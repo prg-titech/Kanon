@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+    <title>oka_sotsuron</title>
+
+    <script type="text/javascript" src="../../../../../Documents/node_modules/vis/dist/vis.js"></script>
+    <link href="../../../../../Documents/node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+<body>
+
+<script type="text/javascript" src="../../../../../Documents/gitclones/ace-builds/src/ace.js"></script>
+<script type="text/javascript" src="../../../../../Documents/node_modules/esprima/dist/esprima.js"></script>
+<script type="text/javascript" src="../../../../../Documents/gitclones/escodegen/escodegen.browser.js"></script>
+<script type="text/javascript" src="../../js/toVisjs.js"></script>
+<script type="text/javascript" src="../../js/traverse.js"></script>
+<script type="text/javascript" src="../../js/store-positions.js"></script>
+<script type="text/javascript" src="../../js/code-conversion.js"></script>
+<script type="text/javascript" src="../../js/update.js"></script>
+<script type="text/javascript" src="../../js/context.js"></script>
+<script type="text/javascript" src="../../js/trace.js"></script>
+<script type="text/javascript" src="../../live-editor-js/ast-walker.js"></script>
+<script type="text/javascript" src="../../live-editor-js/ast-builder.js"></script>
+<script type="text/javascript" src="../../live-editor-js/pjs-ast-transforms.js"></script>
+
+<div id="editor">
+<script>
+    window.editor = ace.edit("editor");
+    editor.setValue(window.localStorage["code"] || "");
+
+    editor.getSession().setMode('ace/mode/javascript');
+    editor.on('change', Update.positionUpdate);
+    editor.getSelection().on('changeCursor', Update.contextUpdate);
+</script>
+</div>
+
+<div id="mynetwork">
+</div>
+<div id='button'>
+    <input type="button" value="No Context" onclick="Context.ChangeContext(false); Update.contextUpdate();">
+    <input type="button" value="Use Context" onclick="Context.ChangeContext(true); Update.contextUpdate();">
+</div>
+<div id='context'>
+</div>
+<div id='console'>
+</div>
+<script type="text/javascript">
+    var container = document.getElementById('mynetwork');
+    var data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
+    var options = {
+        autoResize: false,
+        nodes: {color: 'skyblue'},
+        edges: {arrows: 'to', color: 'skyblue'},
+        interaction: {zoomView: false},
+    };
+    window.network = new vis.Network(container, data, options);
+    StorePositions.oldNetworkNodesData = network.body.data.nodes._data;
+    StorePositions.oldNetworkEdgesData = network.body.data.edges._data;
+
+    Update.positionUpdate();
+    editor.getSelection().clearSelection();
+
+    document.getElementById('context').textContent = (Context.UseContext) ? 'Use Context' : 'No Context';
+</script>
+</body>
+</html>
+
+
+

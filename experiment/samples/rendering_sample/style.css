@@ -1,0 +1,28 @@
+#editor {
+    width: 600px;
+    height: 600px;
+    float: left;
+    margin-right: 30px;
+}
+
+#mynetwork {
+    width: 600px;
+    height: 600px;
+    border: 1px solid lightgray;
+    float: left;
+}
+
+#button {
+    float: left;
+    clear: left;
+}
+
+#context {
+    float: left;
+    margin-left: 10px;
+}
+
+#console {
+    float: left;
+    clear: left;
+}
