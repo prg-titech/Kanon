@@ -10,10 +10,14 @@ the data structure of your code is rendered in right side as graph.
 
 __Kanon__ use some other libraries.
 
-- [vis.js](http://visjs.org)
+- [vis.js](http://visjs.org) (github: https://github.com/almende/vis)
 
-- [Ace Editor](https://ace.c9.io)
+- [Ace Editor](https://ace.c9.io) (github: https://github.com/ajaxorg/ace)
 
-- [esprima](http://esprima.org)
+- [esprima](http://esprima.org) (github: https://github.com/jquery/esprima/tree/3.1.1)
 
-- [escodegen](https://github.com/estools/escodegen)
+- escodegen (github: https://github.com/estools/escodegen)
+
+## Reference
+
+- live-editor in Khan Academy (github: https://github.com/Khan/live-editor)
