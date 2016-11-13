@@ -6,6 +6,13 @@ class __Edge {
     }
 };
 
+class __VariableNode {
+    constructor(id) {
+        this.id = id;
+        this.__id = 'Variable-' + id;
+    }
+};
+
 class __Literal {
     constructor(value) {
         this.value = value;
@@ -15,24 +22,42 @@ class __Literal {
 class __Graph {
     constructor() {
         this.nodes = []; // Array of Object
-        this.edges = []; // Array of Edge
+        this.edges = []; // Array of __Edge
     }
 };
 
-var traverse = function(objs) {
+var traverse = function(objs, variables = {}) {
     var ret = new __Graph();
 
     for (var i = 0; i < objs.length; i++) {
         var obj = objs[i];
-        if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined) { continue; }
+        if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined) continue;
 
         dfs(ret, obj);
     }
+
+    Object.keys(variables).forEach(function(key) {
+        var obj = variables[key];
+        if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined) return;
+
+        dfs(ret, obj);
+    })
 
     for (var i = 0; i < ret.nodes.length; i++) {
         if (ret.nodes[i].__id) continue;
         checkId(ret.nodes[i], ret.edges);
     }
+
+    Object.keys(variables).forEach(function(key) {
+        var tempNode = new __VariableNode(key);
+
+        var index = ret.nodes.indexOf(variables[key]);
+        if (index >= 0) {
+            var tempEdge = new __Edge(tempNode, ret.nodes[index], key);
+            ret.nodes.push(tempNode);
+            ret.edges.push(tempEdge);
+        }
+    });
 
     return ret;
 };

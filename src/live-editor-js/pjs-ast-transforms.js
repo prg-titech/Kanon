@@ -2,7 +2,8 @@ window.ASTTransforms = {};
 
 let b = window.ASTBuilder;
 
-/** before: new Hoge()
+/** 
+ * before: new Hoge()
  * after:  function() {
  *             var temp = new Hoge();
  *
@@ -197,6 +198,32 @@ ASTTransforms.AddLoopId_and_LoopCount = function() {
     };
 };
 
+
+/**
+ * @param {string} variables
+ *
+ * In this function, add variable declaration at the head of the code.
+ * the declared variable is the element of variables
+ */
+ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
+    return {
+        leave(node, path) {
+            if (node.type === 'Program') {
+                node.body.unshift(
+                    b.VariableDeclaration(
+                        variables.map(function(variable) {
+                            return b.VariableDeclarator(
+                                b.Identifier(variable)
+                            )
+                        })
+                    , 'var')
+                );
+            }
+        }
+    };
+};
+
+
 ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"];
 
 /** Insert the code can manage the context in loop.
@@ -349,7 +376,7 @@ ASTTransforms.Context = function () {
  * if Statement type is VariableDeclaration and node.kind is 'var',
  *   Statement -> {checkPoint; Statement; checkPoint} ... (2)
  */
-ASTTransforms.InsertCheckPoint = function() {
+ASTTransforms.InsertCheckPoint = function(variables) {
     var idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
     return {
@@ -359,94 +386,72 @@ ASTTransforms.InsertCheckPoint = function() {
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
 
+                let checkPoint = function(loc) {
+                    Context.CheckPointTable[idCounter] = loc;
+                    return b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('Context'),
+                                b.Identifier('__checkPoint')
+                            ),
+                            [
+                                b.Identifier('__objs'),
+                                b.Identifier('__loopId'),
+                                b.Identifier('__loopCount'),
+                                b.Identifier(idCounter++),
+                                b.ObjectExpression(
+                                    variables.map(function(val) {
+                                        return b.Property(
+                                            b.Identifier(val),
+                                            b.CallExpression(
+                                                b.Identifier('eval'),
+                                                [b.Identifier(val)]
+                                            )
+                                        );
+                                    })
+                                )
+                            ]
+                        )
+                    )
+                };
+
                 if (['ReturnStatement', 'BreakStatement', 'ContinueStatement'].indexOf(node.type) != -1) {
-                    Context.CheckPointTable[idCounter] = start;
                     return b.BlockStatement([
-                        b.expressionstatement(
-                            b.callexpression(
-                                b.memberexpression(
-                                    b.identifier('Context'),
-                                    b.Identifier('__checkPoint')
-                                ),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.Identifier('__loopId'),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier(idCounter++)
-                                ]
-                            )
-                        ),
+                        checkPoint(start),
                         Object.assign({}, node)
                     ]);
                 } else if (node.type == 'VariableDeclaration' && node.kind != 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
-                    Context.CheckPointTable[idCounter] = start;
-                    Context.CheckPointTable[idCounter+1] = end;
                     return [
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('Context'),
-                                    b.Identifier('__checkPoint')
-                                ),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.Identifier('__loopId'),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier(idCounter++)
-                                ]
-                            )
-                        ),
+                        checkPoint(start),
                         Object.assign({}, node),
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('Context'),
-                                    b.Identifier('__checkPoint')
-                                ),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.Identifier('__loopId'),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier(idCounter++)
-                                ]
-                            )
-                        )
+                        checkPoint(end)
                     ];
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
-                    Context.CheckPointTable[idCounter] = start;
-                    Context.CheckPointTable[idCounter+1] = end;
                     return b.BlockStatement([
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('Context'),
-                                    b.Identifier('__checkPoint')
-                                ),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.Identifier('__loopId'),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier(idCounter++)
-                                ]
-                            )
-                        ),
+                        checkPoint(start),
                         Object.assign({}, node),
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('Context'),
-                                    b.Identifier('__checkPoint')
-                                ),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.Identifier('__loopId'),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier(idCounter++)
-                                ]
-                            )
-                        )
+                        checkPoint(end)
                     ]);
+                }
+            }
+        }
+    };
+};
 
+
+/**
+ * @param {Array} variables
+ *
+ * In this function, if the head of the name in VariableDeclarator have '$',
+ * remove '$' and preserve the name in variables(Array)
+ */
+ASTTransforms.CheckVisualizeVariable = function(variables) {
+    return {
+        leave(node, path) {
+            if (node.type == 'VariableDeclarator') {
+                if (node.id.name[0] == '$') {
+                    node.id.name = node.id.name.slice(1, node.id.name.length)
+                    variables.push(node.id.name);
                 }
             }
         }

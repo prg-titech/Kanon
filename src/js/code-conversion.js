@@ -18,21 +18,28 @@ CodeConversion.transformCode = function(code, isContext = false) {
         let ast = esprima.parse(code, {loc: true});
     
         let visitors = [];
+
+        var visualizeVariables = [];
+        visitors.push(ASTTransforms.CheckVisualizeVariable(visualizeVariables));
+        walkAST(ast, null, visitors);
+        visitors = [];
+
         if (isContext) {
-            visitors.push(ASTTransforms.InsertCheckPoint());
+            visitors.push(ASTTransforms.InsertCheckPoint(visualizeVariables));
             walkAST(ast, null, visitors);
             visitors = [];
         }
-        visitors.push(ASTTransforms.Context());
+
+        if (visualizeVariables.length) visitors.push(ASTTransforms.AddVisualizeVariablesDeclaration(visualizeVariables));
         visitors.push(ASTTransforms.AddLoopCounter());
         visitors.push(ASTTransforms.AddLoopId_and_LoopCount());
-        visitors.push(ASTTransforms.NewExpressionToFunction());
         visitors.push(ASTTransforms.AddCounter());
         visitors.push(ASTTransforms.Add__objsCode());
+        visitors.push(ASTTransforms.Context());
+        visitors.push(ASTTransforms.NewExpressionToFunction());
 
         walkAST(ast, null, visitors);
 
         return escodegen.generate(ast);
-    } catch (e) {
-    }
+    } catch (e) {}
 };

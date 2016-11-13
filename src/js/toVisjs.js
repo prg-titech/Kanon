@@ -16,6 +16,10 @@ var translator = function(graph) {
         if (graph.nodes[i].constructor.name == "__Literal") {
             node.label = "" + graph.nodes[i].value;
             node.color = 'white';
+        } else if (graph.nodes[i].constructor.name == '__VariableNode') {
+            node.label = graph.nodes[i].id;
+            node.physics = true;
+            node.hidden = true;
         } else {
             node.label = graph.nodes[i].constructor.name;
         }
@@ -23,8 +27,12 @@ var translator = function(graph) {
         node.id = graph.nodes[i].__id;
         retData.nodes.push(node);
         for (var j = 0; j < retData.edges.length; j++) {
-            if (retData.edges[j].from == graph.nodes[i])
+            if (retData.edges[j].from == graph.nodes[i]) {
                 retData.edges[j].from = node.id;
+                if (graph.nodes[i].constructor.name == '__VariableNode') {
+                    retData.edges[j].color = 'seagreen';
+                }
+            }
             if (retData.edges[j].to == graph.nodes[i])
                 retData.edges[j].to = node.id;
         }

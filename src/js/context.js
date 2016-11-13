@@ -18,8 +18,8 @@ Context.CheckPointTable = {};
  *
  * this function is checkPoint is located at the head and the tail of each Statement.
  */
-Context.__checkPoint = function(objects, loopId, count, checkPointId) {
-    var storedGraph = Context.__StoreGraph(objects, loopId, count, checkPointId);
+Context.__checkPoint = function(objects, loopId, count, checkPointId, visualizeVariables) {
+    var storedGraph = Context.__StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
     if (Context.UseContext) {
 
         if (!Trace.ClickElementContext.pos && Trace.ClickElement.node) {
@@ -41,8 +41,8 @@ Context.__checkPoint = function(objects, loopId, count, checkPointId) {
 };
 
 
-Context.__StoreGraph = function(objects, loopId, count, checkPointId) {
-    var graph = translator(traverse(objects));
+Context.__StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
+    var graph = translator(traverse(objects, visualizeVariables));
 
     if (!Context.StoreGraph[checkPointId]) Context.StoreGraph[checkPointId] = {};
     if (!Context.StoreGraph[checkPointId][loopId]) Context.StoreGraph[checkPointId][loopId] = {};
@@ -52,7 +52,7 @@ Context.__StoreGraph = function(objects, loopId, count, checkPointId) {
 };
 
 
-// __draw() method is inserted the tail of the user code
+// __draw() method is executed after user code
 Context.__draw = function() {
     if (Context.UseContext) {
         try {
