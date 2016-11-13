@@ -18,6 +18,10 @@ __Kanon__ use some other libraries.
 
 - escodegen (https://github.com/estools/escodegen)
 
+I would like to use [esprima](http://esprima.org) and looked for esprima.js,
+but I couldn't find it. So, I use [external/esprima.js](https://github.com/prg-titech/Kanon/blob/master/external/esprima.js)
+which copied https://unpkg.com/esprima@3.1.1/dist/esprima.js
+
 ## Reference
 
 - live-editor (https://github.com/Khan/live-editor)
