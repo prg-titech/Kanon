@@ -15,6 +15,7 @@ Context.CheckPointTable = {};
  * @param {string} loopId
  * @param {int} count
  * @param {int} checkPointId
+ * @param {Object} visualizeVariables
  *
  * this function is checkPoint is located at the head and the tail of each Statement.
  */

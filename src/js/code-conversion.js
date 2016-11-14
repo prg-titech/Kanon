@@ -19,16 +19,19 @@ CodeConversion.transformCode = function(code, isContext = false) {
     
         let visitors = [];
 
+        // var visualizeVariables = [];
+        // visitors.push(ASTTransforms.CheckVisualizeVariable(visualizeVariables));
+        // walkAST(ast, null, visitors);
+        // visitors = [];
         var visualizeVariables = [];
-        visitors.push(ASTTransforms.CheckVisualizeVariable(visualizeVariables));
-        walkAST(ast, null, visitors);
-        visitors = [];
 
         if (isContext) {
             visitors.push(ASTTransforms.InsertCheckPoint(visualizeVariables));
-            walkAST(ast, null, visitors);
-            visitors = [];
+        } else {
+            visitors.push(ASTTransforms.RemoveVisualizeVariable());
         }
+        walkAST(ast, null, visitors);
+        visitors = [];
 
         if (visualizeVariables.length) visitors.push(ASTTransforms.AddVisualizeVariablesDeclaration(visualizeVariables));
         visitors.push(ASTTransforms.AddLoopCounter());
