@@ -390,8 +390,9 @@ ASTTransforms.InsertCheckPoint = function(variables) {
             if (node.type == 'BlockStatement') {
                 env.extendEnv(new VisualizeVariable.BlockFlame());
             }
+            return env.visualizeVariable();
         },
-        leave(node, path) {
+        leave(node, path, enterData) {
             if (node.type == 'VariableDeclaration') {
                 node.declarations.forEach(function(declaration) {
                     if (declaration.id.name[0] == '$') {
@@ -414,7 +415,7 @@ ASTTransforms.InsertCheckPoint = function(variables) {
                 let parent = path[path.length - 2];
                 let visualizeVariable = env.visualizeVariable();
 
-                let checkPoint = function(loc) {
+                let checkPoint = function(loc, variables) {
                     Context.CheckPointTable[idCounter] = loc;
                     return b.ExpressionStatement(
                         b.CallExpression(
@@ -428,7 +429,7 @@ ASTTransforms.InsertCheckPoint = function(variables) {
                                 b.Identifier('__loopCount'),
                                 b.Identifier(idCounter++),
                                 b.ObjectExpression(
-                                    visualizeVariable.map(function(val) {
+                                    variables.map(function(val) {
                                         return b.Property(
                                             b.Identifier(val),
                                             b.CallExpression(
@@ -445,20 +446,20 @@ ASTTransforms.InsertCheckPoint = function(variables) {
 
                 if (['ReturnStatement', 'BreakStatement', 'ContinueStatement'].indexOf(node.type) != -1) {
                     return b.BlockStatement([
-                        checkPoint(start),
+                        checkPoint(start, enterData[0]),
                         Object.assign({}, node)
                     ]);
                 } else if (node.type == 'VariableDeclaration' && node.kind != 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return [
-                        checkPoint(start),
+                        checkPoint(start, enterData[0]),
                         Object.assign({}, node),
-                        checkPoint(end)
+                        checkPoint(end, visualizeVariable)
                     ];
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return b.BlockStatement([
-                        checkPoint(start),
+                        checkPoint(start, enterData[0]),
                         Object.assign({}, node),
-                        checkPoint(end)
+                        checkPoint(end, visualizeVariable)
                     ]);
                 }
             }

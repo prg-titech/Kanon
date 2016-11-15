@@ -13,9 +13,10 @@ window.walkAST = function(node, path, visitors) {
     } else {
         path.push(node);
     }
+    let enterData = [];
     visitors.forEach(visitor => {
         if (visitor.enter) {
-            visitor.enter(node, path);
+            enterData.push(visitor.enter(node, path));
         }
     });
     for (let prop of Object.keys(node)) {
@@ -38,7 +39,7 @@ window.walkAST = function(node, path, visitors) {
     let step = 1;
     visitors.forEach(visitor => {
         if (visitor.leave) {
-            let replacement = visitor.leave(node, path);
+            let replacement = visitor.leave(node, path, enterData);
             if (replacement) {
                 if (replacement instanceof Array) {
                     let parent = path[path.length - 2];
