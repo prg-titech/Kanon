@@ -62,7 +62,7 @@ VisualizeVariable.StackEnv.prototype.visualizeVariable = function() {
 
     while (current) {
         Object.keys(current.env).forEach(function(varName) {
-            if (!retObj[varName]) retObj[varName] = current.env[varName];
+            if (typeof(retObj[varName]) === 'undefined') retObj[varName] = current.env[varName];
         });
         current = current.prev;
     }

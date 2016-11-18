@@ -9,9 +9,6 @@ Trace.ClickElement = {};
  * if you click on a node or edge, this function is executed.
  */
 Trace.ClickEventFunction = function(param) {
-    Context.ChangeContext(true);
-    document.getElementById('context').textContent = 'Use Context';
-
     // choose node
     if (param.nodes.length) {
         Trace.ClickElement.node = param.nodes[0];
@@ -23,6 +20,9 @@ Trace.ClickEventFunction = function(param) {
     }
     // no choose
     else return;
+
+    Context.ChangeContext(true);
+    document.getElementById('context').textContent = 'Use Context';
 
     try {
         eval(Update.CodeWithCheckPoint);

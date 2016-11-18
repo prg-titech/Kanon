@@ -19,10 +19,6 @@ CodeConversion.transformCode = function(code, isContext = false) {
     
         let visitors = [];
 
-        // var visualizeVariables = [];
-        // visitors.push(ASTTransforms.CheckVisualizeVariable(visualizeVariables));
-        // walkAST(ast, null, visitors);
-        // visitors = [];
         var visualizeVariables = [];
 
         if (isContext) {
@@ -33,7 +29,7 @@ CodeConversion.transformCode = function(code, isContext = false) {
         walkAST(ast, null, visitors);
         visitors = [];
 
-        if (visualizeVariables.length) visitors.push(ASTTransforms.AddVisualizeVariablesDeclaration(visualizeVariables));
+        visitors.push(ASTTransforms.BlockedProgram());
         visitors.push(ASTTransforms.AddLoopCounter());
         visitors.push(ASTTransforms.AddLoopId_and_LoopCount());
         visitors.push(ASTTransforms.AddCounter());

@@ -224,6 +224,17 @@ ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
 };
 
 
+ASTTransforms.BlockedProgram = function() {
+    return {
+        leave(node, path) {
+            if (node.type === 'Program') {
+                node.body = [b.BlockStatement(node.body)];
+            }
+        }
+    };
+};
+
+
 ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"];
 
 /** Insert the code can manage the context in loop.
@@ -389,12 +400,20 @@ ASTTransforms.InsertCheckPoint = function(variables) {
 
             if (node.type == 'BlockStatement') {
                 env.extendEnv(new VisualizeVariable.BlockFlame());
+
+                node.body.forEach(s => {
+                    if (s.type == 'VariableDeclaration' && s.kind != 'var') {
+                        s.declarations.forEach(declarator => {
+                            env.addVariable(declarator.id.name, node.kind, false);
+                        });
+                    }
+                });
             }
             return env.visualizeVariable();
         },
         leave(node, path, enterData) {
             if (node.type == 'VariableDeclaration') {
-                node.declarations.forEach(function(declaration) {
+                node.declarations.forEach(declaration => {
                     if (declaration.id.name[0] == '$') {
                         declaration.id.name = declaration.id.name.slice(1, declaration.id.name.length);
                         env.addVariable(declaration.id.name, node.kind, true);
