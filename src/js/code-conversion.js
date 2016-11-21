@@ -19,10 +19,8 @@ CodeConversion.transformCode = function(code, isContext = false) {
     
         let visitors = [];
 
-        var visualizeVariables = [];
-
         if (isContext) {
-            visitors.push(ASTTransforms.InsertCheckPoint(visualizeVariables));
+            visitors.push(ASTTransforms.InsertCheckPoint());
         } else {
             visitors.push(ASTTransforms.RemoveVisualizeVariable());
         }

@@ -235,7 +235,7 @@ ASTTransforms.BlockedProgram = function() {
 };
 
 
-ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"];
+ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
 
 /** Insert the code can manage the context in loop.
  * loop includes
@@ -244,6 +244,7 @@ ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "Fun
  * - ForStatement
  * - FunctionExpression
  * - FunctionDeclaration
+ * - ArrowFunctionExpression
  *
  * This is code conversion example in WhileStatement
  * before:
@@ -386,16 +387,29 @@ ASTTransforms.Context = function () {
  *
  * if Statement type is VariableDeclaration and node.kind is 'var',
  *   Statement -> {checkPoint; Statement; checkPoint} ... (2)
+ *
+ *
+ * At the same time, implement variable visualization by using '$'.
+ * the scope of variables is implemented by my environment whose style is stack.
+ *
  */
-ASTTransforms.InsertCheckPoint = function(variables) {
+ASTTransforms.InsertCheckPoint = function() {
     var idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
     var env = new VisualizeVariable.StackEnv();
 
     return {
         enter(node, path) {
-            if (['FunctionDeclaration', 'FunctionExpression'].indexOf(node.type) >= 0) {
+            if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].indexOf(node.type) >= 0) {
                 env.extendEnv(new VisualizeVariable.FunctionFlame());
+
+                node.body.body.forEach(s => {
+                    if (s.type == 'VariableDeclaration' && s.kind == 'var') {
+                        s.declarations.forEach(declarator => {
+                            env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
+                        });
+                    }
+                });
             }
 
             if (node.type == 'BlockStatement') {
@@ -404,7 +418,7 @@ ASTTransforms.InsertCheckPoint = function(variables) {
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
                         s.declarations.forEach(declarator => {
-                            env.addVariable(declarator.id.name, node.kind, false);
+                            env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
                         });
                     }
                 });
@@ -413,18 +427,17 @@ ASTTransforms.InsertCheckPoint = function(variables) {
         },
         leave(node, path, enterData) {
             if (node.type == 'VariableDeclaration') {
-                node.declarations.forEach(declaration => {
-                    if (declaration.id.name[0] == '$') {
-                        declaration.id.name = declaration.id.name.slice(1, declaration.id.name.length);
-                        env.addVariable(declaration.id.name, node.kind, true);
-                        variables.push(declaration.id.name);
+                node.declarations.forEach(declarator => {
+                    if (declarator.id.name[0] == '$') {
+                        declarator.id.name = declarator.id.name.slice(1, declarator.id.name.length);
+                        env.addVariable(declarator.id.name, node.kind, true);
                     } else {
-                        env.addVariable(declaration.id.name, node.kind, false);
+                        env.addVariable(declarator.id.name, node.kind, false);
                     }
                 });
             }
 
-            if (['FunctionDeclaration', 'FunctionExpression', 'BlockStatement'].indexOf(node.type) >= 0) {
+            if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression', 'BlockStatement'].indexOf(node.type) >= 0) {
                 env.pop();
             }
 
