@@ -60,7 +60,7 @@ __$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visual
 __$__.Context.Draw = function() {
     if (__$__.Context.UseContext) {
         try {
-            var checkPointId = __$__.Context.findId(__$__.editor.getCursorPosition());
+            var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
             var loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
             var count = __$__.Context.__loopContext[loopId];
             var graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
@@ -73,7 +73,7 @@ __$__.Context.Draw = function() {
         __$__.StorePositions.setPositions(graph);
         __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     } else {
-        var checkPointId = __$__.Context.findId(__$__.editor.getCursorPosition());
+        var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
         if (!checkPointId.afterId) checkPointId.afterId = checkPointId.beforeId;
 
         var beforeLoopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
@@ -85,12 +85,15 @@ __$__.Context.Draw = function() {
 
         // If beforeLoopId same afterLoopId, calcurate the gap between before and after graph.
         if (beforeLoopId == afterLoopId) {
+
+            // take the number of common loop here
             var loopCount = [];
             var afterGraphsCount = Object.keys(afterGraphs);
             Object.keys(beforeGraphs).forEach(function(num) {
                 if (afterGraphsCount.indexOf(num) != -1) loopCount.push(num);
             });
 
+            // calculate the gap between before and after graph
             for (var i = 0; i < loopCount.length; i++) {
                 var beforeGraph = beforeGraphs[loopCount[i]], afterGraph = afterGraphs[loopCount[i]];
                 var beforeNodeId = [], afterNodeId = [];
@@ -139,7 +142,7 @@ __$__.Context.Draw = function() {
 };
 
 
-__$__.Context.findId = function(pos) {
+__$__.Context.FindId = function(pos) {
     let before;
     let after;
     let res = {};
