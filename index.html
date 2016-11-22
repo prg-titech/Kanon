@@ -10,6 +10,9 @@
 </head>
 <body>
 
+<script>
+    var __$__ = {};
+</script>
 <script type="text/javascript" src="external/ace-builds/src/ace.js"></script>
 <script type="text/javascript" src="external/esprima.js"></script>
 <script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>
@@ -27,42 +30,42 @@
 
 <div id="editor">
 <script>
-    window.editor = ace.edit("editor");
-    editor.setValue(window.localStorage["code"] || "");
+    __$__.editor = ace.edit("editor");
+    __$__.editor.setValue(window.localStorage["Kanon-Code"] || "");
 
-    editor.getSession().setMode('ace/mode/javascript');
-    editor.on('change', Update.positionUpdate);
-    editor.getSelection().on('changeCursor', Update.contextUpdate);
+    __$__.editor.getSession().setMode('ace/mode/javascript');
+    __$__.editor.on('change', __$__.Update.PositionUpdate);
+    __$__.editor.getSelection().on('changeCursor', __$__.Update.ContextUpdate);
 </script>
 </div>
 
 <div id="mynetwork">
 </div>
 <div id='button'>
-    <input type="button" value="No Context" onclick="Context.ChangeContext(false); Update.contextUpdate();">
-    <input type="button" value="Use Context" onclick="Context.ChangeContext(true); Update.contextUpdate();">
+    <input type="button" value="No Context" onclick="__$__.Context.ChangeContext(false); __$__.Update.ContextUpdate();">
+    <input type="button" value="Use Context" onclick="__$__.Context.ChangeContext(true); __$__.Update.ContextUpdate();">
 </div>
 <div id='context'>
 </div>
 <div id='console'>
 </div>
 <script type="text/javascript">
-    var container = document.getElementById('mynetwork');
-    var data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
-    var options = {
+    __$__.container = document.getElementById('mynetwork');
+    __$__.data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
+    __$__.options = {
         autoResize: false,
         nodes: {color: 'skyblue'},
         edges: {arrows: 'to', color: 'skyblue'},
         interaction: {zoomView: false},
     };
-    window.network = new vis.Network(container, data, options);
-    StorePositions.oldNetworkNodesData = network.body.data.nodes._data;
-    StorePositions.oldNetworkEdgesData = network.body.data.edges._data;
+    __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
+    __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
+    __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
-    Update.positionUpdate();
-    editor.getSelection().clearSelection();
+    __$__.Update.PositionUpdate();
+    __$__.editor.getSelection().clearSelection();
 
-    document.getElementById('context').textContent = (Context.UseContext) ? 'Use Context' : 'No Context';
+    document.getElementById('context').textContent = (__$__.Context.UseContext) ? 'Use Context' : 'No Context';
 </script>
 </body>
 </html>

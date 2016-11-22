@@ -1,4 +1,6 @@
-var translator = function(graph) {
+__$__.ToVisjs = {};
+
+__$__.ToVisjs.Translator = function(graph) {
     var retData = {nodes: [], edges: []};
 
     for (var i = 0; i < graph.edges.length; i++) {
@@ -13,10 +15,10 @@ var translator = function(graph) {
     for (var i = 0; i < graph.nodes.length; i++) {
         var node = {};
 
-        if (graph.nodes[i].constructor.name == "__Literal") {
+        if (graph.nodes[i] instanceof __$__.Traverse.__Literal) {
             node.label = "" + graph.nodes[i].value;
             node.color = 'white';
-        } else if (graph.nodes[i].constructor.name == '__VariableNode') {
+        } else if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
             node.label = graph.nodes[i].id;
             node.physics = true;
             node.hidden = true;
@@ -29,7 +31,7 @@ var translator = function(graph) {
         for (var j = 0; j < retData.edges.length; j++) {
             if (retData.edges[j].from == graph.nodes[i]) {
                 retData.edges[j].from = node.id;
-                if (graph.nodes[i].constructor.name == '__VariableNode') {
+                if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
                     retData.edges[j].color = 'seagreen';
                 }
             }

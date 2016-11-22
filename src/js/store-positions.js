@@ -1,15 +1,15 @@
-window.StorePositions = {};
+__$__.StorePositions = {};
 
-StorePositions.oldNetworkNodesData = {};
-StorePositions.oldNetworkEdgesData = {};
+__$__.StorePositions.oldNetworkNodesData = {};
+__$__.StorePositions.oldNetworkEdgesData = {};
 
 
 // if nodePositions have the position of node.id, set the position at graph.node.
-StorePositions.setPositions = function(graph, isFixed = false) {
+__$__.StorePositions.setPositions = function(graph, isFixed = false) {
     for (var i = 0; i < graph.nodes.length; i++) {
         var node = graph.nodes[i];
 
-        var nodeData = StorePositions.oldNetworkNodesData[node.id];
+        var nodeData = __$__.StorePositions.oldNetworkNodesData[node.id];
         if (nodeData && nodeData.x) {
             node.x = nodeData.x;
             node.y = nodeData.y;
@@ -21,11 +21,11 @@ StorePositions.setPositions = function(graph, isFixed = false) {
 
 
 // register the positions of the nodes to be able to use old network data
-StorePositions.registerPositions = function() {
-    var pos = network.getPositions();
+__$__.StorePositions.registerPositions = function() {
+    var pos = __$__.network.getPositions();
 
     Object.keys(pos).forEach(function(id) {
-        var temp = StorePositions.oldNetworkNodesData;
+        var temp = __$__.StorePositions.oldNetworkNodesData;
         if (temp[id]) {
             temp[id].x = pos[id].x;
             temp[id].y = pos[id].y;

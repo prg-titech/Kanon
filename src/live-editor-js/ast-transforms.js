@@ -1,6 +1,6 @@
-window.ASTTransforms = {};
+__$__.ASTTransforms = {};
 
-let b = window.ASTBuilder;
+let b = __$__.ASTBuilder;
 
 /** 
  * before: new Hoge()
@@ -18,7 +18,7 @@ let b = window.ASTBuilder;
  * "id" is unique number of this function
  * "__newIdCounter[id]" is the number of times this is called
  */
-ASTTransforms.NewExpressionToFunction = function() {
+__$__.ASTTransforms.NewExpressionToFunction = function() {
     var id = 0;
     return {
         leave(node, path) {
@@ -114,7 +114,7 @@ ASTTransforms.NewExpressionToFunction = function() {
 };
 
 // Add "var __objs = [];" at the head of the code
-ASTTransforms.Add__objsCode = function() {
+__$__.ASTTransforms.Add__objsCode = function() {
     return {
         leave(node, path) {
             const objectsName = "__objs";
@@ -135,7 +135,7 @@ ASTTransforms.Add__objsCode = function() {
 };
 
 // Add "var __newIdCounter = {};" at the head of the code
-ASTTransforms.AddCounter = function() {
+__$__.ASTTransforms.AddCounter = function() {
     return {
         leave(node, path) {
             const counterName = "__newIdCounter";
@@ -156,7 +156,7 @@ ASTTransforms.AddCounter = function() {
 };
 
 // Add "var __loopCounter = {};" at the head of the code
-ASTTransforms.AddLoopCounter = function () {
+__$__.ASTTransforms.AddLoopCounter = function () {
     return {
         leave(node, path) {
             const counterName = "__loopCounter";
@@ -177,7 +177,7 @@ ASTTransforms.AddLoopCounter = function () {
 };
 
 // Add "var __loopId = 'noLoop', __loopCount = 1;" at the head of the code 
-ASTTransforms.AddLoopId_and_LoopCount = function() {
+__$__.ASTTransforms.AddLoopId_and_LoopCount = function() {
     return {
         leave(node, path) {
             if (node.type === "Program") {
@@ -205,7 +205,7 @@ ASTTransforms.AddLoopId_and_LoopCount = function() {
  * In this function, add variable declaration at the head of the code.
  * the declared variable is the element of variables
  */
-ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
+__$__.ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
     return {
         leave(node, path) {
             if (node.type === 'Program') {
@@ -224,7 +224,7 @@ ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
 };
 
 
-ASTTransforms.BlockedProgram = function() {
+__$__.ASTTransforms.BlockedProgram = function() {
     return {
         leave(node, path) {
             if (node.type === 'Program') {
@@ -235,7 +235,7 @@ ASTTransforms.BlockedProgram = function() {
 };
 
 
-ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
+__$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
 
 /** Insert the code can manage the context in loop.
  * loop includes
@@ -263,13 +263,13 @@ ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "Fun
  *
  * __loopId is unique ID
  */
-ASTTransforms.Context = function () {
+__$__.ASTTransforms.Context = function () {
     var idCounter = 1;
     return {
         leave(node, path) {
             const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "__loopContext";
 
-            if (ASTTransforms.Loop.indexOf(node.type) != -1) {
+            if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1) {
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
@@ -323,7 +323,7 @@ ASTTransforms.Context = function () {
                             "!",
                             b.MemberExpression(
                                 b.MemberExpression(
-                                    b.Identifier("Context"),
+                                    b.Identifier("__$__.Context"),
                                     b.Identifier(loopContext)
                                 ),
                                 b.Identifier(loopId),
@@ -335,7 +335,7 @@ ASTTransforms.Context = function () {
                             b.AssignmentExpression(
                                 b.MemberExpression(
                                     b.MemberExpression(
-                                        b.Identifier("Context"),
+                                        b.Identifier("__$__.Context"),
                                         b.Identifier(loopContext)
                                     ),
                                     b.Identifier(loopId),
@@ -393,15 +393,15 @@ ASTTransforms.Context = function () {
  * the scope of variables is implemented by my environment whose style is stack.
  *
  */
-ASTTransforms.InsertCheckPoint = function() {
+__$__.ASTTransforms.InsertCheckPoint = function() {
     var idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
-    var env = new VisualizeVariable.StackEnv();
+    var env = new __$__.VisualizeVariable.StackEnv();
 
     return {
         enter(node, path) {
             if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].indexOf(node.type) >= 0) {
-                env.extendEnv(new VisualizeVariable.FunctionFlame());
+                env.extendEnv(new __$__.VisualizeVariable.FunctionFlame());
 
                 node.body.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind == 'var') {
@@ -413,7 +413,7 @@ ASTTransforms.InsertCheckPoint = function() {
             }
 
             if (node.type == 'BlockStatement') {
-                env.extendEnv(new VisualizeVariable.BlockFlame());
+                env.extendEnv(new __$__.VisualizeVariable.BlockFlame());
 
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
@@ -448,13 +448,10 @@ ASTTransforms.InsertCheckPoint = function() {
                 let visualizeVariable = env.visualizeVariable();
 
                 let checkPoint = function(loc, variables) {
-                    Context.CheckPointTable[idCounter] = loc;
+                    __$__.Context.CheckPointTable[idCounter] = loc;
                     return b.ExpressionStatement(
                         b.CallExpression(
-                            b.MemberExpression(
-                                b.Identifier('Context'),
-                                b.Identifier('__checkPoint')
-                            ),
+                            b.Identifier('__$__.Context.CheckPoint'),
                             [
                                 b.Identifier('__objs'),
                                 b.Identifier('__loopId'),
@@ -501,12 +498,10 @@ ASTTransforms.InsertCheckPoint = function() {
 
 
 /**
- * @param {Array} variables
- *
  * In this function, if the head of the name in VariableDeclarator have '$',
  * remove '$'
  */
-ASTTransforms.RemoveVisualizeVariable = function() {
+__$__.ASTTransforms.RemoveVisualizeVariable = function() {
     return {
         leave(node, path) {
             if (node.type == 'VariableDeclarator') {

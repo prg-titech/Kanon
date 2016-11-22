@@ -1,13 +1,13 @@
-window.Context = {};
+__$__.Context = {};
 
 
-Context.UseContext = true;
-Context.LastGraph;
-Context.StoreGraph = {};
-Context.__loopContext = {"noLoop": 1};
+__$__.Context.UseContext = true;
+__$__.Context.LastGraph;
+__$__.Context.StoredGraph = {};
+__$__.Context.__loopContext = {"noLoop": 1};
 // keys:   ID of check point
 // values: {row, column}
-Context.CheckPointTable = {};
+__$__.Context.CheckPointTable = {};
 
 
 /**
@@ -19,66 +19,71 @@ Context.CheckPointTable = {};
  *
  * this function is checkPoint is located at the head and the tail of each Statement.
  */
-Context.__checkPoint = function(objects, loopId, count, checkPointId, visualizeVariables) {
-    var storedGraph = Context.__StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
-    if (Context.UseContext) {
+__$__.Context.CheckPoint = function(objects, loopId, count, checkPointId, visualizeVariables) {
+    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
 
-        if (!Trace.ClickElementContext.pos && Trace.ClickElement.node) {
+    if (__$__.Context.UseContext) {
+
+        if (!__$__.Trace.ClickElementContext.pos && __$__.Trace.ClickElement.node) {
             storedGraph.nodes.forEach(function (node) {
-                if (node.id == Trace.ClickElement.node) Trace.ClickElementContext = {id: loopId, count: count, pos: Context.CheckPointTable[checkPointId]};
+                if (node.id == __$__.Trace.ClickElement.node) 
+                    __$__.Trace.ClickElementContext = {id: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]};
             });
         }
 
-        if (!Trace.ClickElementContext.pos && Trace.ClickElement.edge) {
+        if (!__$__.Trace.ClickElementContext.pos && __$__.Trace.ClickElement.edge) {
             storedGraph.edges.forEach(function (edge) {
-                if (edge.from == Trace.ClickElement.edge.from &&
-                    edge.to == Trace.ClickElement.edge.to &&
-                    edge.label == Trace.ClickElement.edge.label) Trace.ClickElementContext = {id: loopId, count: count, pos: Context.CheckPointTable[checkPointId]};
+                if (edge.from == __$__.Trace.ClickElement.edge.from &&
+                    edge.to == __$__.Trace.ClickElement.edge.to &&
+                    edge.label == __$__.Trace.ClickElement.edge.label)
+                    __$__.Trace.ClickElementContext = {id: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]};
             })
         }
     } else {
-        Context.LastGraph = storedGraph;
+        __$__.Context.LastGraph = storedGraph;
     }
 };
 
 
-Context.__StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
-    var graph = translator(traverse(objects, visualizeVariables));
+__$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
+    var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, visualizeVariables));
 
-    if (!Context.StoreGraph[checkPointId]) Context.StoreGraph[checkPointId] = {};
-    if (!Context.StoreGraph[checkPointId][loopId]) Context.StoreGraph[checkPointId][loopId] = {};
-    Context.StoreGraph[checkPointId][loopId][count] = graph;
+    if (!__$__.Context.StoredGraph[checkPointId]) __$__.Context.StoredGraph[checkPointId] = {};
+    if (!__$__.Context.StoredGraph[checkPointId][loopId]) __$__.Context.StoredGraph[checkPointId][loopId] = {};
+    __$__.Context.StoredGraph[checkPointId][loopId][count] = graph;
 
     return graph;
 };
 
 
-// __draw() method is executed after user code
-Context.__draw = function() {
-    if (Context.UseContext) {
+// Draw() method is executed after user code
+__$__.Context.Draw = function() {
+    if (__$__.Context.UseContext) {
         try {
-            var checkPointId = Context.findId(editor.getCursorPosition());
-            var loopId = Object.keys(Context.StoreGraph[checkPointId.beforeId])[0];
-            var count = Context.__loopContext[loopId];
-            var graph = Context.StoreGraph[checkPointId.beforeId][loopId][count];
+            var checkPointId = __$__.Context.findId(__$__.editor.getCursorPosition());
+            var loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
+            var count = __$__.Context.__loopContext[loopId];
+            var graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
+
             if (!graph) graph = {nodes: [], edges: []};
         } catch (e) {
             var graph = {nodes: [], edges: []};
         }
 
-        StorePositions.setPositions(graph);
-        network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+        __$__.StorePositions.setPositions(graph);
+        __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     } else {
-        var checkPointId = Context.findId(editor.getCursorPosition());
+        var checkPointId = __$__.Context.findId(__$__.editor.getCursorPosition());
         if (!checkPointId.afterId) checkPointId.afterId = checkPointId.beforeId;
 
-        var beforeLoopId = Object.keys(Context.StoreGraph[checkPointId.beforeId])[0];
-        var afterLoopId  = Object.keys(Context.StoreGraph[checkPointId.afterId])[0];
-        var beforeGraphs = Context.StoreGraph[checkPointId.beforeId][beforeLoopId];
-        var afterGraphs  = Context.StoreGraph[checkPointId.afterId][afterLoopId];
+        var beforeLoopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
+        var afterLoopId  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
+        var beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopId];
+        var afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopId];
 
         var changeNodeId = [], changeEdgeData = [];
 
+        // If beforeLoopId same afterLoopId, calcurate the gap between before and after graph.
         if (beforeLoopId == afterLoopId) {
             var loopCount = [];
             var afterGraphsCount = Object.keys(afterGraphs);
@@ -117,28 +122,29 @@ Context.__draw = function() {
             }
         }
 
-        var graph = Context.LastGraph;
-        StorePositions.setPositions(graph);
+        var graph = __$__.Context.LastGraph;
+        __$__.StorePositions.setPositions(graph);
         graph.nodes.forEach(function(node) {
             if (changeNodeId.indexOf(node.id) >= 0) node.color = 'orange';
         });
         graph.edges.forEach(function(edge) {
+            if (edge.from.slice(0, 11) == '__Variable-') edge.hidden = true;
             changeEdgeData.forEach(function(edgeData) {
                 if (edgeData[0] == edge.from && edgeData[1] == edge.to && edgeData[2] == edge.label) edge.color = 'orange';
             });
         });
 
-        network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+        __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     }
 };
 
 
-Context.findId = function(pos) {
+__$__.Context.findId = function(pos) {
     let before;
     let after;
     let res = {};
-    Object.keys(Context.CheckPointTable).forEach(function(key) {
-        let temp = Context.CheckPointTable[key];
+    Object.keys(__$__.Context.CheckPointTable).forEach(function(key) {
+        let temp = __$__.Context.CheckPointTable[key];
 
         // the case that temp can become before
         if (temp.line < pos.row + 1 || temp.line == pos.row + 1 && temp.column <= pos.column) {
@@ -158,8 +164,8 @@ Context.findId = function(pos) {
 };
 
 
-Context.ChangeContext = function(bool) {
-    Context.UseContext = bool;
+__$__.Context.ChangeContext = function(bool) {
+    __$__.Context.UseContext = bool;
     var elem = document.getElementById('context');
     elem.textContent = (bool) ? 'Use Context' : 'No Context';
 };

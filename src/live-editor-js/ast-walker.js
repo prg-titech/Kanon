@@ -7,7 +7,7 @@
  * @param visitors: One or more objects containing 'enter' and/or 'leave'
  *                  methods which accept a single AST node as an argument.
  */
-window.walkAST = function(node, path, visitors) {
+__$__.walkAST = function(node, path, visitors) {
     if (path === null) {
         path = [node];
     } else {
@@ -29,10 +29,10 @@ window.walkAST = function(node, path, visitors) {
                     // just 1, but in situations involving multiple variable
                     // declarations we end up replacing one statement with
                     // multiple statements and we need to step over all of them.
-                    i += walkAST(child, path, visitors);
+                    i += __$__.walkAST(child, path, visitors);
                 }
             } else if (node[prop].type) { // don't walk metadata props like "loc"
-                walkAST(node[prop], path, visitors);
+                __$__.walkAST(node[prop], path, visitors);
             }
         }
     }

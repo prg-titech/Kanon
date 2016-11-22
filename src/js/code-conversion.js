@@ -1,4 +1,4 @@
-window.CodeConversion = {};
+__$__.CodeConversion = {};
 
 
 /**
@@ -13,29 +13,29 @@ window.CodeConversion = {};
  * Finally, AST is converted into code whose type is string using escodegen.
  * (walkAST() is executed twice if 'isContext' is true.)
  */
-CodeConversion.transformCode = function(code, isContext = false) {
+__$__.CodeConversion.TransformCode = function(code, isContext = false) {
     try {
         let ast = esprima.parse(code, {loc: true});
     
         let visitors = [];
 
         if (isContext) {
-            visitors.push(ASTTransforms.InsertCheckPoint());
+            visitors.push(__$__.ASTTransforms.InsertCheckPoint());
         } else {
-            visitors.push(ASTTransforms.RemoveVisualizeVariable());
+            visitors.push(__$__.ASTTransforms.RemoveVisualizeVariable());
         }
-        walkAST(ast, null, visitors);
+        __$__.walkAST(ast, null, visitors);
         visitors = [];
 
-        visitors.push(ASTTransforms.BlockedProgram());
-        visitors.push(ASTTransforms.AddLoopCounter());
-        visitors.push(ASTTransforms.AddLoopId_and_LoopCount());
-        visitors.push(ASTTransforms.AddCounter());
-        visitors.push(ASTTransforms.Add__objsCode());
-        visitors.push(ASTTransforms.Context());
-        visitors.push(ASTTransforms.NewExpressionToFunction());
+        visitors.push(__$__.ASTTransforms.BlockedProgram());
+        visitors.push(__$__.ASTTransforms.AddLoopCounter());
+        visitors.push(__$__.ASTTransforms.AddLoopId_and_LoopCount());
+        visitors.push(__$__.ASTTransforms.AddCounter());
+        visitors.push(__$__.ASTTransforms.Add__objsCode());
+        visitors.push(__$__.ASTTransforms.Context());
+        visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
-        walkAST(ast, null, visitors);
+        __$__.walkAST(ast, null, visitors);
 
         return escodegen.generate(ast);
     } catch (e) {}

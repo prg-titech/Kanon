@@ -1,4 +1,4 @@
-window.ASTBuilder = {
+__$__.ASTBuilder = {
     /**
      * @param {Array} elements
      */
