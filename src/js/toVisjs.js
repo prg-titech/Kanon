@@ -33,6 +33,7 @@ __$__.ToVisjs.Translator = function(graph) {
                 retData.edges[j].from = node.id;
                 if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
                     retData.edges[j].color = 'seagreen';
+                    retData.edges[j].length = 30;
                 }
             }
             if (retData.edges[j].to == graph.nodes[i])

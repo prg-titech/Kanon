@@ -78,63 +78,117 @@ __$__.Context.Draw = function() {
 
         var beforeLoopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
         var afterLoopId  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
-        var beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopId];
-        var afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopId];
 
-        var changeNodeId = [], changeEdgeData = [];
+        var addedNodeId = [], addedEdgeData = [];
+        var removedNodeId = [], removedEdgeData = [];
 
         // If beforeLoopId same afterLoopId, calcurate the gap between before and after graph.
         if (beforeLoopId == afterLoopId) {
+            var beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopId];
+            var afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopId];
 
             // take the number of common loop here
             var loopCount = [];
             var afterGraphsCount = Object.keys(afterGraphs);
-            Object.keys(beforeGraphs).forEach(function(num) {
+            Object.keys(beforeGraphs).forEach(num => {
                 if (afterGraphsCount.indexOf(num) != -1) loopCount.push(num);
             });
 
             // calculate the gap between before and after graph
             for (var i = 0; i < loopCount.length; i++) {
                 var beforeGraph = beforeGraphs[loopCount[i]], afterGraph = afterGraphs[loopCount[i]];
-                var beforeNodeId = [], afterNodeId = [];
 
-                beforeGraph.nodes.forEach(function(node) {
-                    beforeNodeId.push(node.id);
-                });
-                afterGraph.nodes.forEach(function(node) {
-                    afterNodeId.push(node.id);
-                });
+                // this object checks whether each node is added or removed or not
+                // if 'node1' is added, changeNodeId[node1]: true.
+                // if 'node2' is removed, changeNodeId[node2] : false.
+                // if there is 'node3' in before graph and after graph, changeNodeId[node3]: undefined
+                var changeNodeId = {};
 
-                afterNodeId.forEach(function(id) {
-                    if (beforeNodeId.indexOf(id) == -1) changeNodeId.push(id);
+                beforeGraph.nodes.forEach(node => {
+                    changeNodeId[node.id] = false;
                 });
-
-                // Array of Array ([[from, to, label], [from, to, label], ...])
-                var beforeEdgeData = [], afterEdgeData = [];
-
-                beforeGraph.edges.forEach(function(edge) {
-                    beforeEdgeData.push([edge.from, edge.to, edge.label].toString());
-                });
-                afterGraph.edges.forEach(function(edge) {
-                    afterEdgeData.push([edge.from, edge.to, edge.label].toString());
+                afterGraph.nodes.forEach(node => {
+                    if (changeNodeId[node.id] == false) delete changeNodeId[node.id];
+                    else if (changeNodeId[node.id] == undefined) changeNodeId[node.id] = true;
                 });
 
-                afterEdgeData.forEach(function(edge) {
-                    if (beforeEdgeData.indexOf(edge) == -1) changeEdgeData.push(edge.split(','));
+                Object.keys(changeNodeId).forEach(id => {
+                    if (changeNodeId[id]) addedNodeId.push(id);
+                    else removedNodeId.push(id);
                 });
+
+                // this object checks whether each edge is added or removed or not
+                // if 'edge1' is added, changeEdgeData[edge1]: true.
+                // if 'edge2' is removed, changeEdgeData[edge2] : false.
+                // if there is 'edge3' in before graph and after graph, changeEdgeData[edge3]: undefined
+                var changeEdgeData = {};
+
+                beforeGraph.edges.forEach(edge => {
+                    changeEdgeData[[edge.from, edge.to, edge.label].toString()] = false;
+                })
+                afterGraph.edges.forEach(edge => {
+                    var data = [edge.from, edge.to, edge.label].toString();
+                    if (changeEdgeData[data] == false) delete changeEdgeData[data];
+                    else if (changeEdgeData[data] == undefined) changeEdgeData[data] = true;
+                });
+
+                Object.keys(changeEdgeData).forEach(data => {
+                    if (changeEdgeData[data]) addedEdgeData.push(data.split(','));
+                    else removedEdgeData.push(data.split(','));
+                })
             }
         }
 
         var graph = __$__.Context.LastGraph;
         __$__.StorePositions.setPositions(graph);
-        graph.nodes.forEach(function(node) {
-            if (changeNodeId.indexOf(node.id) >= 0) node.color = 'orange';
+
+        graph.nodes.forEach(node => {
+            var index = addedNodeId.indexOf(node.id)
+            if (index >= 0) {
+                node.color = 'orange';
+                delete addedNodeId[index];
+            }
         });
-        graph.edges.forEach(function(edge) {
+        graph.edges.forEach(edge => {
             if (edge.from.slice(0, 11) == '__Variable-') edge.hidden = true;
-            changeEdgeData.forEach(function(edgeData) {
-                if (edgeData[0] == edge.from && edgeData[1] == edge.to && edgeData[2] == edge.label) edge.color = 'orange';
+            addedEdgeData.forEach((edgeData, index) => {
+                if (edgeData[0] == edge.from && edgeData[1] == edge.to && edgeData[2] == edge.label) {
+                    edge.color = 'orange';
+                    delete addedEdgeData[index];
+                }
             });
+        });
+
+        addedNodeId.forEach(id => {
+            var label = '';
+            afterGraph.nodes.forEach(node => {
+                if (node.id == id) label = node.label;
+            })
+            if (id) graph.nodes.push({
+                fixed: false,
+                id: id,
+                label: label,
+                physics: false,
+                color: 'orange'
+            });
+        });
+        addedEdgeData.forEach(data => {
+            if (data) graph.edges.push({
+                from: data[0],
+                to: data[1],
+                label: data[2],
+                color: 'orange',
+                dashes: true
+            })
+        });
+        removedEdgeData.forEach(data => {
+            if (data) graph.edges.push({
+                from: data[0],
+                to: data[1],
+                label: data[2],
+                color: 'green',
+                dashes: true
+            })
         });
 
         __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
