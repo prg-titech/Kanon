@@ -6,6 +6,16 @@ the data structure of your code is rendered in right side as graph.
 
 ## How to use
 
+### How to build
+
+__Kanon__ is using other some libraries to implement.
+Then, when you use __Kanon__ in your local environment, 
+execute the following command:
+```
+git clone --recursive https://github.com/prg-titech/Kanon.git
+```
+If finished, go to Kanon directory and open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html).
+
 ## NOTE
 
 __Kanon__ use some other libraries.
