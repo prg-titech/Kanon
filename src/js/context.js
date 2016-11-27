@@ -221,8 +221,13 @@ __$__.Context.FindId = function(pos) {
 };
 
 
-__$__.Context.ChangeContext = function(bool) {
+__$__.Context.SwitchContext = function(bool) {
     __$__.Context.UseContext = bool;
     var elem = document.getElementById('context');
     elem.textContent = (bool) ? 'Use Context' : 'No Context';
+};
+
+
+__$__.Context.AdvanceContext = function() {
+    var pos = __$__.editor.getCursorPosition();
 };

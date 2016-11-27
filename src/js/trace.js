@@ -21,7 +21,7 @@ __$__.Trace.ClickEventFunction = function(param) {
     // no choose
     else return;
 
-    __$__.Context.ChangeContext(true);
+    __$__.Context.SwitchContext(true);
     document.getElementById('context').textContent = 'Use Context';
 
     try {
