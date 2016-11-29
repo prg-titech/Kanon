@@ -1,9 +1,8 @@
-__$__.Trace = {};
-
-
-__$__.Trace.ClickElementContext = {};
-__$__.Trace.ClickElement = {};
-__$__.Trace.TraceGraphData = {nodes: [], edges: []};
+__$__.Trace = {
+    ClickElementContext: {},
+    ClickElement: {},
+    TraceGraphData: {nodes: [], edges: []}
+};
 
 
 /**

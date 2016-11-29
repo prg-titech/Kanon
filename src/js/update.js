@@ -1,20 +1,20 @@
-__$__.Update = {};
+__$__.Update = {
+    CodeWithCheckPoint: ''
+};
 
-
-__$__.Update.CodeWithCheckPoint = '';
 
 // this function is called when ace editor is edited.
 __$__.Update.PositionUpdate = function() {
     window.localStorage["Kanon-Code"] = __$__.editor.getValue();
-    let code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
+    let transformed_code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
     var __objs;
     try {
-        eval(code);
+        eval(transformed_code);
         document.getElementById('console').textContent = '';
         var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
         
         if (!__$__.Update.isChange(graph)) {
-            __$__.Update.context__$__.Update();
+            __$__.Update.ContextUpdate();
             return;
         }
 
@@ -53,15 +53,13 @@ __$__.Update.PositionUpdate = function() {
  */
 __$__.Update.ContextUpdate = function(e) {
     if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '') {
-        __$__.Context.CheckPointTable = {};
+        // initialize some data
+        __$__.Context.Initialize();
+        __$__.Trace.TraceGraphData = {nodes: [], edges: []};
+
         __$__.Update.CodeWithCheckPoint = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
+
         try {
-            __$__.Context.StoredGraph = {};
-            __$__.Context.StartEndInLoop = {}; // TODO: new!
-            __$__.Context.TableTimeCounter = []; // TODO: new!
-            __$__.Context.NestLoop = {}; // TODO: new!
-            __$__.Context.StackToCheckLoop = ['noLoop'];
-            __$__.Trace.TraceGraphData = {nodes: [], edges: []};
             eval(__$__.Update.CodeWithCheckPoint);
 
             // check maximum of Context.__loopContext

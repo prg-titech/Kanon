@@ -28,11 +28,7 @@ __$__.CodeConversion.TransformCode = function(code, isContext = false) {
         visitors = [];
 
         visitors.push(__$__.ASTTransforms.BlockedProgram());
-        visitors.push(__$__.ASTTransforms.AddLoopCounter());
-        visitors.push(__$__.ASTTransforms.AddLoopId_and_LoopCount());
-        visitors.push(__$__.ASTTransforms.AddCounter());
-        visitors.push(__$__.ASTTransforms.Add__objsCode());
-        visitors.push(__$__.ASTTransforms.AddTimeCounter());
+        visitors.push(__$__.ASTTransforms.AddSomeCodeInHeadAndTail());
         visitors.push(__$__.ASTTransforms.Context());
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 

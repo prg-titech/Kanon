@@ -113,122 +113,58 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
     };
 };
 
-// Add "var __objs = [];" at the head of the code
-__$__.ASTTransforms.Add__objsCode = function() {
+// Add some code in the head and tail of user code.
+__$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
     return {
         leave(node, path) {
-            const objectsName = "__objs";
-
-            if (node.type === "Program") {
-                node.body.unshift(
-                    b.VariableDeclaration(
-                        [b.VariableDeclarator(
-                            b.Identifier(objectsName),
-                            b.ArrayExpression([])
-                        )],
-                        "var"
-                    )
-                );
-            }
-        }
-    };
-};
-
-// Add "var __newIdCounter = {};" at the head of the code
-__$__.ASTTransforms.AddCounter = function() {
-    return {
-        leave(node, path) {
-            const counterName = "__newIdCounter";
-
-            if (node.type === "Program") {
-                node.body.unshift(
-                    b.VariableDeclaration(
-                        [b.VariableDeclarator(
-                            b.Identifier(counterName),
-                            b.ObjectExpression([])
-                        )],
-                        "var"
-                    )
-                );
-            }
-        }
-    };
-};
-
-// Add "var __loopCounter = {};" at the head of the code
-__$__.ASTTransforms.AddLoopCounter = function () {
-    return {
-        leave(node, path) {
-            const counterName = "__loopCounter";
-
-            if (node.type === "Program") {
-                node.body.unshift(
-                    b.VariableDeclaration(
-                        [b.VariableDeclarator(
-                            b.Identifier(counterName),
-                            b.ObjectExpression([])
-                        )],
-                        "var"
-                    )
-                );
-            }
-        }
-    };
-};
-
-// Add "var __loopId = 'noLoop', __loopCount = 1;" at the head of the code 
-__$__.ASTTransforms.AddLoopId_and_LoopCount = function() {
-    return {
-        leave(node, path) {
-            if (node.type === "Program") {
+            if (node.type === 'Program') {
+                // this is VariableDeclaration at the head of user code
                 node.body.unshift(
                     b.VariableDeclaration([
                         b.VariableDeclarator(
-                            b.Identifier("__loopId"),
-                            b.Literal("noLoop")
+                            b.Identifier('__loopCounter'),
+                            b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
-                            b.Identifier("__loopCount"),
+                            b.Identifier('__loopId'),
+                            b.Literal('noLoop')
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__loopCount'),
                             b.Literal(1)
-                        )
-                    ], "var")
-                );
-            }
-        }
-    };
-};
-
-
-// Add "var __time_counter = 0; __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];" at the head of the code.
-// and, add "__$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter;" at the tail of the code.
-__$__.ASTTransforms.AddTimeCounter = function() {
-    return {
-        leave(node, path) {
-            if (node.type === "Program") {
-                node.body.unshift(
-                    b.VariableDeclaration(
-                        [b.VariableDeclarator(
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__newIdCounter'),
+                            b.ObjectExpression([])
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__objs'),
+                            b.ArrayExpression([])
+                        ),
+                        b.VariableDeclarator(
                             b.Identifier('__time_counter'),
                             b.Literal(0)
-                        )],
-                        "var"
-                    )
+                        )
+                    ], 'var')
                 );
+
+                // __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
                 node.body.unshift(
                     b.ExpressionStatement(
                         b.Identifier('__$__.Context.StartEndInLoop["noLoop"] = [{start: 0}]')
                     )
-                )
+                );
+
+                // __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter;
                 node.body.push(
                     b.ExpressionStatement(
                         b.Identifier('__$__.Context.StartEndInLoop["noLoop"][0].end = __time_counter')
                     )
-                )
+                );
             }
         }
     };
 };
-
 
 /**
  * @param {string} variables
@@ -446,6 +382,11 @@ __$__.ASTTransforms.Context = function () {
  *
  * At the same time, implement variable visualization by using '$'.
  * the scope of variables is implemented by my environment whose style is stack.
+ *
+ * inserted check point is 
+ * '__$__.Context.ChechPoint(__objs, __loopId, __loopCount, __time_counter, {})'
+ * and, the last of arguments is object which means visualization of variables.
+ * the argument is {v: eval(v)} if variable 'v' should be visualized.
  *
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {

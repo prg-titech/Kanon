@@ -1,14 +1,24 @@
 __$__.Context = {
     UseContext: true,
     LastGraph: undefined,
-    StackToCheckLoop: ['noLoop'], // TODO: new!
+    StackToCheckLoop: ['noLoop'],
     StoredGraph: {},
-    StartEndInLoop: {}, // TODO: new!
-    NestLoop: {}, // TODO: new!
-    TableTimeCounter: [], // TODO: new!
+    StartEndInLoop: {},
+    NestLoop: {},
+    TableTimeCounter: [],
     __loopContext: {'noLoop': 1},
     CheckPointTable: {}
 };
+
+
+__$__.Context.Initialize = function() {
+    __$__.Context.StoredGraph = {};
+    __$__.Context.StartEndInLoop = {};
+    __$__.Context.TableTimeCounter = [];
+    __$__.Context.NestLoop = {};
+    __$__.Context.StackToCheckLoop = ['noLoop'];
+    __$__.Context.CheckPointTable = {};
+}
 
 
 /**
@@ -27,32 +37,44 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 
     if (!__$__.Context.NestLoop[loopId]) __$__.Context.NestLoop[loopId] = {inner: [], parent: []};
 
+    // make __$__.Context.NestLoop
     if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1] != loopId) {
         var parent = __$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1];
+
         if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 2] == loopId) {
             __$__.Context.StackToCheckLoop.pop();
         } else {
-            if (parent && __$__.Context.NestLoop[loopId].parent.indexOf(parent) == -1) __$__.Context.NestLoop[loopId].parent.push(parent);
-            if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopId) == -1) __$__.Context.NestLoop[parent].inner.push(loopId);
+            if (parent && __$__.Context.NestLoop[loopId].parent.indexOf(parent) == -1)
+                __$__.Context.NestLoop[loopId].parent.push(parent);
+
+            if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopId) == -1)
+                __$__.Context.NestLoop[parent].inner.push(loopId);
+
             __$__.Context.StackToCheckLoop.push(loopId);
         }
     }
 
+    // the node of storedGraph is whether first appearing or not in this part
     storedGraph.nodes.forEach(node => {
         var flag = false;
+
         __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
             flag = flag || (node.id == nodeData.id);
         });
+
         if (!flag) {
             __$__.Trace.TraceGraphData.nodes.push({id: node.id, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
         }
     });
 
+    // the edge of storedGraph is whether first appearing or not in this part
     storedGraph.edges.forEach(edge => {
         var flag = false;
+
         __$__.Trace.TraceGraphData.edges.forEach(edgeData => {
             flag = flag || (edge.from == edgeData.from && edge.to == edgeData.to && edge.label == edgeData.label);
         });
+
         if (!flag) {
             __$__.Trace.TraceGraphData.edges.push({from: edge.from, to: edge.to, label: edge.label, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
         }
@@ -159,6 +181,7 @@ __$__.Context.Draw = function() {
         var graph = __$__.Context.LastGraph;
         __$__.StorePositions.setPositions(graph);
 
+        // change color of added node to orange in this part
         graph.nodes.forEach(node => {
             var index = addedNodeId.indexOf(node.id)
             if (index >= 0) {
@@ -166,6 +189,7 @@ __$__.Context.Draw = function() {
                 delete addedNodeId[index];
             }
         });
+        // change color of added edge to orange in this part
         graph.edges.forEach(edge => {
             if (edge.from.slice(0, 11) == '__Variable-') edge.hidden = true;
             addedEdgeData.forEach((edgeData, index) => {

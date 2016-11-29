@@ -1,7 +1,7 @@
-__$__.StorePositions = {};
-
-__$__.StorePositions.oldNetworkNodesData = {};
-__$__.StorePositions.oldNetworkEdgesData = {};
+__$__.StorePositions = {
+    oldNetworkNodesData: {},
+    oldNetworkEdgesData: {}
+};
 
 
 // if nodePositions have the position of node.id, set the position at graph.node.
