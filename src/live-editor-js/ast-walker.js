@@ -13,10 +13,12 @@ __$__.walkAST = function(node, path, visitors) {
     } else {
         path.push(node);
     }
-    let enterData = [];
+    let enterData = {};
     visitors.forEach(visitor => {
         if (visitor.enter) {
-            enterData.push(visitor.enter(node, path));
+            // enterData.push(visitor.enter(node, path));
+            var temp = visitor.enter(node, path);
+            if (temp) enterData[temp[0]] = temp[1];
         }
     });
     for (let prop of Object.keys(node)) {

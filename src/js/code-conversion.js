@@ -32,11 +32,14 @@ __$__.CodeConversion.TransformCode = function(code, isContext = false) {
         visitors.push(__$__.ASTTransforms.AddLoopId_and_LoopCount());
         visitors.push(__$__.ASTTransforms.AddCounter());
         visitors.push(__$__.ASTTransforms.Add__objsCode());
+        visitors.push(__$__.ASTTransforms.AddTimeCounter());
         visitors.push(__$__.ASTTransforms.Context());
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
         __$__.walkAST(ast, null, visitors);
 
         return escodegen.generate(ast);
-    } catch (e) {}
+    } catch (e) {
+        console.log(e)
+    }
 };

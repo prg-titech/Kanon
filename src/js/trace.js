@@ -3,6 +3,7 @@ __$__.Trace = {};
 
 __$__.Trace.ClickElementContext = {};
 __$__.Trace.ClickElement = {};
+__$__.Trace.TraceGraphData = {nodes: [], edges: []};
 
 
 /**
@@ -24,23 +25,31 @@ __$__.Trace.ClickEventFunction = function(param) {
     __$__.Context.SwitchContext(true);
     document.getElementById('context').textContent = 'Use Context';
 
-    try {
-        eval(__$__.Update.CodeWithCheckPoint);
-        __$__.Context.__loopContext[__$__.Trace.ClickElementContext.id] = __$__.Trace.ClickElementContext.count;
+    if (__$__.Trace.ClickElement.node)
+        __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
+            if (__$__.Trace.ClickElement.node == nodeData.id) {
+                __$__.Context.__loopContext[nodeData.loopId] = nodeData.count;
+                __$__.Context.ChangeInnerAndParentContext(nodeData.loopId);
 
-        // move cursor position to check point made the node or the edge 
-        __$__.editor.moveCursorToPosition({row: __$__.Trace.ClickElementContext.pos.line - 1, column: __$__.Trace.ClickElementContext.pos.column});
-        if (__$__.editor.getSelection().isEmpty()) {
-            __$__.Update.ContextUpdate();
-        } else {
-            __$__.editor.getSelection().clearSelection();
-        }
-    } catch (e) {
-        if (e == 'Infinite Loop') {
-            document.getElementById('console').textContent = 'infinite loop?';
-        } else {
-            console.log(e);
-        }
+                __$__.editor.moveCursorToPosition({row: nodeData.pos.line - 1, column: nodeData.pos.column});
+            }
+        });
+    else
+        __$__.Trace.TraceGraphData.edges.forEach(edgeData => {
+            if (__$__.Trace.ClickElement.edge.from == edgeData.from &&
+                __$__.Trace.ClickElement.edge.to == edgeData.to &&
+                __$__.Trace.ClickElement.edge.label == edgeData.label) {
+
+                __$__.Context.__loopContext[edgeData.loopId] = edgeData.count;
+                __$__.Context.ChangeInnerAndParentContext(edgeData.loopId);
+
+                __$__.editor.moveCursorToPosition({row: edgeData.pos.line - 1, column: edgeData.pos.column});
+            }
+        });
+    if (__$__.editor.getSelection().isEmpty()) {
+        __$__.Update.ContextUpdate();
+    } else {
+        __$__.editor.getSelection().clearSelection();
     }
 
     __$__.Trace.ClickElementContext = {};

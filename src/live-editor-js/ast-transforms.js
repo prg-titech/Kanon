@@ -199,6 +199,37 @@ __$__.ASTTransforms.AddLoopId_and_LoopCount = function() {
 };
 
 
+// Add "var __time_counter = 0; __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];" at the head of the code.
+// and, add "__$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter;" at the tail of the code.
+__$__.ASTTransforms.AddTimeCounter = function() {
+    return {
+        leave(node, path) {
+            if (node.type === "Program") {
+                node.body.unshift(
+                    b.VariableDeclaration(
+                        [b.VariableDeclarator(
+                            b.Identifier('__time_counter'),
+                            b.Literal(0)
+                        )],
+                        "var"
+                    )
+                );
+                node.body.unshift(
+                    b.ExpressionStatement(
+                        b.Identifier('__$__.Context.StartEndInLoop["noLoop"] = [{start: 0}]')
+                    )
+                )
+                node.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('__$__.Context.StartEndInLoop["noLoop"][0].end = __time_counter')
+                    )
+                )
+            }
+        }
+    };
+};
+
+
 /**
  * @param {string} variables
  *
@@ -258,7 +289,10 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  *     if (!Context.__loopContext[__loopId]) Context.__loopContext[__loopId] = 1;
  *     let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
  *     if (__loopCount > 1000) throw 'Infinite Loop';
+ *     let __start = __time_counter;
  *     ...
+ *     if (!__$__.Context.StartEndInLoop[__loopId]) __$__.Context.StartEndInLoop[__loopId] = [];
+ *     __$__.Context.StartEndInLoop[__loopId].push({start: __start, end: __time_counter-1});
  *   }
  *
  * __loopId is unique ID
@@ -266,13 +300,38 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
 __$__.ASTTransforms.Context = function () {
     var idCounter = 1;
     return {
-        leave(node, path) {
+        enter(node, path) {
             const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "__loopContext";
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1) {
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
+                node.body.body.push(
+                    b.IfStatement(
+                        b.Identifier('!__$__.Context.StartEndInLoop[__loopId]'),
+                        b.ExpressionStatement(
+                            b.AssignmentExpression(
+                                b.Identifier('__$__.Context.StartEndInLoop[__loopId]'),
+                                "=",
+                                b.ArrayExpression([])
+                            )
+                        )
+                    )
+                ),
+                node.body.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('__$__.Context.StartEndInLoop[__loopId].push({start: __start, end: __time_counter - 1})')
+                    )
+                ),
+                node.body.body.unshift(
+                    b.VariableDeclaration([
+                        b.VariableDeclarator(
+                            b.Identifier('__start'),
+                            b.Identifier('__time_counter')
+                        )
+                    ], 'let')
+                ),
                 node.body.body.unshift(
                     b.IfStatement(
                         b.BinaryExpression(
@@ -351,11 +410,7 @@ __$__.ASTTransforms.Context = function () {
                     b.VariableDeclaration(
                         [b.VariableDeclarator(
                             b.Identifier(loopId),
-                            b.BinaryExpression(
-                                b.Literal("loop"),
-                                "+",
-                                b.Identifier(idCounter++)
-                            )
+                            b.Literal("loop" + idCounter++)
                         )],
                         "let"
                     )
@@ -394,6 +449,7 @@ __$__.ASTTransforms.Context = function () {
  *
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {
+    var id = 'InsertCheckPoint'
     var idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
     var env = new __$__.VisualizeVariable.StackEnv();
@@ -423,9 +479,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     }
                 });
             }
-            return env.visualizeVariable();
+            return [id, env.visualizeVariable()];
         },
         leave(node, path, enterData) {
+            var data = enterData[id];
             if (node.type == 'VariableDeclaration') {
                 node.declarations.forEach(declarator => {
                     if (declarator.id.name[0] == '$') {
@@ -456,6 +513,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 b.Identifier('__objs'),
                                 b.Identifier('__loopId'),
                                 b.Identifier('__loopCount'),
+                                b.Identifier('__time_counter++'),
                                 b.Identifier(idCounter++),
                                 b.ObjectExpression(
                                     variables.map(function(val) {
@@ -475,18 +533,18 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
                 if (['ReturnStatement', 'BreakStatement', 'ContinueStatement'].indexOf(node.type) != -1) {
                     return b.BlockStatement([
-                        checkPoint(start, enterData[0]),
+                        checkPoint(start, data),
                         Object.assign({}, node)
                     ]);
                 } else if (node.type == 'VariableDeclaration' && node.kind != 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return [
-                        checkPoint(start, enterData[0]),
+                        checkPoint(start, data),
                         Object.assign({}, node),
                         checkPoint(end, visualizeVariable)
                     ];
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return b.BlockStatement([
-                        checkPoint(start, enterData[0]),
+                        checkPoint(start, data),
                         Object.assign({}, node),
                         checkPoint(end, visualizeVariable)
                     ]);

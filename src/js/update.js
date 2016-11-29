@@ -57,6 +57,11 @@ __$__.Update.ContextUpdate = function(e) {
         __$__.Update.CodeWithCheckPoint = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
         try {
             __$__.Context.StoredGraph = {};
+            __$__.Context.StartEndInLoop = {}; // TODO: new!
+            __$__.Context.TableTimeCounter = []; // TODO: new!
+            __$__.Context.NestLoop = {}; // TODO: new!
+            __$__.Context.StackToCheckLoop = ['noLoop'];
+            __$__.Trace.TraceGraphData = {nodes: [], edges: []};
             eval(__$__.Update.CodeWithCheckPoint);
 
             // check maximum of Context.__loopContext
