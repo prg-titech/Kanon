@@ -205,7 +205,7 @@ __$__.Context.Draw = function() {
             afterGraph.nodes.forEach(node => {
                 if (node.id == id) label = node.label;
             })
-            if (id) graph.nodes.push({
+            if (id && id.slice(0, 11) != '__Variable-') graph.nodes.push({
                 fixed: false,
                 id: id,
                 label: label,
@@ -214,7 +214,7 @@ __$__.Context.Draw = function() {
             });
         });
         addedEdgeData.forEach(data => {
-            if (data) graph.edges.push({
+            if (data && data[0].slice(0, 11) != '__Variable-') graph.edges.push({
                 from: data[0],
                 to: data[1],
                 label: data[2],
