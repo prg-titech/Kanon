@@ -1,4 +1,6 @@
-__$__.ASTTransforms = {};
+__$__.ASTTransforms = {
+    checkPoint_idCounter: 1 // this is used to count id of each check point
+};
 
 let b = __$__.ASTBuilder;
 
@@ -222,7 +224,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  * after:
  *   while(condition) {
  *     let __loopId = "loop" + idCounter;
- *     if (!Context.__loopContext[__loopId]) Context.__loopContext[__loopId] = 1;
+ *     if (!Context.LoopContext[__loopId]) Context.LoopContext[__loopId] = 1;
  *     let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
  *     if (__loopCount > 1000) throw 'Infinite Loop';
  *     let __start = __time_counter;
@@ -237,9 +239,9 @@ __$__.ASTTransforms.Context = function () {
     var idCounter = 1;
     return {
         enter(node, path) {
-            const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "__loopContext";
+            const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
 
-            if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1) {
+            if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
@@ -391,7 +393,7 @@ __$__.ASTTransforms.Context = function () {
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {
     var id = 'InsertCheckPoint'
-    var idCounter = 1;
+    __$__.ASTTransforms.checkPoint_idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
     var env = new __$__.VisualizeVariable.StackEnv();
 
@@ -424,29 +426,29 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
         },
         leave(node, path, enterData) {
             var data = enterData[id];
-            if (node.type == 'VariableDeclaration') {
-                node.declarations.forEach(declarator => {
-                    if (declarator.id.name[0] == '$') {
-                        declarator.id.name = declarator.id.name.slice(1, declarator.id.name.length);
-                        env.addVariable(declarator.id.name, node.kind, true);
-                    } else {
-                        env.addVariable(declarator.id.name, node.kind, false);
-                    }
-                });
+
+            if (node.type == 'VariableDeclarator') {
+                let parent = path[path.length - 2];
+                if (node.id.name[0] == '$') {
+                    node.id.name = node.id.name.slice(1, node.id.name.length);
+                    env.addVariable(node.id.name, parent.kind, true);
+                } else {
+                    env.addVariable(node.id.name, parent.kind, false);
+                }
             }
 
             if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression', 'BlockStatement'].indexOf(node.type) >= 0) {
                 env.pop();
             }
 
-            if (statementTypes.indexOf(node.type) >= 0) {
+            if (statementTypes.indexOf(node.type) >= 0 || node.type == 'VariableDeclarator') {
                 let start = node.loc.start;
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
                 let visualizeVariable = env.visualizeVariable();
 
                 let checkPoint = function(loc, variables) {
-                    __$__.Context.CheckPointTable[idCounter] = loc;
+                    __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
                     return b.ExpressionStatement(
                         b.CallExpression(
                             b.Identifier('__$__.Context.CheckPoint'),
@@ -455,7 +457,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 b.Identifier('__loopId'),
                                 b.Identifier('__loopCount'),
                                 b.Identifier('__time_counter++'),
-                                b.Identifier(idCounter++),
+                                b.Identifier(__$__.ASTTransforms.checkPoint_idCounter++),
                                 b.ObjectExpression(
                                     variables.map(function(val) {
                                         return b.Property(
@@ -483,6 +485,29 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         Object.assign({}, node),
                         checkPoint(end, visualizeVariable)
                     ];
+                } else if (node.type == 'VariableDeclarator' && node.init) {
+                    let expression = Object.assign({}, node.init);
+                    let name = node.id.name;
+
+                    node.init = b.CallExpression(
+                        b.ArrowFunctionExpression(
+                            [],
+                            b.BlockStatement([
+                                checkPoint(node.init.loc.start, data),
+                                b.VariableDeclaration([
+                                    b.VariableDeclarator(
+                                        b.Identifier(name),
+                                        expression
+                                    )
+                                ], 'var'),
+                                checkPoint(node.init.loc.end, visualizeVariable),
+                                b.ReturnStatement(
+                                    b.Identifier(name)
+                                )
+                            ])
+                        ),
+                        []
+                    );
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return b.BlockStatement([
                         checkPoint(start, data),

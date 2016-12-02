@@ -6,7 +6,7 @@ __$__.Context = {
     StartEndInLoop: {},
     NestLoop: {},
     TableTimeCounter: [],
-    __loopContext: {'noLoop': 1},
+    LoopContext: {'noLoop': 1},
     CheckPointTable: {}
 };
 
@@ -32,7 +32,7 @@ __$__.Context.Initialize = function() {
  * this function is checkPoint is located at the head and the tail of each Statement.
  */
 __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPointId, visualizeVariables) {
-    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, timeCounter, checkPointId, visualizeVariables);
+    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
     __$__.Context.TableTimeCounter.push({loopId: loopId, loopCount: count});
 
     if (!__$__.Context.NestLoop[loopId]) __$__.Context.NestLoop[loopId] = {inner: [], parent: []};
@@ -84,7 +84,7 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 };
 
 
-__$__.Context.StoreGraph = function(objects, loopId, count, timeCounter, checkPointId, visualizeVariables) {
+__$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
     var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, visualizeVariables));
 
     if (!__$__.Context.StoredGraph[checkPointId]) __$__.Context.StoredGraph[checkPointId] = {};
@@ -101,7 +101,7 @@ __$__.Context.Draw = function() {
         try {
             var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
             var loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-            var count = __$__.Context.__loopContext[loopId];
+            var count = __$__.Context.LoopContext[loopId];
             var graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
 
             if (!graph) graph = {nodes: [], edges: []};
@@ -277,7 +277,7 @@ __$__.Context.SwitchContext = function(bool) {
  *
  */
 __$__.Context.ChangeInnerAndParentContext = function(loopId) {
-    var new_loop_count = __$__.Context.__loopContext[loopId];
+    var new_loop_count = __$__.Context.LoopContext[loopId];
     var start_end = __$__.Context.StartEndInLoop[loopId][new_loop_count-1];
 
     var changeInnerContext = function(loopId) {
@@ -291,7 +291,7 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
 
         // this is executed when the context of 'loopId' mast be changed
         if (smallest_time) {
-            __$__.Context.__loopContext[loopId] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
+            __$__.Context.LoopContext[loopId] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
             __$__.Context.NestLoop[loopId].inner.forEach(id => {
                 changeInnerContext(id);
             });
@@ -299,11 +299,11 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
     };
 
     var changeParentContext = function(loopId) {
-        var count = __$__.Context.__loopContext[loopId];
+        var count = __$__.Context.LoopContext[loopId];
         var start_end = __$__.Context.StartEndInLoop[loopId][count-1];
 
         __$__.Context.NestLoop[loopId].parent.forEach(id => {
-            var now_count = __$__.Context.__loopContext[id];
+            var now_count = __$__.Context.LoopContext[id];
             var s_e = __$__.Context.StartEndInLoop[id][now_count-1];
 
             // if the context of 'id' don't have to be changed
@@ -311,7 +311,7 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
             else { // if the context of 'id' must to be changed
                 __$__.Context.StartEndInLoop[id].forEach((compared_s_e, index) => {
                     if (start_end.start > compared_s_e.start && compared_s_e.end > start_end.end) {
-                        __$__.Context.__loopContext[id] = index + 1;
+                        __$__.Context.LoopContext[id] = index + 1;
                         changeParentContext(id);
                     }
                 });

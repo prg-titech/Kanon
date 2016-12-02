@@ -1,4 +1,21 @@
-__$__.Traverse = {};
+__$__.Traverse = {
+    __Edge(from, to, label) {
+        this.from = from;
+        this.to = to;
+        this.label = label;
+    },
+    __VariableNode(id) {
+        this.id = id;
+        this.__id = '__Variable-' + id;
+    },
+    __Literal(value) {
+        this.value = value;
+    },
+    __Graph() {
+        this.nodes = []; // Array of Object
+        this.edges = []; // Array of __Edge
+    }
+};
 
 
 __$__.Traverse.__Edge = function(from, to, label) {

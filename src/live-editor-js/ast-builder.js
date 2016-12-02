@@ -9,6 +9,20 @@ __$__.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} params
+     * @param {BlockStatement or Expression} body
+     */
+    ArrowFunctionExpression(params, body) {
+        return {
+            type: "ArrowFunctionExpression",
+            id: null,
+            params: params,
+            body: body,
+            expression: false,
+            generator: false
+        };
+    },
+    /**
      * @param {Expression} left
      * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
      * @param {Expression} right

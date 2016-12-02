@@ -62,10 +62,10 @@ __$__.Update.ContextUpdate = function(e) {
         try {
             eval(__$__.Update.CodeWithCheckPoint);
 
-            // check maximum of Context.__loopContext
+            // check maximum of Context.LoopContext
             // if loop doesn't include now context, now context is changed at the max of loop count
             Object.keys(__loopCounter).forEach(function(loopId) {
-                if (__$__.Context.__loopContext[loopId] > __loopCounter[loopId]) __$__.Context.__loopContext[loopId] = __loopCounter[loopId];
+                if (__$__.Context.LoopContext[loopId] > __loopCounter[loopId]) __$__.Context.LoopContext[loopId] = __loopCounter[loopId];
             });
 
             __$__.Context.Draw();

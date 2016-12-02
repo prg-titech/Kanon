@@ -27,7 +27,7 @@ __$__.Trace.ClickEventFunction = function(param) {
     if (__$__.Trace.ClickElement.node)
         __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
             if (__$__.Trace.ClickElement.node == nodeData.id) {
-                __$__.Context.__loopContext[nodeData.loopId] = nodeData.count;
+                __$__.Context.LoopContext[nodeData.loopId] = nodeData.count;
                 __$__.Context.ChangeInnerAndParentContext(nodeData.loopId);
 
                 __$__.editor.moveCursorToPosition({row: nodeData.pos.line - 1, column: nodeData.pos.column});
@@ -39,7 +39,7 @@ __$__.Trace.ClickEventFunction = function(param) {
                 __$__.Trace.ClickElement.edge.to == edgeData.to &&
                 __$__.Trace.ClickElement.edge.label == edgeData.label) {
 
-                __$__.Context.__loopContext[edgeData.loopId] = edgeData.count;
+                __$__.Context.LoopContext[edgeData.loopId] = edgeData.count;
                 __$__.Context.ChangeInnerAndParentContext(edgeData.loopId);
 
                 __$__.editor.moveCursorToPosition({row: edgeData.pos.line - 1, column: edgeData.pos.column});
