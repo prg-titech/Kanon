@@ -6,7 +6,7 @@ let b = __$__.ASTBuilder;
 
 /** 
  * before: new Hoge()
- * after:  function() {
+ * after:  (() => {
  *             var temp = new Hoge();
  *
  *             if (__newIdCounter[id]) __newIdCounter[id]++;
@@ -15,22 +15,45 @@ let b = __$__.ASTBuilder;
  *             temp.__id = id + "-" + __newIdCounter[id];
  *             __objs.push(temp);
  *             return temp;
- *         }()
+ *         })()
  *
  * "id" is unique number of this function
  * "__newIdCounter[id]" is the number of times this is called
+ *
  */
 __$__.ASTTransforms.NewExpressionToFunction = function() {
-    var id = 0;
     return {
         leave(node, path) {
             if (node.type === "NewExpression") {
                 const counterName = "__newIdCounter";
-                id++;
+
+                // In this part, register the position of this NewExpression.
+                // If already registered, use the loopId
+                let id;
+                Object.keys(__$__.Context.NewIdPositions).forEach(newId => {
+                    var pos = __$__.Context.NewIdPositions[newId];
+                    if (pos.start.line == node.loc.start.line &&
+                            pos.start.column == node.loc.start.column &&
+                            pos.end.line == node.loc.end.line &&
+                            pos.end.column == node.loc.end.column) {
+                        id = newId;
+                        pos.useID = true;
+                    }
+                });
+                // the case of not registered yet.
+                if (!id) {
+                    let i = 1;
+                    while (!id) {
+                        let newId = 'new' + i;
+                        if (Object.keys(__$__.Context.NewIdPositions).indexOf(newId) == -1) id = newId;
+                        i++;
+                    }
+                    __$__.Context.NewIdPositions[id] = node.loc;
+                    __$__.Context.NewIdPositions[id].useID = true;
+                }
 
                 return b.CallExpression(
-                    b.FunctionExpression(
-                        null,
+                    b.ArrowFunctionExpression(
                         [],
                         b.BlockStatement([
                             b.VariableDeclaration(
@@ -46,14 +69,14 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                             b.IfStatement(
                                 b.MemberExpression(
                                     b.Identifier(counterName),
-                                    b.Literal("" + id),
+                                    b.Literal(id),
                                     true
                                 ),
                                 b.ExpressionStatement(
                                     b.UpdateExpression(
                                         b.MemberExpression(
                                             b.Identifier(counterName),
-                                            b.Literal("" + id),
+                                            b.Literal(id),
                                             true
                                         ),
                                         "++",
@@ -64,7 +87,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                     b.AssignmentExpression(
                                         b.MemberExpression(
                                             b.Identifier(counterName),
-                                            b.Literal("" + id),
+                                            b.Literal(id),
                                             true
                                         ),
                                         "=",
@@ -204,7 +227,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
 };
 
 
-__$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
+__$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "ForInStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
 
 /** Insert the code can manage the context in loop.
  * loop includes
@@ -223,7 +246,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  *
  * after:
  *   while(condition) {
- *     let __loopId = "loop" + idCounter;
+ *     let __loopId = "loop" + id;
  *     if (!Context.LoopContext[__loopId]) Context.LoopContext[__loopId] = 1;
  *     let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
  *     if (__loopCount > 1000) throw 'Infinite Loop';
@@ -236,12 +259,36 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  * __loopId is unique ID
  */
 __$__.ASTTransforms.Context = function () {
-    var idCounter = 1;
     return {
         enter(node, path) {
             const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
+                // In this part, register the position of this loop.
+                // If already registered, use the loopId
+                let id;
+                Object.keys(__$__.Context.LoopIdPositions).forEach(loopId => {
+                    var pos = __$__.Context.LoopIdPositions[loopId];
+                    if (pos.start.line == node.loc.start.line &&
+                            pos.start.column == node.loc.start.column &&
+                            pos.end.line == node.loc.end.line &&
+                            pos.end.column == node.loc.end.column) {
+                        id = loopId;
+                        pos.useID = true;
+                    }
+                });
+                // the case of not registered yet
+                if (!id) {
+                    let i = 1;
+                    while(!id) {
+                        let loopId = 'loop' + i;
+                        if (Object.keys(__$__.Context.LoopIdPositions).indexOf(loopId) == -1) id = loopId;
+                        i++;
+                    }
+                    __$__.Context.LoopIdPositions[id] = node.loc;
+                    __$__.Context.LoopIdPositions[id].useID = true;
+                }
+
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
@@ -348,7 +395,7 @@ __$__.ASTTransforms.Context = function () {
                     b.VariableDeclaration(
                         [b.VariableDeclarator(
                             b.Identifier(loopId),
-                            b.Literal("loop" + idCounter++)
+                            b.Literal(id)
                         )],
                         "let"
                     )
@@ -485,29 +532,31 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         Object.assign({}, node),
                         checkPoint(end, visualizeVariable)
                     ];
-                } else if (node.type == 'VariableDeclarator' && node.init) {
-                    let expression = Object.assign({}, node.init);
-                    let name = node.id.name;
+                } else if (node.type == 'VariableDeclarator') {
+                    if (node.init) {
+                        let expression = Object.assign({}, node.init);
+                        let name = node.id.name;
 
-                    node.init = b.CallExpression(
-                        b.ArrowFunctionExpression(
-                            [],
-                            b.BlockStatement([
-                                checkPoint(node.init.loc.start, data),
-                                b.VariableDeclaration([
-                                    b.VariableDeclarator(
-                                        b.Identifier(name),
-                                        expression
+                        node.init = b.CallExpression(
+                            b.ArrowFunctionExpression(
+                                [],
+                                b.BlockStatement([
+                                    checkPoint(node.init.loc.start, data),
+                                    b.VariableDeclaration([
+                                        b.VariableDeclarator(
+                                            b.Identifier(name),
+                                            expression
+                                        )
+                                    ], 'var'),
+                                    checkPoint(node.init.loc.end, visualizeVariable),
+                                    b.ReturnStatement(
+                                        b.Identifier(name)
                                     )
-                                ], 'var'),
-                                checkPoint(node.init.loc.end, visualizeVariable),
-                                b.ReturnStatement(
-                                    b.Identifier(name)
-                                )
-                            ])
-                        ),
-                        []
-                    );
+                                ])
+                            ),
+                            []
+                        );
+                    }
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
                     return b.BlockStatement([
                         checkPoint(start, data),

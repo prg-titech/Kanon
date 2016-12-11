@@ -4,8 +4,9 @@ __$__.Update = {
 
 
 // this function is called when ace editor is edited.
-__$__.Update.PositionUpdate = function() {
+__$__.Update.PositionUpdate = function(e) {
     window.localStorage["Kanon-Code"] = __$__.editor.getValue();
+    if (e) __$__.Update.UpdateIdPositions(e);
     let transformed_code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
     var __objs;
     try {
@@ -108,4 +109,101 @@ __$__.Update.isChange = function(graph) {
     return (!Boolean(networkNodes) || !Boolean(networkEdges) ||
             JSON.stringify(graphNodes.sort()) != JSON.stringify(networkNodes.sort()) ||
             JSON.stringify(graphEdges.sort()) != JSON.stringify(networkEdges.sort()));
+};
+
+
+/**
+ * @param {Object} e : the data of changed code
+ *
+ * In this function, update the positions of newID and loopID.
+ * If user code is edited, this function is executed.
+ */
+__$__.Update.UpdateIdPositions = function(e) {
+    var start = {line: e.start.row + 1, column: e.start.column};
+    var end = {line: e.end.row + 1, column: e.end.column};
+    var compare = __$__.Update.ComparePosition;
+
+    if (e.action == 'insert') {
+        // update LoopIdPositions
+        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
+            var pos = __$__.Context.LoopIdPositions[id];
+
+            // if inserted code is the upper part of the loop
+            if (compare(end, '<', pos.start)) {
+                if (pos.start.line == end.line) pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                pos.start.line += e.lines.length - 1;
+                pos.end.line   += e.lines.length - 1;
+            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                pos.end.line   += e.lines.length - 1;
+            }
+        });
+        // update NewIdPositions
+        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
+            var pos = __$__.Context.NewIdPositions[id];
+
+            // if inserted code is the upper part of the loop
+            if (compare(end, '<', pos.start)) {
+                if (pos.start.line == end.line) pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                pos.start.line += e.lines.length - 1;
+                pos.end.line   += e.lines.length - 1;
+            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                pos.end.line   += e.lines.length - 1;
+            }
+        });
+    } else { // e.action == 'remove'
+        // update LoopIdPositions
+        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
+            var pos = __$__.Context.LoopIdPositions[id];
+
+            // if inserted code is the upper part of the loop
+            if (compare(end, '<', pos.start)) {
+                if (pos.start.line == end.line) pos.start.column -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                pos.start.line -= e.lines.length - 1;
+                pos.end.line   -= e.lines.length - 1;
+            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                pos.end.line   -= e.lines.length - 1;
+            }
+        });
+        // update NewIdPositions
+        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
+            var pos = __$__.Context.NewIdPositions[id];
+
+            // if inserted code is the upper part of the loop
+            if (compare(end, '<', pos.start)) {
+                if (pos.start.line == end.line) pos.start.column -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                pos.start.line -= e.lines.length - 1;
+                pos.end.line   -= e.lines.length - 1;
+            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                pos.end.line   -= e.lines.length - 1;
+            }
+        });
+    }
+};
+
+
+/**
+ * @param {Object} p1: {line, column}
+ * @param {string} operator: '==', '<', '>', '<=', '>='
+ * @param {Object} p2: {line, column}
+ */
+__$__.Update.ComparePosition = function(p1, operator, p2) {
+    var ret = false;
+    if (operator == '==' || operator == '<=' || operator == '>=') {
+        ret = ret || (p1.line == p2.line && p1.column == p2.column);
+    }
+    if (operator == '<' || operator == '<=') {
+        ret = ret || (p1.line == p2.line && p1.column < p2.column || p1.line < p2.line);
+    }
+    if (operator == '>' || operator == '>=') {
+        ret = ret || (p1.line == p2.line && p1.column > p2.column || p1.line > p2.line);
+    }
+    return ret;
 };

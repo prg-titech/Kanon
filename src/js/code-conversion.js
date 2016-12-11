@@ -32,10 +32,23 @@ __$__.CodeConversion.TransformCode = function(code, isContext = false) {
         visitors.push(__$__.ASTTransforms.Context());
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
+        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
+            __$__.Context.LoopIdPositions[id].useID = false;
+        });
+        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
+            __$__.Context.NewIdPositions[id].useID = false;
+        });
+
         __$__.walkAST(ast, null, visitors);
+
+        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
+            if (!__$__.Context.LoopIdPositions[id].useID) delete __$__.Context.LoopIdPositions[id];
+        });
+        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
+            if (!__$__.Context.NewIdPositions[id].useID) delete __$__.Context.NewIdPositions[id];
+        });
 
         return escodegen.generate(ast);
     } catch (e) {
-        console.log(e)
     }
 };

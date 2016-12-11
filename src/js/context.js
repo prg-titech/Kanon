@@ -7,7 +7,9 @@ __$__.Context = {
     NestLoop: {},
     TableTimeCounter: [],
     LoopContext: {'noLoop': 1},
-    CheckPointTable: {}
+    CheckPointTable: {},
+    LoopIdPositions: {},
+    NewIdPositions: {}
 };
 
 
