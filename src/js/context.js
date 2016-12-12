@@ -112,7 +112,8 @@ __$__.Context.Draw = function() {
         }
 
         __$__.StorePositions.setPositions(graph);
-        __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+        if (__$__.Update.isChange(graph, true))
+            __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     } else {
         var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
         if (!checkPointId.afterId) checkPointId.afterId = checkPointId.beforeId;
@@ -234,7 +235,8 @@ __$__.Context.Draw = function() {
             })
         });
 
-        __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+        if (__$__.Update.isChange(graph, true))
+            __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     }
 };
 

@@ -14,7 +14,7 @@ __$__.Update.PositionUpdate = function(e) {
         document.getElementById('console').textContent = '';
         var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
         
-        if (!__$__.Update.isChange(graph)) {
+        if (!__$__.Update.isChange(graph, false)) {
             __$__.Update.ContextUpdate();
             return;
         }
@@ -86,7 +86,7 @@ __$__.Update.ContextUpdate = function(e) {
  * return true if new graph is different from old graph
  * return false otherwise
  */
-__$__.Update.isChange = function(graph) {
+__$__.Update.isChange = function(graph, context = false) {
     var graphNodes = graph.nodes.map(function(node) {
         return [node.id, node.label];
     });
@@ -95,13 +95,13 @@ __$__.Update.isChange = function(graph) {
     });
 
     var networkNodes = [];
-    var temp = __$__.StorePositions.oldNetworkNodesData;
+    var temp = (context) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
     Object.keys(temp).forEach(function(key){
         networkNodes.push([temp[key].id, temp[key].label]);
     });
     
     var networkEdges = [];
-    temp = __$__.StorePositions.oldNetworkEdgesData;
+    temp = (context) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
     Object.keys(temp).forEach(function(key){
         networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);
     });
