@@ -129,13 +129,14 @@ __$__.Update.UpdateIdPositions = function(e) {
             var pos = __$__.Context.LoopIdPositions[id];
 
             // if inserted code is the upper part of the loop
-            if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line) pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+            if (compare(start, '<', pos.start)) {
+                if (pos.start.line == start.line) pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
-            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+            // } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+            } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
                 pos.end.line   += e.lines.length - 1;
             }
         });
@@ -144,13 +145,14 @@ __$__.Update.UpdateIdPositions = function(e) {
             var pos = __$__.Context.NewIdPositions[id];
 
             // if inserted code is the upper part of the loop
-            if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line) pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+            if (compare(start, '<', pos.start)) {
+                if (pos.start.line == start.line) pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
-            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line) pos.end.column   += e.lines[e.lines.length-1].length;
+            // } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
+            } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
+                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
                 pos.end.line   += e.lines.length - 1;
             }
         });

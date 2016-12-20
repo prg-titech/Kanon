@@ -247,9 +247,9 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  * after:
  *   while(condition) {
  *     let __loopId = "loop" + id;
- *     if (!Context.LoopContext[__loopId]) Context.LoopContext[__loopId] = 1;
+ *     if (!__$__.Context.LoopContext[__loopId]) __$__.Context.LoopContext[__loopId] = 1;
  *     let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
- *     if (__loopCount > 1000) throw 'Infinite Loop';
+ *     if (__loopCount > 10000) throw 'Infinite Loop';
  *     let __start = __time_counter;
  *     ...
  *     if (!__$__.Context.StartEndInLoop[__loopId]) __$__.Context.StartEndInLoop[__loopId] = [];
