@@ -16,15 +16,18 @@ __$__.CodeConversion = {};
 __$__.CodeConversion.TransformCode = function(code, isContext = false) {
     try {
         let ast = esprima.parse(code, {loc: true});
-    
         let visitors = [];
+
 
         if (isContext) {
             visitors.push(__$__.ASTTransforms.InsertCheckPoint());
         } else {
             visitors.push(__$__.ASTTransforms.RemoveVisualizeVariable());
         }
+
         __$__.walkAST(ast, null, visitors);
+
+
         visitors = [];
 
         visitors.push(__$__.ASTTransforms.BlockedProgram());
@@ -32,21 +35,27 @@ __$__.CodeConversion.TransformCode = function(code, isContext = false) {
         visitors.push(__$__.ASTTransforms.Context());
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
+
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
             __$__.Context.LoopIdPositions[id].useID = false;
         });
+
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
             __$__.Context.NewIdPositions[id].useID = false;
         });
 
+
         __$__.walkAST(ast, null, visitors);
+
 
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
             if (!__$__.Context.LoopIdPositions[id].useID) delete __$__.Context.LoopIdPositions[id];
         });
+
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
             if (!__$__.Context.NewIdPositions[id].useID) delete __$__.Context.NewIdPositions[id];
         });
+
 
         return escodegen.generate(ast);
     } catch (e) {

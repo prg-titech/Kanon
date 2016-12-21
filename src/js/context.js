@@ -35,9 +35,12 @@ __$__.Context.Initialize = function() {
  */
 __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPointId, visualizeVariables) {
     var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
+
     __$__.Context.TableTimeCounter.push({loopId: loopId, loopCount: count});
 
+
     if (!__$__.Context.NestLoop[loopId]) __$__.Context.NestLoop[loopId] = {inner: [], parent: []};
+
 
     // make __$__.Context.NestLoop
     if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1] != loopId) {
@@ -49,8 +52,10 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
             if (parent && __$__.Context.NestLoop[loopId].parent.indexOf(parent) == -1)
                 __$__.Context.NestLoop[loopId].parent.push(parent);
 
+
             if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopId) == -1)
                 __$__.Context.NestLoop[parent].inner.push(loopId);
+
 
             __$__.Context.StackToCheckLoop.push(loopId);
         }
@@ -60,9 +65,11 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
     storedGraph.nodes.forEach(node => {
         var flag = false;
 
+
         __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
             flag = flag || (node.id == nodeData.id);
         });
+
 
         if (!flag) {
             __$__.Trace.TraceGraphData.nodes.push({id: node.id, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
@@ -73,14 +80,17 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
     storedGraph.edges.forEach(edge => {
         var flag = false;
 
+
         __$__.Trace.TraceGraphData.edges.forEach(edgeData => {
             flag = flag || (edge.from == edgeData.from && edge.to == edgeData.to && edge.label == edgeData.label);
         });
+
 
         if (!flag) {
             __$__.Trace.TraceGraphData.edges.push({from: edge.from, to: edge.to, label: edge.label, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
         }
     });
+
 
     __$__.Context.LastGraph = storedGraph;
 };
@@ -89,9 +99,14 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 __$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
     var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, visualizeVariables));
 
-    if (!__$__.Context.StoredGraph[checkPointId]) __$__.Context.StoredGraph[checkPointId] = {};
-    if (!__$__.Context.StoredGraph[checkPointId][loopId]) __$__.Context.StoredGraph[checkPointId][loopId] = {};
+    if (!__$__.Context.StoredGraph[checkPointId])
+        __$__.Context.StoredGraph[checkPointId] = {};
+
+    if (!__$__.Context.StoredGraph[checkPointId][loopId])
+        __$__.Context.StoredGraph[checkPointId][loopId] = {};
+
     __$__.Context.StoredGraph[checkPointId][loopId][count] = graph;
+
 
     return graph;
 };
@@ -99,6 +114,7 @@ __$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visual
 
 // Draw() method is executed after user code
 __$__.Context.Draw = function() {
+
     if (__$__.Context.UseContext) {
         try {
             var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
@@ -112,11 +128,14 @@ __$__.Context.Draw = function() {
         }
 
         __$__.StorePositions.setPositions(graph);
+
         if (__$__.Update.isChange(graph, true))
             __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+
     } else {
         var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
-        if (!checkPointId.afterId) checkPointId.afterId = checkPointId.beforeId;
+        if (!checkPointId.afterId)
+            checkPointId.afterId = checkPointId.beforeId;
 
         var beforeLoopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
         var afterLoopId  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
@@ -132,9 +151,12 @@ __$__.Context.Draw = function() {
             // take the number of common loop here
             var loopCount = [];
             var afterGraphsCount = Object.keys(afterGraphs);
+
+
             Object.keys(beforeGraphs).forEach(num => {
                 if (afterGraphsCount.indexOf(num) != -1) loopCount.push(num);
             });
+
 
             // calculate the gap between before and after graph
             for (var i = 0; i < loopCount.length; i++) {
@@ -149,14 +171,18 @@ __$__.Context.Draw = function() {
                 beforeGraph.nodes.forEach(node => {
                     changeNodeId[node.id] = false;
                 });
+
                 afterGraph.nodes.forEach(node => {
                     if (changeNodeId[node.id] == false) delete changeNodeId[node.id];
                     else if (changeNodeId[node.id] == undefined) changeNodeId[node.id] = true;
                 });
 
+
                 Object.keys(changeNodeId).forEach(id => {
-                    if (changeNodeId[id]) addedNodeId.push(id);
-                    else removedNodeId.push(id);
+                    if (changeNodeId[id])
+                        addedNodeId.push(id);
+                    else
+                        removedNodeId.push(id);
                 });
 
                 // this object checks whether each edge is added or removed or not
@@ -168,15 +194,21 @@ __$__.Context.Draw = function() {
                 beforeGraph.edges.forEach(edge => {
                     changeEdgeData[[edge.from, edge.to, edge.label].toString()] = false;
                 })
+
                 afterGraph.edges.forEach(edge => {
                     var data = [edge.from, edge.to, edge.label].toString();
-                    if (changeEdgeData[data] == false) delete changeEdgeData[data];
-                    else if (changeEdgeData[data] == undefined) changeEdgeData[data] = true;
+
+                    if (changeEdgeData[data] == false)
+                        delete changeEdgeData[data];
+                    else if (changeEdgeData[data] == undefined)
+                        changeEdgeData[data] = true;
                 });
 
                 Object.keys(changeEdgeData).forEach(data => {
-                    if (changeEdgeData[data]) addedEdgeData.push(data.split(','));
-                    else removedEdgeData.push(data.split(','));
+                    if (changeEdgeData[data])
+                        addedEdgeData.push(data.split(','));
+                    else
+                        removedEdgeData.push(data.split(','));
                 })
             }
         }
@@ -187,6 +219,7 @@ __$__.Context.Draw = function() {
         // change color of added node to orange in this part
         graph.nodes.forEach(node => {
             var index = addedNodeId.indexOf(node.id)
+
             if (index >= 0) {
                 node.color = 'orange';
                 delete addedNodeId[index];
@@ -195,6 +228,7 @@ __$__.Context.Draw = function() {
         // change color of added edge to orange in this part
         graph.edges.forEach(edge => {
             if (edge.from.slice(0, 11) == '__Variable-') edge.hidden = true;
+
             addedEdgeData.forEach((edgeData, index) => {
                 if (edgeData[0] == edge.from && edgeData[1] == edge.to && edgeData[2] == edge.label) {
                     edge.color = 'orange';
@@ -205,9 +239,11 @@ __$__.Context.Draw = function() {
 
         addedNodeId.forEach(id => {
             var label = '';
+
             afterGraph.nodes.forEach(node => {
                 if (node.id == id) label = node.label;
-            })
+            });
+
             if (id && id.slice(0, 11) != '__Variable-') graph.nodes.push({
                 fixed: false,
                 id: id,
@@ -216,6 +252,7 @@ __$__.Context.Draw = function() {
                 color: 'orange'
             });
         });
+
         addedEdgeData.forEach(data => {
             if (data && data[0].slice(0, 11) != '__Variable-') graph.edges.push({
                 from: data[0],
@@ -223,8 +260,9 @@ __$__.Context.Draw = function() {
                 label: data[2],
                 color: 'orange',
                 dashes: true
-            })
+            });
         });
+
         removedEdgeData.forEach(data => {
             if (data) graph.edges.push({
                 from: data[0],
@@ -232,7 +270,7 @@ __$__.Context.Draw = function() {
                 label: data[2],
                 color: 'green',
                 dashes: true
-            })
+            });
         });
 
         if (__$__.Update.isChange(graph, true))
@@ -245,6 +283,7 @@ __$__.Context.FindId = function(pos) {
     let before;
     let after;
     let res = {};
+
     Object.keys(__$__.Context.CheckPointTable).forEach(function(key) {
         let temp = __$__.Context.CheckPointTable[key];
 
@@ -262,6 +301,7 @@ __$__.Context.FindId = function(pos) {
         }
     });
 
+
     return res;
 };
 
@@ -269,6 +309,7 @@ __$__.Context.FindId = function(pos) {
 __$__.Context.SwitchContext = function(bool) {
     __$__.Context.UseContext = bool;
     var elem = document.getElementById('context');
+
     elem.textContent = (bool) ? 'Use Context' : 'No Context';
 };
 
@@ -284,18 +325,22 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
     var new_loop_count = __$__.Context.LoopContext[loopId];
     var start_end = __$__.Context.StartEndInLoop[loopId][new_loop_count-1];
 
+
     var changeInnerContext = function(loopId) {
         var smallest_time;
 
+
         __$__.Context.StartEndInLoop[loopId].forEach(compared_s_e => {
             if (start_end.start < compared_s_e.start && compared_s_e.end < start_end.end) {
-                if (!smallest_time || smallest_time > compared_s_e.start) smallest_time = compared_s_e.start;
+                if (!smallest_time || smallest_time > compared_s_e.start)
+                    smallest_time = compared_s_e.start;
             }
         });
 
         // this is executed when the context of 'loopId' mast be changed
         if (smallest_time) {
             __$__.Context.LoopContext[loopId] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
+
             __$__.Context.NestLoop[loopId].inner.forEach(id => {
                 changeInnerContext(id);
             });
@@ -306,12 +351,15 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
         var count = __$__.Context.LoopContext[loopId];
         var start_end = __$__.Context.StartEndInLoop[loopId][count-1];
 
+
         __$__.Context.NestLoop[loopId].parent.forEach(id => {
             var now_count = __$__.Context.LoopContext[id];
             var s_e = __$__.Context.StartEndInLoop[id][now_count-1];
 
+
             // if the context of 'id' don't have to be changed
-            if (start_end.start > s_e.start && s_e.end > start_end.end) return;
+            if (start_end.start > s_e.start && s_e.end > start_end.end)
+                return;
             else { // if the context of 'id' must to be changed
                 __$__.Context.StartEndInLoop[id].forEach((compared_s_e, index) => {
                     if (start_end.start > compared_s_e.start && compared_s_e.end > start_end.end) {
@@ -326,5 +374,7 @@ __$__.Context.ChangeInnerAndParentContext = function(loopId) {
     __$__.Context.NestLoop[loopId].inner.forEach(id => {
         changeInnerContext(id);
     });
+
+
     changeParentContext(loopId);
 };

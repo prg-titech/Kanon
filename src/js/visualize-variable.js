@@ -38,20 +38,23 @@ __$__.VisualizeVariable.StackEnv.prototype.pop = function() {
     ret.prev = null;
 
     return ret;
-}
+};
 
 
 __$__.VisualizeVariable.StackEnv.prototype.addVariable = function(variable, kind, visualize) {
     var current = this.tail;
+
     if (kind == 'var') {
         while (!(current instanceof __$__.VisualizeVariable.FunctionFlame)) {
             current = current.prev;
         }
+
         current.env[variable] = visualize;
     } else {
         while (!(current instanceof __$__.VisualizeVariable.BlockFlame)) {
             current = current.prev;
         }
+
         current.env[variable] = visualize;
     }
 };
@@ -64,13 +67,16 @@ __$__.VisualizeVariable.StackEnv.prototype.visualizeVariable = function() {
         Object.keys(current.env).forEach(function(varName) {
             if (typeof(retObj[varName]) === 'undefined') retObj[varName] = current.env[varName];
         });
+
         current = current.prev;
     }
 
     var ret = [];
+
     Object.keys(retObj).forEach(function(varName) {
         if (retObj[varName]) ret.push(varName);
     });
+
 
     return ret;
 }

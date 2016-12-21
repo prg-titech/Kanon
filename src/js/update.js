@@ -6,18 +6,25 @@ __$__.Update = {
 // this function is called when ace editor is edited.
 __$__.Update.PositionUpdate = function(e) {
     window.localStorage["Kanon-Code"] = __$__.editor.getValue();
-    if (e) __$__.Update.UpdateIdPositions(e);
+
+    if (e)
+        __$__.Update.UpdateIdPositions(e);
+
     let transformed_code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
     var __objs;
+
     try {
         eval(transformed_code);
         document.getElementById('console').textContent = '';
+
         var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
         
+
         if (!__$__.Update.isChange(graph, false)) {
             __$__.Update.ContextUpdate();
             return;
         }
+
 
         __$__.options.nodes.physics = true;
         __$__.StorePositions.setPositions(graph, true);
@@ -28,6 +35,7 @@ __$__.Update.PositionUpdate = function(e) {
         __$__.network.on("dragEnd", function(params) {
             __$__.StorePositions.registerPositions();
         });
+
         __$__.network.once("stabilized", function(params) {
             __$__.options.nodes.physics = false;
             __$__.network.setOptions(__$__.options);
@@ -93,18 +101,21 @@ __$__.Update.isChange = function(graph, context = false) {
     var graphEdges = graph.edges.map(function(edge) {
         return [edge.from, edge.to, edge.label];
     });
-
     var networkNodes = [];
     var temp = (context) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
+
     Object.keys(temp).forEach(function(key){
         networkNodes.push([temp[key].id, temp[key].label]);
     });
     
+
     var networkEdges = [];
     temp = (context) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
+
     Object.keys(temp).forEach(function(key){
         networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);
     });
+
 
     return (!Boolean(networkNodes) || !Boolean(networkEdges) ||
             JSON.stringify(graphNodes.sort()) != JSON.stringify(networkNodes.sort()) ||
@@ -123,6 +134,7 @@ __$__.Update.UpdateIdPositions = function(e) {
     var end = {line: e.end.row + 1, column: e.end.column};
     var compare = __$__.Update.ComparePosition;
 
+
     if (e.action == 'insert') {
         // update LoopIdPositions
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
@@ -130,29 +142,38 @@ __$__.Update.UpdateIdPositions = function(e) {
 
             // if inserted code is the upper part of the loop
             if (compare(start, '<', pos.start)) {
-                if (pos.start.line == start.line) pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                if (pos.start.line == start.line)
+                    pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line)
+                    pos.end.column   += e.lines[e.lines.length-1].length;
+
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
-            // } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
             } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line)
+                    pos.end.column   += e.lines[e.lines.length-1].length;
+
                 pos.end.line   += e.lines.length - 1;
             }
         });
+
         // update NewIdPositions
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
             var pos = __$__.Context.NewIdPositions[id];
 
             // if inserted code is the upper part of the loop
             if (compare(start, '<', pos.start)) {
-                if (pos.start.line == start.line) pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                if (pos.start.line == start.line)
+                    pos.start.column += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line)
+                    pos.end.column   += e.lines[e.lines.length-1].length;
+
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
-            // } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
             } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == start.line) pos.end.column   += e.lines[e.lines.length-1].length;
+                if (pos.end.line   == start.line)
+                    pos.end.column   += e.lines[e.lines.length-1].length;
+
                 pos.end.line   += e.lines.length - 1;
             }
         });
@@ -163,12 +184,17 @@ __$__.Update.UpdateIdPositions = function(e) {
 
             // if inserted code is the upper part of the loop
             if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line) pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                if (pos.start.line == end.line)
+                    pos.start.column -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line)
+                    pos.end.column   -= e.lines[e.lines.length-1].length;
+
                 pos.start.line -= e.lines.length - 1;
                 pos.end.line   -= e.lines.length - 1;
             } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line)
+                    pos.end.column   -= e.lines[e.lines.length-1].length;
+
                 pos.end.line   -= e.lines.length - 1;
             }
         });
@@ -178,12 +204,17 @@ __$__.Update.UpdateIdPositions = function(e) {
 
             // if inserted code is the upper part of the loop
             if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line) pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                if (pos.start.line == end.line)
+                    pos.start.column -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line)
+                    pos.end.column   -= e.lines[e.lines.length-1].length;
+
                 pos.start.line -= e.lines.length - 1;
                 pos.end.line   -= e.lines.length - 1;
             } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line) pos.end.column   -= e.lines[e.lines.length-1].length;
+                if (pos.end.line   == end.line)
+                    pos.end.column   -= e.lines[e.lines.length-1].length;
+
                 pos.end.line   -= e.lines.length - 1;
             }
         });
@@ -198,14 +229,20 @@ __$__.Update.UpdateIdPositions = function(e) {
  */
 __$__.Update.ComparePosition = function(p1, operator, p2) {
     var ret = false;
+
+
     if (operator == '==' || operator == '<=' || operator == '>=') {
         ret = ret || (p1.line == p2.line && p1.column == p2.column);
     }
+
     if (operator == '<' || operator == '<=') {
         ret = ret || (p1.line == p2.line && p1.column < p2.column || p1.line < p2.line);
     }
+
     if (operator == '>' || operator == '>=') {
         ret = ret || (p1.line == p2.line && p1.column > p2.column || p1.line > p2.line);
     }
+
+
     return ret;
 };
