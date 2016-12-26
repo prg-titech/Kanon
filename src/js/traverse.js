@@ -1,23 +1,26 @@
-__$__.Traverse = {
-    __Edge(from, to, label) {
-        this.from = from;
-        this.to = to;
-        this.label = label;
-    },
+__$__.Traverse = {};
 
-    __VariableNode(id) {
-        this.id = id;
-        this.__id = '__Variable-' + id;
-    },
+__$__.Traverse.__Edge = function(from, to, label) {
+    this.from = from;
+    this.to = to;
+    this.label = label;
+};
 
-    __Literal(value) {
-        this.value = value;
-    },
 
-    __Graph() {
-        this.nodes = []; // Array of Object
-        this.edges = []; // Array of __Edge
-    }
+__$__.Traverse.__VariableNode = function(id) {
+    this.id = id;
+    this.__id = '__Variable-' + id;
+};
+
+
+__$__.Traverse.__Literal = function(value) {
+    this.value = value;
+};
+
+
+__$__.Traverse.__Graph = function() {
+    this.nodes = [];
+    this.edges = [];
 };
 
 
