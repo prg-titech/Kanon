@@ -1,8 +1,8 @@
 # Kanon
 
-__Kanon__ is programming environment.
+__Kanon__ is a live programming environment.
 If you write JavaScript code in left side editor,
-the data structure of your code is rendered in right side as graph.
+data structures that are got by executing your code are rendered in right side as a graph.
 
 ## How to use
 
