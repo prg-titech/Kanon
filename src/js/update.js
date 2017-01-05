@@ -96,16 +96,25 @@ __$__.Update.ContextUpdate = function(e) {
  */
 __$__.Update.isChange = function(graph, context = false) {
     var graphNodes = graph.nodes.map(function(node) {
-        return [node.id, node.label];
+        if (node.color && node.color !== 'white')
+            return [node.id, node.label, node.color];
+        else 
+            return [node.id, node.label];
     });
     var graphEdges = graph.edges.map(function(edge) {
-        return [edge.from, edge.to, edge.label];
+        if (edge.color && edge.color !== 'white')
+            return [edge.from, edge.to, edge.label, edge.color];
+        else
+            return [edge.from, edge.to, edge.label];
     });
     var networkNodes = [];
     var temp = (context) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
 
     Object.keys(temp).forEach(function(key){
-        networkNodes.push([temp[key].id, temp[key].label]);
+        if (context && temp[key].color && temp[key].color !== 'white')
+            networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
+        else
+            networkNodes.push([temp[key].id, temp[key].label]);
     });
     
 
@@ -113,7 +122,10 @@ __$__.Update.isChange = function(graph, context = false) {
     temp = (context) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
 
     Object.keys(temp).forEach(function(key){
-        networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);
+        if (context && temp[key].color && temp[key].color !== 'white')
+            networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);
+        else
+            networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);
     });
 
 
