@@ -7,14 +7,14 @@ let b = __$__.ASTBuilder;
 /** 
  * before: new Hoge()
  * after:  (() => {
- *             var temp = new Hoge();
+ *             var __temp = new Hoge();
  *
  *             if (__newIdCounter[id]) __newIdCounter[id]++;
  *             else __newIdCounter[id] = 1;
  *
- *             temp.__id = id + "-" + __newIdCounter[id];
- *             __objs.push(temp);
- *             return temp;
+ *             __temp.__id = id + "-" + __newIdCounter[id];
+ *             __objs.push(__temp);
+ *             return __temp;
  *         })()
  *
  * "id" is unique number of this function
@@ -58,7 +58,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                         b.BlockStatement([
                             b.VariableDeclaration(
                                 [b.VariableDeclarator(
-                                    b.Identifier("temp"),
+                                    b.Identifier("__temp"),
                                     b.NewExpression(
                                         node.callee,
                                         node.arguments
@@ -98,7 +98,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                             b.ExpressionStatement(
                                 b.AssignmentExpression(
                                     b.MemberExpression(
-                                        b.Identifier("temp"),
+                                        b.Identifier("__temp"),
                                         b.Identifier("__id")
                                     ),
                                     "=",
@@ -123,11 +123,11 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                         b.Identifier("__objs"),
                                         b.Identifier("push")
                                     ),
-                                    [b.Identifier("temp")]
+                                    [b.Identifier("__temp")]
                                 )
                             ),
                             b.ReturnStatement(
-                                b.Identifier("temp")
+                                b.Identifier("__temp")
                             )
                         ])
                     ),
@@ -234,6 +234,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  * - DoWhileStatement
  * - WhileStatement
  * - ForStatement
+ * - ForInStatement
  * - FunctionExpression
  * - FunctionDeclaration
  * - ArrowFunctionExpression

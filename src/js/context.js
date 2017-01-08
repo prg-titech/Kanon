@@ -268,7 +268,7 @@ __$__.Context.Draw = function() {
                 from: data[0],
                 to: data[1],
                 label: data[2],
-                color: 'green',
+                color: 'seagreen',
                 dashes: true
             });
         });
