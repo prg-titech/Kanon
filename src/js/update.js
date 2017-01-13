@@ -32,10 +32,8 @@ __$__.Update.PositionUpdate = function(e) {
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
-        __$__.network.on("dragEnd", function(params) {
-            __$__.StorePositions.registerPositions();
-        });
-
+        __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
+        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
         __$__.network.once("stabilized", function(params) {
             __$__.options.nodes.physics = false;
             __$__.network.setOptions(__$__.options);
@@ -47,7 +45,6 @@ __$__.Update.PositionUpdate = function(e) {
 
             __$__.Update.ContextUpdate();
         });
-        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
     } catch (e) {
         if (e == 'Infinite Loop') {
             document.getElementById('console').textContent = 'infinite loop?';
