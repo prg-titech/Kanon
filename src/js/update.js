@@ -47,7 +47,7 @@ __$__.Update.PositionUpdate = function(e) {
 
             __$__.Update.ContextUpdate();
         });
-        __$__.network.on('click', __$__.Trace.ClickEventFunction);
+        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
     } catch (e) {
         if (e == 'Infinite Loop') {
             document.getElementById('console').textContent = 'infinite loop?';
@@ -64,7 +64,7 @@ __$__.Update.ContextUpdate = function(e) {
     if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '') {
         // initialize some data
         __$__.Context.Initialize();
-        __$__.Trace.TraceGraphData = {nodes: [], edges: []};
+        __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
 
         __$__.Update.CodeWithCheckPoint = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
 

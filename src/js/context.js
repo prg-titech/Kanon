@@ -66,13 +66,13 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
         var flag = false;
 
 
-        __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
+        __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
             flag = flag || (node.id == nodeData.id);
         });
 
 
         if (!flag) {
-            __$__.Trace.TraceGraphData.nodes.push({id: node.id, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
+            __$__.JumpToConstruction.GraphData.nodes.push({id: node.id, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
         }
     });
 
@@ -81,13 +81,13 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
         var flag = false;
 
 
-        __$__.Trace.TraceGraphData.edges.forEach(edgeData => {
+        __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
             flag = flag || (edge.from == edgeData.from && edge.to == edgeData.to && edge.label == edgeData.label);
         });
 
 
         if (!flag) {
-            __$__.Trace.TraceGraphData.edges.push({from: edge.from, to: edge.to, label: edge.label, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
+            __$__.JumpToConstruction.GraphData.edges.push({from: edge.from, to: edge.to, label: edge.label, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
         }
     });
 

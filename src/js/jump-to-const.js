@@ -1,23 +1,23 @@
-__$__.Trace = {
+__$__.JumpToConstruction = {
     ClickElementContext: {},
     ClickElement: {},
-    TraceGraphData: {nodes: [], edges: []}
+    GraphData: {nodes: [], edges: []}
 };
 
 
 /**
  * if you click on a node or edge, this function is executed.
  */
-__$__.Trace.ClickEventFunction = function(param) {
+__$__.JumpToConstruction.ClickEventFunction = function(param) {
     // choose node
     if (param.nodes.length) {
-        __$__.Trace.ClickElement.node = param.nodes[0];
+        __$__.JumpToConstruction.ClickElement.node = param.nodes[0];
     }
 
     // choose edge
     else if (param.edges.length) {
         var edgeId = param.edges[0];
-        __$__.Trace.ClickElement.edge = __$__.network.body.data.edges._data[edgeId];
+        __$__.JumpToConstruction.ClickElement.edge = __$__.network.body.data.edges._data[edgeId];
     }
 
     // no choose
@@ -27,9 +27,9 @@ __$__.Trace.ClickEventFunction = function(param) {
     document.getElementById('context').textContent = 'Use Context';
 
 
-    if (__$__.Trace.ClickElement.node)
-        __$__.Trace.TraceGraphData.nodes.forEach(nodeData => {
-            if (__$__.Trace.ClickElement.node == nodeData.id) {
+    if (__$__.JumpToConstruction.ClickElement.node)
+        __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
+            if (__$__.JumpToConstruction.ClickElement.node == nodeData.id) {
                 __$__.Context.LoopContext[nodeData.loopId] = nodeData.count;
                 __$__.Context.ChangeInnerAndParentContext(nodeData.loopId);
 
@@ -38,10 +38,10 @@ __$__.Trace.ClickEventFunction = function(param) {
         });
 
     else
-        __$__.Trace.TraceGraphData.edges.forEach(edgeData => {
-            if (__$__.Trace.ClickElement.edge.from == edgeData.from &&
-                __$__.Trace.ClickElement.edge.to == edgeData.to &&
-                __$__.Trace.ClickElement.edge.label == edgeData.label) {
+        __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
+            if (__$__.JumpToConstruction.ClickElement.edge.from == edgeData.from &&
+                __$__.JumpToConstruction.ClickElement.edge.to == edgeData.to &&
+                __$__.JumpToConstruction.ClickElement.edge.label == edgeData.label) {
 
                 __$__.Context.LoopContext[edgeData.loopId] = edgeData.count;
                 __$__.Context.ChangeInnerAndParentContext(edgeData.loopId);
@@ -57,6 +57,6 @@ __$__.Trace.ClickEventFunction = function(param) {
     }
 
 
-    __$__.Trace.ClickElementContext = {};
-    __$__.Trace.ClickElement = {};
+    __$__.JumpToConstruction.ClickElementContext = {};
+    __$__.JumpToConstruction.ClickElement = {};
 };
