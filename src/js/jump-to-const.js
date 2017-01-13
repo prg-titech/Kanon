@@ -24,8 +24,6 @@ __$__.JumpToConstruction.ClickEventFunction = function(param) {
     else return;
 
     __$__.Context.SwitchContext(true);
-    document.getElementById('context').textContent = 'Use Context';
-
 
     if (__$__.JumpToConstruction.ClickElement.node)
         __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
