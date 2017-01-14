@@ -23,7 +23,7 @@ __$__.VisualizeVariable.StackEnv = function() {
 };
 
 
-__$__.VisualizeVariable.StackEnv.prototype.extendEnv = function(flame) {
+__$__.VisualizeVariable.StackEnv.prototype.push = function(flame) {
     this.tail.next = flame;
     flame.prev = this.tail;
     this.tail = flame;

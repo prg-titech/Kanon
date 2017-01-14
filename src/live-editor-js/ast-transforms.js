@@ -448,7 +448,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
     return {
         enter(node, path) {
             if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].indexOf(node.type) >= 0) {
-                env.extendEnv(new __$__.VisualizeVariable.FunctionFlame());
+                env.push(new __$__.VisualizeVariable.FunctionFlame());
 
                 node.body.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind == 'var') {
@@ -460,7 +460,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
             }
 
             if (node.type == 'BlockStatement') {
-                env.extendEnv(new __$__.VisualizeVariable.BlockFlame());
+                env.push(new __$__.VisualizeVariable.BlockFlame());
 
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
