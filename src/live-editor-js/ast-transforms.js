@@ -191,30 +191,6 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
     };
 };
 
-/**
- * @param {string} variables
- *
- * In this function, add variable declaration at the head of the code.
- * the declared variable is the element of variables
- */
-__$__.ASTTransforms.AddVisualizeVariablesDeclaration = function(variables) {
-    return {
-        leave(node, path) {
-            if (node.type === 'Program') {
-                node.body.unshift(
-                    b.VariableDeclaration(
-                        variables.map(function(variable) {
-                            return b.VariableDeclarator(
-                                b.Identifier(variable)
-                            )
-                        })
-                    , 'var')
-                );
-            }
-        }
-    };
-};
-
 
 __$__.ASTTransforms.BlockedProgram = function() {
     return {
