@@ -113,7 +113,7 @@ __$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visual
 
 
 // Draw() method is executed after user code
-__$__.Context.Draw = function() {
+__$__.Context.Draw = function(e) {
 
     if (__$__.Context.UseContext) {
         try {
@@ -129,7 +129,7 @@ __$__.Context.Draw = function() {
 
         __$__.StorePositions.setPositions(graph);
 
-        if (__$__.Update.isChange(graph, true))
+        if (e === 'changed' || __$__.Update.isChange(graph, true))
             __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
 
     } else {
@@ -273,7 +273,7 @@ __$__.Context.Draw = function() {
             });
         });
 
-        if (__$__.Update.isChange(graph, true))
+        if (e === 'changed' || __$__.Update.isChange(graph, true))
             __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
     }
 };

@@ -58,7 +58,7 @@ __$__.Update.PositionUpdate = function(e) {
  * This update the network with the context at the cursor position.
  */
 __$__.Update.ContextUpdate = function(e) {
-    if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '') {
+    if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '' || e === 'changed') {
         // initialize some data
         __$__.Context.Initialize();
         __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
@@ -74,7 +74,7 @@ __$__.Update.ContextUpdate = function(e) {
                 if (__$__.Context.LoopContext[loopId] > __loopCounter[loopId]) __$__.Context.LoopContext[loopId] = __loopCounter[loopId];
             });
 
-            __$__.Context.Draw();
+            __$__.Context.Draw(e);
         } catch (e) {
             if (e == 'Infinite Loop') {
                 document.getElementById('console').textContent = 'infinite loop?';
