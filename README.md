@@ -35,3 +35,7 @@ which copied https://unpkg.com/esprima@3.1.1/dist/esprima.js
 ## Reference
 
 - live-editor (https://github.com/Khan/live-editor)
+
+## LICENSE
+
+Kanon is "MIT License", see LICENSE for more info.
