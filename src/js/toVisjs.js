@@ -48,4 +48,4 @@ __$__.ToVisjs.Translator = function(graph) {
 
 
     return retData;
-}
+};

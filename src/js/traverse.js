@@ -111,4 +111,4 @@ __$__.Traverse.CheckId = function(node, edges) {
             return;
         }
     }
-}
+};

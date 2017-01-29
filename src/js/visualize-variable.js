@@ -79,4 +79,4 @@ __$__.VisualizeVariable.StackEnv.prototype.visualizeVariable = function() {
 
 
     return ret;
-}
+};
