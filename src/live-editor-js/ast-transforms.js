@@ -456,7 +456,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
             if (node.type == 'VariableDeclarator') {
                 let parent = path[path.length - 2];
-                if (node.id.name[0] == '$') {
+                if (node.id.name[0] == '$' && node.id.name.length > 1) {
                     node.id.name = node.id.name.slice(1, node.id.name.length);
                     env.addVariable(node.id.name, parent.kind, true);
                 } else {
@@ -558,7 +558,7 @@ __$__.ASTTransforms.RemoveVisualizeVariable = function() {
     return {
         leave(node, path) {
             if (node.type == 'VariableDeclarator') {
-                if (node.id.name[0] == '$') {
+                if (node.id.name[0] == '$' && node.id.name.length > 1) {
                     node.id.name = node.id.name.slice(1, node.id.name.length);
                 }
             }
