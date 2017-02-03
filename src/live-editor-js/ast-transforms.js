@@ -441,7 +441,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
                         s.declarations.forEach(declarator => {
-                            if (declarator.id.name[0] === '$')
+                            if (declarator.id.name[0] === '$' && declarator.id.name.length > 1)
                                 env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
                             else
                                 env.addVariable(declarator.id.name, s.kind, false);
