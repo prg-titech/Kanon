@@ -34,7 +34,7 @@ which copied https://unpkg.com/esprima@3.1.1/dist/esprima.js
 
 ## Reference
 
-- live-editor (https://github.com/Khan/live-editor)
+- Live Editor (https://github.com/Khan/live-editor)
 
 ## LICENSE
 
