@@ -5,24 +5,24 @@ __$__.CodeConversion = {};
  * memo: code(string) -> ast -> new ast -> code(string)
  *
  * @param {string} code
- * @param {boolean} isContext
+ * @param {boolean} isSnapshot
  *
  * First, user code is converted into AST using esprima parser.
  * Second, we define visitors to use walkAST(),
  * and executes walkAST() using the visitors.
  * Finally, AST is converted into code whose type is string using escodegen.
- * (walkAST() is executed twice if 'isContext' is true.)
+ * (walkAST() is executed twice if 'isSnapshot' is true.)
  */
-__$__.CodeConversion.TransformCode = function(code, isContext = false) {
+__$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
     try {
         let ast = esprima.parse(code, {loc: true});
         let visitors = [];
 
 
-        if (isContext) {
+        if (isSnapshot) {
             visitors.push(__$__.ASTTransforms.InsertCheckPoint());
         } else {
-            visitors.push(__$__.ASTTransforms.RemoveVisualizeVariable());
+            visitors.push(__$__.ASTTransforms.RemoveProbe());
         }
 
         __$__.walkAST(ast, null, visitors);

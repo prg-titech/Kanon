@@ -1,5 +1,5 @@
 __$__.Context = {
-    UseContext: true,
+    Snapshot: true,
     LastGraph: undefined,
     StackToCheckLoop: ['noLoop'],
     StoredGraph: {},
@@ -29,12 +29,12 @@ __$__.Context.Initialize = function() {
  * @param {int} count
  * @param {int} timeCounter
  * @param {int} checkPointId
- * @param {Object} visualizeVariables
+ * @param {Object} probe
  *
  * this function is checkPoint is located at the head and the tail of each Statement.
  */
-__$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPointId, visualizeVariables) {
-    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, visualizeVariables);
+__$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPointId, probe) {
+    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, probe);
 
     __$__.Context.TableTimeCounter.push({loopId: loopId, loopCount: count});
 
@@ -96,8 +96,8 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 };
 
 
-__$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visualizeVariables) {
-    var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, visualizeVariables));
+__$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, probe) {
+    var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
 
     if (!__$__.Context.StoredGraph[checkPointId])
         __$__.Context.StoredGraph[checkPointId] = {};
@@ -115,7 +115,7 @@ __$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, visual
 // Draw() method is executed after user code
 __$__.Context.Draw = function(e) {
 
-    if (__$__.Context.UseContext) {
+    if (__$__.Context.Snapshot) {
         try {
             var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
             var loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
@@ -306,11 +306,11 @@ __$__.Context.FindId = function(pos) {
 };
 
 
-__$__.Context.SwitchContext = function(bool) {
-    __$__.Context.UseContext = bool;
-    var elem = document.getElementById('context');
+__$__.Context.SwitchViewMode = function(bool) {
+    __$__.Context.Snapshot = bool;
+    var elem = document.getElementById('viewmode');
 
-    elem.textContent = (bool) ? 'Use Context' : 'No Context';
+    elem.textContent = (bool) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
 };
 
 

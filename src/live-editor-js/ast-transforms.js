@@ -419,12 +419,12 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
     var id = 'InsertCheckPoint'
     __$__.ASTTransforms.checkPoint_idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
-    var env = new __$__.VisualizeVariable.StackEnv();
+    var env = new __$__.Probe.StackEnv();
 
     return {
         enter(node, path) {
             if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].indexOf(node.type) >= 0) {
-                env.push(new __$__.VisualizeVariable.FunctionFlame());
+                env.push(new __$__.Probe.FunctionFlame());
 
                 node.body.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind == 'var') {
@@ -436,7 +436,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
             }
 
             if (node.type == 'BlockStatement') {
-                env.push(new __$__.VisualizeVariable.BlockFlame());
+                env.push(new __$__.Probe.BlockFlame());
 
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
@@ -449,7 +449,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     }
                 });
             }
-            return [id, env.visualizeVariable()];
+            return [id, env.Variables()];
         },
         leave(node, path, enterData) {
             var data = enterData[id];
@@ -472,7 +472,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 let start = node.loc.start;
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
-                let visualizeVariable = env.visualizeVariable();
+                let variables = env.Variables();
 
                 let checkPoint = function(loc, variables) {
                     __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
@@ -510,7 +510,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     return [
                         checkPoint(start, data),
                         Object.assign({}, node),
-                        checkPoint(end, visualizeVariable)
+                        checkPoint(end, variables)
                     ];
                 } else if (node.type == 'VariableDeclarator') {
                     if (node.init) {
@@ -528,7 +528,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                             expression
                                         )
                                     ], 'var'),
-                                    checkPoint(node.init.loc.end, visualizeVariable),
+                                    checkPoint(node.init.loc.end, variables),
                                     b.ReturnStatement(
                                         b.Identifier(name)
                                     )
@@ -541,7 +541,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     return b.BlockStatement([
                         checkPoint(start, data),
                         Object.assign({}, node),
-                        checkPoint(end, visualizeVariable)
+                        checkPoint(end, variables)
                     ]);
                 }
             }
@@ -554,7 +554,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
  * In this function, if the head of the name in VariableDeclarator have '$',
  * remove '$'
  */
-__$__.ASTTransforms.RemoveVisualizeVariable = function() {
+__$__.ASTTransforms.RemoveProbe = function() {
     return {
         leave(node, path) {
             if (node.type == 'VariableDeclarator') {

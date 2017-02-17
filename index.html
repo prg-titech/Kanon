@@ -23,7 +23,7 @@
 <script type="text/javascript" src="src/js/update.js"></script>
 <script type="text/javascript" src="src/js/context.js"></script>
 <script type="text/javascript" src="src/js/jump-to-const.js"></script>
-<script type="text/javascript" src="src/js/visualize-variable.js"></script>
+<script type="text/javascript" src="src/js/probe.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-walker.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-builder.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-transforms.js"></script>
@@ -43,10 +43,10 @@
 <div id="mynetwork">
 </div>
 <div id='button'>
-    <input type="button" value="No Context" onclick="__$__.Context.SwitchContext(false); __$__.Update.ContextUpdate('changed');">
-    <input type="button" value="Use Context" onclick="__$__.Context.SwitchContext(true); __$__.Update.ContextUpdate('changed');">
+    <input type="button" value="Summarized" onclick="__$__.Context.SwitchViewMode(false); __$__.Update.ContextUpdate('changed');">
+    <input type="button" value="Snapshot" onclick="__$__.Context.SwitchViewMode(true); __$__.Update.ContextUpdate('changed');">
 </div>
-<div id='context'>
+<div id='viewmode'>
 </div>
 <div id='console'>
 </div>
@@ -66,7 +66,7 @@
     __$__.Update.PositionUpdate();
     __$__.editor.getSelection().clearSelection();
 
-    document.getElementById('context').textContent = (__$__.Context.UseContext) ? 'Use Context' : 'No Context';
+    document.getElementById('viewmode').textContent = (__$__.Context.Snapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
 </script>
 </body>
 </html>

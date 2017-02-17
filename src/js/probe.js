@@ -1,36 +1,36 @@
-__$__.VisualizeVariable = {};
+__$__.Probe = {};
 
 
-__$__.VisualizeVariable.FunctionFlame = function() {
+__$__.Probe.FunctionFlame = function() {
     this.next = null;
     this.prev = null;
     this.env = {};
 };
 
 
-__$__.VisualizeVariable.BlockFlame = function() {
+__$__.Probe.BlockFlame = function() {
     this.next = null;
     this.prev = null;
     this.env = {}
 };
 
 
-__$__.VisualizeVariable.StackEnv = function() {
-    this.head = new __$__.VisualizeVariable.FunctionFlame();
-    this.tail = new __$__.VisualizeVariable.BlockFlame();
+__$__.Probe.StackEnv = function() {
+    this.head = new __$__.Probe.FunctionFlame();
+    this.tail = new __$__.Probe.BlockFlame();
     this.head.next = this.tail;
     this.tail.prev = this.head;
 };
 
 
-__$__.VisualizeVariable.StackEnv.prototype.push = function(flame) {
+__$__.Probe.StackEnv.prototype.push = function(flame) {
     this.tail.next = flame;
     flame.prev = this.tail;
     this.tail = flame;
 };
 
 
-__$__.VisualizeVariable.StackEnv.prototype.pop = function() {
+__$__.Probe.StackEnv.prototype.pop = function() {
     var ret = this.tail;
 
     ret.prev.next = null;
@@ -41,17 +41,17 @@ __$__.VisualizeVariable.StackEnv.prototype.pop = function() {
 };
 
 
-__$__.VisualizeVariable.StackEnv.prototype.addVariable = function(variable, kind, visualize) {
+__$__.Probe.StackEnv.prototype.addVariable = function(variable, kind, visualize) {
     var current = this.tail;
 
     if (kind == 'var') {
-        while (!(current instanceof __$__.VisualizeVariable.FunctionFlame)) {
+        while (!(current instanceof __$__.Probe.FunctionFlame)) {
             current = current.prev;
         }
 
         current.env[variable] = visualize;
     } else {
-        while (!(current instanceof __$__.VisualizeVariable.BlockFlame)) {
+        while (!(current instanceof __$__.Probe.BlockFlame)) {
             current = current.prev;
         }
 
@@ -59,7 +59,7 @@ __$__.VisualizeVariable.StackEnv.prototype.addVariable = function(variable, kind
     }
 };
 
-__$__.VisualizeVariable.StackEnv.prototype.visualizeVariable = function() {
+__$__.Probe.StackEnv.prototype.Variables = function() {
     var retObj = {};
     var current = this.tail;
 

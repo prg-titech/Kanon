@@ -23,7 +23,7 @@ __$__.JumpToConstruction.ClickEventFunction = function(param) {
     // no choose
     else return;
 
-    __$__.Context.SwitchContext(true);
+    __$__.Context.SwitchViewMode(true);
 
     if (__$__.JumpToConstruction.ClickElement.node)
         __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
