@@ -67,6 +67,10 @@
     __$__.editor.getSelection().clearSelection();
 
     document.getElementById('viewmode').textContent = (__$__.Context.Snapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
+
+    window.onresize = function() {
+        __$__.network.redraw();
+    };
 </script>
 </body>
 </html>
