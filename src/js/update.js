@@ -58,6 +58,7 @@ __$__.Update.PositionUpdate = function(e) {
  * This update the network with the context at the cursor position.
  */
 __$__.Update.ContextUpdate = function(e) {
+    __$__.network.redraw();
     if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '' || e === 'changed') {
         // initialize some data
         __$__.Context.Initialize();
