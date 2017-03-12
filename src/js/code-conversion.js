@@ -33,15 +33,18 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
         visitors.push(__$__.ASTTransforms.BlockedProgram());
         visitors.push(__$__.ASTTransforms.AddSomeCodeInHeadAndTail());
         visitors.push(__$__.ASTTransforms.Context());
+        visitors.push(__$__.ASTTransforms.CallExpressionToFunction());
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
 
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
             __$__.Context.LoopIdPositions[id].useID = false;
         });
-
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
             __$__.Context.NewIdPositions[id].useID = false;
+        });
+        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
+            __$__.Context.CallIdPositions[id].useID = false;
         });
 
 
@@ -51,13 +54,16 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
             if (!__$__.Context.LoopIdPositions[id].useID) delete __$__.Context.LoopIdPositions[id];
         });
-
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
             if (!__$__.Context.NewIdPositions[id].useID) delete __$__.Context.NewIdPositions[id];
+        });
+        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
+            if (!__$__.Context.CallIdPositions[id].useID) delete __$__.Context.CallIdPositions[id];
         });
 
 
         return escodegen.generate(ast);
     } catch (e) {
+        console.log(e);
     }
 };

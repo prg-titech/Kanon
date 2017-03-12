@@ -11,7 +11,13 @@
 <body>
 
 <script>
-    var __$__ = {};
+    var __$__ = {
+        SummarizedViewColor: {
+            AddNode: 'orange',
+            AddEdge: 'orange',
+            RemoveEdge: 'seagreen'
+        }
+    };
 </script>
 <script type="text/javascript" src="external/ace-builds/src/ace.js"></script>
 <script type="text/javascript" src="external/esprima.js"></script>
@@ -59,7 +65,7 @@
     __$__.options = {
         autoResize: false,
         nodes: {color: 'skyblue'},
-        edges: {arrows: 'to', color: 'skyblue'},
+        edges: {arrows: 'to', color: 'skyblue', width: 3},
         interaction: {zoomView: false},
     };
     __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);

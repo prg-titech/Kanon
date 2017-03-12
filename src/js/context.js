@@ -9,6 +9,7 @@ __$__.Context = {
     LoopContext: {'noLoop': 1},
     CheckPointTable: {},
     LoopIdPositions: {},
+    CallIdPositions: {},
     NewIdPositions: {}
 };
 
@@ -221,7 +222,7 @@ __$__.Context.Draw = function(e) {
             var index = addedNodeId.indexOf(node.id)
 
             if (index >= 0) {
-                node.color = 'orange';
+                node.color = __$__.SummarizedViewColor.AddNode;
                 delete addedNodeId[index];
             }
         });
@@ -231,7 +232,7 @@ __$__.Context.Draw = function(e) {
 
             addedEdgeData.forEach((edgeData, index) => {
                 if (edgeData[0] == edge.from && edgeData[1] == edge.to && edgeData[2] == edge.label) {
-                    edge.color = 'orange';
+                    edge.color = __$__.SummarizedViewColor.AddEdge;
                     delete addedEdgeData[index];
                 }
             });
@@ -249,7 +250,7 @@ __$__.Context.Draw = function(e) {
                 id: id,
                 label: label,
                 physics: false,
-                color: 'orange'
+                color: __$__.SummarizedViewColor.AddNode
             });
         });
 
@@ -258,7 +259,7 @@ __$__.Context.Draw = function(e) {
                 from: data[0],
                 to: data[1],
                 label: data[2],
-                color: 'orange',
+                color: __$__.SummarizedViewColor.AddEdge,
                 dashes: true
             });
         });
@@ -268,7 +269,7 @@ __$__.Context.Draw = function(e) {
                 from: data[0],
                 to: data[1],
                 label: data[2],
-                color: 'seagreen',
+                color: __$__.SummarizedViewColor.RemoveEdge,
                 dashes: true
             });
         });

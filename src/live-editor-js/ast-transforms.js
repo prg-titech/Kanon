@@ -6,19 +6,21 @@ let b = __$__.ASTBuilder;
 
 /** 
  * before: new Hoge()
+ *
  * after:  (() => {
- *             var __temp = new Hoge();
+ *             var __temp = new Hoge(), __objectID = '';
+ *             __call_stack.forEach(id => {
+ *                 __objectID += id + '-' + __call_count[id] + '-';
+ *             });
+ *             __objectID += 'unique ID';
  *
- *             if (__newIdCounter[id]) __newIdCounter[id]++;
- *             else __newIdCounter[id] = 1;
+ *             if (__newIdCounter[__objectID]) __newIdCounter[__objectID]++;
+ *             else __newIdCounter[__objectID] = 1;
  *
- *             __temp.__id = id + "-" + __newIdCounter[id];
+ *             __temp.__id = __objectID + '-' + __newIdConter[__objectID];
  *             __objs.push(__temp);
  *             return __temp;
  *         })()
- *
- * "id" is unique number of this function
- * "__newIdCounter[id]" is the number of times this is called
  *
  */
 __$__.ASTTransforms.NewExpressionToFunction = function() {
@@ -28,7 +30,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                 const counterName = "__newIdCounter";
 
                 // In this part, register the position of this NewExpression.
-                // If already registered, use the loopId
+                // If already registered, use the Id
                 let id;
                 Object.keys(__$__.Context.NewIdPositions).forEach(newId => {
                     var pos = __$__.Context.NewIdPositions[newId];
@@ -63,9 +65,180 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                         node.callee,
                                         node.arguments
                                     )
+                                ), b.VariableDeclarator(
+                                    b.Identifier('__objectID'),
+                                    b.Literal('')
                                 )],
                                 "var"
                             ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__call_stack'),
+                                        b.Identifier('forEach')
+                                    ),
+                                    [b.ArrowFunctionExpression(
+                                        [b.Identifier('id')],
+                                        b.BlockStatement(
+                                            [b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.Identifier('__objectID'),
+                                                    "+=",
+                                                    b.BinaryExpression(
+                                                        b.BinaryExpression(
+                                                            b.BinaryExpression(
+                                                                b.Identifier('id'),
+                                                                "+",
+                                                                b.Literal('-')
+                                                            ),
+                                                            "+",
+                                                            b.MemberExpression(
+                                                                b.Identifier('__call_count'),
+                                                                b.Identifier('id'),
+                                                                true
+                                                            )
+                                                        ),
+                                                        "+",
+                                                        b.Literal('-')
+                                                    )
+                                                )
+                                            )]
+                                        )
+                                    )]
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                b.AssignmentExpression(
+                                    b.Identifier('__objectID'),
+                                    "+=",
+                                    b.Literal(id)
+                                )
+                            ),
+                            b.IfStatement(
+                                b.MemberExpression(
+                                    b.Identifier(counterName),
+                                    b.Identifier('__objectID'),
+                                    true
+                                ),
+                                b.ExpressionStatement(
+                                    b.UpdateExpression(
+                                        b.MemberExpression(
+                                            b.Identifier(counterName),
+                                            b.Identifier('__objectID'),
+                                            true
+                                        ),
+                                        "++",
+                                        false
+                                    )
+                                ),
+                                b.ExpressionStatement(
+                                    b.AssignmentExpression(
+                                        b.MemberExpression(
+                                            b.Identifier(counterName),
+                                            b.Identifier('__objectID'),
+                                            true
+                                        ),
+                                        "=",
+                                        b.Literal(1)
+                                    )
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                b.AssignmentExpression(
+                                    b.MemberExpression(
+                                        b.Identifier("__temp"),
+                                        b.Identifier("__id")
+                                    ),
+                                    "=",
+                                    b.BinaryExpression(
+                                        b.BinaryExpression(
+                                            b.Identifier('__objectID'),
+                                            "+",
+                                            b.Literal("-")
+                                        ),
+                                        "+",
+                                        b.MemberExpression(
+                                            b.Identifier(counterName),
+                                            b.Identifier('__objectID'),
+                                            true
+                                        )
+                                    )
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier("__objs"),
+                                        b.Identifier("push")
+                                    ),
+                                    [b.Identifier("__temp")]
+                                )
+                            ),
+                            b.ReturnStatement(
+                                b.Identifier("__temp")
+                            )
+                        ])
+                    ),
+                    []
+                );
+            }
+        }
+    };
+};
+
+
+/**
+ * To give CallExpression a unique ID,
+ * we convert CallExprssion to the following example program.
+ *
+ * before:
+ * func(arg1, arg2, ...)
+ *
+ * after:
+ * (() => {
+ *     if (__call_count['unique ID']) __call_count['unique ID']++;
+ *     else __call_count['unique ID'] = 1;
+ *     __call_stack.push('unique ID');
+ *     func(arg1, arg2, ...);
+ *     __call_stack.pop();
+ * })()
+ */
+__$__.ASTTransforms.CallExpressionToFunction = function() {
+    return {
+        leave(node, path) {
+            if (node.type === "CallExpression" && node.loc) {
+                const counterName = "__call_count";
+                const stackName = "__call_stack";
+
+                // In this part, register the position of this CallExpression.
+                // If already registered, use the Id
+                let id;
+                Object.keys(__$__.Context.CallIdPositions).forEach(callId => {
+                    var pos = __$__.Context.CallIdPositions[callId];
+                    if (pos.start.line == node.loc.start.line &&
+                            pos.start.column == node.loc.start.column &&
+                            pos.end.line == node.loc.end.line &&
+                            pos.end.column == node.loc.end.column) {
+                        id = callId;
+                        pos.useID = true;
+                    }
+                });
+                // the case of not registered yet.
+                if (!id) {
+                    let i = 1;
+                    while (!id) {
+                        let callId = 'call' + i;
+                        if (Object.keys(__$__.Context.CallIdPositions).indexOf(callId) == -1) id = callId;
+                        i++;
+                    }
+                    __$__.Context.CallIdPositions[id] = node.loc;
+                    __$__.Context.CallIdPositions[id].useID = true;
+                }
+
+                return b.CallExpression(
+                    b.ArrowFunctionExpression(
+                        [],
+                        b.BlockStatement([
                             b.IfStatement(
                                 b.MemberExpression(
                                     b.Identifier(counterName),
@@ -96,38 +269,28 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                 )
                             ),
                             b.ExpressionStatement(
-                                b.AssignmentExpression(
+                                b.CallExpression(
                                     b.MemberExpression(
-                                        b.Identifier("__temp"),
-                                        b.Identifier("__id")
+                                        b.Identifier(stackName),
+                                        b.Identifier("push")
                                     ),
-                                    "=",
-                                    b.BinaryExpression(
-                                        b.BinaryExpression(
-                                            b.Literal(id),
-                                            "+",
-                                            b.Literal("-")
-                                        ),
-                                        "+",
-                                        b.MemberExpression(
-                                            b.Identifier(counterName),
-                                            b.Literal(id),
-                                            true
-                                        )
-                                    )
+                                    [b.Literal(id)]
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    node.callee,
+                                    node.arguments
                                 )
                             ),
                             b.ExpressionStatement(
                                 b.CallExpression(
                                     b.MemberExpression(
-                                        b.Identifier("__objs"),
-                                        b.Identifier("push")
+                                        b.Identifier(stackName),
+                                        b.Identifier("pop")
                                     ),
-                                    [b.Identifier("__temp")]
+                                    []
                                 )
-                            ),
-                            b.ReturnStatement(
-                                b.Identifier("__temp")
                             )
                         ])
                     ),
@@ -169,6 +332,14 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         b.VariableDeclarator(
                             b.Identifier('__time_counter'),
                             b.Literal(0)
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__call_count'),
+                            b.ObjectExpression([])
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__call_stack'),
+                            b.ArrayExpression([])
                         )
                     ], 'var')
                 );
@@ -242,7 +413,7 @@ __$__.ASTTransforms.Context = function () {
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
                 // In this part, register the position of this loop.
-                // If already registered, use the loopId
+                // If already registered, use the Id
                 let id;
                 Object.keys(__$__.Context.LoopIdPositions).forEach(loopId => {
                     var pos = __$__.Context.LoopIdPositions[loopId];

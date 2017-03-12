@@ -144,89 +144,77 @@ __$__.Update.UpdateIdPositions = function(e) {
     var end = {line: e.end.row + 1, column: e.end.column};
     var compare = __$__.Update.ComparePosition;
 
+    var modify_by_insert = function(pos) {
+        // if inserted code is the upper part of the loop
+        if (compare(start, '<', pos.start)) {
+            if (pos.start.line == start.line)
+                pos.start.column += e.lines[e.lines.length-1].length;
+            if (pos.end.line   == start.line)
+                pos.end.column   += e.lines[e.lines.length-1].length;
+
+            pos.start.line += e.lines.length - 1;
+            pos.end.line   += e.lines.length - 1;
+        } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
+            if (pos.end.line   == start.line)
+                pos.end.column   += e.lines[e.lines.length-1].length;
+
+            pos.end.line   += e.lines.length - 1;
+        }
+    };
+    var modify_by_remove = function(pos) {
+        // if removed code is the upper part of the loop
+        if (compare(end, '<', pos.start)) {
+            if (pos.start.line == end.line)
+                pos.start.column -= e.lines[e.lines.length-1].length;
+            if (pos.end.line   == end.line)
+                pos.end.column   -= e.lines[e.lines.length-1].length;
+
+            pos.start.line -= e.lines.length - 1;
+            pos.end.line   -= e.lines.length - 1;
+        } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
+            if (pos.end.line   == end.line)
+                pos.end.column   -= e.lines[e.lines.length-1].length;
+
+            pos.end.line   -= e.lines.length - 1;
+        } else if (compare(start, '<', pos.start) && compare(pos.end, '<', end)) { // if removed code is the outer part of the loop
+            return true;
+        }
+    };
 
     if (e.action == 'insert') {
         // update LoopIdPositions
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            var pos = __$__.Context.LoopIdPositions[id];
-
-            // if inserted code is the upper part of the loop
-            if (compare(start, '<', pos.start)) {
-                if (pos.start.line == start.line)
-                    pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-
-                pos.start.line += e.lines.length - 1;
-                pos.end.line   += e.lines.length - 1;
-            } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-
-                pos.end.line   += e.lines.length - 1;
-            }
+            modify_by_insert(__$__.Context.LoopIdPositions[id]);
         });
 
         // update NewIdPositions
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            var pos = __$__.Context.NewIdPositions[id];
+            modify_by_insert(__$__.Context.NewIdPositions[id]);
+        });
 
-            // if inserted code is the upper part of the loop
-            if (compare(start, '<', pos.start)) {
-                if (pos.start.line == start.line)
-                    pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-
-                pos.start.line += e.lines.length - 1;
-                pos.end.line   += e.lines.length - 1;
-            } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-
-                pos.end.line   += e.lines.length - 1;
-            }
+        // update CallIdPositions
+        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
+            modify_by_insert(__$__.Context.CallIdPositions[id]);
         });
     } else { // e.action == 'remove'
-        // update LoopIdPositions
         Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            var pos = __$__.Context.LoopIdPositions[id];
-
-            // if inserted code is the upper part of the loop
-            if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line)
-                    pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
-
-                pos.start.line -= e.lines.length - 1;
-                pos.end.line   -= e.lines.length - 1;
-            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
-
-                pos.end.line   -= e.lines.length - 1;
-            }
+            var dlt = modify_by_remove(__$__.Context.LoopIdPositions[id]);
+            if (dlt)
+                delete __$__.Context.LoopIdPositions[id];
         });
+
         // update NewIdPositions
         Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            var pos = __$__.Context.NewIdPositions[id];
+            var dlt = modify_by_remove(__$__.Context.NewIdPositions[id]);
+            if (dlt)
+                delete __$__.Context.NewIdPositions[id];
+        });
 
-            // if inserted code is the upper part of the loop
-            if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line)
-                    pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
-
-                pos.start.line -= e.lines.length - 1;
-                pos.end.line   -= e.lines.length - 1;
-            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
-
-                pos.end.line   -= e.lines.length - 1;
-            }
+        // update CallIdPositions
+        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
+            var dlt = modify_by_remove(__$__.Context.CallIdPositions[id]);
+            if (dlt)
+                delete __$__.Context.CallIdPositions[id];
         });
     }
 };
