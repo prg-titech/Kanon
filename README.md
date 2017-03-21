@@ -1,20 +1,24 @@
 # Kanon
 
-__Kanon__ is a live programming environment.
+__Kanon__ is a live programming environment for the data structures.
 If you write JavaScript code in left side editor,
-data structures that are got by executing your code are rendered in right side as a graph.
+data structures got by executing your code are rendered in right side as a graph.
 
 ## How to use
+
+You can use Kanon immediately at [https://prg-titech.github.io/Kanon/](https://prg-titech.github.io/Kanon/).
 
 ### How to build
 
 __Kanon__ is using other some libraries to implement.
-Then, when you use __Kanon__ in your local environment, 
+So, you would like to use __Kanon__ in your local environment, 
 execute the following command:
 ```
 git clone --recursive https://github.com/prg-titech/Kanon.git
 ```
 If finished, go to Kanon directory and open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html).
+
+## 
 
 ## NOTE
 
