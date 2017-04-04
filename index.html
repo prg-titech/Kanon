@@ -37,7 +37,10 @@
 <div id="editor">
 <script>
     __$__.editor = ace.edit("editor");
-    __$__.editor.setValue(window.localStorage["Kanon-Code"] || "");
+    if (window.localStorage["Kanon-Code"] && window.localStorage["Kanon-Code"].indexOf('__$__') === -1)
+        __$__.editor.setValue(window.localStorage["Kanon-Code"]);
+    else
+        __$__.editor.setValue('');
 
     __$__.editor.getSession().setMode('ace/mode/javascript');
     __$__.editor.getSession().setUseWorker(false);
