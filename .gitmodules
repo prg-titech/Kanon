@@ -7,6 +7,3 @@
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/estools/escodegen.git
-[submodule "external/esprima"]
-	path = external/esprima
-	url = https://github.com/jquery/esprima.git
