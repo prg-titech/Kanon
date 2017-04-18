@@ -1,28 +1,28 @@
 # Kanon
 
-__Kanon__ is a live programming environment for the data structures.
-If you write JavaScript code in left side editor,
-data structures got by executing your code are rendered in right side as a graph.
+__Kanon__ is a live programming environment for data structures.
+While you write JavaScript code in the editor on the left-hand side,
+the data structures constructed during the execution of the code appears as a graph on the right-hand side.
 
 ## How to use
 
-You can use Kanon immediately at [https://prg-titech.github.io/Kanon/](https://prg-titech.github.io/Kanon/).
+Kanon runs on your browser.  Open the following page: [https://prg-titech.github.io/Kanon/](https://prg-titech.github.io/Kanon/).
 
-### How to build
+## How to build
 
-__Kanon__ is using other some libraries to implement.
-So, you would like to use __Kanon__ in your local environment, 
-execute the following command:
+To build __Kanon__ in your local environment,
+execute the following command.
 ```
 git clone --recursive https://github.com/prg-titech/Kanon.git
 ```
-If finished, go to Kanon directory and open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html).
+This will copy the source code of Kanon as well as the external libraries.
+After downloaded, go to the Kanon directory and open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html).
 
 ## 
 
 ## NOTE
 
-__Kanon__ use some other libraries.
+__Kanon__ uses the following libraries.
 
 - [vis.js](http://visjs.org) (https://github.com/almende/vis)
 
@@ -41,4 +41,4 @@ I copied https://unpkg.com/esprima@3.1.1/dist/esprima.js and pasted to externals
 
 ## LICENSE
 
-Kanon is "MIT License", see LICENSE for more info.
+Kanon is distributed under the MIT License. See LICENSE for more information.
