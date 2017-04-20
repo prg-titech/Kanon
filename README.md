@@ -20,7 +20,7 @@ After downloaded, go to the Kanon directory and open [index.html](https://github
 
 ## 
 
-## NOTE
+## Notes
 
 __Kanon__ uses the following libraries.
 
@@ -29,16 +29,17 @@ __Kanon__ uses the following libraries.
 - [Ace](https://ace.c9.io) (https://github.com/ajaxorg/ace)
 
 - [esprima](http://esprima.org) (https://github.com/jquery/esprima/tree/3.1.1)
+  [*]
 
 - escodegen (https://github.com/estools/escodegen)
 
-In order to use Esprima,
-I copied https://unpkg.com/esprima@3.1.1/dist/esprima.js and pasted to externals/esprima.js
 
-## Reference
+## References
 
 - Live Editor (https://github.com/Khan/live-editor)
 
 ## LICENSE
 
 Kanon is distributed under the MIT License. See LICENSE for more information.
+
+[*]: Our repository includes esprima.js in the externals directory, which is taken from https://unpkg.com/esprima@3.1.1/dist/esprima.js .
