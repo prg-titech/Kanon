@@ -92,7 +92,7 @@ __$__.Update.ContextUpdate = function(e) {
  * return true if new graph is different from old graph
  * return false otherwise
  */
-__$__.Update.isChange = function(graph, context = false) {
+__$__.Update.isChange = function(graph, snapshot = false) {
     var graphNodes = graph.nodes.map(function(node) {
         if (node.color && node.color !== 'white')
             return [node.id, node.label, node.color];
@@ -106,10 +106,10 @@ __$__.Update.isChange = function(graph, context = false) {
             return [edge.from, edge.to, edge.label];
     });
     var networkNodes = [];
-    var temp = (context) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
+    var temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
 
     Object.keys(temp).forEach(function(key){
-        if (context && temp[key].color && temp[key].color !== 'white')
+        if (snapshot && temp[key].color && temp[key].color !== 'white')
             networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
         else
             networkNodes.push([temp[key].id, temp[key].label]);
@@ -117,10 +117,10 @@ __$__.Update.isChange = function(graph, context = false) {
     
 
     var networkEdges = [];
-    temp = (context) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
+    temp = (snapshot) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
 
     Object.keys(temp).forEach(function(key){
-        if (context && temp[key].color && temp[key].color !== 'white')
+        if (snapshot && temp[key].color && temp[key].color !== 'white')
             networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);
         else
             networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);

@@ -19,6 +19,8 @@ __$__.ToVisjs.Translator = function(graph) {
         if (graph.nodes[i] instanceof __$__.Traverse.__Literal) {
             node.label = "" + graph.nodes[i].value;
             node.color = 'white';
+        // } else if (graph.nodes[i] instanceof __$__.Traverse.__Function) {
+        //     node.lobel = "Function";
         } else if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
             node.label = graph.nodes[i].id;
             node.physics = true;

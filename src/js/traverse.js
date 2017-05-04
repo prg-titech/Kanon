@@ -17,6 +17,10 @@ __$__.Traverse.__Literal = function(value) {
     this.value = value;
 };
 
+// __$__.Traverse.__Function = function(fun_name) {
+//     // this.__id = fun_name;
+// };
+
 
 __$__.Traverse.__Graph = function() {
     this.nodes = [];
@@ -26,6 +30,7 @@ __$__.Traverse.__Graph = function() {
 
 __$__.Traverse.traverse = function(objs, variables = {}) {
     var ret = new __$__.Traverse.__Graph();
+    var includeVariable = {};
 
     for (var i = 0; i < objs.length; i++) {
         var obj = objs[i];
@@ -37,22 +42,6 @@ __$__.Traverse.traverse = function(objs, variables = {}) {
     }
 
     Object.keys(variables).forEach(function(key) {
-        var obj = variables[key];
-
-        if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined)
-            return;
-
-        __$__.Traverse.dfs(ret, obj);
-    });
-
-    for (var i = 0; i < ret.nodes.length; i++) {
-        if (ret.nodes[i].__id)
-            continue;
-
-        __$__.Traverse.CheckId(ret.nodes[i], ret.edges);
-    }
-
-    Object.keys(variables).forEach(function(key) {
         var tempNode = new __$__.Traverse.__VariableNode(key);
         var index = ret.nodes.indexOf(variables[key]);
 
@@ -61,8 +50,35 @@ __$__.Traverse.traverse = function(objs, variables = {}) {
 
             ret.nodes.push(tempNode);
             ret.edges.push(tempEdge);
+        // } else {
+        //     if (typeof variables[key] === 'function') {
+        //         var fun_node = new __$__.Traverse.__Function(variables[key]);
+        //         var tempEdge = new __$__.Traverse.__Edge(tempNode, fun_node, key);
+        //         ret.nodes.push(fun_node);
+        //         ret.nodes.push(tempNode);
+        //         ret.edges.push(tempEdge);
+        //     } else if (typeof variables[key] === 'number') {
+        //         var num_node = new __$__.Traverse.__Literal(variables[key]);
+        //         var tempEdge = new __$__.Traverse.__Edge(tempNode, num_node, key);
+        //         ret.nodes.push(num_node);
+        //         ret.nodes.push(tempNode);
+        //         ret.edges.push(tempEdge);
+        //     } else if (typeof variables[key] === 'string') {
+        //         var str_node = new __$__.Traverse.__Literal(variables[key]);
+        //         var tempEdge = new __$__.Traverse.__Edge(tempNode, str_node, key);
+        //         ret.nodes.push(str_node);
+        //         ret.nodes.push(tempNode);
+        //         ret.edges.push(tempEdge);
+        //     }
         }
     });
+
+    for (var i = 0; i < ret.nodes.length; i++) {
+        if (ret.nodes[i].__id)
+            continue;
+
+        __$__.Traverse.CheckId(ret.nodes[i], ret.edges);
+    }
 
 
     return ret;

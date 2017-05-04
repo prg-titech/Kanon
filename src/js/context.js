@@ -119,9 +119,18 @@ __$__.Context.Draw = function(e) {
     if (__$__.Context.Snapshot) {
         try {
             var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
-            var loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-            var count = __$__.Context.LoopContext[loopId];
-            var graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
+            var loopId, count, graph;
+            if (checkPointId.afterId &&
+                __$__.Context.CheckPointTable[checkPointId.afterId].column === __$__.editor.getCursorPosition().column &&
+                __$__.Context.CheckPointTable[checkPointId.afterId].line === __$__.editor.getCursorPosition().row + 1) {
+                loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
+                count = __$__.Context.LoopContext[loopId];
+                graph = __$__.Context.StoredGraph[checkPointId.afterId][loopId][count];
+            } else {
+                loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
+                count = __$__.Context.LoopContext[loopId];
+                graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
+            }
 
             if (!graph) graph = {nodes: [], edges: []};
         } catch (e) {
@@ -289,7 +298,7 @@ __$__.Context.FindId = function(pos) {
         let temp = __$__.Context.CheckPointTable[key];
 
         // the case that temp can become before
-        if (temp.line < pos.row + 1 || temp.line == pos.row + 1 && temp.column <= pos.column) {
+        if (temp.line < pos.row + 1 || temp.line == pos.row + 1 && temp.column < pos.column) {
             if (!before || before.line < temp.line || before.line == temp.line && before.column <= temp.column) {
                 before = temp;
                 res.beforeId = key;

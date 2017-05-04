@@ -612,9 +612,9 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
                         s.declarations.forEach(declarator => {
-                            if (declarator.id.name[0] === '$' && declarator.id.name.length > 1)
-                                env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
-                            else
+                            // if (declarator.id.name[0] === '$' && declarator.id.name.length > 1)
+                            //     env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
+                            // else
                                 env.addVariable(declarator.id.name, s.kind, false);
                         });
                     }
@@ -627,12 +627,13 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
             if (node.type == 'VariableDeclarator') {
                 let parent = path[path.length - 2];
-                if (node.id.name[0] == '$' && node.id.name.length > 1) {
-                    node.id.name = node.id.name.slice(1, node.id.name.length);
-                    env.addVariable(node.id.name, parent.kind, true);
-                } else {
-                    env.addVariable(node.id.name, parent.kind, false);
-                }
+                // if (node.id.name[0] == '$' && node.id.name.length > 1) {
+                //     node.id.name = node.id.name.slice(1, node.id.name.length);
+                //     env.addVariable(node.id.name, parent.kind, true);
+                // } else {
+                //     env.addVariable(node.id.name, parent.kind, false);
+                // }
+                env.addVariable(node.id.name, parent.kind, true);
             }
 
             if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression', 'BlockStatement'].indexOf(node.type) >= 0) {

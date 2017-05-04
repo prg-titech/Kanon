@@ -64,6 +64,5 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
 
         return escodegen.generate(ast);
     } catch (e) {
-        console.log(e);
     }
 };
