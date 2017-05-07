@@ -8,9 +8,9 @@ __$__.Context = {
     TableTimeCounter: [],
     LoopContext: {'noLoop': 1},
     CheckPointTable: {},
-    LoopIdPositions: {},
-    CallIdPositions: {},
-    NewIdPositions: {}
+    LoopLabelPosition: {},
+    CallLabelPosition: {},
+    NewLabelPosition: {}
 };
 
 
@@ -26,7 +26,7 @@ __$__.Context.Initialize = function() {
 
 /**
  * @param {Array} objects: this equals __objs in transformed code
- * @param {string} loopId
+ * @param {string} loopLabel
  * @param {int} count
  * @param {int} timeCounter
  * @param {int} checkPointId
@@ -34,31 +34,31 @@ __$__.Context.Initialize = function() {
  *
  * this function is checkPoint is located at the head and the tail of each Statement.
  */
-__$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPointId, probe) {
-    var storedGraph = __$__.Context.StoreGraph(objects, loopId, count, checkPointId, probe);
+__$__.Context.CheckPoint = function(objects, loopLabel, count, timeCounter, checkPointId, probe) {
+    var storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, checkPointId, probe);
 
-    __$__.Context.TableTimeCounter.push({loopId: loopId, loopCount: count});
+    __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
 
 
-    if (!__$__.Context.NestLoop[loopId]) __$__.Context.NestLoop[loopId] = {inner: [], parent: []};
+    if (!__$__.Context.NestLoop[loopLabel]) __$__.Context.NestLoop[loopLabel] = {inner: [], parent: []};
 
 
     // make __$__.Context.NestLoop
-    if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1] != loopId) {
+    if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1] != loopLabel) {
         var parent = __$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1];
 
-        if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 2] == loopId) {
+        if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 2] == loopLabel) {
             __$__.Context.StackToCheckLoop.pop();
         } else {
-            if (parent && __$__.Context.NestLoop[loopId].parent.indexOf(parent) == -1)
-                __$__.Context.NestLoop[loopId].parent.push(parent);
+            if (parent && __$__.Context.NestLoop[loopLabel].parent.indexOf(parent) == -1)
+                __$__.Context.NestLoop[loopLabel].parent.push(parent);
 
 
-            if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopId) == -1)
-                __$__.Context.NestLoop[parent].inner.push(loopId);
+            if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopLabel) == -1)
+                __$__.Context.NestLoop[parent].inner.push(loopLabel);
 
 
-            __$__.Context.StackToCheckLoop.push(loopId);
+            __$__.Context.StackToCheckLoop.push(loopLabel);
         }
     }
 
@@ -73,7 +73,12 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 
 
         if (!flag) {
-            __$__.JumpToConstruction.GraphData.nodes.push({id: node.id, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
+            __$__.JumpToConstruction.GraphData.nodes.push({
+                id: node.id,
+                loopLabel: loopLabel,
+                count: count,
+                pos: __$__.Context.CheckPointTable[checkPointId]
+            });
         }
     });
 
@@ -88,7 +93,14 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 
 
         if (!flag) {
-            __$__.JumpToConstruction.GraphData.edges.push({from: edge.from, to: edge.to, label: edge.label, loopId: loopId, count: count, pos: __$__.Context.CheckPointTable[checkPointId]});
+            __$__.JumpToConstruction.GraphData.edges.push({
+                from: edge.from,
+                to: edge.to,
+                label: edge.label,
+                loopLabel: loopLabel,
+                count: count,
+                pos: __$__.Context.CheckPointTable[checkPointId]
+            });
         }
     });
 
@@ -97,16 +109,16 @@ __$__.Context.CheckPoint = function(objects, loopId, count, timeCounter, checkPo
 };
 
 
-__$__.Context.StoreGraph = function(objects, loopId, count, checkPointId, probe) {
+__$__.Context.StoreGraph = function(objects, loopLabel, count, checkPointId, probe) {
     var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
 
     if (!__$__.Context.StoredGraph[checkPointId])
         __$__.Context.StoredGraph[checkPointId] = {};
 
-    if (!__$__.Context.StoredGraph[checkPointId][loopId])
-        __$__.Context.StoredGraph[checkPointId][loopId] = {};
+    if (!__$__.Context.StoredGraph[checkPointId][loopLabel])
+        __$__.Context.StoredGraph[checkPointId][loopLabel] = {};
 
-    __$__.Context.StoredGraph[checkPointId][loopId][count] = graph;
+    __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
 
 
     return graph;
@@ -119,17 +131,17 @@ __$__.Context.Draw = function(e) {
     if (__$__.Context.Snapshot) {
         try {
             var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
-            var loopId, count, graph;
+            var loopLabel, count, graph;
             if (checkPointId.afterId &&
                 __$__.Context.CheckPointTable[checkPointId.afterId].column === __$__.editor.getCursorPosition().column &&
                 __$__.Context.CheckPointTable[checkPointId.afterId].line === __$__.editor.getCursorPosition().row + 1) {
-                loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
-                count = __$__.Context.LoopContext[loopId];
-                graph = __$__.Context.StoredGraph[checkPointId.afterId][loopId][count];
+                loopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
+                count = __$__.Context.LoopContext[loopLabel];
+                graph = __$__.Context.StoredGraph[checkPointId.afterId][loopLabel][count];
             } else {
-                loopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-                count = __$__.Context.LoopContext[loopId];
-                graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopId][count];
+                loopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
+                count = __$__.Context.LoopContext[loopLabel];
+                graph = __$__.Context.StoredGraph[checkPointId.beforeId][loopLabel][count];
             }
 
             if (!graph) graph = {nodes: [], edges: []};
@@ -140,23 +152,26 @@ __$__.Context.Draw = function(e) {
         __$__.StorePositions.setPositions(graph);
 
         if (e === 'changed' || __$__.Update.isChange(graph, true))
-            __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+            __$__.network.setData({
+                nodes: new vis.DataSet(graph.nodes),
+                edges: new vis.DataSet(graph.edges)
+            });
 
     } else {
         var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
         if (!checkPointId.afterId)
             checkPointId.afterId = checkPointId.beforeId;
 
-        var beforeLoopId = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-        var afterLoopId  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
+        var beforeLoopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
+        var afterLoopLabel  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
 
         var addedNodeId = [], addedEdgeData = [];
         var removedNodeId = [], removedEdgeData = [];
 
-        // If beforeLoopId same afterLoopId, calcurate the gap between before and after graph.
-        if (beforeLoopId == afterLoopId) {
-            var beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopId];
-            var afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopId];
+        // If beforeLoopLabel same afterLoopLabel, calcurate the gap between before and after graph.
+        if (beforeLoopLabel == afterLoopLabel) {
+            var beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopLabel];
+            var afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopLabel];
 
             // take the number of common loop here
             var loopCount = [];
@@ -284,7 +299,10 @@ __$__.Context.Draw = function(e) {
         });
 
         if (e === 'changed' || __$__.Update.isChange(graph, true))
-            __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+            __$__.network.setData({
+                nodes: new vis.DataSet(graph.nodes),
+                edges: new vis.DataSet(graph.edges)
+            });
     }
 };
 
@@ -325,66 +343,66 @@ __$__.Context.SwitchViewMode = function(bool) {
 
 
 /**
- * @param {string} loopId
+ * @param {string} loopLabel
  *
  * This function is executed when a context is changed.
- * the argument is loop's id, and the loop's id is 'loopId' of the loop whose context is changed.
+ * the argument is loop's label, and the loop's label is 'loopLabel' of the loop whose context is changed.
  *
  */
-__$__.Context.ChangeInnerAndParentContext = function(loopId) {
-    var new_loop_count = __$__.Context.LoopContext[loopId];
-    var start_end = __$__.Context.StartEndInLoop[loopId][new_loop_count-1];
+__$__.Context.ChangeInnerAndParentContext = function(loopLabel) {
+    var new_loop_count = __$__.Context.LoopContext[loopLabel];
+    var start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
 
 
-    var changeInnerContext = function(loopId) {
+    var changeInnerContext = function(loopLabel) {
         var smallest_time;
 
 
-        __$__.Context.StartEndInLoop[loopId].forEach(compared_s_e => {
+        __$__.Context.StartEndInLoop[loopLabel].forEach(compared_s_e => {
             if (start_end.start < compared_s_e.start && compared_s_e.end < start_end.end) {
                 if (!smallest_time || smallest_time > compared_s_e.start)
                     smallest_time = compared_s_e.start;
             }
         });
 
-        // this is executed when the context of 'loopId' mast be changed
+        // this is executed when the context of 'loopLabel' mast be changed
         if (smallest_time) {
-            __$__.Context.LoopContext[loopId] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
+            __$__.Context.LoopContext[loopLabel] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
 
-            __$__.Context.NestLoop[loopId].inner.forEach(id => {
-                changeInnerContext(id);
+            __$__.Context.NestLoop[loopLabel].inner.forEach(label => {
+                changeInnerContext(label);
             });
         }
     };
 
-    var changeParentContext = function(loopId) {
-        var count = __$__.Context.LoopContext[loopId];
-        var start_end = __$__.Context.StartEndInLoop[loopId][count-1];
+    var changeParentContext = function(loopLabel) {
+        var count = __$__.Context.LoopContext[loopLabel];
+        var start_end = __$__.Context.StartEndInLoop[loopLabel][count-1];
 
 
-        __$__.Context.NestLoop[loopId].parent.forEach(id => {
-            var now_count = __$__.Context.LoopContext[id];
-            var s_e = __$__.Context.StartEndInLoop[id][now_count-1];
+        __$__.Context.NestLoop[loopLabel].parent.forEach(label => {
+            var now_count = __$__.Context.LoopContext[label];
+            var s_e = __$__.Context.StartEndInLoop[label][now_count-1];
 
 
-            // if the context of 'id' don't have to be changed
+            // if the context of 'label' don't have to be changed
             if (start_end.start > s_e.start && s_e.end > start_end.end)
                 return;
-            else { // if the context of 'id' must to be changed
-                __$__.Context.StartEndInLoop[id].forEach((compared_s_e, index) => {
+            else { // if the context of 'label' must to be changed
+                __$__.Context.StartEndInLoop[label].forEach((compared_s_e, index) => {
                     if (start_end.start > compared_s_e.start && compared_s_e.end > start_end.end) {
-                        __$__.Context.LoopContext[id] = index + 1;
-                        changeParentContext(id);
+                        __$__.Context.LoopContext[label] = index + 1;
+                        changeParentContext(label);
                     }
                 });
             }
         })
     }
 
-    __$__.Context.NestLoop[loopId].inner.forEach(id => {
-        changeInnerContext(id);
+    __$__.Context.NestLoop[loopLabel].inner.forEach(label => {
+        changeInnerContext(label);
     });
 
 
-    changeParentContext(loopId);
+    changeParentContext(loopLabel);
 };

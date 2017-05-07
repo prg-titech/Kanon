@@ -65,7 +65,8 @@ __$__.Probe.StackEnv.prototype.Variables = function() {
 
     while (current) {
         Object.keys(current.env).forEach(function(varName) {
-            if (typeof(retObj[varName]) === 'undefined') retObj[varName] = current.env[varName];
+            if (typeof(retObj[varName]) === 'undefined')
+                retObj[varName] = current.env[varName];
         });
 
         current = current.prev;
@@ -74,7 +75,8 @@ __$__.Probe.StackEnv.prototype.Variables = function() {
     var ret = [];
 
     Object.keys(retObj).forEach(function(varName) {
-        if (retObj[varName]) ret.push(varName);
+        if (retObj[varName])
+            ret.push(varName);
     });
 
 

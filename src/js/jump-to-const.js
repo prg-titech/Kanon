@@ -28,10 +28,13 @@ __$__.JumpToConstruction.ClickEventFunction = function(param) {
     if (__$__.JumpToConstruction.ClickElement.node)
         __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
             if (__$__.JumpToConstruction.ClickElement.node == nodeData.id) {
-                __$__.Context.LoopContext[nodeData.loopId] = nodeData.count;
-                __$__.Context.ChangeInnerAndParentContext(nodeData.loopId);
+                __$__.Context.LoopContext[nodeData.loopLabel] = nodeData.count;
+                __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
 
-                __$__.editor.moveCursorToPosition({row: nodeData.pos.line - 1, column: nodeData.pos.column});
+                __$__.editor.moveCursorToPosition({
+                    row: nodeData.pos.line - 1,
+                    column: nodeData.pos.column
+                });
             }
         });
 
@@ -41,10 +44,13 @@ __$__.JumpToConstruction.ClickEventFunction = function(param) {
                 __$__.JumpToConstruction.ClickElement.edge.to == edgeData.to &&
                 __$__.JumpToConstruction.ClickElement.edge.label == edgeData.label) {
 
-                __$__.Context.LoopContext[edgeData.loopId] = edgeData.count;
-                __$__.Context.ChangeInnerAndParentContext(edgeData.loopId);
+                __$__.Context.LoopContext[edgeData.loopLabel] = edgeData.count;
+                __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
 
-                __$__.editor.moveCursorToPosition({row: edgeData.pos.line - 1, column: edgeData.pos.column});
+                __$__.editor.moveCursorToPosition({
+                    row: edgeData.pos.line - 1,
+                    column: edgeData.pos.column
+                });
             }
         });
 

@@ -9,15 +9,15 @@ let b = __$__.ASTBuilder;
  *
  * after:  (() => {
  *             var __temp = new Hoge(), __objectID = '';
- *             __call_stack.forEach(id => {
- *                 __objectID += id + '-' + __call_count[id] + '-';
+ *             __call_stack.forEach(label => {
+ *                 __objectID += label + '-' + __call_count[label] + '-';
  *             });
  *             __objectID += 'unique ID';
  *
- *             if (__newIdCounter[__objectID]) __newIdCounter[__objectID]++;
- *             else __newIdCounter[__objectID] = 1;
+ *             if (__newLabelCounter[__objectID]) __newLabelCounter[__objectID]++;
+ *             else __newLabelCounter[__objectID] = 1;
  *
- *             __temp.__id = __objectID + '-' + __newIdConter[__objectID];
+ *             __temp.__id = __objectID + '-' + __newLabelCounter[__objectID];
  *             __objs.push(__temp);
  *             return __temp;
  *         })()
@@ -27,31 +27,31 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
     return {
         leave(node, path) {
             if (node.type === "NewExpression") {
-                const counterName = "__newIdCounter";
+                const counterName = "__newLabelCounter";
 
                 // In this part, register the position of this NewExpression.
-                // If already registered, use the Id
-                let id;
-                Object.keys(__$__.Context.NewIdPositions).forEach(newId => {
-                    var pos = __$__.Context.NewIdPositions[newId];
+                // If already registered, use the Label
+                let label;
+                Object.keys(__$__.Context.NewLabelPosition).forEach(newLabel => {
+                    var pos = __$__.Context.NewLabelPosition[newLabel];
                     if (pos.start.line == node.loc.start.line &&
                             pos.start.column == node.loc.start.column &&
                             pos.end.line == node.loc.end.line &&
                             pos.end.column == node.loc.end.column) {
-                        id = newId;
-                        pos.useID = true;
+                        label = newLabel;
+                        pos.useLabel = true;
                     }
                 });
                 // the case of not registered yet.
-                if (!id) {
+                if (!label) {
                     let i = 1;
-                    while (!id) {
-                        let newId = 'new' + i;
-                        if (Object.keys(__$__.Context.NewIdPositions).indexOf(newId) == -1) id = newId;
+                    while (!label) {
+                        let newLabel = 'new' + i;
+                        if (Object.keys(__$__.Context.NewLabelPosition).indexOf(newLabel) == -1) label = newLabel;
                         i++;
                     }
-                    __$__.Context.NewIdPositions[id] = node.loc;
-                    __$__.Context.NewIdPositions[id].useID = true;
+                    __$__.Context.NewLabelPosition[label] = node.loc;
+                    __$__.Context.NewLabelPosition[label].useLabel = true;
                 }
 
                 return b.CallExpression(
@@ -78,7 +78,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                         b.Identifier('forEach')
                                     ),
                                     [b.ArrowFunctionExpression(
-                                        [b.Identifier('id')],
+                                        [b.Identifier('label')],
                                         b.BlockStatement(
                                             [b.ExpressionStatement(
                                                 b.AssignmentExpression(
@@ -87,14 +87,14 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                                     b.BinaryExpression(
                                                         b.BinaryExpression(
                                                             b.BinaryExpression(
-                                                                b.Identifier('id'),
+                                                                b.Identifier('label'),
                                                                 "+",
                                                                 b.Literal('-')
                                                             ),
                                                             "+",
                                                             b.MemberExpression(
                                                                 b.Identifier('__call_count'),
-                                                                b.Identifier('id'),
+                                                                b.Identifier('label'),
                                                                 true
                                                             )
                                                         ),
@@ -111,7 +111,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                                 b.AssignmentExpression(
                                     b.Identifier('__objectID'),
                                     "+=",
-                                    b.Literal(id)
+                                    b.Literal(label)
                                 )
                             ),
                             b.IfStatement(
@@ -188,7 +188,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
 
 
 /**
- * To give CallExpression a unique ID,
+ * To give CallExpression a unique Label,
  * we convert CallExprssion to the following example program.
  *
  * before:
@@ -196,9 +196,9 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
  *
  * after:
  * (() => {
- *     if (__call_count['unique ID']) __call_count['unique ID']++;
- *     else __call_count['unique ID'] = 1;
- *     __call_stack.push('unique ID');
+ *     if (__call_count['unique Label']) __call_count['unique Label']++;
+ *     else __call_count['unique Label'] = 1;
+ *     __call_stack.push('unique Label');
  *     func(arg1, arg2, ...);
  *     __call_stack.pop();
  * })()
@@ -211,28 +211,28 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                 const stackName = "__call_stack";
 
                 // In this part, register the position of this CallExpression.
-                // If already registered, use the Id
-                let id;
-                Object.keys(__$__.Context.CallIdPositions).forEach(callId => {
-                    var pos = __$__.Context.CallIdPositions[callId];
+                // If already registered, use the Label
+                let label;
+                Object.keys(__$__.Context.CallLabelPosition).forEach(callLabel => {
+                    var pos = __$__.Context.CallLabelPosition[callLabel];
                     if (pos.start.line == node.loc.start.line &&
                             pos.start.column == node.loc.start.column &&
                             pos.end.line == node.loc.end.line &&
                             pos.end.column == node.loc.end.column) {
-                        id = callId;
-                        pos.useID = true;
+                        label = callLabel;
+                        pos.useLabel = true;
                     }
                 });
                 // the case of not registered yet.
-                if (!id) {
+                if (!label) {
                     let i = 1;
-                    while (!id) {
-                        let callId = 'call' + i;
-                        if (Object.keys(__$__.Context.CallIdPositions).indexOf(callId) == -1) id = callId;
+                    while (!label) {
+                        let callLabel = 'call' + i;
+                        if (Object.keys(__$__.Context.CallLabelPosition).indexOf(callLabel) == -1) label = callLabel;
                         i++;
                     }
-                    __$__.Context.CallIdPositions[id] = node.loc;
-                    __$__.Context.CallIdPositions[id].useID = true;
+                    __$__.Context.CallLabelPosition[label] = node.loc;
+                    __$__.Context.CallLabelPosition[label].useLabel = true;
                 }
 
                 return b.CallExpression(
@@ -242,14 +242,14 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                             b.IfStatement(
                                 b.MemberExpression(
                                     b.Identifier(counterName),
-                                    b.Literal(id),
+                                    b.Literal(label),
                                     true
                                 ),
                                 b.ExpressionStatement(
                                     b.UpdateExpression(
                                         b.MemberExpression(
                                             b.Identifier(counterName),
-                                            b.Literal(id),
+                                            b.Literal(label),
                                             true
                                         ),
                                         "++",
@@ -260,7 +260,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                     b.AssignmentExpression(
                                         b.MemberExpression(
                                             b.Identifier(counterName),
-                                            b.Literal(id),
+                                            b.Literal(label),
                                             true
                                         ),
                                         "=",
@@ -274,7 +274,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                         b.Identifier(stackName),
                                         b.Identifier("push")
                                     ),
-                                    [b.Literal(id)]
+                                    [b.Literal(label)]
                                 )
                             ),
                             b.ExpressionStatement(
@@ -305,9 +305,9 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  * Add some code in the head and the tail of user code.
  *
  * var __loopCounter = {},
- *     __loopIds = ['noLoop'],
+ *     __loopLabels = ['noLoop'],
  *     __loopCount = 1,
- *     __newIdCounter = {},
+ *     __newLabelCounter = {},
  *     __objs = [],
  *     __time_counter = 0,
  *     __time_counter_stack = [],
@@ -329,7 +329,7 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                             b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
-                            b.Identifier('__loopIds'),
+                            b.Identifier('__loopLabels'),
                             b.ArrayExpression([b.Literal('noLoop')])
                         ),
                         b.VariableDeclarator(
@@ -337,7 +337,7 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                             b.Literal(1)
                         ),
                         b.VariableDeclarator(
-                            b.Identifier('__newIdCounter'),
+                            b.Identifier('__newLabelCounter'),
                             b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
@@ -413,74 +413,71 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  *
  * after:
  *   while(condition) {
- *     let __loopId = 'loop' + id;
- *     __loopIds.push(__loopId);
- *     if (!__$__.Context.LoopContext[__loopId]) __$__.Context.LoopContext[__loopId] = 1;
+ *     let __loopLabel = 'loop' + label;
+ *     __loopLabels.push(__loopLabel);
+ *     if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = 1;
  *     let __loopCount =
- *         (__loopCounter[__loopId])
- *         ? ++__loopCounter[__loopId]
- *         : __loopCounter[__loopId] = 1;
+ *         (__loopCounter[__loopLabel])
+ *         ? ++__loopCounter[__loopLabel]
+ *         : __loopCounter[__loopLabel] = 1;
  *     if (__loopCount > 10000) throw 'Infinite Loop';
  *     let __start = __time_counter;
  *     __time_counter_stack.push({start: __time_counter});
  *
  *     ...
  *
- *     if (!__$__.Context.StartEndInLoop[__loopId])
- *         __$__.Context.StartEndInLoop[__loopId] = [];
+ *     if (!__$__.Context.StartEndInLoop[__loopLabel])
+ *         __$__.Context.StartEndInLoop[__loopLabel] = [];
  *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
- *     __$__.Context.StartEndInLoop[__loopId].push(__time_counter_stack.pop());
- *     __loopIds.pop();
+ *     __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
+ *     __loopLabels.pop();
  *   }
  *
- * __loopId is unique ID
+ * __loopLabel is unique label
  */
 __$__.ASTTransforms.Context = function () {
     return {
         enter(node, path) {
-            const loopIds = "__loopIds", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
+            const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
                 // In this part, register the position of this loop.
-                // If already registered, use the Id
-                let id;
-                Object.keys(__$__.Context.LoopIdPositions).forEach(loopId => {
-                    var pos = __$__.Context.LoopIdPositions[loopId];
+                // If already registered, use the label
+                let label;
+                Object.keys(__$__.Context.LoopLabelPosition).forEach(loopLabel => {
+                    var pos = __$__.Context.LoopLabelPosition[loopLabel];
                     if (pos.start.line == node.loc.start.line &&
                             pos.start.column == node.loc.start.column &&
                             pos.end.line == node.loc.end.line &&
                             pos.end.column == node.loc.end.column) {
-                        id = loopId;
-                        pos.useID = true;
+                        label = loopLabel;
+                        pos.useLabel = true;
                     }
                 });
-                // the case that the ID have not been registered yet.
-                if (!id) {
+                // the case that the Label have not been registered yet.
+                if (!label) {
                     let i = 1;
-                    let arr_ID = Object.keys(__$__.Context.LoopIdPositions);
-                    next: while(!id) {
-                        let loopId = node.type + i;
-                        // if (path[path.length - 2].type === 'LabeledStatement')
-                        //     loopId = path[path.length - 2].label.name + '-' + loopId
-                        // if (Object.keys(__$__.Context.LoopIdPositions).indexOf(loopId) == -1) id = loopId;
-                        for (var j = 0; j < arr_ID.length; j++) {
-                            if (arr_ID[j].indexOf(loopId) !== -1) {
+                    let arr_label = Object.keys(__$__.Context.LoopLabelPosition);
+                    next: while(!label) {
+                        let loopLabel = node.type + i;
+                        for (var j = 0; j < arr_label.length; j++) {
+                            if (arr_label[j].indexOf(loopLabel) !== -1) {
                                 i++;
                                 continue next;
                             }
                         }
-                        id = loopId
+                        label = loopLabel
                         if (path[path.length - 2].type === 'LabeledStatement')
-                            id += '-' + path[path.length - 2].label.name;
+                            label += '-' + path[path.length - 2].label.name;
                     }
-                    __$__.Context.LoopIdPositions[id] = node.loc;
-                    __$__.Context.LoopIdPositions[id].useID = true;
+                    __$__.Context.LoopLabelPosition[label] = node.loc;
+                    __$__.Context.LoopLabelPosition[label].useLabel = true;
                 }
 
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
-                // if (!__$__.Context.StartEndInLoop[__loopId]) __$__.Context.StartEndInLoop[__loopId] = [];
+                // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
                 node.body.body.push(
                     b.IfStatement(
                         b.UnaryExpression(
@@ -493,7 +490,7 @@ __$__.ASTTransforms.Context = function () {
                                     ),
                                     b.Identifier('StartEndInLoop')
                                 ),
-                                b.Identifier('__loopId'),
+                                b.Identifier('__loopLabel'),
                                 true
                             ),
                             true
@@ -508,7 +505,7 @@ __$__.ASTTransforms.Context = function () {
                                         ),
                                         b.Identifier('StartEndInLoop')
                                     ),
-                                    b.Identifier('__loopId'),
+                                    b.Identifier('__loopLabel'),
                                     true
                                 ),
                                 "=",
@@ -545,7 +542,7 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 )
-                // __$__.Context.StartEndInLoop[__loopId].push(__time_counter_stack.pop());
+                // __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
                 node.body.body.push(
                     b.ExpressionStatement(
                         b.CallExpression(
@@ -558,7 +555,7 @@ __$__.ASTTransforms.Context = function () {
                                         ),
                                         b.Identifier('StartEndInLoop')
                                     ),
-                                    b.Identifier('__loopId'),
+                                    b.Identifier('__loopLabel'),
                                     true
                                 ),
                                 b.Identifier('push')
@@ -573,12 +570,12 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 ),
-                // __loopIds.pop();
+                // __loopLabels.pop();
                 node.body.body.push(
                     b.ExpressionStatement(
                         b.CallExpression(
                             b.MemberExpression(
-                                b.Identifier(loopIds),
+                                b.Identifier(loopLabels),
                                 b.Identifier('pop')
                             ),
                             []
@@ -624,7 +621,7 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 ),
-                // let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
+                // let __loopCount = (__loopCounter[__loopLabel]) ? ++__loopCounter[__loopLabel] : __loopCounter[__loopLabel] = 1;
                 node.body.body.unshift(
                     b.VariableDeclaration([
                         b.VariableDeclarator(
@@ -632,13 +629,13 @@ __$__.ASTTransforms.Context = function () {
                             b.ConditionalExpression(
                                 b.MemberExpression(
                                     b.Identifier(loopCounter),
-                                    b.Identifier('__loopId'),
+                                    b.Identifier('__loopLabel'),
                                     true
                                 ),
                                 b.UpdateExpression(
                                     b.MemberExpression(
                                         b.Identifier(loopCounter),
-                                        b.Identifier('__loopId'),
+                                        b.Identifier('__loopLabel'),
                                         true
                                     ),
                                     "++",
@@ -647,7 +644,7 @@ __$__.ASTTransforms.Context = function () {
                                 b.AssignmentExpression(
                                     b.MemberExpression(
                                         b.Identifier(loopCounter),
-                                        b.Identifier('__loopId'),
+                                        b.Identifier('__loopLabel'),
                                         true
                                     ),
                                     "=",
@@ -657,7 +654,7 @@ __$__.ASTTransforms.Context = function () {
                         )
                     ], "let")
                 );
-                // if (!__$__.Context.LoopContext[__loopId]) __$__.Context.LoopContext[__loopId] = ;
+                // if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = ;
                 node.body.body.unshift(
                     b.IfStatement(
                         b.UnaryExpression(
@@ -670,7 +667,7 @@ __$__.ASTTransforms.Context = function () {
                                     ),
                                     b.Identifier(loopContext)
                                 ),
-                                b.Identifier('__loopId'),
+                                b.Identifier('__loopLabel'),
                                 true
                             ),
                             true
@@ -682,7 +679,7 @@ __$__.ASTTransforms.Context = function () {
                                         b.Identifier("__$__.Context"),
                                         b.Identifier(loopContext)
                                     ),
-                                    b.Identifier('__loopId'),
+                                    b.Identifier('__loopLabel'),
                                     true
                                 ),
                                 "=",
@@ -691,25 +688,25 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 );
-                // __loopIds.push(__loopId);
+                // __loopLabels.push(__loopLabel);
                 node.body.body.unshift(
                     b.ExpressionStatement(
                         b.CallExpression(
                             b.MemberExpression(
-                                b.Identifier(loopIds),
+                                b.Identifier(loopLabels),
                                 b.Identifier('push'),
                                 false
                             ),
-                            [b.Identifier('__loopId')]
+                            [b.Identifier('__loopLabel')]
                         )
                     )
                 );
-                // let __loopId = 'loop' + id;
+                // let __loopLabel = 'loop' + label;
                 node.body.body.unshift(
                     b.VariableDeclaration([
                         b.VariableDeclarator(
-                            b.Identifier('__loopId'),
-                            b.Literal(id)
+                            b.Identifier('__loopLabel'),
+                            b.Literal(label)
                         )
                     ], 'let')
                 );
@@ -746,7 +743,7 @@ __$__.ASTTransforms.Context = function () {
  * the scope of variables is implemented by my environment whose style is stack.
  *
  * inserted check point is 
- * '__$__.Context.ChechPoint(__objs, __loopId, __loopCount, __time_counter, {})'
+ * '__$__.Context.ChechPoint(__objs, __loopLabel, __loopCount, __time_counter, {})'
  * and, the last of arguments is object which means visualization of variables.
  * the argument is {v: eval(v)} if variable 'v' should be visualized.
  *
@@ -777,9 +774,6 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
                         s.declarations.forEach(declarator => {
-                            // if (declarator.id.name[0] === '$' && declarator.id.name.length > 1)
-                            //     env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
-                            // else
                                 env.addVariable(declarator.id.name, s.kind, false);
                         });
                     }
@@ -792,12 +786,6 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
             if (node.type == 'VariableDeclarator') {
                 let parent = path[path.length - 2];
-                // if (node.id.name[0] == '$' && node.id.name.length > 1) {
-                //     node.id.name = node.id.name.slice(1, node.id.name.length);
-                //     env.addVariable(node.id.name, parent.kind, true);
-                // } else {
-                //     env.addVariable(node.id.name, parent.kind, false);
-                // }
                 env.addVariable(node.id.name, parent.kind, true);
             }
 
@@ -819,10 +807,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                             [
                                 b.Identifier('__objs'),
                                 b.MemberExpression(
-                                    b.Identifier('__loopIds'),
+                                    b.Identifier('__loopLabels'),
                                     b.BinaryExpression(
                                         b.MemberExpression(
-                                            b.Identifier('__loopIds'),
+                                            b.Identifier('__loopLabels'),
                                             b.Identifier('length')
                                         ),
                                         '-',
@@ -851,10 +839,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
                 /**
                  * {
-                 *     if (!__$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]])
-                 *         __$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]] = [];
+                 *     if (!__$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]])
+                 *         __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]] = [];
                  *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
-                 *     __$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]].push(__time_counter_stack.pop());
+                 *     __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]].push(__time_counter_stack.pop());
                  * }
                  */
                 let out_loop = () => b.BlockStatement([
@@ -870,10 +858,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     b.Identifier('StartEndInLoop')
                                 ),
                                 b.MemberExpression(
-                                    b.Identifier('__loopIds'),
+                                    b.Identifier('__loopLabels'),
                                     b.BinaryExpression(
                                         b.MemberExpression(
-                                            b.Identifier('__loopIds'),
+                                            b.Identifier('__loopLabels'),
                                             b.Identifier('length')
                                         ),
                                         '-',
@@ -896,10 +884,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                         b.Identifier('StartEndInLoop')
                                     ),
                                     b.MemberExpression(
-                                        b.Identifier('__loopIds'),
+                                        b.Identifier('__loopLabels'),
                                         b.BinaryExpression(
                                             b.MemberExpression(
-                                                b.Identifier('__loopIds'),
+                                                b.Identifier('__loopLabels'),
                                                 b.Identifier('length')
                                             ),
                                             '-',
@@ -951,10 +939,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                         b.Identifier('StartEndInLoop')
                                     ),
                                     b.MemberExpression(
-                                        b.Identifier('__loopIds'),
+                                        b.Identifier('__loopLabels'),
                                         b.BinaryExpression(
                                             b.MemberExpression(
-                                                b.Identifier('__loopIds'),
+                                                b.Identifier('__loopLabels'),
                                                 b.Identifier('length')
                                             ),
                                             '-',
@@ -986,7 +974,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     let __temp = hoge;
                  *     do {
                  *         out_loop
-                 *     } while (__loopIds.pop().indexOf('Statement') >= 0)
+                 *     } while (__loopLabels.pop().indexOf('Statement') >= 0)
                  *     return __temp;
                  * }
                  */
@@ -1006,7 +994,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     b.MemberExpression(
                                         b.CallExpression(
                                             b.MemberExpression(
-                                                b.Identifier('__loopIds'),
+                                                b.Identifier('__loopLabels'),
                                                 b.Identifier('pop')
                                             ),
                                             []
@@ -1032,7 +1020,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     checkpoint;
                  *     do {
                  *         out_loop
-                 *     } while (__loopIds.pop().indexOf(label) === 0)
+                 *     } while (__loopLabels.pop().indexOf(label) === 0)
                  *     continue label; (or break label;)
                  * }
                  */
@@ -1046,7 +1034,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     b.MemberExpression(
                                         b.CallExpression(
                                             b.MemberExpression(
-                                                b.Identifier('__loopIds'),
+                                                b.Identifier('__loopLabels'),
                                                 b.Identifier('pop')
                                             ),
                                             []
@@ -1073,7 +1061,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * {
                  *     checkpoint;
                  *     out_loop;
-                 *     __loopIds.pop()
+                 *     __loopLabels.pop()
                  *     continue; (or break;)
                  * }
                  */
@@ -1083,7 +1071,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         out_loop(),
                         b.CallExpression(
                             b.MemberExpression(
-                                b.Identifier('__loopIds'),
+                                b.Identifier('__loopLabels'),
                                 b.Identifier('pop')
                             ),
                             []

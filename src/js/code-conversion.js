@@ -37,32 +37,33 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
         visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
 
 
-        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            __$__.Context.LoopIdPositions[id].useID = false;
+        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
+            __$__.Context.LoopLabelPosition[label].useLabel = false;
         });
-        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            __$__.Context.NewIdPositions[id].useID = false;
+        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
+            __$__.Context.NewLabelPosition[label].useLabel = false;
         });
-        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
-            __$__.Context.CallIdPositions[id].useID = false;
+        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
+            __$__.Context.CallLabelPosition[label].useLabel = false;
         });
 
 
         __$__.walkAST(ast, null, visitors);
 
 
-        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            if (!__$__.Context.LoopIdPositions[id].useID) delete __$__.Context.LoopIdPositions[id];
+        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
+            if (!__$__.Context.LoopLabelPosition[label].useLabel) delete __$__.Context.LoopLabelPosition[label];
         });
-        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            if (!__$__.Context.NewIdPositions[id].useID) delete __$__.Context.NewIdPositions[id];
+        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
+            if (!__$__.Context.NewLabelPosition[label].useLabel) delete __$__.Context.NewLabelPosition[label];
         });
-        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
-            if (!__$__.Context.CallIdPositions[id].useID) delete __$__.Context.CallIdPositions[id];
+        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
+            if (!__$__.Context.CallLabelPosition[label].useLabel) delete __$__.Context.CallLabelPosition[label];
         });
 
 
         return escodegen.generate(ast);
     } catch (e) {
+        let i;
     }
 };

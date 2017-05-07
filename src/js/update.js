@@ -8,7 +8,7 @@ __$__.Update.PositionUpdate = function(e) {
     window.localStorage["Kanon-Code"] = __$__.editor.getValue();
 
     if (e)
-        __$__.Update.UpdateIdPositions(e);
+        __$__.Update.UpdateLabelPositions(e);
 
     let transformed_code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
     var __objs;
@@ -40,7 +40,10 @@ __$__.Update.PositionUpdate = function(e) {
 
             __$__.StorePositions.registerPositions();
             __$__.StorePositions.setPositions(graph);
-            __$__.network.setData({nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)});
+            __$__.network.setData({
+                nodes: new vis.DataSet(graph.nodes),
+                edges: new vis.DataSet(graph.edges)
+            });
 
 
             __$__.Update.ContextUpdate();
@@ -71,8 +74,9 @@ __$__.Update.ContextUpdate = function(e) {
 
             // check maximum of Context.LoopContext
             // if loop doesn't include now context, now context is changed at the max of loop count
-            Object.keys(__loopCounter).forEach(function(loopId) {
-                if (__$__.Context.LoopContext[loopId] > __loopCounter[loopId]) __$__.Context.LoopContext[loopId] = __loopCounter[loopId];
+            Object.keys(__loopCounter).forEach(function(loopLabel) {
+                if (__$__.Context.LoopContext[loopLabel] > __loopCounter[loopLabel])
+                    __$__.Context.LoopContext[loopLabel] = __loopCounter[loopLabel];
             });
 
             __$__.Context.Draw(e);
@@ -136,10 +140,10 @@ __$__.Update.isChange = function(graph, snapshot = false) {
 /**
  * @param {Object} e : the data of changed code
  *
- * In this function, update the positions of newID and loopID.
+ * In this function, update the positions of newLabel, loopLabel and callLabel.
  * If user code is edited, this function is executed.
  */
-__$__.Update.UpdateIdPositions = function(e) {
+__$__.Update.UpdateLabelPositions = function(e) {
     var start = {line: e.start.row + 1, column: e.start.column};
     var end = {line: e.end.row + 1, column: e.end.column};
     var compare = __$__.Update.ComparePosition;
@@ -182,39 +186,39 @@ __$__.Update.UpdateIdPositions = function(e) {
     };
 
     if (e.action == 'insert') {
-        // update LoopIdPositions
-        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            modify_by_insert(__$__.Context.LoopIdPositions[id]);
+        // update LoopLabelPosition
+        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
+            modify_by_insert(__$__.Context.LoopLabelPosition[label]);
         });
 
-        // update NewIdPositions
-        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            modify_by_insert(__$__.Context.NewIdPositions[id]);
+        // update NewLabelPosition
+        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
+            modify_by_insert(__$__.Context.NewLabelPosition[label]);
         });
 
-        // update CallIdPositions
-        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
-            modify_by_insert(__$__.Context.CallIdPositions[id]);
+        // update CallLabelPosition
+        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
+            modify_by_insert(__$__.Context.CallLabelPosition[label]);
         });
     } else { // e.action == 'remove'
-        Object.keys(__$__.Context.LoopIdPositions).forEach(id => {
-            var dlt = modify_by_remove(__$__.Context.LoopIdPositions[id]);
+        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
+            var dlt = modify_by_remove(__$__.Context.LoopLabelPosition[label]);
             if (dlt)
-                delete __$__.Context.LoopIdPositions[id];
+                delete __$__.Context.LoopLabelPosition[label];
         });
 
-        // update NewIdPositions
-        Object.keys(__$__.Context.NewIdPositions).forEach(id => {
-            var dlt = modify_by_remove(__$__.Context.NewIdPositions[id]);
+        // update NewLabelPosition
+        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
+            var dlt = modify_by_remove(__$__.Context.NewLabelPosition[label]);
             if (dlt)
-                delete __$__.Context.NewIdPositions[id];
+                delete __$__.Context.NewLabelPosition[label];
         });
 
-        // update CallIdPositions
-        Object.keys(__$__.Context.CallIdPositions).forEach(id => {
-            var dlt = modify_by_remove(__$__.Context.CallIdPositions[id]);
+        // update CallLabelPosition
+        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
+            var dlt = modify_by_remove(__$__.Context.CallLabelPosition[label]);
             if (dlt)
-                delete __$__.Context.CallIdPositions[id];
+                delete __$__.Context.CallLabelPosition[label];
         });
     }
 };
