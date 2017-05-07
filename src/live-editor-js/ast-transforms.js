@@ -301,7 +301,22 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
     };
 };
 
-// Add some code in the head and tail of user code.
+/**
+ * Add some code in the head and the tail of user code.
+ *
+ * var __loopCounter = {},
+ *     __loopIds = ['noLoop'],
+ *     __loopCount = 1,
+ *     __newIdCounter = {},
+ *     __objs = [],
+ *     __time_counter = 0,
+ *     __time_counter_stack = [],
+ *     __call_count = {},
+ *     __call_stack = [];
+ * __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
+ * ...
+ * __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter;
+ */
 __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
     return {
         leave(node, path) {
@@ -314,8 +329,8 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                             b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
-                            b.Identifier('__loopId'),
-                            b.Literal('noLoop')
+                            b.Identifier('__loopIds'),
+                            b.ArrayExpression([b.Literal('noLoop')])
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__loopCount'),
@@ -332,6 +347,10 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         b.VariableDeclarator(
                             b.Identifier('__time_counter'),
                             b.Literal(0)
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__time_counter_stack'),
+                            b.ArrayExpression([])
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__call_count'),
@@ -376,7 +395,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
 
 __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement", "ForInStatement", "FunctionExpression", "FunctionDeclaration", "ArrowFunctionExpression"];
 
-/** Insert the code can manage the context in loop.
+/** Insert the code to manage the context in loop.
  * loop includes
  * - DoWhileStatement
  * - WhileStatement
@@ -394,14 +413,24 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  *
  * after:
  *   while(condition) {
- *     let __loopId = "loop" + id;
+ *     let __loopId = 'loop' + id;
+ *     __loopIds.push(__loopId);
  *     if (!__$__.Context.LoopContext[__loopId]) __$__.Context.LoopContext[__loopId] = 1;
- *     let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
+ *     let __loopCount =
+ *         (__loopCounter[__loopId])
+ *         ? ++__loopCounter[__loopId]
+ *         : __loopCounter[__loopId] = 1;
  *     if (__loopCount > 10000) throw 'Infinite Loop';
  *     let __start = __time_counter;
+ *     __time_counter_stack.push({start: __time_counter});
+ *
  *     ...
- *     if (!__$__.Context.StartEndInLoop[__loopId]) __$__.Context.StartEndInLoop[__loopId] = [];
- *     __$__.Context.StartEndInLoop[__loopId].push({start: __start, end: __time_counter-1});
+ *
+ *     if (!__$__.Context.StartEndInLoop[__loopId])
+ *         __$__.Context.StartEndInLoop[__loopId] = [];
+ *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
+ *     __$__.Context.StartEndInLoop[__loopId].push(__time_counter_stack.pop());
+ *     __loopIds.pop();
  *   }
  *
  * __loopId is unique ID
@@ -409,7 +438,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
 __$__.ASTTransforms.Context = function () {
     return {
         enter(node, path) {
-            const loopId = "__loopId", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
+            const loopIds = "__loopIds", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
                 // In this part, register the position of this loop.
@@ -425,13 +454,24 @@ __$__.ASTTransforms.Context = function () {
                         pos.useID = true;
                     }
                 });
-                // the case of not registered yet
+                // the case that the ID have not been registered yet.
                 if (!id) {
                     let i = 1;
-                    while(!id) {
-                        let loopId = 'loop' + i;
-                        if (Object.keys(__$__.Context.LoopIdPositions).indexOf(loopId) == -1) id = loopId;
-                        i++;
+                    let arr_ID = Object.keys(__$__.Context.LoopIdPositions);
+                    next: while(!id) {
+                        let loopId = node.type + i;
+                        // if (path[path.length - 2].type === 'LabeledStatement')
+                        //     loopId = path[path.length - 2].label.name + '-' + loopId
+                        // if (Object.keys(__$__.Context.LoopIdPositions).indexOf(loopId) == -1) id = loopId;
+                        for (var j = 0; j < arr_ID.length; j++) {
+                            if (arr_ID[j].indexOf(loopId) !== -1) {
+                                i++;
+                                continue next;
+                            }
+                        }
+                        id = loopId
+                        if (path[path.length - 2].type === 'LabeledStatement')
+                            id += '-' + path[path.length - 2].label.name;
                     }
                     __$__.Context.LoopIdPositions[id] = node.loc;
                     __$__.Context.LoopIdPositions[id].useID = true;
@@ -440,23 +480,129 @@ __$__.ASTTransforms.Context = function () {
                 if (node.body.type != "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
+                // if (!__$__.Context.StartEndInLoop[__loopId]) __$__.Context.StartEndInLoop[__loopId] = [];
                 node.body.body.push(
                     b.IfStatement(
-                        b.Identifier('!__$__.Context.StartEndInLoop[__loopId]'),
+                        b.UnaryExpression(
+                            '!',
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__$__'),
+                                        b.Identifier('Context')
+                                    ),
+                                    b.Identifier('StartEndInLoop')
+                                ),
+                                b.Identifier('__loopId'),
+                                true
+                            ),
+                            true
+                        ),
                         b.ExpressionStatement(
                             b.AssignmentExpression(
-                                b.Identifier('__$__.Context.StartEndInLoop[__loopId]'),
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('StartEndInLoop')
+                                    ),
+                                    b.Identifier('__loopId'),
+                                    true
+                                ),
                                 "=",
                                 b.ArrayExpression([])
                             )
                         )
                     )
                 ),
+                // __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
                 node.body.body.push(
                     b.ExpressionStatement(
-                        b.Identifier('__$__.Context.StartEndInLoop[__loopId].push({start: __start, end: __time_counter - 1})')
+                        b.AssignmentExpression(
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.BinaryExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__time_counter_stack'),
+                                            b.Identifier('length')
+                                        ),
+                                        '-',
+                                        b.Literal(1)
+                                    ),
+                                    true
+                                ),
+                                b.Identifier('end')
+                            ),
+                            '=',
+                            b.BinaryExpression(
+                                b.Identifier('__time_counter'),
+                                '-',
+                                b.Literal(1)
+                            )
+                        )
+                    )
+                )
+                // __$__.Context.StartEndInLoop[__loopId].push(__time_counter_stack.pop());
+                node.body.body.push(
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('StartEndInLoop')
+                                    ),
+                                    b.Identifier('__loopId'),
+                                    true
+                                ),
+                                b.Identifier('push')
+                            ),
+                            [b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.Identifier('pop')
+                                ),
+                                []
+                            )]
+                        )
                     )
                 ),
+                // __loopIds.pop();
+                node.body.body.push(
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier(loopIds),
+                                b.Identifier('pop')
+                            ),
+                            []
+                        )
+                    )
+                ),
+                // __time_counter_stack.push({start: __time_counter});
+                node.body.body.unshift(
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__time_counter_stack'),
+                                b.Identifier('push')
+                            ),
+                            [b.ObjectExpression(
+                                [b.Property(
+                                    b.Identifier('start'),
+                                    b.Identifier('__time_counter')
+                                )]
+                            )]
+                        )
+                    )
+                ),
+                // let __start = __time_counter;
                 node.body.body.unshift(
                     b.VariableDeclaration([
                         b.VariableDeclarator(
@@ -465,6 +611,7 @@ __$__.ASTTransforms.Context = function () {
                         )
                     ], 'let')
                 ),
+                // if (__loopCount > 10000) throw 'Infinite Loop';
                 node.body.body.unshift(
                     b.IfStatement(
                         b.BinaryExpression(
@@ -477,6 +624,7 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 ),
+                // let __loopCount = (__loopCounter[__loopId]) ? ++__loopCounter[__loopId] : __loopCounter[__loopId] = 1;
                 node.body.body.unshift(
                     b.VariableDeclaration([
                         b.VariableDeclarator(
@@ -484,13 +632,13 @@ __$__.ASTTransforms.Context = function () {
                             b.ConditionalExpression(
                                 b.MemberExpression(
                                     b.Identifier(loopCounter),
-                                    b.Identifier(loopId),
+                                    b.Identifier('__loopId'),
                                     true
                                 ),
                                 b.UpdateExpression(
                                     b.MemberExpression(
                                         b.Identifier(loopCounter),
-                                        b.Identifier(loopId),
+                                        b.Identifier('__loopId'),
                                         true
                                     ),
                                     "++",
@@ -499,7 +647,7 @@ __$__.ASTTransforms.Context = function () {
                                 b.AssignmentExpression(
                                     b.MemberExpression(
                                         b.Identifier(loopCounter),
-                                        b.Identifier(loopId),
+                                        b.Identifier('__loopId'),
                                         true
                                     ),
                                     "=",
@@ -509,16 +657,20 @@ __$__.ASTTransforms.Context = function () {
                         )
                     ], "let")
                 );
+                // if (!__$__.Context.LoopContext[__loopId]) __$__.Context.LoopContext[__loopId] = ;
                 node.body.body.unshift(
                     b.IfStatement(
                         b.UnaryExpression(
                             "!",
                             b.MemberExpression(
                                 b.MemberExpression(
-                                    b.Identifier("__$__.Context"),
+                                    b.MemberExpression(
+                                        b.Identifier('__$__'),
+                                        b.Identifier('Context')
+                                    ),
                                     b.Identifier(loopContext)
                                 ),
-                                b.Identifier(loopId),
+                                b.Identifier('__loopId'),
                                 true
                             ),
                             true
@@ -530,7 +682,7 @@ __$__.ASTTransforms.Context = function () {
                                         b.Identifier("__$__.Context"),
                                         b.Identifier(loopContext)
                                     ),
-                                    b.Identifier(loopId),
+                                    b.Identifier('__loopId'),
                                     true
                                 ),
                                 "=",
@@ -539,14 +691,27 @@ __$__.ASTTransforms.Context = function () {
                         )
                     )
                 );
+                // __loopIds.push(__loopId);
                 node.body.body.unshift(
-                    b.VariableDeclaration(
-                        [b.VariableDeclarator(
-                            b.Identifier(loopId),
-                            b.Literal(id)
-                        )],
-                        "let"
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier(loopIds),
+                                b.Identifier('push'),
+                                false
+                            ),
+                            [b.Identifier('__loopId')]
+                        )
                     )
+                );
+                // let __loopId = 'loop' + id;
+                node.body.body.unshift(
+                    b.VariableDeclaration([
+                        b.VariableDeclarator(
+                            b.Identifier('__loopId'),
+                            b.Literal(id)
+                        )
+                    ], 'let')
                 );
             }
         }
@@ -653,7 +818,18 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                             b.Identifier('__$__.Context.CheckPoint'),
                             [
                                 b.Identifier('__objs'),
-                                b.Identifier('__loopId'),
+                                b.MemberExpression(
+                                    b.Identifier('__loopIds'),
+                                    b.BinaryExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__loopIds'),
+                                            b.Identifier('length')
+                                        ),
+                                        '-',
+                                        b.Literal(1)
+                                    ),
+                                    true
+                                ),
                                 b.Identifier('__loopCount'),
                                 b.Identifier('__time_counter++'),
                                 b.Identifier(__$__.ASTTransforms.checkPoint_idCounter++),
@@ -673,9 +849,245 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     )
                 };
 
-                if (['ReturnStatement', 'BreakStatement', 'ContinueStatement'].indexOf(node.type) != -1) {
+                /**
+                 * {
+                 *     if (!__$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]])
+                 *         __$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]] = [];
+                 *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
+                 *     __$__.Context.StartEndInLoop[__loopIds[__loopIds.length - 1]].push(__time_counter_stack.pop());
+                 * }
+                 */
+                let out_loop = () => b.BlockStatement([
+                    b.IfStatement(
+                        b.UnaryExpression(
+                            '!',
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__$__'),
+                                        b.Identifier('Context')
+                                    ),
+                                    b.Identifier('StartEndInLoop')
+                                ),
+                                b.MemberExpression(
+                                    b.Identifier('__loopIds'),
+                                    b.BinaryExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__loopIds'),
+                                            b.Identifier('length')
+                                        ),
+                                        '-',
+                                        b.Literal(1)
+                                    ),
+                                    true
+                                ),
+                                true
+                            ),
+                            true
+                        ),
+                        b.ExpressionStatement(
+                            b.AssignmentExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('StartEndInLoop')
+                                    ),
+                                    b.MemberExpression(
+                                        b.Identifier('__loopIds'),
+                                        b.BinaryExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__loopIds'),
+                                                b.Identifier('length')
+                                            ),
+                                            '-',
+                                            b.Literal(1)
+                                        ),
+                                        true
+                                    ),
+                                    true
+                                ),
+                                '=',
+                                b.ArrayExpression([])
+                            )
+                        )
+                    ),
+                    b.ExpressionStatement(
+                        b.AssignmentExpression(
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.BinaryExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__time_counter_stack'),
+                                            b.Identifier('length')
+                                        ),
+                                        '-',
+                                        b.Literal(1)
+                                    ),
+                                    true
+                                ),
+                                b.Identifier('end')
+                            ),
+                            '=',
+                            b.BinaryExpression(
+                                b.Identifier('__time_counter'),
+                                '-',
+                                b.Literal(1)
+                            )
+                        )
+                    ),
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('StartEndInLoop')
+                                    ),
+                                    b.MemberExpression(
+                                        b.Identifier('__loopIds'),
+                                        b.BinaryExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__loopIds'),
+                                                b.Identifier('length')
+                                            ),
+                                            '-',
+                                            b.Literal(1)
+                                        ),
+                                        true
+                                    ),
+                                    true
+                                ),
+                                b.Identifier('push')
+                            ),
+                            [b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.Identifier('pop')
+                                ),
+                                []
+                            )]
+                        )
+                    )
+                ]);
+                /**
+                 * // before
+                 * return hoge;
+                 *
+                 * // after
+                 * {
+                 *     checkpoint;
+                 *     let __temp = hoge;
+                 *     do {
+                 *         out_loop
+                 *     } while (__loopIds.pop().indexOf('Statement') >= 0)
+                 *     return __temp;
+                 * }
+                 */
+                if (node.type === 'ReturnStatement') {
                     return b.BlockStatement([
                         checkPoint(start, data),
+                        b.VariableDeclaration([
+                            b.VariableDeclarator(
+                                b.Identifier('__temp'),
+                                node.argument
+                            )
+                        ], 'let'),
+                        b.DoWhileStatement(
+                            out_loop(),
+                            b.BinaryExpression(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__loopIds'),
+                                                b.Identifier('pop')
+                                            ),
+                                            []
+                                        ),
+                                        b.Identifier('indexOf')
+                                    ),
+                                    [b.Literal('Statement')]
+                                ),
+                                '>=',
+                                b.Literal(0)
+                            )
+                        ),
+                        b.ReturnStatement(
+                            b.Identifier('__temp')
+                        )
+                    ]);
+                /**
+                 * // before
+                 * continue label; (or break label;)
+                 *
+                 * // after
+                 * {
+                 *     checkpoint;
+                 *     do {
+                 *         out_loop
+                 *     } while (__loopIds.pop().indexOf(label) === 0)
+                 *     continue label; (or break label;)
+                 * }
+                 */
+                } else if (['ContinueStatement', 'BreakStatement'].indexOf(node.type) >= 0 && node.label.name) {
+                    return b.BlockStatement([
+                        checkPoint(start, data),
+                        b.DoWhileStatement(
+                            out_loop(),
+                            b.BinaryExpression(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__loopIds'),
+                                                b.Identifier('pop')
+                                            ),
+                                            []
+                                        ),
+                                        b.Identifier('indexOf')
+                                    ),
+                                    [b.Literal('-' + node.label.name)]
+                                ),
+                                '===',
+                                b.UnaryExpression(
+                                    '-',
+                                    b.Literal(1),
+                                    true
+                                )
+                            )
+                        ),
+                        Object.assign({}, node)
+                    ]);
+                /**
+                 * // before
+                 * continue; (or break;)
+                 *
+                 * // after
+                 * {
+                 *     checkpoint;
+                 *     out_loop;
+                 *     __loopIds.pop()
+                 *     continue; (or break;)
+                 * }
+                 */
+                } else if (['ContinueStatement', 'BreakStatement'].indexOf(node.type) >= 0) {
+                    return b.BlockStatement([
+                        checkPoint(start, data),
+                        out_loop(),
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__loopIds'),
+                                b.Identifier('pop')
+                            ),
+                            []
+                        ),
                         Object.assign({}, node)
                     ]);
                 } else if (node.type == 'VariableDeclaration' && node.kind != 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
@@ -710,11 +1122,14 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         );
                     }
                 } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
-                    return b.BlockStatement([
-                        checkPoint(start, data),
-                        Object.assign({}, node),
-                        checkPoint(end, variables)
-                    ]);
+                    // So that the body of 'LabeledStatement' is not checkpoint(CallExpression).
+                    if (['WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement'].indexOf(node.type) === -1 || parent.type !== 'LabeledStatement') {
+                        return b.BlockStatement([
+                            checkPoint(start, data),
+                            Object.assign({}, node),
+                            checkPoint(end, variables)
+                        ]);
+                    }
                 }
             }
         }

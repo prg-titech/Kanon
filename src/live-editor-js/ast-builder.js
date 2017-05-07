@@ -82,6 +82,17 @@ __$__.ASTBuilder = {
         };
     },
     /**
+     * @param {Statement} body
+     * @param {Expression} test
+     */
+    DoWhileStatement(body, test) {
+        return {
+            type: 'DoWhileStatement',
+            body: body,
+            test: test
+        };
+    },
+    /**
      * @param {Expression} expression
      */
     ExpressionStatement(expression) {
@@ -230,7 +241,7 @@ __$__.ASTBuilder = {
     },
     /**
      * @param {Expression} argument
-     * @param {string} operator: "++" or "--"
+     * @param {string} operator
      * @param {Boolean} prefix: true => ++argument, false => argument++
      */
     UpdateExpression(argument, operator, prefix) {
