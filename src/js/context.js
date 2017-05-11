@@ -353,56 +353,24 @@ __$__.Context.ChangeInnerAndParentContext = function(loopLabel) {
     var new_loop_count = __$__.Context.LoopContext[loopLabel];
     var start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
 
+    Object.keys(__$__.Context.StartEndInLoop).forEach(key => {
+        if (loopLabel === key)
+            return;
 
-    var changeInnerContext = function(loopLabel) {
-        var smallest_time;
+        var current_loop_count = __$__.Context.LoopContext[key];
+        var s_e = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
+        if (s_e.start <= start_end.start && start_end.end <= s_e.end ||
+            start_end.start <= s_e.start && s_e.end <= start_end.end)
+            return;
 
+        var correct_context = __$__.Context.StartEndInLoop[key].map(checked_s_e => {
+            return checked_s_e.start <= start_end.start && start_end.end <= checked_s_e.end ||
+                   start_end.start <= checked_s_e.start && checked_s_e.end <= start_end.end
+        }).indexOf(true);
 
-        __$__.Context.StartEndInLoop[loopLabel].forEach(compared_s_e => {
-            if (start_end.start < compared_s_e.start && compared_s_e.end < start_end.end) {
-                if (!smallest_time || smallest_time > compared_s_e.start)
-                    smallest_time = compared_s_e.start;
-            }
-        });
+        if (correct_context === -1)
+            return;
 
-        // this is executed when the context of 'loopLabel' mast be changed
-        if (smallest_time) {
-            __$__.Context.LoopContext[loopLabel] = __$__.Context.TableTimeCounter[smallest_time].loopCount;
-
-            __$__.Context.NestLoop[loopLabel].inner.forEach(label => {
-                changeInnerContext(label);
-            });
-        }
-    };
-
-    var changeParentContext = function(loopLabel) {
-        var count = __$__.Context.LoopContext[loopLabel];
-        var start_end = __$__.Context.StartEndInLoop[loopLabel][count-1];
-
-
-        __$__.Context.NestLoop[loopLabel].parent.forEach(label => {
-            var now_count = __$__.Context.LoopContext[label];
-            var s_e = __$__.Context.StartEndInLoop[label][now_count-1];
-
-
-            // if the context of 'label' don't have to be changed
-            if (start_end.start > s_e.start && s_e.end > start_end.end)
-                return;
-            else { // if the context of 'label' must to be changed
-                __$__.Context.StartEndInLoop[label].forEach((compared_s_e, index) => {
-                    if (start_end.start > compared_s_e.start && compared_s_e.end > start_end.end) {
-                        __$__.Context.LoopContext[label] = index + 1;
-                        changeParentContext(label);
-                    }
-                });
-            }
-        })
-    }
-
-    __$__.Context.NestLoop[loopLabel].inner.forEach(label => {
-        changeInnerContext(label);
+        __$__.Context.LoopContext[key] = correct_context + 1;
     });
-
-
-    changeParentContext(loopLabel);
 };
