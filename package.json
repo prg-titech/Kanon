@@ -1,0 +1,25 @@
+{
+  "name": "kanon",
+  "version": "1.0.0",
+  "description": "A live programming environment specialized for data structure programming.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prg-titech/Kanon.git"
+  },
+  "author": "Akio Oka",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/prg-titech/Kanon/issues"
+  },
+  "homepage": "https://github.com/prg-titech/Kanon#readme",
+  "dependencies": {
+    "electron": "^1.6.7",
+    "escodegen": "^1.8.1",
+    "esprima": "^3.1.3",
+    "vis": "^4.19.1"
+  }
+}
