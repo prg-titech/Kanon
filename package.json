@@ -4,7 +4,7 @@
   "description": "A live programming environment specialized for data structure programming.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
