@@ -4,7 +4,9 @@
   "description": "A live programming environment specialized for data structure programming.",
   "main": "app.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "create": "node_modules/.bin/electron-packager . --platform=darwin --overwrite",
+    "open": "open Kanon-darwin-x64/Kanon.app"
   },
   "repository": {
     "type": "git",
@@ -17,9 +19,10 @@
   },
   "homepage": "https://github.com/prg-titech/Kanon#readme",
   "dependencies": {
+    "ace-builds": "^1.2.5",
     "electron": "^1.6.7",
+    "electron-packager": "^8.7.0",
     "esprima": "^3.1.3",
-    "vis": "4.17.0",
-    "ace-builds": "^1.2.5"
+    "vis": "4.17.0"
   }
 }
