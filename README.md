@@ -18,11 +18,11 @@ git clone --recursive https://github.com/prg-titech/Kanon.git
 This will copy the source code of Kanon as well as the external libraries.
 After downloaded, go to the Kanon directory and open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html).
 
-Also you can build __Kanon__ with `nvm`.
+Also you can build __Kanon__ with `npm`.
 
 ```
-nvm install
-nvm start
+npm install
+npm start
 ```
 
 ---
