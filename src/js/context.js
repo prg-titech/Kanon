@@ -121,6 +121,7 @@ __$__.Context.StoreGraph = function(objects, loopLabel, count, checkPointId, pro
     __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
 
 
+    __$__.Context.LastGraph = graph;
     return graph;
 };
 
@@ -151,7 +152,7 @@ __$__.Context.Draw = function(e) {
 
         __$__.StorePositions.setPositions(graph);
 
-        if (e === 'changed' || __$__.Update.isChange(graph, true))
+        if (e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true))
             __$__.network.setData({
                 nodes: new vis.DataSet(graph.nodes),
                 edges: new vis.DataSet(graph.edges)
@@ -298,7 +299,7 @@ __$__.Context.Draw = function(e) {
             });
         });
 
-        if (e === 'changed' || __$__.Update.isChange(graph, true))
+        if (e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true))
             __$__.network.setData({
                 nodes: new vis.DataSet(graph.nodes),
                 edges: new vis.DataSet(graph.edges)

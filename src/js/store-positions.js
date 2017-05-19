@@ -11,13 +11,14 @@ __$__.StorePositions.setPositions = function(graph, isFixed = false) {
         var nodeData = __$__.StorePositions.oldNetworkNodesData[node.id];
 
 
-        if (nodeData && nodeData.x) {
+        if (nodeData && nodeData.x !== undefined) {
             node.x = nodeData.x;
             node.y = nodeData.y;
             node.fixed = isFixed;
             node.physics = isFixed;
         }
     }
+    
 };
 
 

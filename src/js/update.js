@@ -27,27 +27,21 @@ __$__.Update.PositionUpdate = function(e) {
 
 
         __$__.options.nodes.physics = true;
-        __$__.StorePositions.setPositions(graph, true);
+        __$__.StorePositions.setPositions(graph);
         __$__.network = new vis.Network(__$__.container, {nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)}, __$__.options);
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
         __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
         __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
-        __$__.network.once("stabilized", function(params) {
+        __$__.network.once('stabilized', params => {
             __$__.options.nodes.physics = false;
             __$__.network.setOptions(__$__.options);
 
             __$__.StorePositions.registerPositions();
-            __$__.StorePositions.setPositions(graph);
-            __$__.network.setData({
-                nodes: new vis.DataSet(graph.nodes),
-                edges: new vis.DataSet(graph.edges)
-            });
-
-
             __$__.Update.ContextUpdate();
         });
+
     } catch (e) {
         if (e == 'Infinite Loop') {
             document.getElementById('console').textContent = 'infinite loop?';

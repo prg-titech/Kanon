@@ -29,6 +29,7 @@
 <script type="text/javascript" src="src/js/update.js"></script>
 <script type="text/javascript" src="src/js/context.js"></script>
 <script type="text/javascript" src="src/js/jump-to-const.js"></script>
+<script type="text/javascript" src="src/js/layout.js"></script>
 <script type="text/javascript" src="src/js/probe.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-walker.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-builder.js"></script>
@@ -60,6 +61,12 @@
 <div id='reset'>
     <input type="button" value="Redraw" onclick="__$__.network.redraw();">
 </div>
+<div id='LinkedList'>
+    <input type="button" value="LinkedList" onclick="__$__.Layout.RedrawLinkedList();">
+</div>
+<div id='BinaryTree'>
+    <input type="button" value="BinaryTree" onclick="__$__.Layout.RedrawBinaryTree();">
+</div>
 <div id='console'>
 </div>
 <script type="text/javascript">
@@ -67,7 +74,7 @@
     __$__.data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
     __$__.options = {
         autoResize: false,
-        nodes: {color: 'skyblue'},
+        nodes: {color: 'skyblue', physics: false},
         edges: {arrows: 'to', color: 'skyblue', width: 3},
         interaction: {zoomView: false},
     };
