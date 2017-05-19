@@ -10,12 +10,12 @@ function BST() {
 };
 
 BST.prototype.add = function(val) {
-    var $temp = new Node(val);
+    var temp = new Node(val);
     
     if (this.root === null) {
         this.root = temp;
     } else {
-        var $current = this.root;
+        var current = this.root;
         
         while (current.val <= val && current.right || current.val > val && current.left) {
             if (current.val <= val && current.right) {
