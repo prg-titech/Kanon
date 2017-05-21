@@ -375,3 +375,48 @@ __$__.Context.ChangeInnerAndParentContext = function(loopLabel) {
         __$__.Context.LoopContext[key] = correct_context + 1;
     });
 };
+
+
+/**
+ * If this function is called,
+ * the context in a loop on the cursor position goes on the next/previous context.
+ */
+__$__.Context.MoveContextOnCursorPosition = function(moveTo) {
+    let isChanged = false;
+    let cursor = __$__.editor.getCursorPosition();
+    cursor.line = cursor.row + 1;
+
+    let compare = __$__.Update.ComparePosition;
+    let nearestLoopLabel = 'noLoop';
+
+    // Find which loop should be changed.
+    Object.keys(__$__.Context.LoopLabelPosition).forEach(loopLabel => {
+        let loop = __$__.Context.LoopLabelPosition[loopLabel];
+        // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
+        let nearestLoop = __$__.Context.LoopLabelPosition[nearestLoopLabel];
+
+        if (compare(loop.start, "<=", cursor) && compare(cursor, "<=", loop.end)) {
+            if (nearestLoopLabel === 'noLoop'
+                || compare(nearestLoop.start, "<=", loop.start) && compare(loop.end, "<=", nearestLoop.end))
+                nearestLoopLabel = loopLabel;
+        }
+    });
+
+
+    if (moveTo === 'next') {
+        let maxContext = __$__.Context.StartEndInLoop[nearestLoopLabel].length;
+        if (__$__.Context.LoopContext[nearestLoopLabel] < maxContext) {
+            __$__.Context.LoopContext[nearestLoopLabel]++;
+            __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
+            isChanged = true;
+        }
+    } else if (moveTo === 'prev') {
+        if (1 < __$__.Context.LoopContext[nearestLoopLabel]) {
+            __$__.Context.LoopContext[nearestLoopLabel]--;
+            __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
+            isChanged = true;
+        }
+    }
+
+    return isChanged;
+};
