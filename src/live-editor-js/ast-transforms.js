@@ -199,8 +199,9 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
  *     if (__call_count['unique Label']) __call_count['unique Label']++;
  *     else __call_count['unique Label'] = 1;
  *     __call_stack.push('unique Label');
- *     func(arg1, arg2, ...);
+ *     var __temp = func(arg1, arg2, ...);
  *     __call_stack.pop();
+ *     return __temp;
  * })()
  */
 __$__.ASTTransforms.CallExpressionToFunction = function() {
@@ -277,11 +278,15 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                     [b.Literal(label)]
                                 )
                             ),
-                            b.ExpressionStatement(
-                                b.CallExpression(
-                                    node.callee,
-                                    node.arguments
-                                )
+                            b.VariableDeclaration([
+                                b.VariableDeclarator(
+                                    b.Identifier('__temp'),
+                                    b.CallExpression(
+                                        node.callee,
+                                        node.arguments
+                                    )
+                                )],
+                                'var'
                             ),
                             b.ExpressionStatement(
                                 b.CallExpression(
@@ -291,6 +296,9 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                     ),
                                     []
                                 )
+                            ),
+                            b.ReturnStatement(
+                                b.Identifier('__temp')
                             )
                         ])
                     ),
@@ -717,7 +725,7 @@ __$__.ASTTransforms.Context = function () {
 
 
 /**
- * insert check point before and after statement(VariableDeclaration is exception).
+ * insert check point before and after each statement(VariableDeclaration is exception).
  *
  * if statement type is 'return', 'break', 'continue', 
  *   Statement -> {checkPoint; Statement} ... (1)
@@ -745,7 +753,7 @@ __$__.ASTTransforms.Context = function () {
  * inserted check point is 
  * '__$__.Context.ChechPoint(__objs, __loopLabel, __loopCount, __time_counter, {})'
  * and, the last of arguments is object which means visualization of variables.
- * the argument is {v: eval(v)} if variable 'v' should be visualized.
+ * the argument is {v: typeof v === 'string' ? eval(v) : undefined} if variable 'v' should be visualized.
  *
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {
@@ -774,7 +782,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 node.body.forEach(s => {
                     if (s.type == 'VariableDeclaration' && s.kind != 'var') {
                         s.declarations.forEach(declarator => {
-                                env.addVariable(declarator.id.name, s.kind, false);
+                            env.addVariable(declarator.id.name, s.kind, false);
                         });
                     }
                 });
@@ -825,9 +833,21 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     variables.map(function(val) {
                                         return b.Property(
                                             b.Identifier(val),
-                                            b.CallExpression(
-                                                b.Identifier('eval'),
-                                                [b.Identifier(val)]
+                                            b.ConditionalExpression(
+                                                b.BinaryExpression(
+                                                    b.UnaryExpression(
+                                                        'typeof',
+                                                        b.Identifier(val),
+                                                        true
+                                                    ),
+                                                    '!==',
+                                                    b.Literal('string')
+                                                ),
+                                                b.CallExpression(
+                                                    b.Identifier('eval'),
+                                                    [b.Identifier(val)]
+                                                ),
+                                                b.Identifier("undefined")
                                             )
                                         );
                                     })

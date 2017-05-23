@@ -21,11 +21,8 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
 
         if (isSnapshot) {
             visitors.push(__$__.ASTTransforms.InsertCheckPoint());
-        } else {
-            visitors.push(__$__.ASTTransforms.RemoveProbe());
+            __$__.walkAST(ast, null, visitors);
         }
-
-        __$__.walkAST(ast, null, visitors);
 
 
         visitors = [];
