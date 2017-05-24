@@ -16,7 +16,6 @@ __$__.CodeConversion = {
         let tf = __$__.ASTTransforms;
         let visitors = [];
     
-    
         __$__.ASTTransforms.pairCPID = {};
         __$__.ASTTransforms.varEnv = new __$__.Probe.StackEnv();
         visitors.push(tf.Labeling());
