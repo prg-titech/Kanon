@@ -10,6 +10,7 @@ __$__.Update.PositionUpdate = function(e) {
     if (e)
         __$__.Update.UpdateLabelPositions(e);
 
+    __$__.Context.Initialize();
     let transformed_code = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
     var __objs;
 
@@ -32,16 +33,66 @@ __$__.Update.PositionUpdate = function(e) {
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
-        __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
         __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+        let moveArray = params => {
+            // if (params.nodes.length > 0 && params.nodes[0])
+            if (params.nodes.length > 0) {
+                let id = params.nodes[0];
+                let indices = [-1, -1];
+
+                for (let i = 0; i < __$__.Context.Arrays.length; i++) {
+                    let index = __$__.Context.Arrays[i].indexOf(id);
+                    if (index >= 0) {
+                        indices[0] = i;
+                        indices[1] = index;
+                        break;
+                    }
+                }
+
+                if (indices[0] >= 0) {
+                    let arrayIDs = __$__.Context.Arrays[indices[0]];
+                    for (let i = 0; i < arrayIDs.length; i++) {
+                        let pos = __$__.network.getPositions(id)[id];
+                        __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * 20, pos.y);
+                    }
+                }
+            }
+        }
+        __$__.network.on('dragging', moveArray);
+        __$__.network.on('dragEnd', moveArray);
+        __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
         __$__.network.once('stabilized', params => {
             __$__.options.nodes.physics = false;
             __$__.network.setOptions(__$__.options);
+            // align each value of the ArrayExpression if that is Literal
+            // Object.values(__$__.network.body.data.edges._data).forEach(edge => {
+            //     let indices = [-1, -1];
+
+            //     for (let i = 0; i < __$__.Context.Arrays.length; i++) {
+            //         let index = __$__.Context.Arrays[i].indexOf(edge.from);
+            //         if (index >= 0) {
+            //             indices[0] = i;
+            //             indices[1] = index;
+            //             break;
+            //         }
+            //     }
+
+            //     if (indices[0] >= 0) {
+            //         if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
+            //             let pos = __$__.network.getPositions(edge.from)[edge.from];
+            //             __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
+            //         }
+            //     }
+            // });
+
 
             __$__.StorePositions.registerPositions();
             __$__.Update.ContextUpdate();
         });
 
+        __$__.Context.Arrays.forEach(array => {
+            moveArray({nodes: [array[0]]});
+        });
     } catch (e) {
         if (e == 'Infinite Loop') {
             document.getElementById('console').textContent = 'infinite loop?';
@@ -180,39 +231,20 @@ __$__.Update.UpdateLabelPositions = function(e) {
     };
 
     if (e.action == 'insert') {
-        // update LoopLabelPosition
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
-            modify_by_insert(__$__.Context.LoopLabelPosition[label]);
-        });
-
-        // update NewLabelPosition
-        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
-            modify_by_insert(__$__.Context.NewLabelPosition[label]);
-        });
-
-        // update CallLabelPosition
-        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
-            modify_by_insert(__$__.Context.CallLabelPosition[label]);
+        // update
+        ['LoopLabelPosition', 'NewLabelPosition', 'ArrayLabelPosition', 'CallLabelPosition'].forEach(pos => {
+            Object.keys(__$__.Context[pos]).forEach(label => {
+                modify_by_insert(__$__.Context[pos][label]);
+            });
         });
     } else { // e.action == 'remove'
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
-            var dlt = modify_by_remove(__$__.Context.LoopLabelPosition[label]);
-            if (dlt)
-                delete __$__.Context.LoopLabelPosition[label];
-        });
-
-        // update NewLabelPosition
-        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
-            var dlt = modify_by_remove(__$__.Context.NewLabelPosition[label]);
-            if (dlt)
-                delete __$__.Context.NewLabelPosition[label];
-        });
-
-        // update CallLabelPosition
-        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
-            var dlt = modify_by_remove(__$__.Context.CallLabelPosition[label]);
-            if (dlt)
-                delete __$__.Context.CallLabelPosition[label];
+        // update
+        ['LoopLabelPosition', 'NewLabelPosition', 'ArrayLabelPosition', 'CallLabelPosition'].forEach(pos => {
+            Object.keys(__$__.Context[pos]).forEach(label => {
+                var dlt = modify_by_remove(__$__.Context[pos][label]);
+                if (dlt)
+                    delete __$__.Context[pos][label];
+            });
         });
     }
 };

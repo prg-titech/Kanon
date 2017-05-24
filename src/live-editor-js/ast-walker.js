@@ -8,6 +8,9 @@
  *                  methods which accept a single AST node as an argument.
  */
 __$__.walkAST = function(node, path, visitors) {
+    if (node === null) {
+        return 1;
+    }
     if (path === null) {
         path = [node];
     } else {

@@ -36,49 +36,36 @@
 <script type="text/javascript" src="src/live-editor-js/ast-transforms.js"></script>
 
 <div id="editor">
-<script type="text/javascript" src="src/js/editor.js"></script>
+    <script type="text/javascript" src="src/js/editor.js"></script>
 </div>
 
 <div id="mynetwork">
 </div>
+
 <div id='button'>
     <input type="button" value="Summarized" onclick="__$__.Context.SwitchViewMode(false); __$__.Update.ContextUpdate('changed');">
     <input type="button" value="Snapshot" onclick="__$__.Context.SwitchViewMode(true); __$__.Update.ContextUpdate('changed');">
 </div>
+
 <div id='viewmode'>
 </div>
+
 <div id='reset'>
     <input type="button" value="Redraw" onclick="__$__.network.redraw();">
 </div>
+
 <div id='LinkedList'>
     <input type="button" value="LinkedList" onclick="__$__.Layout.RedrawLinkedList();">
 </div>
+
 <div id='BinaryTree'>
     <input type="button" value="BinaryTree" onclick="__$__.Layout.RedrawBinaryTree();">
 </div>
+
 <div id='console'>
 </div>
-<script type="text/javascript">
-    __$__.container = document.getElementById('mynetwork');
-    __$__.data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
-    __$__.options = {
-        autoResize: false,
-        nodes: {color: 'skyblue', physics: false},
-        edges: {arrows: 'to', color: 'skyblue', width: 3},
-        interaction: {zoomView: false},
-    };
-    __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
-    __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
-    __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
-    __$__.Update.PositionUpdate();
-    __$__.editor.getSelection().clearSelection();
+<script type="text/javascript" src="src/js/network.js"></script>
 
-    document.getElementById('viewmode').textContent = (__$__.Context.Snapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
-
-    window.onresize = function() {
-        __$__.network.redraw();
-    };
-</script>
 </body>
 </html>

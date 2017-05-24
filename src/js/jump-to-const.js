@@ -1,6 +1,6 @@
 __$__.JumpToConstruction = {
-    ClickElementContext: {},
     ClickElement: {},
+    ClickElementContext: {},
     GraphData: {nodes: [], edges: []}
 };
 

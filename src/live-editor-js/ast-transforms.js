@@ -17,28 +17,39 @@ let b = __$__.ASTBuilder;
  *             if (__newLabelCounter[__objectID]) __newLabelCounter[__objectID]++;
  *             else __newLabelCounter[__objectID] = 1;
  *
- *             __temp.__id = __objectID + '-' + __newLabelCounter[__objectID];
+ *             __$__.Context.Objects[__objectID + '-' + __newLabelCounter[__objectID]] = __temp;
  *             __objs.push(__temp);
  *             return __temp;
  *         })()
  *
+ * Array Expression is also the same
  */
-__$__.ASTTransforms.NewExpressionToFunction = function() {
+__$__.ASTTransforms.CollectObjects = function() {
     return {
         leave(node, path) {
-            if (node.type === "NewExpression") {
-                const counterName = "__newLabelCounter";
-
+            if (node.loc && (node.type === "NewExpression" || node.type === 'ArrayExpression')) {
+                const isNewExp = node.type === 'NewExpression';
+                const counterName = (isNewExp) ? '__newLabelCounter' : '__arrayLabelCounter';
+                const LabelPosition = (isNewExp) ? __$__.Context.NewLabelPosition : __$__.Context.ArrayLabelPosition;
+                const label_header = (isNewExp) ? 'new' : 'array';
+                const this_node = (isNewExp)
+                        ? b.NewExpression(
+                              node.callee,
+                              node.arguments
+                          )
+                        : b.ArrayExpression(
+                            node.elements
+                        );
                 // In this part, register the position of this NewExpression.
                 // If already registered, use the Label
                 let label;
-                Object.keys(__$__.Context.NewLabelPosition).forEach(newLabel => {
-                    var pos = __$__.Context.NewLabelPosition[newLabel];
+                Object.keys(LabelPosition).forEach(labelName => {
+                    var pos = LabelPosition[labelName];
                     if (pos.start.line == node.loc.start.line &&
                             pos.start.column == node.loc.start.column &&
                             pos.end.line == node.loc.end.line &&
                             pos.end.column == node.loc.end.column) {
-                        label = newLabel;
+                        label = labelName;
                         pos.useLabel = true;
                     }
                 });
@@ -46,12 +57,12 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                 if (!label) {
                     let i = 1;
                     while (!label) {
-                        let newLabel = 'new' + i;
-                        if (Object.keys(__$__.Context.NewLabelPosition).indexOf(newLabel) == -1) label = newLabel;
+                        let newLabel = label_header + i;
+                        if (Object.keys(LabelPosition).indexOf(newLabel) == -1) label = newLabel;
                         i++;
                     }
-                    __$__.Context.NewLabelPosition[label] = node.loc;
-                    __$__.Context.NewLabelPosition[label].useLabel = true;
+                    LabelPosition[label] = node.loc;
+                    LabelPosition[label].useLabel = true;
                 }
 
                 return b.CallExpression(
@@ -61,10 +72,7 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                             b.VariableDeclaration(
                                 [b.VariableDeclarator(
                                     b.Identifier("__temp"),
-                                    b.NewExpression(
-                                        node.callee,
-                                        node.arguments
-                                    )
+                                    this_node
                                 ), b.VariableDeclarator(
                                     b.Identifier('__objectID'),
                                     b.Literal('')
@@ -146,23 +154,30 @@ __$__.ASTTransforms.NewExpressionToFunction = function() {
                             b.ExpressionStatement(
                                 b.AssignmentExpression(
                                     b.MemberExpression(
-                                        b.Identifier("__temp"),
-                                        b.Identifier("__id")
-                                    ),
-                                    "=",
-                                    b.BinaryExpression(
-                                        b.BinaryExpression(
-                                            b.Identifier('__objectID'),
-                                            "+",
-                                            b.Literal("-")
-                                        ),
-                                        "+",
                                         b.MemberExpression(
-                                            b.Identifier(counterName),
-                                            b.Identifier('__objectID'),
-                                            true
-                                        )
-                                    )
+                                            b.MemberExpression(
+                                                b.Identifier('__$__'),
+                                                b.Identifier('Context')
+                                            ),
+                                            b.Identifier('Objects')
+                                        ),
+                                        b.BinaryExpression(
+                                            b.BinaryExpression(
+                                                b.Identifier('__objectID'),
+                                                "+",
+                                                b.Literal("-")
+                                            ),
+                                            "+",
+                                            b.MemberExpression(
+                                                b.Identifier(counterName),
+                                                b.Identifier('__objectID'),
+                                                true
+                                            )
+                                        ),
+                                        true
+                                    ),
+                                    '=',
+                                    b.Identifier('__temp')
                                 )
                             ),
                             b.ExpressionStatement(
@@ -316,6 +331,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __loopLabels = ['noLoop'],
  *     __loopCount = 1,
  *     __newLabelCounter = {},
+ *     __arrayLabelCounter = {},
  *     __objs = [],
  *     __time_counter = 0,
  *     __time_counter_stack = [],
@@ -346,6 +362,10 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__newLabelCounter'),
+                            b.ObjectExpression([])
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__arrayLabelCounter'),
                             b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(

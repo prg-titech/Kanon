@@ -1,26 +1,33 @@
 __$__.Context = {
-    Snapshot: true,
+    ArrayLabelPosition: {},
+    Arrays: [],
+    CallLabelPosition: {},
+    CheckPointTable: {},
     LastGraph: undefined,
+    Literals: [],
+    LoopContext: {'noLoop': 1},
+    LoopLabelPosition: {},
+    NestLoop: {},
+    NewLabelPosition: {},
+    Objects: {},
+    Snapshot: true,
     StackToCheckLoop: ['noLoop'],
     StoredGraph: {},
     StartEndInLoop: {},
-    NestLoop: {},
-    TableTimeCounter: [],
-    LoopContext: {'noLoop': 1},
-    CheckPointTable: {},
-    LoopLabelPosition: {},
-    CallLabelPosition: {},
-    NewLabelPosition: {}
+    TableTimeCounter: []
 };
 
 
 __$__.Context.Initialize = function() {
+    __$__.Context.Arrays = [];
+    __$__.Context.CheckPointTable = {};
+    __$__.Context.Literals = [];
+    __$__.Context.NestLoop = {};
+    __$__.Context.Objects = {};
     __$__.Context.StoredGraph = {};
     __$__.Context.StartEndInLoop = {};
-    __$__.Context.TableTimeCounter = [];
-    __$__.Context.NestLoop = {};
     __$__.Context.StackToCheckLoop = ['noLoop'];
-    __$__.Context.CheckPointTable = {};
+    __$__.Context.TableTimeCounter = [];
 }
 
 
@@ -419,4 +426,14 @@ __$__.Context.MoveContextOnCursorPosition = function(moveTo) {
     }
 
     return isChanged;
+};
+
+
+__$__.Context.getObjectID = function(obj) {
+    let index = Object.values(__$__.Context.Objects).indexOf(obj);
+    if (index === -1) {
+        return undefined;
+    } else {
+        return Object.keys(__$__.Context.Objects)[index];
+    }
 };

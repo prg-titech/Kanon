@@ -1,6 +1,6 @@
 __$__.StorePositions = {
-    oldNetworkNodesData: {},
-    oldNetworkEdgesData: {}
+    oldNetworkEdgesData: {},
+    oldNetworkNodesData: {}
 };
 
 

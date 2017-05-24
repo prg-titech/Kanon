@@ -31,31 +31,24 @@ __$__.CodeConversion.TransformCode = function(code, isSnapshot = false) {
         visitors.push(__$__.ASTTransforms.AddSomeCodeInHeadAndTail());
         visitors.push(__$__.ASTTransforms.Context());
         visitors.push(__$__.ASTTransforms.CallExpressionToFunction());
-        visitors.push(__$__.ASTTransforms.NewExpressionToFunction());
+        visitors.push(__$__.ASTTransforms.CollectObjects());
 
 
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
-            __$__.Context.LoopLabelPosition[label].useLabel = false;
-        });
-        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
-            __$__.Context.NewLabelPosition[label].useLabel = false;
-        });
-        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
-            __$__.Context.CallLabelPosition[label].useLabel = false;
+        ['LoopLabelPosition', 'NewLabelPosition', 'CallLabelPosition', 'ArrayLabelPosition'].forEach(pos => {
+            Object.keys(__$__.Context[pos]).forEach(label => {
+                __$__.Context[pos][label].useLabel = false;
+            });
         });
 
 
         __$__.walkAST(ast, null, visitors);
 
 
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(label => {
-            if (!__$__.Context.LoopLabelPosition[label].useLabel) delete __$__.Context.LoopLabelPosition[label];
-        });
-        Object.keys(__$__.Context.NewLabelPosition).forEach(label => {
-            if (!__$__.Context.NewLabelPosition[label].useLabel) delete __$__.Context.NewLabelPosition[label];
-        });
-        Object.keys(__$__.Context.CallLabelPosition).forEach(label => {
-            if (!__$__.Context.CallLabelPosition[label].useLabel) delete __$__.Context.CallLabelPosition[label];
+        ['LoopLabelPosition', 'NewLabelPosition', 'CallLabelPosition', 'ArrayLabelPosition'].forEach(pos => {
+            Object.keys(__$__.Context[pos]).forEach(label => {
+                if (!__$__.Context[pos][label].useLabel)
+                    delete __$__.Context[pos][label];
+            });
         });
 
 

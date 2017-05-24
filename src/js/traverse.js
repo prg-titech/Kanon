@@ -9,17 +9,13 @@ __$__.Traverse.__Edge = function(from, to, label) {
 
 __$__.Traverse.__VariableNode = function(id) {
     this.id = id;
-    this.__id = '__Variable-' + id;
+    __$__.Context.Objects['__Variable-' + id] = this;
 };
 
 
 __$__.Traverse.__Literal = function(value) {
     this.value = value;
 };
-
-// __$__.Traverse.__Function = function(fun_name) {
-//     // this.__id = fun_name;
-// };
 
 
 __$__.Traverse.__Graph = function() {
@@ -74,7 +70,7 @@ __$__.Traverse.traverse = function(objs, variables = {}) {
     });
 
     for (var i = 0; i < ret.nodes.length; i++) {
-        if (ret.nodes[i].__id)
+        if (Object.values(__$__.Context.Objects).indexOf(ret.nodes[i]) > 0)
             continue;
 
         __$__.Traverse.CheckId(ret.nodes[i], ret.edges);
@@ -93,10 +89,10 @@ __$__.Traverse.dfs = function(graph, node) {
         return;
     }
 
-    for (var key in node) {
+    Object.keys(node).forEach(key => {
         // Don't search if the head of property name is "__"
         if (key[0] == "_" && key[1] == "_")
-            continue;
+            return;
 
         // "to" is destination of edge
         var to = node[key];
@@ -112,7 +108,7 @@ __$__.Traverse.dfs = function(graph, node) {
                 __$__.Traverse.dfs(graph, to);
             }
         }
-    }
+    })
 };
 
 // check whether all of the nodes have an id or not
@@ -120,10 +116,11 @@ __$__.Traverse.dfs = function(graph, node) {
 __$__.Traverse.CheckId = function(node, edges) {
     for (var i = 0; i < edges.length; i++) {
         if (node == edges[i].to) {
-            if (!edges[i].from.__id)
+            if (Object.values(__$__.Context.Objects).indexOf(edges[i].from) === -1)
                 __$__.Traverse.CheckId(edges[i].from, edges);
 
-            node.__id = edges[i].from.__id + "-" + edges[i].label;
+            let newID = __$__.Context.getObjectID(edges[i].from) + '-' + edges[i].label;
+            __$__.Context.Objects[newID] = node;
             return;
         }
     }
