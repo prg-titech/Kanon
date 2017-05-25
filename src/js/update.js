@@ -28,13 +28,14 @@ __$__.Update.PositionUpdate = function(e) {
 
 
         __$__.options.nodes.physics = true;
+        __$__.options.nodes.hidden = true;
+        __$__.options.edges.hidden = true;
         __$__.StorePositions.setPositions(graph);
         __$__.network = new vis.Network(__$__.container, {nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)}, __$__.options);
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
-        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
-        let moveArray = params => {
+        let updateArray = params => {
             // if (params.nodes.length > 0 && params.nodes[0])
             if (params.nodes.length > 0) {
                 let id = params.nodes[0];
@@ -58,14 +59,22 @@ __$__.Update.PositionUpdate = function(e) {
                 }
             }
         }
-        __$__.network.on('dragging', moveArray);
-        __$__.network.on('dragEnd', moveArray);
+        __$__.Context.Arrays.forEach(array => {
+            updateArray({nodes: [array[0]]});
+        });
+
+        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+        __$__.network.on('dragging', updateArray);
+        __$__.network.on('dragEnd', updateArray);
         __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
         __$__.network.once('stabilized', params => {
             __$__.options.nodes.physics = false;
+            __$__.options.nodes.hidden = false;
+            __$__.options.edges.hidden = false;
             __$__.network.setOptions(__$__.options);
-            // align each value of the ArrayExpression if that is Literal
+
             /*
+            // align each value of the ArrayExpression if that is Literal
             Object.values(__$__.network.body.data.edges._data).forEach(edge => {
                 let indices = [-1, -1];
 
@@ -87,13 +96,8 @@ __$__.Update.PositionUpdate = function(e) {
             });
             */
 
-
             __$__.StorePositions.registerPositions();
             __$__.Update.ContextUpdate();
-        });
-
-        __$__.Context.Arrays.forEach(array => {
-            moveArray({nodes: [array[0]]});
         });
     } catch (e) {
         if (e == 'Infinite Loop') {
@@ -108,7 +112,7 @@ __$__.Update.PositionUpdate = function(e) {
  * This update the network with the context at the cursor position.
  */
 __$__.Update.ContextUpdate = function(e) {
-    __$__.network.redraw();
+    // __$__.network.redraw();
     if ((!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '' || e === 'changed') {
         // initialize some data
         __$__.Context.Initialize();
@@ -144,13 +148,13 @@ __$__.Update.ContextUpdate = function(e) {
  * return false otherwise
  */
 __$__.Update.isChange = function(graph, snapshot = false) {
-    var graphNodes = graph.nodes.map(function(node) {
+    var graphNodes = graph.nodes.map(node => {
         if (node.color && node.color !== 'white')
             return [node.id, node.label, node.color];
         else 
             return [node.id, node.label];
     });
-    var graphEdges = graph.edges.map(function(edge) {
+    var graphEdges = graph.edges.map(edge => {
         if (edge.color && edge.color !== 'white')
             return [edge.from, edge.to, edge.label, edge.color];
         else
@@ -159,7 +163,7 @@ __$__.Update.isChange = function(graph, snapshot = false) {
     var networkNodes = [];
     var temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
 
-    Object.keys(temp).forEach(function(key){
+    Object.keys(temp).forEach(key => {
         if (snapshot && temp[key].color && temp[key].color !== 'white')
             networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
         else
@@ -178,7 +182,8 @@ __$__.Update.isChange = function(graph, snapshot = false) {
     });
 
 
-    return (!Boolean(networkNodes) || !Boolean(networkEdges) ||
+    return (!Boolean(networkNodes) ||
+            !Boolean(networkEdges) ||
             JSON.stringify(graphNodes.sort()) != JSON.stringify(networkNodes.sort()) ||
             JSON.stringify(graphEdges.sort()) != JSON.stringify(networkEdges.sort()));
 };

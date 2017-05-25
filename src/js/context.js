@@ -135,14 +135,15 @@ __$__.Context.StoreGraph = function(objects, loopLabel, count, checkPointId, pro
 
 // Draw() method is executed after user code
 __$__.Context.Draw = function(e) {
+    let cursorPos = __$__.editor.getCursorPosition();
 
     if (__$__.Context.Snapshot) {
         try {
-            var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
+            var checkPointId = __$__.Context.FindId(cursorPos);
             var loopLabel, count, graph;
             if (checkPointId.afterId &&
-                __$__.Context.CheckPointTable[checkPointId.afterId].column === __$__.editor.getCursorPosition().column &&
-                __$__.Context.CheckPointTable[checkPointId.afterId].line === __$__.editor.getCursorPosition().row + 1) {
+                __$__.Context.CheckPointTable[checkPointId.afterId].column === cursorPos.column &&
+                __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1) {
                 loopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
                 count = __$__.Context.LoopContext[loopLabel];
                 graph = __$__.Context.StoredGraph[checkPointId.afterId][loopLabel][count];
@@ -166,7 +167,7 @@ __$__.Context.Draw = function(e) {
             });
 
     } else {
-        var checkPointId = __$__.Context.FindId(__$__.editor.getCursorPosition());
+        var checkPointId = __$__.Context.FindId(cursorPos);
         if (!checkPointId.afterId)
             checkPointId.afterId = checkPointId.beforeId;
 
