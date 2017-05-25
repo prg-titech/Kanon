@@ -65,25 +65,27 @@ __$__.Update.PositionUpdate = function(e) {
             __$__.options.nodes.physics = false;
             __$__.network.setOptions(__$__.options);
             // align each value of the ArrayExpression if that is Literal
-            // Object.values(__$__.network.body.data.edges._data).forEach(edge => {
-            //     let indices = [-1, -1];
+            /*
+            Object.values(__$__.network.body.data.edges._data).forEach(edge => {
+                let indices = [-1, -1];
 
-            //     for (let i = 0; i < __$__.Context.Arrays.length; i++) {
-            //         let index = __$__.Context.Arrays[i].indexOf(edge.from);
-            //         if (index >= 0) {
-            //             indices[0] = i;
-            //             indices[1] = index;
-            //             break;
-            //         }
-            //     }
+                for (let i = 0; i < __$__.Context.Arrays.length; i++) {
+                    let index = __$__.Context.Arrays[i].indexOf(edge.from);
+                    if (index >= 0) {
+                        indices[0] = i;
+                        indices[1] = index;
+                        break;
+                    }
+                }
 
-            //     if (indices[0] >= 0) {
-            //         if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
-            //             let pos = __$__.network.getPositions(edge.from)[edge.from];
-            //             __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
-            //         }
-            //     }
-            // });
+                if (indices[0] >= 0) {
+                    if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
+                        let pos = __$__.network.getPositions(edge.from)[edge.from];
+                        __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
+                    }
+                }
+            });
+            */
 
 
             __$__.StorePositions.registerPositions();

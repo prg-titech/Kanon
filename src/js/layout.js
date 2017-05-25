@@ -67,7 +67,6 @@ __$__.Layout.LinkedList = function(graph, nodeLabel = "Node", nextLabel = 'next'
      */
     let sortedListNode = [];
 
-    // TODO: 一度通った場所は通らないようにする
     while (listNodes.length > 0) {
         let list = [listNodes.shift()];
         list[0].__checked = true;
@@ -91,17 +90,24 @@ __$__.Layout.LinkedList = function(graph, nodeLabel = "Node", nextLabel = 'next'
     }
 
     // register nodes position and the valueLabel nodes
-    let count = 0;
     for (var i = 0; i < sortedListNode.length; i++) {
         for (var j = 0; j < sortedListNode[i].length; j++) {
             let node = sortedListNode[i][j];
-            if (!isChanged && (node.x === undefined || node.x !== count * 100 || node.y !== -200))
-                isChanged = true;
-            node.x = count++ * 100;
-            node.y = -200;
+            let pos = __$__.network.getPositions(node.id)[node.id];
+            if (j === 0) {
+                node.x = pos.x;
+                node.y = pos.y;
+            } else {
+                let prevNode = sortedListNode[i][j-1];
+                if (!isChanged && (pos.x !== prevNode.x + 100 || pos.y !== prevNode.y))
+                    isChanged = true;
+                node.x = prevNode.x + 100;
+                node.y = prevNode.y;
+            }
 
             if (node.__val) {
-                if (!isChanged && (node.__val.x === undefined || node.__val.x !== node.x && node.__val.y !== node.y + 100))
+                let valPos = __$__.network.getPositions(node.__val.id)[node.__val.id];
+                if (!isChanged && (valPos.x !== node.x || valPos.y !== node.y + 100))
                     isChanged = true;
                 node.__val.x = node.x;
                 node.__val.y = node.y + 100;
@@ -265,21 +271,19 @@ __$__.Layout.BinaryTree = function(graph, nodeLabel = "Node", leftLabel = 'left'
     }
 
     let count = 0;
-    let setPosition = function(node, depth, width_from, width_to) {
+    let setPosition = function(node, depth, width_from, width_to, tree_num) {
         let next_x = (width_to === 0) ? 0 : ((width_from + width_to) / 2) * 100;
         let next_y = depth * 100;
 
-        if (!isChanged && (node.x === undefined || node.x !== next_x || node.y !== next_y))
-            isChanged = true;
         // register node's position.
         node.x = next_x;
         node.y = next_y;
+        node.__tree_num = tree_num;
 
         if (node.__val) {
-            if (!isChanged && (node.__val.x === undefined || node.__val.x !== node.x || node.__val.y !== node.y + 75))
-                isChanged = true;
             node.__val.x = node.x;
             node.__val.y = node.y + 75;
+            node.__val.__tree_num = tree_num;
             delete node.__val;
         }
 
@@ -288,27 +292,43 @@ __$__.Layout.BinaryTree = function(graph, nodeLabel = "Node", leftLabel = 'left'
         
         if (node.__left) {
             // recursive call if node.__left is defined.
-            setPosition(node.__left, depth+1, width_from, width_mid);
+            setPosition(node.__left, depth+1, width_from, width_mid, tree_num);
             delete node.__left;
         }
 
         if (node.__right) {
             // recursive call if node.__right is defined.
-            setPosition(node.__right, depth+1, width_mid + 1, width_to)
+            setPosition(node.__right, depth+1, width_mid + 1, width_to, tree_num);
             delete node.__right;
         }
     }
 
+    // this array represents how distance the root node is moved.
+    let mvRootPos = [];
     for (var i = 0; i < treeRoots.length; i++) {
         let root = treeRoots[i].root;
         let width = Math.pow(2, treeRoots[i].height);
 
-        setPosition(root, 0, count, count + width - 1);
+        setPosition(root, 0, count, count + width - 1, i);
+
+        mvRootPos.push({
+            x: __$__.network.getPositions(root.id)[root.id].x - root.x,
+            y: __$__.network.getPositions(root.id)[root.id].y - root.y
+        });
 
         count += width;
     }
 
     graph.nodes.forEach(node => {
+        if (node.__tree_num !== undefined) {
+            let beforePos = __$__.network.getPositions(node.id)[node.id];
+            let mvPos = mvRootPos[node.__tree_num];
+            node.x += mvPos.x;
+            node.y += mvPos.y;
+            if (!isChanged && (beforePos.x !== node.x || beforePos.y !== node.y))
+                isChanged = true;
+            delete node.__tree_num;
+        }
         if (node.__left !== undefined)
             delete node.__left;
         if (node.__right !== undefined)
