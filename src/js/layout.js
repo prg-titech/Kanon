@@ -93,7 +93,7 @@ __$__.Layout.LinkedList = function(graph, nodeLabel = "Node", nextLabel = 'next'
     for (var i = 0; i < sortedListNode.length; i++) {
         for (var j = 0; j < sortedListNode[i].length; j++) {
             let node = sortedListNode[i][j];
-            let pos = __$__.network.getPositions(node.id)[node.id];
+            let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
             if (j === 0) {
                 node.x = pos.x;
                 node.y = pos.y;
@@ -106,7 +106,7 @@ __$__.Layout.LinkedList = function(graph, nodeLabel = "Node", nextLabel = 'next'
             }
 
             if (node.__val) {
-                let valPos = __$__.network.getPositions(node.__val.id)[node.__val.id];
+                let valPos = __$__.StorePositions.oldNetworkNodesData[node.__val.id];
                 if (!isChanged && (valPos.x !== node.x || valPos.y !== node.y + 100))
                     isChanged = true;
                 node.__val.x = node.x;
@@ -312,8 +312,8 @@ __$__.Layout.BinaryTree = function(graph, nodeLabel = "Node", leftLabel = 'left'
         setPosition(root, 0, count, count + width - 1, i);
 
         mvRootPos.push({
-            x: __$__.network.getPositions(root.id)[root.id].x - root.x,
-            y: __$__.network.getPositions(root.id)[root.id].y - root.y
+            x: __$__.StorePositions.oldNetworkNodesData[root.id].x - root.x,
+            y: __$__.StorePositions.oldNetworkNodesData[root.id].y - root.y
         });
 
         count += width;
@@ -321,7 +321,7 @@ __$__.Layout.BinaryTree = function(graph, nodeLabel = "Node", leftLabel = 'left'
 
     graph.nodes.forEach(node => {
         if (node.__tree_num !== undefined) {
-            let beforePos = __$__.network.getPositions(node.id)[node.id];
+            let beforePos = __$__.StorePositions.oldNetworkNodesData[node.id];
             let mvPos = mvRootPos[node.__tree_num];
             node.x += mvPos.x;
             node.y += mvPos.y;
