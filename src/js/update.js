@@ -30,7 +30,7 @@ __$__.Update.PositionUpdate = function(e) {
         __$__.options.nodes.physics = true;
         __$__.options.nodes.hidden = true;
         __$__.options.edges.hidden = true;
-        __$__.StorePositions.setPositions(graph);
+        __$__.StorePositions.setPositions(graph, true);
         __$__.network = new vis.Network(__$__.container, {nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)}, __$__.options);
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
@@ -59,15 +59,7 @@ __$__.Update.PositionUpdate = function(e) {
                 }
             }
         }
-        __$__.Context.Arrays.forEach(array => {
-            updateArray({nodes: [array[0]]});
-        });
-
-        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
-        __$__.network.on('dragging', updateArray);
-        __$__.network.on('dragEnd', updateArray);
-        __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
-        __$__.network.once('stabilized', params => {
+        let stabilized = params => {
             __$__.options.nodes.physics = false;
             __$__.options.nodes.hidden = false;
             __$__.options.edges.hidden = false;
@@ -98,7 +90,21 @@ __$__.Update.PositionUpdate = function(e) {
 
             __$__.StorePositions.registerPositions();
             __$__.Update.ContextUpdate();
+        }
+
+        __$__.Context.Arrays.forEach(array => {
+            updateArray({nodes: [array[0]]});
         });
+
+        __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+        __$__.network.on('dragging', updateArray);
+        __$__.network.on('dragEnd', updateArray);
+        __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
+        if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
+            __$__.network.once('stabilized', stabilized);
+        else
+            stabilized();
+
     } catch (e) {
         if (e == 'Infinite Loop') {
             document.getElementById('console').textContent = 'infinite loop?';
