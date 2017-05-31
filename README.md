@@ -47,6 +47,6 @@ __Kanon__ uses the following libraries.
 
 ## LICENSE
 
-Kanon is distributed under the MIT License. See LICENSE for more information.
+Kanon is distributed under the MIT License. See [LICENSE](https://github.com/prg-titech/Kanon/blob/master/LICENSE) for more information.
 
 [*]: Our repository includes esprima.js in the externals directory, which is taken from https://unpkg.com/esprima@3.1.1/dist/esprima.js .
