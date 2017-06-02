@@ -1,17 +1,17 @@
-var Node = function(val) {
+let Node = function(val) {
     this.val = val;
     this.next = null;
     this.prev = null;
 };
 
-var DLList = function() {
+let DLList = function() {
     this.head = null;
     this.tail = null;
     this.length = 0;
 };
 
 DLList.prototype.add = function(val) {
-    var temp = new Node(val);
+    let temp = new Node(val);
     
     if (!this.head) {
         this.head = temp;
@@ -26,7 +26,7 @@ DLList.prototype.add = function(val) {
 
 DLList.prototype.insert = function(val, index) {
     if (0 <= index && index <= this.length) {
-        var temp = new Node(val);
+        let temp = new Node(val);
         
         if (index === this.length) {
             temp.prev = this.tail;
@@ -37,7 +37,7 @@ DLList.prototype.insert = function(val, index) {
             this.head.prev = temp;
             this.head = temp;
         } else {
-            var current = this.head;
+            let current = this.head;
             
             for (var i = 0; i < index; i++) {
                 current = current.next;
@@ -65,7 +65,7 @@ DLList.prototype.remove = function(index) {
             delete this.tail.next.prev;
             delete this.tail.next;
         } else {
-            var current = this.head;
+            let current = this.head;
             
             for (var i = 0; i < index; i++) {
                 current = current.next;
@@ -81,22 +81,24 @@ DLList.prototype.remove = function(index) {
 };
 
 DLList.prototype.reverse = function() {
-    var current = this.head, temp = current.next;
-    
-    while (current !== this.tail) {
-        current.prev = temp;
-        temp = temp.next;
-        current.prev.next = current;
-        if (current === this.head) delete current.next;
-        delete current.prev.prev;
-        current = current.prev;
+    if (this.length > 0) {
+        let current = this.head, temp = current.next;
+        
+        while (current !== this.tail) {
+            current.prev = temp;
+            temp = temp.next;
+            current.prev.next = current;
+            if (current === this.head) delete current.next;
+            delete current.prev.prev;
+            current = current.prev;
+        }
+        
+        this.tail = this.head;
+        this.head = current;
     }
-    
-    this.tail = this.head;
-    this.head = current;
 };
 
-var list = new DLList();
+let list = new DLList();
 
 list.add(1);
 list.add(2);
