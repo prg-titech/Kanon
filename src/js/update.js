@@ -31,7 +31,14 @@ __$__.Update.PositionUpdate = function(e) {
         __$__.options.nodes.hidden = true;
         __$__.options.edges.hidden = true;
         __$__.StorePositions.setPositions(graph, true);
-        __$__.network = new vis.Network(__$__.container, {nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)}, __$__.options);
+        // __$__.network = new vis.Network(__$__.container, {nodes: new vis.DataSet(graph.nodes), edges: new vis.DataSet(graph.edges)}, __$__.options);
+        // __$__.network.setOptions(__$__.options);
+        // __$__.Animation.setData(graph);
+        __$__.network.setOptions(__$__.options);
+        __$__.network.setData({
+            nodes: new vis.DataSet(graph.nodes),
+            edges: new vis.DataSet(graph.edges)
+        });
         __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
         __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
 
