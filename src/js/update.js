@@ -27,6 +27,7 @@ __$__.Update = {
             
     
             if (!__$__.Update.isChange(graph, false)) {
+                __$__.Update.wait = false;
                 __$__.Update.ContextUpdate();
                 return;
             }
