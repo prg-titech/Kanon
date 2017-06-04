@@ -59,6 +59,7 @@ __$__.Animation = {
             nodes: new vis.DataSet(graph.nodes),
             edges: new vis.DataSet(graph.edges)
         });
+        graph.nodes.forEach(node => {__$__.Update.updateArray({nodes: [node.id]});});
         if (nextPos.length > 0) {
             __$__.Animation.nowAnimationID++;
             nextPos.forEach(pos => {

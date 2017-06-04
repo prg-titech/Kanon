@@ -11,8 +11,7 @@ __$__.editor.getSelection().on('changeCursor', (e) => {
     setTimeout(() => {
         __$__.Update.ContextUpdate(e);
     }, 0);
-}
-)
+});
 
 __$__.editor.commands.addCommand({
     name: 'NextContext',
