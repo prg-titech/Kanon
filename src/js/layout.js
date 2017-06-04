@@ -130,10 +130,6 @@ __$__.Layout = {
         __$__.StorePositions.setPositions(graph);
         let isChanged = __$__.Layout.setLinkedList(graph);
         if (isChanged) {
-            // __$__.network.setData({
-            //     nodes: new vis.DataSet(graph.nodes),
-            //     edges: new vis.DataSet(graph.edges)
-            // });
             __$__.Animation.SetData(graph);
             __$__.StorePositions.registerPositions();
             __$__.Context.Draw('redraw');
@@ -341,10 +337,6 @@ __$__.Layout = {
         __$__.StorePositions.setPositions(graph);
         let isChanged = __$__.Layout.setBinaryTree(graph);
         if (isChanged) {
-            // __$__.network.setData({
-            //     nodes: new vis.DataSet(graph.nodes),
-            //     edges: new vis.DataSet(graph.edges)
-            // }); 
             __$__.Animation.SetData(graph);
             __$__.StorePositions.registerPositions();
             __$__.Context.Draw('redraw');

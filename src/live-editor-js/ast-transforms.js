@@ -348,10 +348,10 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                 // this is VariableDeclaration at the head of user code
                 node.body.unshift(
                     b.VariableDeclaration([
-                        b.VariableDeclarator(
-                            b.Identifier('__loopCounter'),
-                            b.ObjectExpression([])
-                        ),
+                        // b.VariableDeclarator(
+                        //     b.Identifier('__loopCounter'),
+                        //     b.ObjectExpression([])
+                        // ),
                         b.VariableDeclarator(
                             b.Identifier('__loopLabels'),
                             b.ArrayExpression([b.Literal('noLoop')])
@@ -466,7 +466,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
 __$__.ASTTransforms.Context = function () {
     return {
         enter(node, path) {
-            const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__loopCounter", loopContext = "LoopContext";
+            const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
 
             if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
                 // In this part, register the position of this loop.

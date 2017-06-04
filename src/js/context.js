@@ -17,17 +17,20 @@ __$__.Context = {
     StartEndInLoop: {},
     SummarizedContext: {},
     TableTimeCounter: [],
+    __loopCounter: {},
 
     Initialize: function() {
         __$__.Context.Arrays = [];
         __$__.Context.CheckPointTable = {};
         __$__.Context.Literals = [];
+        __$__.Context.LoopContext = {'noLoop': 1};
         __$__.Context.NestLoop = {};
         __$__.Context.Objects = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];
         __$__.Context.TableTimeCounter = [];
+        __$__.Context.__loopCounter = {};
     },
 
     /**
@@ -127,7 +130,6 @@ __$__.Context = {
         __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
     
     
-        __$__.Context.LastGraph = graph;
         return graph;
     },
     
@@ -135,27 +137,28 @@ __$__.Context = {
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
         let cursorPos = __$__.editor.getCursorPosition();
+        let checkPointId = __$__.Context.FindId(cursorPos);
     
         if (__$__.Context.Snapshot) {
             try {
-                var checkPointId = __$__.Context.FindId(cursorPos);
-                var loopLabel, count, cID, graph;
+                var loopLabel, count, cpID, graph;
                 if (checkPointId.afterId &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].column === cursorPos.column &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1) {
-                    loopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
-                    count = __$__.Context.LoopContext[loopLabel];
-                    cID = checkPointId.afterId;
-                    graph = __$__.Context.StoredGraph[cID][loopLabel][count];
-                } else {
-                    loopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-                    count = __$__.Context.LoopContext[loopLabel];
-                    cID = checkPointId.beforeId;
-                    graph = __$__.Context.StoredGraph[cID][loopLabel][count];
-                }
-                if (__$__.Context.SnapshotContext['cID'] === cID && __$__.Context.SnapshotContext['loopLabel'] === loopLabel && __$__.Context.SnapshotContext['count'] === count)
+                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1)
+                    cpID = checkPointId.afterId;
+                else
+                    cpID = checkPointId.beforeId;
+
+                loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                count = __$__.Context.LoopContext[loopLabel];
+                graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
+
+                if (__$__.Context.SnapshotContext['cpID'] === cpID
+                    && __$__.Context.SnapshotContext['loopLabel'] === loopLabel
+                    && __$__.Context.SnapshotContext['count'] === count)
                     return;
-                __$__.Context.SnapshotContext['cID'] = checkPointId.beforeId
+
+                __$__.Context.SnapshotContext['cpID'] = cpID;
                 __$__.Context.SnapshotContext['loopLabel'] = loopLabel;
                 __$__.Context.SnapshotContext['count'] = count;
     
@@ -169,17 +172,10 @@ __$__.Context = {
                 isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
     
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
-                // __$__.Layout.setLinkedList(graph);
-                // __$__.Layout.setBinaryTree(graph);
-                // __$__.network.setData({
-                //     nodes: new vis.DataSet(graph.nodes),
-                //     edges: new vis.DataSet(graph.edges)
-                // });
                 __$__.Animation.setData(graph);
                 __$__.StorePositions.registerPositions();
             }
         } else {
-            var checkPointId = __$__.Context.FindId(cursorPos);
             if (!checkPointId.afterId)
                 checkPointId.afterId = checkPointId.beforeId;
     
@@ -224,8 +220,10 @@ __$__.Context = {
                     });
     
                     afterGraph.nodes.forEach(node => {
-                        if (changeNodeId[node.id] == false) delete changeNodeId[node.id];
-                        else if (changeNodeId[node.id] == undefined) changeNodeId[node.id] = true;
+                        if (changeNodeId[node.id] == false)
+                            delete changeNodeId[node.id];
+                        else if (changeNodeId[node.id] == undefined)
+                            changeNodeId[node.id] = true;
                     });
     
     
@@ -264,14 +262,23 @@ __$__.Context = {
                 }
             }
     
-            var graph = __$__.Context.LastGraph;
+            let graph = {nodes: [], edges: []};
+
+            // copy __$__.Context.LastGraph to a abject named graph.
+            __$__.Context.LastGraph.nodes.forEach(node => {
+                graph.nodes.push(Object.assign({}, node));
+            });
+            __$__.Context.LastGraph.edges.forEach(edge => {
+                graph.edges.push(Object.assign({}, edge));
+            });
+
             __$__.StorePositions.setPositions(graph);
             let isChanged = __$__.Layout.setLinkedList(graph);
                 isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
     
             // change color of added node to orange in this part
             graph.nodes.forEach(node => {
-                var index = addedNodeId.indexOf(node.id)
+                var index = addedNodeId.indexOf(node.id);
     
                 if (index >= 0) {
                     node.color = __$__.SummarizedViewColor.AddNode;
@@ -297,41 +304,40 @@ __$__.Context = {
                     if (node.id == id) label = node.label;
                 });
     
-                if (id && id.slice(0, 11) != '__Variable-') graph.nodes.push({
-                    fixed: false,
-                    id: id,
-                    label: label,
-                    physics: false,
-                    color: __$__.SummarizedViewColor.AddNode
-                });
+                if (id && id.slice(0, 11) != '__Variable-')
+                    graph.nodes.push({
+                        fixed: false,
+                        id: id,
+                        label: label,
+                        physics: false,
+                        color: __$__.SummarizedViewColor.AddNode
+                    });
             });
     
             addedEdgeData.forEach(data => {
-                if (data && data[0].slice(0, 11) != '__Variable-') graph.edges.push({
-                    from: data[0],
-                    to: data[1],
-                    label: data[2],
-                    color: __$__.SummarizedViewColor.AddEdge,
-                    dashes: true
-                });
+                if (data && data[0].slice(0, 11) != '__Variable-')
+                    graph.edges.push({
+                        from: data[0],
+                        to: data[1],
+                        label: data[2],
+                        color: __$__.SummarizedViewColor.AddEdge,
+                        dashes: true
+                    });
             });
     
             removedEdgeData.forEach(data => {
-                if (data) graph.edges.push({
-                    from: data[0],
-                    to: data[1],
-                    label: data[2],
-                    color: __$__.SummarizedViewColor.RemoveEdge,
-                    dashes: true
-                });
+                if (data)
+                    graph.edges.push({
+                        from: data[0],
+                        to: data[1],
+                        label: data[2],
+                        color: __$__.SummarizedViewColor.RemoveEdge,
+                        dashes: true
+                    });
             });
     
     
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true))
-                // __$__.network.setData({
-                //     nodes: new vis.DataSet(graph.nodes),
-                //     edges: new vis.DataSet(graph.edges)
-                // });
                 __$__.Animation.setData(graph);
     
             __$__.StorePositions.registerPositions();
@@ -371,7 +377,7 @@ __$__.Context = {
         var elem = document.getElementById('viewmode');
     
         elem.textContent = (isSnapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
-        if (isShapshot)
+        if (isSnapshot)
             __$__.Context.SnapshotContext = {};
         else
             __$__.Context.SummarizedContext = {};

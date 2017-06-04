@@ -41,12 +41,6 @@ __$__.Animation = {
      * we use animation to move the node.
      */
     setData: function(graph) {
-        /**
-         * graphには複数のノードが存在する
-         * 座標が指定されているノードはmoveWithAnimationを使う
-         * それが終わったら
-         */
-        // __$__.Animation.nowAnimationID++;
         let nextPos = [];
         let pos = __$__.network.getPositions();
         graph.nodes.forEach(node => {

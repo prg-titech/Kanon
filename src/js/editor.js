@@ -6,11 +6,13 @@ else
 
 __$__.editor.getSession().setMode('ace/mode/javascript');
 __$__.editor.getSession().setUseWorker(false);
-// __$__.editor.on('change', (e) => {__$__.Animation.nowAnimationID++;__$__.Update.PositionUpdate(e);});
-// __$__.editor.getSelection().on('changeCursor', (e) => {__$__.Animation.nowAnimationID++;__$__.Update.ContextUpdate(e);});
 __$__.editor.on('change', __$__.Update.PositionUpdate);
-__$__.editor.getSelection().on('changeCursor', __$__.Update.ContextUpdate);
-
+__$__.editor.getSelection().on('changeCursor', (e) => {
+    setTimeout(() => {
+        __$__.Update.ContextUpdate(e);
+    }, 0);
+}
+)
 
 __$__.editor.commands.addCommand({
     name: 'NextContext',
