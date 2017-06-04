@@ -45,29 +45,6 @@ __$__.Update = {
             __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
             __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
     
-            let updateArray = params => {
-                if (params.nodes.length > 0) {
-                    let id = params.nodes[0];
-                    let indices = [-1, -1];
-    
-                    for (let i = 0; i < __$__.Context.Arrays.length; i++) {
-                        let index = __$__.Context.Arrays[i].indexOf(id);
-                        if (index >= 0) {
-                            indices[0] = i;
-                            indices[1] = index;
-                            break;
-                        }
-                    }
-    
-                    if (indices[0] >= 0) {
-                        let arrayIDs = __$__.Context.Arrays[indices[0]];
-                        for (let i = 0; i < arrayIDs.length; i++) {
-                            let pos = __$__.network.getPositions(id)[id];
-                            __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * 20, pos.y);
-                        }
-                    }
-                }
-            }
             let stabilized = params => {
                 __$__.options.nodes.physics = false;
                 __$__.options.nodes.hidden = false;
@@ -103,12 +80,12 @@ __$__.Update = {
             }
     
             __$__.Context.Arrays.forEach(array => {
-                updateArray({nodes: [array[0]]});
+                __$__.Update.updateArray({nodes: [array[0]]});
             });
     
             __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
-            __$__.network.on('dragging', updateArray);
-            __$__.network.on('dragEnd', updateArray);
+            __$__.network.on('dragging', __$__.Update.updateArray);
+            __$__.network.on('dragEnd', __$__.Update.updateArray);
             __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
             __$__.Update.wait = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
@@ -289,5 +266,29 @@ __$__.Update = {
     
     
         return ret;
+    },
+
+    updateArray: params => {
+        if (params.nodes.length > 0) {
+            let id = params.nodes[0];
+            let indices = [-1, -1];
+
+            for (let i = 0; i < __$__.Context.Arrays.length; i++) {
+                let index = __$__.Context.Arrays[i].indexOf(id);
+                if (index >= 0) {
+                    indices[0] = i;
+                    indices[1] = index;
+                    break;
+                }
+            }
+
+            if (indices[0] >= 0) {
+                let arrayIDs = __$__.Context.Arrays[indices[0]];
+                for (let i = 0; i < arrayIDs.length; i++) {
+                    let pos = __$__.network.getPositions(id)[id];
+                    __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * 20, pos.y);
+                }
+            }
+        }
     }
 };

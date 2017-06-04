@@ -27,6 +27,7 @@ __$__.Animation = {
             }
             
             __$__.network.moveNode(id, pos.x + Math.floor(delta.x * (currentTime - startTime) / ms), pos.y + Math.floor(delta.y * (currentTime - startTime) / ms))
+            __$__.Update.updateArray({nodes: [id]});
             __$__.StorePositions.registerPositions();
         }, 1);
     },

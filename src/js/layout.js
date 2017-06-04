@@ -228,6 +228,7 @@ __$__.Layout = {
     
         // these types are Array because a graph might have some trees.
         let treeRoots = [];
+        let tree_CenterPos = [];
         /**
          * if height of a tree is 0, then width = 1;
          * if height of a tree is 1, then width = 2;
@@ -244,6 +245,8 @@ __$__.Layout = {
     
         while (listNodes.length > 0) {
             let node = listNodes[0];
+            let centerPos = {x: 0, y: 0};
+            let n = 1; // the number of the node of this tree
     
             while (node.__parent) {
                 node = node.__parent;
@@ -268,18 +271,24 @@ __$__.Layout = {
                     let parent = current.__parent;
                     delete current.__parent;
                     listNodes.splice(listNodes.indexOf(current), 1);
+                    centerPos.x += current.x;
+                    centerPos.y += current.y;
                     current = parent;
+                    n++;
                 }
                 isTree = true;
             }
     
-            if (isTree)
+            if (isTree) {
+                centerPos.x /= n;
+                centerPos.y /= n;
                 treeRoots.push(tree);
-            else
+                tree_CenterPos.push(centerPos);
+            } else
                 break;
         }
     
-        let count = 0;
+        let oldCenterPos = [];
         let setPosition = function(node, depth, width_from, width_to, tree_num) {
             let next_x = (width_to === 0) ? 0 : ((width_from + width_to) / 2) * 100;
             let next_y = depth * 100;
@@ -287,6 +296,8 @@ __$__.Layout = {
             // register node's position.
             node.x = next_x;
             node.y = next_y;
+            oldCenterPos[tree_num].x += node.x;
+            oldCenterPos[tree_num].y += node.y;
             node.__tree_num = tree_num;
     
             if (node.__val) {
@@ -299,31 +310,41 @@ __$__.Layout = {
             // define the middle between width_from and width_to.
             let width_mid = Math.floor((width_from + width_to) / 2)
             
+            var ret = 1;
             if (node.__left) {
                 // recursive call if node.__left is defined.
-                setPosition(node.__left, depth+1, width_from, width_mid, tree_num);
+                ret += setPosition(node.__left, depth+1, width_from, width_mid, tree_num);
                 delete node.__left;
             }
     
             if (node.__right) {
                 // recursive call if node.__right is defined.
-                setPosition(node.__right, depth+1, width_mid + 1, width_to, tree_num);
+                ret += setPosition(node.__right, depth+1, width_mid + 1, width_to, tree_num);
                 delete node.__right;
             }
+            return ret;
         }
     
         // this array represents how distance the root node is moved.
         let mvRootPos = [];
+        let count = 0;
         for (var i = 0; i < treeRoots.length; i++) {
             let root = treeRoots[i].root;
+            oldCenterPos.push({x: 0, y: 0});
             let width = Math.pow(2, treeRoots[i].height);
     
-            setPosition(root, 0, count, count + width - 1, i);
+            let nodeSize = setPosition(root, 0, count, count + width - 1, i);
+            oldCenterPos[i].x /= nodeSize;
+            oldCenterPos[i].y /= nodeSize;
     
+            // mvRootPos.push({
+            //     x: __$__.StorePositions.oldNetworkNodesData[root.id].x - root.x,
+            //     y: __$__.StorePositions.oldNetworkNodesData[root.id].y - root.y
+            // });
             mvRootPos.push({
-                x: __$__.StorePositions.oldNetworkNodesData[root.id].x - root.x,
-                y: __$__.StorePositions.oldNetworkNodesData[root.id].y - root.y
-            });
+                x: tree_CenterPos[i].x - oldCenterPos[i].x,
+                y: tree_CenterPos[i].y - oldCenterPos[i].y
+            })
     
             count += width;
         }

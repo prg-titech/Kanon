@@ -15,7 +15,6 @@ __$__.Context = {
     StackToCheckLoop: ['noLoop'],
     StoredGraph: {},
     StartEndInLoop: {},
-    SummarizedContext: {},
     TableTimeCounter: [],
     __loopCounter: {},
 
@@ -181,11 +180,6 @@ __$__.Context = {
     
             var beforeLoopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
             var afterLoopLabel  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
-            if (__$__.Context.SummarizedContext['beforeId'] === checkPointId.beforeId
-                && __$__.Context.SummarizedContext['afterId'] === checkPointId.afterId)
-                return;
-            __$__.Context.SummarizedContext['beforeId'] = checkPointId.beforeId;
-            __$__.Context.SummarizedContext['afterId'] = checkPointId.afterId;
     
             var addedNodeId = [], addedEdgeData = [];
             var removedNodeId = [], removedEdgeData = [];
@@ -379,9 +373,6 @@ __$__.Context = {
         elem.textContent = (isSnapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
         if (isSnapshot)
             __$__.Context.SnapshotContext = {};
-        else
-            __$__.Context.SummarizedContext = {};
-
     },
     
     
