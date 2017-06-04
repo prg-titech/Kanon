@@ -63,6 +63,11 @@ __$__.Animation = {
             nextPos.forEach(pos => {
                 __$__.Animation.moveWithAnimation(pos.id, pos, __$__.Animation.nowAnimationID, 500);
             });
+            // __$__.network.fit({
+            //     animation: {
+            //         easingFuncion: 'linear'
+            //     }
+            // });
         }
     }
 }

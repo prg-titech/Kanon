@@ -64,9 +64,11 @@ __$__.Layout = {
          * (where a, b, etc. represent nodes.)
          */
         let sortedListNode = [];
+        let sortedListNode_CenterPos = [];
     
         while (listNodes.length > 0) {
             let list = [listNodes.shift()];
+            let pos = {x: list[0].x, y: list[0].y};
             list[0].__checked = true;
             while (list[0].__prev && !list[0].__prev.__checked) {
                 let prev = list[0].__prev;
@@ -77,14 +79,21 @@ __$__.Layout = {
             }
             while (list[list.length-1].__next && !list[list.length-1].__next.__checked) {
                 let next = list[list.length-1].__next;
+                pos.x += next.x;
+                pos.y += next.y;
                 next.__checked = true;
                 delete list[list.length-1].__next;
                 list.push(listNodes.splice(listNodes.indexOf(next),1)[0]);
                 delete next.__prev;
             }
     
-            if (list.length > 1)
+            if (list.length > 1) {
+                pos.x /= list.length;
+                pos.y /= list.length;
+
                 sortedListNode.push(list);
+                sortedListNode_CenterPos.push(pos);
+            }
         }
     
         // register nodes position and the valueLabel nodes
@@ -92,16 +101,25 @@ __$__.Layout = {
             for (var j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
                 let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
-                if (j === 0) {
-                    node.x = pos.x;
-                    node.y = pos.y;
-                } else {
-                    let prevNode = sortedListNode[i][j-1];
-                    if (!isChanged && (pos.x !== prevNode.x + 100 || pos.y !== prevNode.y))
-                        isChanged = true;
-                    node.x = prevNode.x + 100;
-                    node.y = prevNode.y;
-                }
+                // if (j === 0) {
+                //     node.x = pos.x;
+                //     node.y = pos.y;
+                // } else {
+                //     let prevNode = sortedListNode[i][j-1];
+                //     if (!isChanged && (pos.x !== prevNode.x + 100 || pos.y !== prevNode.y))
+                //         isChanged = true;
+                //     node.x = prevNode.x + 100;
+                //     node.y = prevNode.y;
+                // }
+
+                let newPos = {
+                    x: sortedListNode_CenterPos[i].x + 100 * (j - (sortedListNode[i].length - 1) / 2),
+                    y: sortedListNode_CenterPos[i].y
+                };
+                if (!isChanged && pos.x !== newPos.x || pos.y !== newPos.y)
+                    isChanged = true;
+                node.x = newPos.x;
+                node.y = newPos.y;
     
                 if (node.__val) {
                     let valPos = __$__.StorePositions.oldNetworkNodesData[node.__val.id];
