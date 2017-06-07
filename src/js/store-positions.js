@@ -13,8 +13,7 @@ __$__.StorePositions = {
             if (nodeData && nodeData.x !== undefined) {
                 node.x = nodeData.x;
                 node.y = nodeData.y;
-                node.fixed = isFixed;
-                node.physics = isFixed;
+                node.fixed = true;
             }
         }
         

@@ -55,9 +55,11 @@ __$__.Animation = {
                 node.y = pos[node.id].y;
             }
         });
+        __$__.nodes = new vis.DataSet(graph.nodes);
+        __$__.edges = new vis.DataSet(graph.edges);
         __$__.network.setData({
-            nodes: new vis.DataSet(graph.nodes),
-            edges: new vis.DataSet(graph.edges)
+            nodes: __$__.nodes,
+            edges: __$__.edges
         });
         graph.nodes.forEach(node => {__$__.Update.updateArray({nodes: [node.id]});});
         if (nextPos.length > 0) {

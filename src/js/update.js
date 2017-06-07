@@ -33,24 +33,28 @@ __$__.Update = {
             }
     
     
-            __$__.options.nodes.physics = true;
             __$__.options.nodes.hidden = true;
             __$__.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
             __$__.network.setOptions(__$__.options);
+            __$__.nodes = new vis.DataSet(graph.nodes);
+            __$__.edges = new vis.DataSet(graph.edges);
             __$__.network.setData({
-                nodes: new vis.DataSet(graph.nodes),
-                edges: new vis.DataSet(graph.edges)
+                nodes: __$__.nodes,
+                edges: __$__.edges
             });
             __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
             __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
     
             let stabilized = params => {
-                __$__.options.nodes.physics = false;
+                // __$__.options.nodes.physics = false;
                 __$__.options.nodes.hidden = false;
                 __$__.options.edges.hidden = false;
-                __$__.options.physics = {enabled: true, barnesHut: {gravitationalConstant: -5000}};
+                // __$__.options.physics = {enabled: true, barnesHut: {gravitationalConstant: -5000}};
                 __$__.network.setOptions(__$__.options);
+                __$__.nodes.forEach(node => {
+                    __$__.nodes.update({id: node.id, fixed: true});
+                });
     
                 /*
                 // align each value of the ArrayExpression if that is Literal
@@ -85,6 +89,18 @@ __$__.Update = {
             });
     
             __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+            __$__.network.on('dragStart', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    __$__.nodes.update({id: nodeId, fixed: false});
+                }
+            });
+            __$__.network.on('dragEnd', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    __$__.nodes.update({id: nodeId, fixed: true})
+                }
+            });
             __$__.network.on('dragging', __$__.Update.updateArray);
             __$__.network.on('dragEnd', __$__.Update.updateArray);
             __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);

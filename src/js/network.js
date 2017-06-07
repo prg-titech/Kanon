@@ -1,10 +1,28 @@
 __$__.container = document.getElementById('mynetwork');
-__$__.data = {nodes: new vis.DataSet({}), edges: new vis.DataSet({})};
+__$__.nodes = new vis.DataSet({});
+__$__.edges = new vis.DataSet({});
+__$__.data = {nodes: __$__.nodes, edges: __$__.edges};
 __$__.options = {
     autoResize: false,
-    nodes: {color: 'skyblue', physics: false},
-    edges: {arrows: 'to', color: 'skyblue', width: 3},
-    interaction: {zoomView: false},
+    nodes: {
+        color: 'skyblue'
+    },
+    edges: {
+        arrows: 'to',
+        color: 'skyblue',
+        width: 3,
+        smooth: {
+            enabled: true,
+            forceDirection: 'none',
+            roundness: 1.0
+        }
+    },
+    physics: {
+        enabled: true
+    },
+    interaction: {
+        zoomView: false
+    },
 };
 __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
 __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;

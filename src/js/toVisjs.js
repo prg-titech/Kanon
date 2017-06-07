@@ -25,7 +25,7 @@ __$__.ToVisjs = {
                     hidden: true,
                     id: __$__.Context.getObjectID(graph.nodes[i]),
                     label: graph.nodes[i].id,
-                    physics: true
+                    fixed: false
                 };
 
                 retData.nodes.push(node);
