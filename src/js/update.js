@@ -14,6 +14,7 @@ __$__.Update = {
         try {
             let checkInfiniteLoop = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
             eval(checkInfiniteLoop);
+            document.getElementById('console').textContent = '';
     
             __$__.Context.Initialize();
             __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
@@ -21,7 +22,6 @@ __$__.Update = {
             var __objs;
     
             eval(__$__.Update.CodeWithCheckPoint);
-            document.getElementById('console').textContent = '';
     
             var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
             
@@ -49,6 +49,7 @@ __$__.Update = {
                 __$__.options.nodes.physics = false;
                 __$__.options.nodes.hidden = false;
                 __$__.options.edges.hidden = false;
+                __$__.options.physics = {enabled: true, barnesHut: {gravitationalConstant: -5000}};
                 __$__.network.setOptions(__$__.options);
     
                 /*

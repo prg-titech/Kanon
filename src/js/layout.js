@@ -93,11 +93,15 @@ __$__.Layout = {
 
                 sortedListNode.push(list);
                 sortedListNode_CenterPos.push(pos);
+            } else {
+                list[0].__checked = false;
             }
         }
     
+        let listRegion = [];
         // register nodes position and the valueLabel nodes
         for (var i = 0; i < sortedListNode.length; i++) {
+            let region = {x: {from: NaN, to: NaN}, y: {from: NaN, to: NaN}};
             for (var j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
                 let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
@@ -116,6 +120,16 @@ __$__.Layout = {
                     x: sortedListNode_CenterPos[i].x + 100 * (j - (sortedListNode[i].length - 1) / 2),
                     y: sortedListNode_CenterPos[i].y
                 };
+
+                if (!(newPos.x > region.x.from))
+                    region.x.from = newPos.x;
+                if (!(region.x.to > newPos.x))
+                    region.x.to = newPos.x;
+                if (!(newPos.y > region.y.from))
+                    region.y.from = newPos.y;
+                if (!(region.y.to > newPos.y))
+                    region.y.to = newPos.y;
+
                 if (!isChanged && pos.x !== newPos.x || pos.y !== newPos.y)
                     isChanged = true;
                 node.x = newPos.x;
@@ -123,16 +137,45 @@ __$__.Layout = {
     
                 if (node.__val) {
                     let valPos = __$__.StorePositions.oldNetworkNodesData[node.__val.id];
+
+                    if (!(node.x > region.x.from))
+                        region.x.from = node.x;
+                    if (!(region.x.to > node.x))
+                        region.x.to = node.x;
+                    if (!(node.y + 100 > region.y.from))
+                        region.y.from = node.y + 100;
+                    if (!(region.y.to > node.y + 100))
+                        region.y.to = node.y + 100;
+
                     if (!isChanged && (valPos.x !== node.x || valPos.y !== node.y + 100))
                         isChanged = true;
                     node.__val.x = node.x;
                     node.__val.y = node.y + 100;
-                    delete node.__val;
+                    node.__val.__checked = true;
                 }
             }
+            region.x.from -= 10;
+            region.x.to += 10;
+            region.y.from -= 10;
+            region.y.to += 10;
+            listRegion.push(region);
         }
     
         graph.nodes.forEach(node => {
+            if (node.__checked) {
+                delete node.__checked;
+            } else {
+                listRegion.forEach(region => {
+                    if (region.x.from <= node.x && node.x <= region.x.to
+                        && region.y.from <= node.y && node.y <= region.y.to) {
+                        node.y = region.y.to + 50;
+                        if (node.__val) {
+                            node.__val.x = node.x;
+                            node.__val.y = node.y + 100;
+                        }
+                    }
+                });
+            }
             if (node.__next !== undefined)
                 delete node.__next;
             if (node.__prev !== undefined)

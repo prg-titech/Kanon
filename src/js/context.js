@@ -152,11 +152,6 @@ __$__.Context = {
                 count = __$__.Context.LoopContext[loopLabel];
                 graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
 
-                if (__$__.Context.SnapshotContext['cpID'] === cpID
-                    && __$__.Context.SnapshotContext['loopLabel'] === loopLabel
-                    && __$__.Context.SnapshotContext['count'] === count)
-                    return;
-
                 __$__.Context.SnapshotContext['cpID'] = cpID;
                 __$__.Context.SnapshotContext['loopLabel'] = loopLabel;
                 __$__.Context.SnapshotContext['count'] = count;
