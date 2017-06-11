@@ -22,7 +22,6 @@ __$__.Context = {
         __$__.Context.Arrays = [];
         __$__.Context.CheckPointTable = {};
         __$__.Context.Literals = [];
-        __$__.Context.LoopContext = {'noLoop': 1};
         __$__.Context.NestLoop = {};
         __$__.Context.Objects = {};
         __$__.Context.StoredGraph = {};
