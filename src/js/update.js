@@ -130,10 +130,12 @@ __$__.Update = {
                 // if loop doesn't include now context, now context is changed at the max of loop count
                 Object.keys(__$__.Context.__loopCounter).forEach(function(loopLabel) {
                     if (__$__.Context.LoopContext[loopLabel] > __$__.Context.__loopCounter[loopLabel])
-                        __$__.Context.LoopContext[loopLabel] = __$__.Context.__loopCounter[loopLabel];
+                        __$__.Context.setLoopContext(loopLabel, '=', __$__.Context.__loopCounter[loopLabel]);
                 });
     
                 __$__.Context.Draw(e);
+
+                __$__.ShowContext.show();
             } catch (e) {
                 if (e == 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';

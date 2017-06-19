@@ -27,7 +27,7 @@ __$__.JumpToConstruction = {
         if (__$__.JumpToConstruction.ClickElement.node)
             __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
                 if (__$__.JumpToConstruction.ClickElement.node == nodeData.id) {
-                    __$__.Context.LoopContext[nodeData.loopLabel] = nodeData.count;
+                    __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
     
                     __$__.editor.moveCursorToPosition({
@@ -43,7 +43,7 @@ __$__.JumpToConstruction = {
                     __$__.JumpToConstruction.ClickElement.edge.to == edgeData.to &&
                     __$__.JumpToConstruction.ClickElement.edge.label == edgeData.label) {
     
-                    __$__.Context.LoopContext[edgeData.loopLabel] = edgeData.count;
+                    __$__.Context.setLoopContext(edgeData.loopLabel, '=', edgeData.count);
                     __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
     
                     __$__.editor.moveCursorToPosition({

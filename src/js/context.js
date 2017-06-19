@@ -399,7 +399,7 @@ __$__.Context = {
             if (correct_context === -1)
                 return;
     
-            __$__.Context.LoopContext[key] = correct_context + 1;
+            __$__.Context.setLoopContext(key, '=', correct_context + 1);
         });
     },
     
@@ -433,13 +433,13 @@ __$__.Context = {
         if (moveTo === 'next') {
             let maxContext = __$__.Context.StartEndInLoop[nearestLoopLabel].length;
             if (__$__.Context.LoopContext[nearestLoopLabel] < maxContext) {
-                __$__.Context.LoopContext[nearestLoopLabel]++;
+                __$__.Context.setLoopContext(nearestLoopLabel, '+=', 1);
                 __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
                 isChanged = true;
             }
         } else if (moveTo === 'prev') {
             if (1 < __$__.Context.LoopContext[nearestLoopLabel]) {
-                __$__.Context.LoopContext[nearestLoopLabel]--;
+                __$__.Context.setLoopContext(nearestLoopLabel, '-=', 1);
                 __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
                 isChanged = true;
             }
@@ -457,4 +457,10 @@ __$__.Context = {
             return Object.keys(__$__.Context.Objects)[index];
         }
     },
+
+    setLoopContext: function(label, ope, n) {
+        let prog = '__$__.Context.LoopContext[label] ' + ope + ' ' + n + ';';
+        eval(prog);
+        __$__.ShowContext.update(label);
+    }
 };

@@ -31,3 +31,5 @@ __$__.editor.commands.addCommand({
             __$__.Context.Draw('redraw');
     }
 });
+__$__.editor.session.on('changeScrollLeft', __$__.ShowContext.show);
+__$__.editor.session.on('changeScrollTop', __$__.ShowContext.show);
