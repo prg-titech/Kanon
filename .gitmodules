@@ -1,3 +1,6 @@
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/estools/escodegen.git
+[submodule "external/jquery"]
+	path = external/jquery
+	url = https://github.com/jquery/jquery.git
