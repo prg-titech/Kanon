@@ -1,4 +1,7 @@
 __$__.ShowContext = {
+    /**
+     * this function displays the context of the loop or the function.
+     */
     show: function() {
         let checked_arr = [];
         let divs = $('#show_context').children();
@@ -32,12 +35,18 @@ __$__.ShowContext = {
             let display = (__$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
             let content = __$__.Context.LoopContext[id];
 
-            let div = '<div id=' + id + ' style="display: ' + display + '; top: ' + pos.y + 'px; left: ' + pos.x + 'px;">' + content + '</div>'
+            // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
+            let div = this.makeDivElement(id, display, pos.y, pos.x, content);
             $('#show_context').append(div);
         });
     },
 
 
+    /**
+     * @params id {string} : div's id
+     *
+     * this function calculates where the context of the loop or the function should be displayed.
+     */
     position: function(id) {
         let pos = {
             column: __$__.Context.LoopLabelPosition[id].start.column,
@@ -48,6 +57,11 @@ __$__.ShowContext = {
     },
 
 
+    /**
+     * @param pos {Object} : this has x and y property.
+     *
+     * this function judges whether the argument that represents position is included in the editor.
+     */
     inEditor: function(pos) {
         let editor = {
             h: parseInt($('#editor').css('height').slice(0, -2)),
@@ -58,11 +72,12 @@ __$__.ShowContext = {
     },
 
 
-    updateContext: function(id) {
-        document.getElementById(id).textContent = __$__.Context.LoopContext[id];
-    },
-
-
+    /**
+     * @param label_s {string or Array of string}
+     *
+     * This function updates the displayed context.
+     * If the type of the argument is Array, the contexts of the all element of the Array are updated.
+     */
     update: function(label_s) {
         if (label_s.constructor === 'Array') {
             let labels = label_s;
@@ -77,6 +92,16 @@ __$__.ShowContext = {
             if (label !== 'noLoop')
                 document.getElementById(label).textContent = __$__.Context.LoopContext[label];
         }
+    },
+
+    /**
+     * @param id      {string}           : the id of returned div element
+     * @param display {string}           : the returned div element is 
+     * @param top     {number}           : determine the position of the returned div element
+     * @param left    {number}           : determine the position of the returned div element
+     * @param content {string or number} : the displayed content
+     */
+    makeDivElement(id, display, top, left, content) {
+        return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + content + '</div>';
     }
 };
-
