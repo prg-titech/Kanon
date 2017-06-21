@@ -4,7 +4,8 @@ __$__.ShowContext = {
      */
     show: function() {
         let checked_arr = [];
-        let divs = $('#show_context').children();
+        let show_div = $('#show_context');
+        let divs = show_div.children();
 
         for (var i = 0; i < divs.length; i++) {
             let div = divs[i];
@@ -37,7 +38,7 @@ __$__.ShowContext = {
 
             // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
             let div = this.makeDivElement(id, display, pos.y, pos.x, content);
-            $('#show_context').append(div);
+            show_div.append(div);
         });
     },
 
