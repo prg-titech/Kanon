@@ -1,9 +1,3 @@
-[submodule "external/ace-builds"]
-	path = external/ace-builds
-	url = https://github.com/ajaxorg/ace-builds.git
-[submodule "external/vis"]
-	path = external/vis
-	url = https://github.com/almende/vis.git
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/estools/escodegen.git
