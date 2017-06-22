@@ -10,6 +10,7 @@ __$__.Update = {
             __$__.Update.UpdateLabelPositions(e);
         __$__.Context.Initialize();
         __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
+        __$__.editor.task.ContextUpdate = []
     
         try {
             let checkInfiniteLoop = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
@@ -28,7 +29,8 @@ __$__.Update = {
     
             if (!__$__.Update.isChange(graph, false)) {
                 __$__.Update.wait = false;
-                __$__.Update.ContextUpdate();
+                if (__$__.editor.task.length === 0)
+                    __$__.Update.ContextUpdate();
                 return;
             }
     

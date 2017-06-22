@@ -1,5 +1,7 @@
 __$__.Animation = {
     nowAnimationID: 0,
+
+
     /**
      * @param: id{String or int} id of the node you want to move by using animation
      * @param: to{Object {x: int, y: int}} the destination position of the node
@@ -31,6 +33,7 @@ __$__.Animation = {
             __$__.StorePositions.registerPositions();
         }, 1);
     },
+
 
     /**
      * @param: graph {Object {nodes: Array, edges: Array}}
