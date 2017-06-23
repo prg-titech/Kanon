@@ -2,8 +2,6 @@ __$__.ASTTransforms = {
     checkPoint_idCounter: 1 // this is used to count id of each check point
 };
 
-let b = __$__.ASTBuilder;
-
 /** 
  * before: new Hoge()
  *
@@ -25,6 +23,7 @@ let b = __$__.ASTBuilder;
  * Array Expression is also the same
  */
 __$__.ASTTransforms.CollectObjects = function() {
+    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.loc && (node.type === "NewExpression" || node.type === 'ArrayExpression')) {
@@ -220,6 +219,7 @@ __$__.ASTTransforms.CollectObjects = function() {
  * })()
  */
 __$__.ASTTransforms.CallExpressionToFunction = function() {
+    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.type === "CallExpression" && node.loc) {
@@ -342,6 +342,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  * __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter;
  */
 __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
+    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.type === 'Program') {
@@ -411,6 +412,7 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
 
 
 __$__.ASTTransforms.BlockedProgram = function() {
+    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.type === 'Program') {
@@ -464,6 +466,7 @@ __$__.ASTTransforms.Loop = ["DoWhileStatement", "WhileStatement", "ForStatement"
  * __loopLabel is unique label
  */
 __$__.ASTTransforms.Context = function () {
+    let b = __$__.ASTBuilder;
     return {
         enter(node, path) {
             const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
@@ -777,6 +780,7 @@ __$__.ASTTransforms.Context = function () {
  *
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {
+    let b = __$__.ASTBuilder;
     var id = 'InsertCheckPoint'
     __$__.ASTTransforms.checkPoint_idCounter = 1;
     var statementTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration'];
@@ -1170,6 +1174,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
  * remove '$'
  */
 __$__.ASTTransforms.RemoveProbe = function() {
+    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.type == 'VariableDeclarator') {
