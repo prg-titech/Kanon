@@ -23,6 +23,13 @@ __$__.Animation = {
     
         let interval = setInterval(() => {
             let currentTime = (new Date).getTime();
+            if (currentTime - startTime >= ms) {
+                __$__.network.moveNode(id, to.x, to.y);
+                __$__.Update.updateArray({nodes: [id]});
+                __$__.StorePositions.registerPositions();
+                clearInterval(interval);
+                return;
+            }
             if (currentTime - startTime >= ms || animationID !== __$__.Animation.nowAnimationID) {
                 clearInterval(interval);
                 return;

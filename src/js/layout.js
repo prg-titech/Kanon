@@ -72,6 +72,8 @@ __$__.Layout = {
             list[0].__checked = true;
             while (list[0].__prev && !list[0].__prev.__checked) {
                 let prev = list[0].__prev;
+                pos.x += prev.x;
+                pos.y += prev.y;
                 prev.__checked = true;
                 list.unshift(listNodes.splice(listNodes.indexOf(prev),1)[0]);
                 delete list[1].__prev;
