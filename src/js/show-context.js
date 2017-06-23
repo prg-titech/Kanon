@@ -26,6 +26,7 @@ __$__.ShowContext = {
                 else
                     $('#' + id).css('display', 'none');
 
+                __$__.ShowContext.update(id);
                 checked_arr.push(id);
             }
         }
@@ -39,7 +40,7 @@ __$__.ShowContext = {
             let content = __$__.Context.LoopContext[id];
 
             // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
-            let div = this.makeDivElement(id, display, pos.y, pos.x, content);
+            let div = __$__.ShowContext.makeDivElement(id, display, pos.y, pos.x, content);
             show_div.append(div);
         });
     },

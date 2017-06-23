@@ -65,5 +65,6 @@ __$__.editor.commands.addCommand({
 });
 
 // showing context
-__$__.editor.session.on('changeScrollLeft', __$__.ShowContext.show);
-__$__.editor.session.on('changeScrollTop', __$__.ShowContext.show);
+__$__.editor.getSession().on('changeScrollLeft', __$__.ShowContext.show);
+__$__.editor.getSession().on('changeScrollTop', __$__.ShowContext.show);
+__$__.editor.getSession().on('changeFold', __$__.ShowContext.show);

@@ -429,6 +429,8 @@ __$__.Context = {
             }
         });
     
+        if (__$__.Context.StartEndInLoop[nearestLoopLabel] === undefined)
+            return isChanged;
     
         if (moveTo === 'next') {
             let maxContext = __$__.Context.StartEndInLoop[nearestLoopLabel].length;

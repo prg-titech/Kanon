@@ -10,7 +10,7 @@ __$__.Update = {
             __$__.Update.UpdateLabelPositions(e);
         __$__.Context.Initialize();
         __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
-        __$__.editor.task.ContextUpdate = []
+        __$__.editor.task.ContextUpdate = [];
     
         try {
             let checkInfiniteLoop = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
@@ -49,10 +49,8 @@ __$__.Update = {
             __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
     
             let stabilized = params => {
-                // __$__.options.nodes.physics = false;
                 __$__.options.nodes.hidden = false;
                 __$__.options.edges.hidden = false;
-                // __$__.options.physics = {enabled: true, barnesHut: {gravitationalConstant: -5000}};
                 __$__.network.setOptions(__$__.options);
                 __$__.nodes.forEach(node => {
                     __$__.nodes.update({id: node.id, fixed: true});
@@ -105,7 +103,7 @@ __$__.Update = {
             });
             __$__.network.on('dragging', __$__.Update.updateArray);
             __$__.network.on('dragEnd', __$__.Update.updateArray);
-            __$__.network.on("dragEnd", __$__.StorePositions.registerPositions);
+            __$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
             __$__.Update.wait = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
                 __$__.network.once('stabilized', stabilized);
@@ -118,6 +116,9 @@ __$__.Update = {
             }
             __$__.Update.wait = true;
         }
+        try {
+            __$__.ShowContext.show();
+        } catch (e) {}
     },
     
     
@@ -130,10 +131,16 @@ __$__.Update = {
             try {
                 // check maximum of Context.LoopContext
                 // if loop doesn't include now context, now context is changed at the max of loop count
+                let labels = [];
                 Object.keys(__$__.Context.__loopCounter).forEach(function(loopLabel) {
                     if (__$__.Context.LoopContext[loopLabel] > __$__.Context.__loopCounter[loopLabel])
                         __$__.Context.setLoopContext(loopLabel, '=', __$__.Context.__loopCounter[loopLabel]);
+                    labels.push(loopLabel);
                 });
+                Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+                    if (labels.indexOf(loopLabel) === -1 && loopLabel !== 'noLoop')
+                        delete __$__.Context.LoopContext[loopLabel]
+                })
     
                 __$__.Context.Draw(e);
 
@@ -142,7 +149,9 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
-            __$__.ShowContext.show();
+            try {
+                __$__.ShowContext.show();
+            } catch (e) {}
         }
     },
     
