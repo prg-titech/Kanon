@@ -29,7 +29,7 @@ __$__.Update = {
     
             if (!__$__.Update.isChange(graph, false)) {
                 __$__.Update.wait = false;
-                if (__$__.editor.task.length === 0)
+                if (__$__.editor.task.ContextUpdate.length === 0)
                     __$__.Update.ContextUpdate();
                 return;
             }
@@ -137,12 +137,12 @@ __$__.Update = {
     
                 __$__.Context.Draw(e);
 
-                __$__.ShowContext.show();
             } catch (e) {
                 if (e == 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
+            __$__.ShowContext.show();
         }
     },
     

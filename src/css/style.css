@@ -36,10 +36,11 @@
     float: left;
 }
 
-#button {
+#viewmodebutton {
     float: left;
     clear: left;
-    margin: 10px;
+    margin-left: 10px;
+    margin-top: 10px;
 }
 
 #viewmode {
@@ -48,7 +49,9 @@
 }
 
 #reset {
-    float: right;
+    position: absolute;
+    left: 1010px;
+    top: 625px;
     margin: 10px;
 }
 
@@ -63,6 +66,17 @@
     margin: 10px;
 }
 */
+
+#showingContextButton {
+    float: left;
+    clear: left;
+    margin-left: 10px;
+}
+
+#showingContext {
+    float: left;
+    margin-left: 10px;
+}
 
 #console {
     float: left;

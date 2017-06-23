@@ -22,7 +22,7 @@ __$__.options = {
     },
     interaction: {
         zoomView: false
-    },
+    }
 };
 __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
 __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;

@@ -45,16 +45,14 @@
     <div id="show_context"></div>
 </div>
 
-<div id="mynetwork">
-</div>
+<div id="mynetwork"></div>
 
-<div id='button'>
+<div id='viewmodebutton'>
     <input type="button" value="Summarized" onclick="__$__.Context.SwitchViewMode(false); __$__.Update.ContextUpdate('changed');">
     <input type="button" value="Snapshot" onclick="__$__.Context.SwitchViewMode(true); __$__.Update.ContextUpdate('changed');">
 </div>
 
-<div id='viewmode'>
-</div>
+<div id='viewmode'></div>
 
 <div id='reset'>
     <input type="button" value="Redraw" onclick="__$__.Update.wait = false; __$__.Update.ContextUpdate();">
@@ -70,8 +68,13 @@
 </div>
 -->
 
-<div id='console'>
+<div id='showingContextButton'>
+    <input type="button" value="Showing Context" onclick="__$__.ShowContext.switchOnOff();">
 </div>
+
+<div id='showingContext'>OFF</div>
+
+<div id='console'></div>
 
 <script type="text/javascript" src="src/js/network.js"></script>
 

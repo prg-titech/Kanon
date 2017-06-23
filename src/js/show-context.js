@@ -1,4 +1,6 @@
 __$__.ShowContext = {
+    on: false,
+
     /**
      * this function displays the context of the loop or the function.
      */
@@ -19,7 +21,7 @@ __$__.ShowContext = {
                 $('#' + id).css('top', '' + pos.y + 'px');
                 $('#' + id).css('left', '' + pos.x + 'px');
 
-                if (__$__.ShowContext.inEditor(pos))
+                if (__$__.ShowContext.on && __$__.ShowContext.inEditor(pos))
                     $('#' + id).css('display', 'block');
                 else
                     $('#' + id).css('display', 'none');
@@ -33,7 +35,7 @@ __$__.ShowContext = {
                 return;
 
             let pos = __$__.ShowContext.position(id);
-            let display = (__$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
+            let display = (__$__.ShowContext.on && __$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
             let content = __$__.Context.LoopContext[id];
 
             // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
@@ -104,5 +106,17 @@ __$__.ShowContext = {
      */
     makeDivElement(id, display, top, left, content) {
         return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + content + '</div>';
+    },
+
+    switchOnOff() {
+        if (__$__.ShowContext.on) {
+            __$__.ShowContext.on = false;
+            document.getElementById('showingContext').textContent = 'OFF';
+            __$__.ShowContext.show();
+        } else {
+            __$__.ShowContext.on = true;
+            document.getElementById('showingContext').textContent = 'ON';
+            __$__.ShowContext.show();
+        }
     }
 };
