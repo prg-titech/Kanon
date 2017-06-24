@@ -1,28 +1,28 @@
 __$__.Update = {
-    CodeWithCheckPoint: '',
+    CodeWithCP: '',
     wait: false,
+    updateValueOfArray: true,
     
     // this function is called when ace editor is edited.
-    PositionUpdate: function(e) {
+    PositionUpdate: function(__arg__) {
         window.localStorage["Kanon-Code"] = __$__.editor.getValue();
     
-        if (e)
-            __$__.Update.UpdateLabelPositions(e);
+        if (__arg__)
+            __$__.Update.UpdateLabelPositions(__arg__);
         __$__.Context.Initialize();
         __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
         __$__.editor.task.ContextUpdate = [];
     
         try {
-            let checkInfiniteLoop = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
-            eval(checkInfiniteLoop);
+            eval(__$__.CodeConversion.TransformCode(__$__.editor.getValue(), true));
             document.getElementById('console').textContent = '';
     
             __$__.Context.Initialize();
             __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
-            __$__.Update.CodeWithCheckPoint = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
+            __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
             var __objs;
     
-            eval(__$__.Update.CodeWithCheckPoint);
+            eval(__$__.Update.CodeWithCP);
     
             var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
             
@@ -56,28 +56,8 @@ __$__.Update = {
                     __$__.nodes.update({id: node.id, fixed: true});
                 });
     
-                /*
-                // align each value of the ArrayExpression if that is Literal
-                Object.values(__$__.network.body.data.edges._data).forEach(edge => {
-                    let indices = [-1, -1];
-    
-                    for (let i = 0; i < __$__.Context.Arrays.length; i++) {
-                        let index = __$__.Context.Arrays[i].indexOf(edge.from);
-                        if (index >= 0) {
-                            indices[0] = i;
-                            indices[1] = index;
-                            break;
-                        }
-                    }
-    
-                    if (indices[0] >= 0) {
-                        if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
-                            let pos = __$__.network.getPositions(edge.from)[edge.from];
-                            __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
-                        }
-                    }
-                });
-                */
+                if (__$__.Update.updateValueOfArray)
+                    __$__.Update.updateArrayValue();
     
                 __$__.Update.wait = false;
                 __$__.StorePositions.registerPositions();
@@ -255,18 +235,18 @@ __$__.Update = {
     
         if (e.action == 'insert') {
             // update
-            ['LoopLabelPosition', 'NewLabelPosition', 'ArrayLabelPosition', 'CallLabelPosition'].forEach(pos => {
-                Object.keys(__$__.Context[pos]).forEach(label => {
-                    modify_by_insert(__$__.Context[pos][label]);
+            Object.keys(__$__.Context.LabelPos).forEach(kind => {
+                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                    modify_by_insert(__$__.Context.LabelPos[kind][label]);
                 });
             });
         } else { // e.action == 'remove'
             // update
-            ['LoopLabelPosition', 'NewLabelPosition', 'ArrayLabelPosition', 'CallLabelPosition'].forEach(pos => {
-                Object.keys(__$__.Context[pos]).forEach(label => {
-                    var dlt = modify_by_remove(__$__.Context[pos][label]);
+            Object.keys(__$__.Context.LabelPos).forEach(kind => {
+                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                    var dlt = modify_by_remove(__$__.Context.LabelPos[kind][label]);
                     if (dlt)
-                        delete __$__.Context[pos][label];
+                        delete __$__.Context.LabelPos[kind][label];
                 });
             });
         }
@@ -316,9 +296,34 @@ __$__.Update = {
                 let arrayIDs = __$__.Context.Arrays[indices[0]];
                 for (let i = 0; i < arrayIDs.length; i++) {
                     let pos = __$__.network.getPositions(id)[id];
-                    __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * 20, pos.y);
+                    __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * __$__.Layout.ArraySize * 2, pos.y);
                 }
             }
+            if (__$__.Update.updateValueOfArray)
+                __$__.Update.updateArrayValue();
         }
+    },
+
+    updateArrayValue: () => {
+        // align each value of the ArrayExpression if that is Literal
+        Object.values(__$__.network.body.data.edges._data).forEach(edge => {
+            let indices = [-1, -1];
+    
+            for (let i = 0; i < __$__.Context.Arrays.length; i++) {
+                let index = __$__.Context.Arrays[i].indexOf(edge.from);
+                if (index >= 0) {
+                    indices[0] = i;
+                    indices[1] = index;
+                    break;
+                }
+            }
+    
+            if (indices[0] >= 0) {
+                if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
+                    let pos = __$__.network.getPositions(edge.from)[edge.from];
+                    __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
+                }
+            }
+        });
     }
 };

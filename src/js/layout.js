@@ -1,4 +1,6 @@
 __$__.Layout = {
+    ArraySize: 12,
+
     /**
      * We assume that linked-list is already completed(this means that next edges are defined between nodes).
      */

@@ -35,9 +35,9 @@ __$__.CodeConversion = {
             visitors.push(tf.CollectObjects());
     
     
-            ['LoopLabelPosition', 'NewLabelPosition', 'CallLabelPosition', 'ArrayLabelPosition'].forEach(pos => {
-                Object.keys(__$__.Context[pos]).forEach(label => {
-                    __$__.Context[pos][label].useLabel = false;
+            Object.keys(__$__.Context.LabelPos).forEach(kind => {
+                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                    __$__.Context.LabelPos[kind][label].useLabel = false;
                 });
             });
     
@@ -45,10 +45,10 @@ __$__.CodeConversion = {
             __$__.walkAST(ast, null, visitors);
     
     
-            ['LoopLabelPosition', 'NewLabelPosition', 'CallLabelPosition', 'ArrayLabelPosition'].forEach(pos => {
-                Object.keys(__$__.Context[pos]).forEach(label => {
-                    if (!__$__.Context[pos][label].useLabel)
-                        delete __$__.Context[pos][label];
+            Object.keys(__$__.Context.LabelPos).forEach(kind => {
+                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                    if (!__$__.Context.LabelPos[kind][label].useLabel)
+                        delete __$__.Context.LabelPos[kind][label];
                 });
             });
         }

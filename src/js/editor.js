@@ -12,7 +12,7 @@ __$__.editor.executeTask = () => {
     if (__$__.editor.task.PositionUpdate.length > 0) {
         let arg;
         while (__$__.editor.task.PositionUpdate.length > 0) {
-            a = __$__.editor.task.PositionUpdate.shift();
+            let a = __$__.editor.task.PositionUpdate.shift();
             if (arg === undefined) {
                 arg = a
             } else {

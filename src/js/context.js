@@ -1,14 +1,17 @@
 __$__.Context = {
-    ArrayLabelPosition: {},
     Arrays: [],
-    CallLabelPosition: {},
+    ChangedGraph: true,
     CheckPointTable: {},
+    LabelPos: {
+        Arr: {},
+        Call: {},
+        Loop: {},
+        Obj: {},
+        New: {}
+    },
     LastGraph: undefined,
     Literals: [],
     LoopContext: {'noLoop': 1},
-    LoopLabelPosition: {},
-    NestLoop: {},
-    NewLabelPosition: {},
     Objects: {},
     Snapshot: true,
     SnapshotContext: {},
@@ -18,11 +21,11 @@ __$__.Context = {
     TableTimeCounter: [],
     __loopCounter: {},
 
-    Initialize: function() {
+    Initialize: () => {
         __$__.Context.Arrays = [];
+        __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
         __$__.Context.Literals = [];
-        __$__.Context.NestLoop = {};
         __$__.Context.Objects = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
@@ -42,83 +45,66 @@ __$__.Context = {
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
     CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe) {
-        var storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, checkPointId, probe);
+
+        var storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
     
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
     
     
-        if (!__$__.Context.NestLoop[loopLabel]) __$__.Context.NestLoop[loopLabel] = {inner: [], parent: []};
+        if (__$__.Context.ChangedGraph) {
+            // the node of storedGraph is whether first appearing or not in this part
+            storedGraph.nodes.forEach(node => {
+                let flag = false;
+    
+                __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
+                    flag = flag || (node.id == nodeData.id);
+                });
     
     
-        // make __$__.Context.NestLoop
-        if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1] != loopLabel) {
-            var parent = __$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 1];
+                if (!flag) {
+                    __$__.JumpToConstruction.GraphData.nodes.push({
+                        id: node.id,
+                        loopLabel: loopLabel,
+                        count: count,
+                        pos: __$__.Context.CheckPointTable[checkPointId]
+                    });
+                }
+            });
     
-            if (__$__.Context.StackToCheckLoop[__$__.Context.StackToCheckLoop.length - 2] == loopLabel) {
-                __$__.Context.StackToCheckLoop.pop();
-            } else {
-                if (parent && __$__.Context.NestLoop[loopLabel].parent.indexOf(parent) == -1)
-                    __$__.Context.NestLoop[loopLabel].parent.push(parent);
+            // the edge of storedGraph is whether first appearing or not in this part
+            storedGraph.edges.forEach(edge => {
+                let flag = false;
     
     
-                if (parent && __$__.Context.NestLoop[parent].inner.indexOf(loopLabel) == -1)
-                    __$__.Context.NestLoop[parent].inner.push(loopLabel);
+                __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
+                    flag = flag || (edge.from == edgeData.from && edge.to == edgeData.to && edge.label == edgeData.label);
+                });
     
     
-                __$__.Context.StackToCheckLoop.push(loopLabel);
-            }
+                if (!flag) {
+                    __$__.JumpToConstruction.GraphData.edges.push({
+                        from: edge.from,
+                        to: edge.to,
+                        label: edge.label,
+                        loopLabel: loopLabel,
+                        count: count,
+                        pos: __$__.Context.CheckPointTable[checkPointId]
+                    });
+                }
+            });
+
+            __$__.Context.ChangedGraph = false;
         }
-    
-        // the node of storedGraph is whether first appearing or not in this part
-        storedGraph.nodes.forEach(node => {
-            var flag = false;
-    
-    
-            __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
-                flag = flag || (node.id == nodeData.id);
-            });
-    
-    
-            if (!flag) {
-                __$__.JumpToConstruction.GraphData.nodes.push({
-                    id: node.id,
-                    loopLabel: loopLabel,
-                    count: count,
-                    pos: __$__.Context.CheckPointTable[checkPointId]
-                });
-            }
-        });
-    
-        // the edge of storedGraph is whether first appearing or not in this part
-        storedGraph.edges.forEach(edge => {
-            var flag = false;
-    
-    
-            __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
-                flag = flag || (edge.from == edgeData.from && edge.to == edgeData.to && edge.label == edgeData.label);
-            });
-    
-    
-            if (!flag) {
-                __$__.JumpToConstruction.GraphData.edges.push({
-                    from: edge.from,
-                    to: edge.to,
-                    label: edge.label,
-                    loopLabel: loopLabel,
-                    count: count,
-                    pos: __$__.Context.CheckPointTable[checkPointId]
-                });
-            }
-        });
-    
     
         __$__.Context.LastGraph = storedGraph;
     },
     
     
-    StoreGraph: function(objects, loopLabel, count, checkPointId, probe) {
-        var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
-    
+    StoreGraph: function(objects, loopLabel, count, timeCounter, checkPointId, probe) {
+        let graph = (__$__.Context.ChangedGraph)
+            ? __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe))
+            : __$__.Context.LastGraph;
+
         if (!__$__.Context.StoredGraph[checkPointId])
             __$__.Context.StoredGraph[checkPointId] = {};
     
@@ -417,10 +403,10 @@ __$__.Context = {
         let nearestLoopLabel = 'noLoop';
     
         // Find which loop should be changed.
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(loopLabel => {
-            let loop = __$__.Context.LoopLabelPosition[loopLabel];
+        Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
+            let loop = __$__.Context.LabelPos.Loop[loopLabel];
             // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
-            let nearestLoop = __$__.Context.LoopLabelPosition[nearestLoopLabel];
+            let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabel];
     
             if (compare(loop.start, "<=", cursor) && compare(cursor, "<=", loop.end)) {
                 if (nearestLoopLabel === 'noLoop'

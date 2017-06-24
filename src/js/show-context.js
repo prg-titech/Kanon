@@ -1,5 +1,5 @@
 __$__.ShowContext = {
-    on: false,
+    on: true,
 
     /**
      * this function displays the context of the loop or the function.
@@ -13,7 +13,7 @@ __$__.ShowContext = {
             let div = divs[i];
             let id = div.id;
 
-            if (Object.keys(__$__.Context.LoopLabelPosition).indexOf(id) === -1)
+            if (Object.keys(__$__.Context.LabelPos.Loop).indexOf(id) === -1)
                 $('#' + id).remove();
             else {
                 let pos = __$__.ShowContext.position(id);
@@ -31,7 +31,7 @@ __$__.ShowContext = {
             }
         }
 
-        Object.keys(__$__.Context.LoopLabelPosition).forEach(id => {
+        Object.keys(__$__.Context.LabelPos.Loop).forEach(id => {
             if (checked_arr.indexOf(id) >= 0)
                 return;
 
@@ -53,8 +53,8 @@ __$__.ShowContext = {
      */
     position: function(id) {
         let pos = {
-            column: __$__.Context.LoopLabelPosition[id].start.column,
-            row: __$__.Context.LoopLabelPosition[id].start.line-1
+            column: __$__.Context.LabelPos.Loop[id].start.column,
+            row: __$__.Context.LabelPos.Loop[id].start.line-1
         }
         let coord = __$__.editor.renderer.textToScreenCoordinates(pos.row, pos.column);
         return {x: coord.pageX - 5 + $(window).scrollLeft(), y: coord.pageY - 40 + $(window).scrollTop()};

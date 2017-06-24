@@ -43,13 +43,13 @@ __$__.ToVisjs = {
                         id: __$__.Context.getObjectID(graph.nodes[i]) + '_' + j,
                         physics: false,
                         shape: 'square',
-                        size: 10
+                        size: __$__.Layout.ArraySize
                     };
                     arrayLabels.push(node.id);
 
                     retData.nodes.push(node);
                 }
-                __$__.Context.Arrays.push(arrayLabels)
+                __$__.Context.Arrays.push(arrayLabels);
             } else {
                 node = {};
 
