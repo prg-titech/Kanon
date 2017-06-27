@@ -16,12 +16,16 @@ __$__.Update = {
         try {
             eval(__$__.CodeConversion.TransformCode(__$__.editor.getValue(), true));
             document.getElementById('console').textContent = '';
+            Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+                if (__$__.Context.StartEndInLoop[loopLabel] === undefined)
+                    delete __$__.Context.LoopContext[loopLabel];
+            });
     
             __$__.Context.Initialize();
             __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
             __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
+
             var __objs;
-    
             eval(__$__.Update.CodeWithCP);
     
             var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));

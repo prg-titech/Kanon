@@ -36,8 +36,8 @@ __$__.ShowContext = {
                 return;
 
             let pos = __$__.ShowContext.position(id);
-            let display = (__$__.ShowContext.on && __$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
             let content = __$__.Context.LoopContext[id];
+            let display = (content !== undefined && __$__.ShowContext.on && __$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
 
             // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
             let div = __$__.ShowContext.makeDivElement(id, display, pos.y, pos.x, content);
