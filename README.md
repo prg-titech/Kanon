@@ -21,7 +21,6 @@ This will copy the source code of Kanon.
 After downloaded, go to the Kanon directory and execute the following command.
 
 ```
-git submodule update --init --recursive
 npm install
 ```
 
