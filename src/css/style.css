@@ -29,6 +29,9 @@
 }
 
 #mynetwork {
+    position: absolute;
+    left: 485px;
+    top: 5px;
     margin-top: 15px;
     width: 600px;
     height: 600px;

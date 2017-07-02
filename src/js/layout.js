@@ -282,7 +282,7 @@ __$__.Layout = {
          * if height of a tree is 2, then width = 4;
          * if height of a tree is 3, then width = 8;
          */
-        let heightBinaryTree = function(rootNode) {
+        let heightBinaryTree = rootNode => {
             if (rootNode === undefined) {
                 return -1;
             } else {
@@ -290,14 +290,36 @@ __$__.Layout = {
             }
         };
     
-        while (listNodes.length > 0) {
+        makeTree: while (listNodes.length > 0) {
             let node = listNodes[0];
             let centerPos = {x: 0, y: 0};
-            let n = 1; // the number of the node of this tree
+            let n = 0; // the number of the node of this tree
     
+            let checked = [node];
             while (node.__parent) {
-                node = node.__parent;
+                if (checked.indexOf(node.__parent) === -1) {
+                    if (listNodes.indexOf(node.__parent) >= 0) {
+                        node = node.__parent;
+                        checked.push(node);
+                    } else {
+                        delete node.__parent;
+                        break;
+                    }
+                } else {
+                    // Here is executed when node objects are not tree.
+                    checked.forEach(checkedNode => {
+                        if (checkedNode.__parent)
+                            delete checkedNode.__parent;
+                        if (checkedNode.__left)
+                            delete checkedNode.__left;
+                        if (checkedNode.__right)
+                            delete checkedNode.__right;
+                        listNodes.splice(listNodes.indexOf(checkedNode), 1);
+                    });
+                    continue makeTree;
+                }
             }
+
             let tree = {
                 root: node,
                 height: heightBinaryTree(node)
@@ -305,12 +327,12 @@ __$__.Layout = {
     
             let current = node;
             let isTree = false;
-            while (current && (current.__left || current.__right || current.__parent)) {
-                if (current.__left && listNodes.indexOf(current.__left) > 0) {
+            while (current && (current.__left || current.__right || current.__parent) || isTree && current === tree.root) {
+                if (current.__left && listNodes.indexOf(current.__left) >= 0) {
                     let left = current.__left;
                     // delete current.__left;
                     current = left;
-                } else if (current.__right && listNodes.indexOf(current.__right) > 0) {
+                } else if (current.__right && listNodes.indexOf(current.__right) >= 0) {
                     let right = current.__right;
                     // delete current.__right;
                     current = right;
@@ -331,8 +353,9 @@ __$__.Layout = {
                 centerPos.y /= n;
                 treeRoots.push(tree);
                 tree_CenterPos.push(centerPos);
-            } else
-                break;
+            } else {
+                listNodes.splice(0, 1);
+            }
         }
     
         let oldCenterPos = [];
