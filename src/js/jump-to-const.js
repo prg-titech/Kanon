@@ -15,7 +15,7 @@ __$__.JumpToConstruction = {
     
         // choose edge
         else if (param.edges.length) {
-            var edgeId = param.edges[0];
+            let edgeId = param.edges[0];
             __$__.JumpToConstruction.ClickElement.edge = __$__.network.body.data.edges._data[edgeId];
         }
     
@@ -26,7 +26,7 @@ __$__.JumpToConstruction = {
     
         if (__$__.JumpToConstruction.ClickElement.node)
             __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
-                if (__$__.JumpToConstruction.ClickElement.node == nodeData.id) {
+                if (__$__.JumpToConstruction.ClickElement.node === nodeData.id) {
                     __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
     
@@ -39,9 +39,9 @@ __$__.JumpToConstruction = {
     
         else
             __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
-                if (__$__.JumpToConstruction.ClickElement.edge.from == edgeData.from &&
-                    __$__.JumpToConstruction.ClickElement.edge.to == edgeData.to &&
-                    __$__.JumpToConstruction.ClickElement.edge.label == edgeData.label) {
+                if (__$__.JumpToConstruction.ClickElement.edge.from === edgeData.from &&
+                    __$__.JumpToConstruction.ClickElement.edge.to === edgeData.to &&
+                    __$__.JumpToConstruction.ClickElement.edge.label === edgeData.label) {
     
                     __$__.Context.setLoopContext(edgeData.loopLabel, '=', edgeData.count);
                     __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);

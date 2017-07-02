@@ -58,7 +58,6 @@
     <input type="button" value="Redraw" onclick="__$__.Update.wait = false; __$__.Update.ContextUpdate();">
 </div>
 
-<!--
 <div id='LinkedList'>
     <input type="button" value="LinkedList" onclick="__$__.Layout.RedrawLinkedList();">
 </div>
@@ -66,13 +65,18 @@
 <div id='BinaryTree'>
     <input type="button" value="BinaryTree" onclick="__$__.Layout.RedrawBinaryTree();">
 </div>
--->
 
 <div id='showingContextButton'>
     <input type="button" value="Showing Context" onclick="__$__.ShowContext.switchOnOff();">
 </div>
 
 <div id='showingContext'>ON</div>
+
+<div id='autoLayoutButton'>
+    <input type="button" value="Auto Layout" onclick="__$__.Layout.switchEnabled();">
+</div>
+
+<div id='autoLayout'>ON</div>
 
 <div id='console'></div>
 

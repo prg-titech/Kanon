@@ -28,7 +28,7 @@ __$__.Update = {
             var __objs;
             eval(__$__.Update.CodeWithCP);
     
-            var graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
+            let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
             
     
             if (!__$__.Update.isChange(graph, false)) {
@@ -66,7 +66,7 @@ __$__.Update = {
                 __$__.Update.wait = false;
                 __$__.StorePositions.registerPositions();
                 __$__.Update.ContextUpdate();
-            }
+            };
     
             __$__.Context.Arrays.forEach(array => {
                 __$__.Update.updateArray({nodes: [array[0]]});
@@ -95,7 +95,7 @@ __$__.Update = {
                 stabilized();
     
         } catch (e) {
-            if (e == 'Infinite Loop') {
+            if (e === 'Infinite Loop') {
                 document.getElementById('console').textContent = 'infinite loop?';
             }
             __$__.Update.wait = true;
@@ -111,7 +111,7 @@ __$__.Update = {
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
-        if (__$__.Update.wait === false && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent == '' || e === 'changed') {
+        if (__$__.Update.wait === false && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent === '' || e === 'changed') {
             try {
                 // check maximum of Context.LoopContext
                 // if loop doesn't include now context, now context is changed at the max of loop count
@@ -124,12 +124,12 @@ __$__.Update = {
                 Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
                     if (labels.indexOf(loopLabel) === -1 && loopLabel !== 'noLoop')
                         delete __$__.Context.LoopContext[loopLabel]
-                })
+                });
     
                 __$__.Context.Draw(e);
 
             } catch (e) {
-                if (e == 'Infinite Loop') {
+                if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
@@ -138,40 +138,42 @@ __$__.Update = {
             } catch (e) {}
         }
     },
-    
-    
+
+
     /**
      * @param {Object} graph: graph has the property is nodes and edges
+     * @param {Boolean} snapshot
      *
      * This function compares old graph and new graph.
      * return true if new graph is different from old graph
      * return false otherwise
      */
     isChange: function(graph, snapshot = false) {
-        var graphNodes = graph.nodes.map(node => {
+        let graphNodes = graph.nodes.map(node => {
             if (node.color && node.color !== 'white')
                 return [node.id, node.label, node.color];
             else 
                 return [node.id, node.label];
         });
-        var graphEdges = graph.edges.map(edge => {
+        let graphEdges = graph.edges.map(edge => {
             if (edge.color && edge.color !== 'white')
                 return [edge.from, edge.to, edge.label, edge.color];
             else
                 return [edge.from, edge.to, edge.label];
         });
-        var networkNodes = [];
-        var temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
+        let networkNodes = [];
+        let temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
     
         Object.keys(temp).forEach(key => {
-            if (snapshot && temp[key].color && temp[key].color !== 'white')
+            if (snapshot && temp[key].color && temp[key].color !== 'white') {
                 networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
-            else
+            } else {
                 networkNodes.push([temp[key].id, temp[key].label]);
+            }
         });
-        
-    
-        var networkEdges = [];
+
+
+        let networkEdges = [];
         temp = (snapshot) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
     
         Object.keys(temp).forEach(function(key){
@@ -184,11 +186,11 @@ __$__.Update = {
     
         return (!Boolean(networkNodes) ||
                 !Boolean(networkEdges) ||
-                JSON.stringify(graphNodes.sort()) != JSON.stringify(networkNodes.sort()) ||
-                JSON.stringify(graphEdges.sort()) != JSON.stringify(networkEdges.sort()));
+                JSON.stringify(graphNodes.sort()) !== JSON.stringify(networkNodes.sort()) ||
+                JSON.stringify(graphEdges.sort()) !== JSON.stringify(networkEdges.sort()));
     },
-    
-    
+
+
     /**
      * @param {Object} e : the data of changed code
      *
@@ -196,39 +198,39 @@ __$__.Update = {
      * If user code is edited, this function is executed.
      */
     UpdateLabelPositions: function(e) {
-        var start = {line: e.start.row + 1, column: e.start.column};
-        var end = {line: e.end.row + 1, column: e.end.column};
-        var compare = __$__.Update.ComparePosition;
+        let start = {line: e.start.row + 1, column: e.start.column};
+        let end = {line: e.end.row + 1, column: e.end.column};
+        let compare = __$__.Update.ComparePosition;
     
-        var modify_by_insert = function(pos) {
+        let modify_by_insert = function(pos) {
             // if inserted code is the upper part of the loop
             if (compare(start, '<', pos.start)) {
-                if (pos.start.line == start.line)
+                if (pos.start.line === start.line)
                     pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   == start.line)
+                if (pos.end.line   === start.line)
                     pos.end.column   += e.lines[e.lines.length-1].length;
     
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
             } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   == start.line)
+                if (pos.end.line   === start.line)
                     pos.end.column   += e.lines[e.lines.length-1].length;
     
                 pos.end.line   += e.lines.length - 1;
             }
         };
-        var modify_by_remove = function(pos) {
+        let modify_by_remove = function(pos) {
             // if removed code is the upper part of the loop
             if (compare(end, '<', pos.start)) {
-                if (pos.start.line == end.line)
+                if (pos.start.line === end.line)
                     pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   == end.line)
+                if (pos.end.line   === end.line)
                     pos.end.column   -= e.lines[e.lines.length-1].length;
     
                 pos.start.line -= e.lines.length - 1;
                 pos.end.line   -= e.lines.length - 1;
             } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                if (pos.end.line   == end.line)
+                if (pos.end.line   === end.line)
                     pos.end.column   -= e.lines[e.lines.length-1].length;
     
                 pos.end.line   -= e.lines.length - 1;
@@ -237,7 +239,7 @@ __$__.Update = {
             }
         };
     
-        if (e.action == 'insert') {
+        if (e.action === 'insert') {
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
@@ -248,34 +250,35 @@ __$__.Update = {
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    var dlt = modify_by_remove(__$__.Context.LabelPos[kind][label]);
+                    let dlt = modify_by_remove(__$__.Context.LabelPos[kind][label]);
                     if (dlt)
                         delete __$__.Context.LabelPos[kind][label];
                 });
             });
         }
     },
-    
-    
+
+
     /**
      * @param {Object} p1: {line, column}
      * @param {string} operator: '==', '<', '>', '<=', '>='
      * @param {Object} p2: {line, column}
+     * @return {boolean}
      */
     ComparePosition: function(p1, operator, p2) {
-        var ret = false;
+        let ret = false;
     
     
-        if (operator == '==' || operator == '<=' || operator == '>=') {
-            ret = ret || (p1.line == p2.line && p1.column == p2.column);
+        if (operator === '==' || operator === '<=' || operator === '>=') {
+            ret = ret || (p1.line === p2.line && p1.column === p2.column);
         }
     
-        if (operator == '<' || operator == '<=') {
-            ret = ret || (p1.line == p2.line && p1.column < p2.column || p1.line < p2.line);
+        if (operator === '<' || operator === '<=') {
+            ret = ret || (p1.line === p2.line && p1.column < p2.column || p1.line < p2.line);
         }
     
-        if (operator == '>' || operator == '>=') {
-            ret = ret || (p1.line == p2.line && p1.column > p2.column || p1.line > p2.line);
+        if (operator === '>' || operator === '>=') {
+            ret = ret || (p1.line === p2.line && p1.column > p2.column || p1.line > p2.line);
         }
     
     

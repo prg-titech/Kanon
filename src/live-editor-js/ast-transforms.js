@@ -56,11 +56,11 @@ __$__.ASTTransforms.CollectObjects = function() {
                 // If already registered, use the Label
                 let label;
                 Object.keys(c.LabelPos).forEach(labelName => {
-                    var pos = c.LabelPos[labelName];
-                    if (pos.start.line == node.loc.start.line &&
-                            pos.start.column == node.loc.start.column &&
-                            pos.end.line == node.loc.end.line &&
-                            pos.end.column == node.loc.end.column) {
+                    let pos = c.LabelPos[labelName];
+                    if (pos.start.line === node.loc.start.line &&
+                            pos.start.column === node.loc.start.column &&
+                            pos.end.line === node.loc.end.line &&
+                            pos.end.column === node.loc.end.column) {
                         label = labelName;
                         pos.useLabel = true;
                     }
@@ -70,7 +70,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                     let i = 1;
                     while (!label) {
                         let newLabel = c.label_header + i;
-                        if (Object.keys(c.LabelPos).indexOf(newLabel) == -1) label = newLabel;
+                        if (Object.keys(c.LabelPos).indexOf(newLabel) === -1) label = newLabel;
                         i++;
                     }
                     c.LabelPos[label] = node.loc;
@@ -243,11 +243,11 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                 // If already registered, use the Label
                 let label;
                 Object.keys(__$__.Context.LabelPos.Call).forEach(callLabel => {
-                    var pos = __$__.Context.LabelPos.Call[callLabel];
-                    if (pos.start.line == node.loc.start.line &&
-                            pos.start.column == node.loc.start.column &&
-                            pos.end.line == node.loc.end.line &&
-                            pos.end.column == node.loc.end.column) {
+                    let pos = __$__.Context.LabelPos.Call[callLabel];
+                    if (pos.start.line === node.loc.start.line &&
+                            pos.start.column === node.loc.start.column &&
+                            pos.end.line === node.loc.end.line &&
+                            pos.end.column === node.loc.end.column) {
                         label = callLabel;
                         pos.useLabel = true;
                     }
@@ -257,7 +257,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                     let i = 1;
                     while (!label) {
                         let callLabel = 'call' + i;
-                        if (Object.keys(__$__.Context.LabelPos.Call).indexOf(callLabel) == -1) label = callLabel;
+                        if (Object.keys(__$__.Context.LabelPos.Call).indexOf(callLabel) === -1) label = callLabel;
                         i++;
                     }
                     __$__.Context.LabelPos.Call[label] = node.loc;
@@ -484,16 +484,16 @@ __$__.ASTTransforms.Context = function () {
         enter(node, path) {
             const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
 
-            if (__$__.ASTTransforms.Loop.indexOf(node.type) != -1 && node.loc) {
+            if (__$__.ASTTransforms.Loop.indexOf(node.type) !== -1 && node.loc) {
                 // In this part, register the position of this loop.
                 // If already registered, use the label
                 let label;
                 Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
-                    var pos = __$__.Context.LabelPos.Loop[loopLabel];
-                    if (pos.start.line == node.loc.start.line &&
-                            pos.start.column == node.loc.start.column &&
-                            pos.end.line == node.loc.end.line &&
-                            pos.end.column == node.loc.end.column) {
+                    let pos = __$__.Context.LabelPos.Loop[loopLabel];
+                    if (pos.start.line === node.loc.start.line &&
+                            pos.start.column === node.loc.start.column &&
+                            pos.end.line === node.loc.end.line &&
+                            pos.end.column === node.loc.end.column) {
                         label = loopLabel;
                         pos.useLabel = true;
                     }
@@ -504,13 +504,13 @@ __$__.ASTTransforms.Context = function () {
                     let arr_label = Object.keys(__$__.Context.LabelPos.Loop);
                     next: while(!label) {
                         let loopLabel = node.type + i;
-                        for (var j = 0; j < arr_label.length; j++) {
+                        for (let j = 0; j < arr_label.length; j++) {
                             if (arr_label[j].indexOf(loopLabel) !== -1) {
                                 i++;
                                 continue next;
                             }
                         }
-                        label = loopLabel
+                        label = loopLabel;
                         if (path[path.length - 2].type === 'LabeledStatement')
                             label += '-' + path[path.length - 2].label.name;
                     }
@@ -518,7 +518,7 @@ __$__.ASTTransforms.Context = function () {
                     __$__.Context.LabelPos.Loop[label].useLabel = true;
                 }
 
-                if (node.body.type != "BlockStatement") {
+                if (node.body.type !== "BlockStatement") {
                     node.body = b.BlockStatement([node.body]);
                 }
                 // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
@@ -557,7 +557,7 @@ __$__.ASTTransforms.Context = function () {
                             )
                         )
                     )
-                ),
+                );
                 // __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
                 node.body.body.push(
                     b.ExpressionStatement(
@@ -585,7 +585,7 @@ __$__.ASTTransforms.Context = function () {
                             )
                         )
                     )
-                )
+                );
                 // __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
                 node.body.body.push(
                     b.ExpressionStatement(
@@ -651,7 +651,7 @@ __$__.ASTTransforms.Context = function () {
                             b.Identifier('__time_counter')
                         )
                     ], 'let')
-                ),
+                );
                 // if (__loopCount > 10000) throw 'Infinite Loop';
                 node.body.body.unshift(
                     b.IfStatement(
@@ -664,7 +664,7 @@ __$__.ASTTransforms.Context = function () {
                             b.Literal('Infinite Loop')
                         )
                     )
-                ),
+                );
                 // let __loopCount = (__loopCounter[__loopLabel]) ? ++__loopCounter[__loopLabel] : __loopCounter[__loopLabel] = 1;
                 node.body.body.unshift(
                     b.VariableDeclaration([
@@ -794,10 +794,10 @@ __$__.ASTTransforms.Context = function () {
  */
 __$__.ASTTransforms.InsertCheckPoint = function() {
     let b = __$__.ASTBuilder;
-    var id = 'InsertCheckPoint'
+    let id = 'InsertCheckPoint';
     __$__.ASTTransforms.checkPoint_idCounter = 1;
-    var stmtTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration', 'ClassDeclaration'];
-    var env = new __$__.Probe.StackEnv();
+    let stmtTypes = ['ExpressionStatement', 'BlockStatement', 'DebuggerStatement', 'WithStatement', 'ReturnStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'IfStatement', 'SwitchStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'FunctionDeclaration', 'VariableDeclaration', 'ClassDeclaration'];
+    let env = new __$__.Probe.StackEnv();
 
     return {
         enter(node, path) {
@@ -805,7 +805,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 env.push(new __$__.Probe.FunctionFlame());
 
                 node.body.body.forEach(s => {
-                    if (s.type == 'VariableDeclaration' && s.kind == 'var') {
+                    if (s.type === 'VariableDeclaration' && s.kind === 'var') {
                         s.declarations.forEach(declarator => {
                             env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
                         });
@@ -813,11 +813,11 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 });
             }
 
-            if (node.type == 'BlockStatement') {
+            if (node.type === 'BlockStatement') {
                 env.push(new __$__.Probe.BlockFlame());
 
                 node.body.forEach(s => {
-                    if (s.type == 'VariableDeclaration' && s.kind != 'var') {
+                    if (s.type === 'VariableDeclaration' && s.kind !== 'var') {
                         s.declarations.forEach(declarator => {
                             env.addVariable(declarator.id.name, s.kind, false);
                         });
@@ -827,9 +827,9 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
             return [id, env.Variables()];
         },
         leave(node, path, enterData) {
-            var data = enterData[id];
+            let data = enterData[id];
 
-            if (node.type == 'VariableDeclarator') {
+            if (node.type === 'VariableDeclarator') {
                 let parent = path[path.length - 2];
                 env.addVariable(node.id.name, parent.kind, true);
             }
@@ -838,7 +838,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 env.pop();
             }
 
-            if (stmtTypes.indexOf(node.type) >= 0 || node.type == 'VariableDeclarator') {
+            if (stmtTypes.indexOf(node.type) >= 0 || node.type === 'VariableDeclarator') {
                 let start = node.loc.start;
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
@@ -1157,7 +1157,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         changedGraphStmt(),
                         Object.assign({}, node)
                     ]);
-                } else if (node.type == 'VariableDeclaration' && node.kind != 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)
+                } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && (['ForStatement', 'ForInStatement'].indexOf(parent.type) === -1 || parent.init !== node && parent.left !== node)
                            || node.type === 'ClassDeclaration') {
                     return [
                         checkPoint(start, data),
@@ -1165,7 +1165,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         changedGraphStmt(),
                         checkPoint(end, variables)
                     ];
-                } else if (node.type == 'VariableDeclarator') {
+                } else if (node.type === 'VariableDeclarator') {
                     if (node.init) {
                         let expression = Object.assign({}, node.init);
                         let name = node.id.name;
@@ -1191,15 +1191,24 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                             []
                         );
                     }
-                } else if (node.type != 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) == -1 || parent.init != node && parent.left != node)) {
+                } else if (node.type !== 'VariableDeclaration' || (['ForStatement', 'ForInStatement'].indexOf(parent.type) === -1 || parent.init !== node && parent.left !== node)) {
                     // So that the body of 'LabeledStatement' is not checkpoint(CallExpression).
                     if (['WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement'].indexOf(node.type) === -1 || parent.type !== 'LabeledStatement') {
-                        return b.BlockStatement([
-                            checkPoint(start, data),
-                            Object.assign({}, node),
-                            changedGraphStmt(),
-                            checkPoint(end, variables)
-                        ]);
+                        if (node.type === 'BlockStatement')
+                            return b.BlockStatement([
+                                changedGraphStmt(),
+                                checkPoint(start, data),
+                                Object.assign({}, node),
+                                changedGraphStmt(),
+                                checkPoint(end, variables)
+                            ]);
+                        else
+                            return b.BlockStatement([
+                                checkPoint(start, data),
+                                Object.assign({}, node),
+                                changedGraphStmt(),
+                                checkPoint(end, variables)
+                            ]);
                     }
                 }
             }
@@ -1213,11 +1222,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
  * remove '$'
  */
 __$__.ASTTransforms.RemoveProbe = function() {
-    let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
-            if (node.type == 'VariableDeclarator') {
-                if (node.id.name[0] == '$' && node.id.name.length > 1) {
+            if (node.type === 'VariableDeclarator') {
+                if (node.id.name[0] === '$' && node.id.name.length > 1) {
                     node.id.name = node.id.name.slice(1, node.id.name.length);
                 }
             }

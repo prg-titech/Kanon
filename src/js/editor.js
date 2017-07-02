@@ -7,7 +7,7 @@ else
 __$__.editor.getSession().setMode('ace/mode/javascript');
 __$__.editor.getSession().setUseWorker(false);
 
-__$__.editor.task = {PositionUpdate: [], ContextUpdate: []}
+__$__.editor.task = {PositionUpdate: [], ContextUpdate: []};
 __$__.editor.executeTask = () => {
     if (__$__.editor.task.PositionUpdate.length > 0) {
         let arg;
@@ -19,7 +19,7 @@ __$__.editor.executeTask = () => {
                 if (arg.start.column === a.end.column && arg.start.row === a.end.row) {
                     arg.start = a.start;
                     a.lines[a.lines.length-1] += arg.lines.shift();
-                    Array.prototype.push.apply(a.lines, arg.lines)
+                    Array.prototype.push.apply(a.lines, arg.lines);
                     arg.lines = a.lines;
                 } else if (arg.end.column === a.start.column && arg.end.row === a.start.row) {
                     arg.end = a.end;
@@ -33,7 +33,7 @@ __$__.editor.executeTask = () => {
         __$__.editor.task.ContextUpdate = [];
         __$__.Update.ContextUpdate();
     }
-}
+};
 
 __$__.editor.on('change', (e) => {
     __$__.editor.task.PositionUpdate.push(e);

@@ -4,10 +4,10 @@ __$__.StorePositions = {
 
 
     // if nodePositions have the position of node.id, set the position at graph.node.
-    setPositions: function(graph, isFixed = false) {
-        for (var i = 0; i < graph.nodes.length; i++) {
-            var node = graph.nodes[i];
-            var nodeData = __$__.StorePositions.oldNetworkNodesData[node.id];
+    setPositions: function(graph) {
+        for (let i = 0; i < graph.nodes.length; i++) {
+            let node = graph.nodes[i];
+            let nodeData = __$__.StorePositions.oldNetworkNodesData[node.id];
     
     
             if (nodeData && nodeData.x !== undefined) {
@@ -22,11 +22,11 @@ __$__.StorePositions = {
     
     // register the positions of the nodes to be able to use old network data
     registerPositions: function() {
-        var pos = __$__.network.getPositions();
+        let pos = __$__.network.getPositions();
     
     
         Object.keys(pos).forEach(function(id) {
-            var temp = __$__.StorePositions.oldNetworkNodesData;
+            let temp = __$__.StorePositions.oldNetworkNodesData;
     
             if (temp[id]) {
                 temp[id].x = pos[id].x;

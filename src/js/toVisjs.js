@@ -3,10 +3,10 @@ __$__.ToVisjs = {
         // initialize
         __$__.Context.Arrays = [];
         __$__.Context.Literals = [];
-        var retData = {nodes: [], edges: []};
+        let retData = {nodes: [], edges: []};
 
-        for (var i = 0; i < graph.nodes.length; i++) {
-            var node;
+        for (let i = 0; i < graph.nodes.length; i++) {
+            let node;
 
             if (graph.nodes[i] instanceof __$__.Traverse.__Literal) {
                 node = {
@@ -60,7 +60,7 @@ __$__.ToVisjs = {
             }
         }
 
-        for (var i = 0; i < graph.edges.length; i++) {
+        for (let i = 0; i < graph.edges.length; i++) {
             let edge = {};
 
             edge.from = __$__.Context.getObjectID(graph.edges[i].from);

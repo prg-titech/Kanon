@@ -9,7 +9,7 @@ __$__.ShowContext = {
         let show_div = $('#show_context');
         let divs = show_div.children();
 
-        for (var i = 0; i < divs.length; i++) {
+        for (let i = 0; i < divs.length; i++) {
             let div = divs[i];
             let id = div.id;
 
@@ -37,7 +37,7 @@ __$__.ShowContext = {
 
             let pos = __$__.ShowContext.position(id);
             let content = __$__.Context.LoopContext[id];
-            let display = (content !== undefined && __$__.ShowContext.on && __$__.ShowContext.inEditor(pos)) ? 'block' : 'none'
+            let display = (content !== undefined && __$__.ShowContext.on && __$__.ShowContext.inEditor(pos)) ? 'block' : 'none';
 
             // '<div id={id} style="display: {display}; top: {top}px; left: {left}px;">{content}</div>'
             let div = __$__.ShowContext.makeDivElement(id, display, pos.y, pos.x, content);
@@ -55,7 +55,7 @@ __$__.ShowContext = {
         let pos = {
             column: __$__.Context.LabelPos.Loop[id].start.column,
             row: __$__.Context.LabelPos.Loop[id].start.line-1
-        }
+        };
         let coord = __$__.editor.renderer.textToScreenCoordinates(pos.row, pos.column);
         return {x: coord.pageX - 5 + $(window).scrollLeft(), y: coord.pageY - 40 + $(window).scrollTop()};
     },
@@ -70,7 +70,7 @@ __$__.ShowContext = {
         let editor = {
             h: parseInt($('#editor').css('height').slice(0, -2)),
             w: parseInt($('#editor').css('width').slice(0, -2))
-        }
+        };
 
         return 40 <= pos.x && pos.x <= 40 + editor.w && -30 <= pos.y && pos.y <= -20 + editor.h;
     },
@@ -113,11 +113,10 @@ __$__.ShowContext = {
         if (__$__.ShowContext.on) {
             __$__.ShowContext.on = false;
             document.getElementById('showingContext').textContent = 'OFF';
-            __$__.ShowContext.show();
         } else {
             __$__.ShowContext.on = true;
             document.getElementById('showingContext').textContent = 'ON';
-            __$__.ShowContext.show();
         }
+        __$__.ShowContext.show();
     }
 };

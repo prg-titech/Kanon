@@ -31,7 +31,7 @@ __$__.Probe.StackEnv.prototype.push = function(flame) {
 
 
 __$__.Probe.StackEnv.prototype.pop = function() {
-    var ret = this.tail;
+    let ret = this.tail;
 
     ret.prev.next = null;
     this.tail = ret.prev;
@@ -42,9 +42,9 @@ __$__.Probe.StackEnv.prototype.pop = function() {
 
 
 __$__.Probe.StackEnv.prototype.addVariable = function(variable, kind, visualize) {
-    var current = this.tail;
+    let current = this.tail;
 
-    if (kind == 'var') {
+    if (kind === 'var') {
         while (!(current instanceof __$__.Probe.FunctionFlame)) {
             current = current.prev;
         }
@@ -60,8 +60,8 @@ __$__.Probe.StackEnv.prototype.addVariable = function(variable, kind, visualize)
 };
 
 __$__.Probe.StackEnv.prototype.Variables = function() {
-    var retObj = {};
-    var current = this.tail;
+    let retObj = {};
+    let current = this.tail;
 
     while (current) {
         Object.keys(current.env).forEach(function(varName) {
@@ -72,7 +72,7 @@ __$__.Probe.StackEnv.prototype.Variables = function() {
         current = current.prev;
     }
 
-    var ret = [];
+    let ret = [];
 
     Object.keys(retObj).forEach(function(varName) {
         if (retObj[varName])

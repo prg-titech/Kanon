@@ -1,5 +1,6 @@
 __$__.Layout = {
     ArraySize: 12,
+    enabled: true,
 
     /**
      * We assume that linked-list is already completed(this means that next edges are defined between nodes).
@@ -104,9 +105,9 @@ __$__.Layout = {
     
         let listRegion = [];
         // register nodes position and the valueLabel nodes
-        for (var i = 0; i < sortedListNode.length; i++) {
+        for (let i = 0; i < sortedListNode.length; i++) {
             let region = {x: {from: NaN, to: NaN}, y: {from: NaN, to: NaN}};
-            for (var j = 0; j < sortedListNode[i].length; j++) {
+            for (let j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
                 let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
                 // if (j === 0) {
@@ -193,11 +194,13 @@ __$__.Layout = {
     
     RedrawLinkedList: function(graph = __$__.Context.LastGraph) {
         __$__.StorePositions.setPositions(graph);
-        let isChanged = __$__.Layout.setLinkedList(graph);
-        if (isChanged) {
-            __$__.Animation.SetData(graph);
-            __$__.StorePositions.registerPositions();
-            __$__.Context.Draw('redraw');
+        if (__$__.Layout.enabled) {
+            let isChanged = __$__.Layout.setLinkedList(graph);
+            if (isChanged) {
+                __$__.Animation.setData(graph);
+                __$__.StorePositions.registerPositions();
+                __$__.Context.Draw('redraw');
+            }
         }
     },
     
@@ -378,9 +381,9 @@ __$__.Layout = {
             }
     
             // define the middle between width_from and width_to.
-            let width_mid = Math.floor((width_from + width_to) / 2)
+            let width_mid = Math.floor((width_from + width_to) / 2);
             
-            var ret = 1;
+            let ret = 1;
             if (node.__left) {
                 // recursive call if node.__left is defined.
                 ret += setPosition(node.__left, depth+1, width_from, width_mid, tree_num);
@@ -393,12 +396,12 @@ __$__.Layout = {
                 delete node.__right;
             }
             return ret;
-        }
+        };
     
         // this array represents how distance the root node is moved.
         let mvRootPos = [];
         let count = 0;
-        for (var i = 0; i < treeRoots.length; i++) {
+        for (let i = 0; i < treeRoots.length; i++) {
             let root = treeRoots[i].root;
             oldCenterPos.push({x: 0, y: 0});
             let width = Math.pow(2, treeRoots[i].height);
@@ -414,7 +417,7 @@ __$__.Layout = {
             mvRootPos.push({
                 x: tree_CenterPos[i].x - oldCenterPos[i].x,
                 y: tree_CenterPos[i].y - oldCenterPos[i].y
-            })
+            });
     
             count += width;
         }
@@ -442,13 +445,33 @@ __$__.Layout = {
         return isChanged;
     },
     
-    RedrawBinaryTree: function(graph = __$__.Context.LastGraph) {
+    RedrawBinaryTree: graph =>{
         __$__.StorePositions.setPositions(graph);
         let isChanged = __$__.Layout.setBinaryTree(graph);
         if (isChanged) {
-            __$__.Animation.SetData(graph);
+            __$__.Animation.setData(graph);
             __$__.StorePositions.registerPositions();
             __$__.Context.Draw('redraw');
         }
+    },
+
+    switchEnabled: () => {
+        if (__$__.Layout.enabled) {
+            __$__.Layout.enabled = false;
+            document.getElementById('autoLayout').textContent = 'OFF';
+        } else {
+            __$__.Layout.enabled = true;
+            document.getElementById('autoLayout').textContent = 'ON';
+        }
+        __$__.Update.ContextUpdate();
     }
+    // switchOnOff() {
+    //     if (__$__.ShowContext.on) {
+    //         __$__.ShowContext.on = false;
+    //         document.getElementById('showingContext').textContent = 'OFF';
+    //     } else {
+    //         __$__.ShowContext.on = true;
+    //         document.getElementById('showingContext').textContent = 'ON';
+    //     }
+    //     __$__.ShowContext.show();
 };

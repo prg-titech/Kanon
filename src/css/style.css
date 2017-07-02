@@ -58,17 +58,17 @@
     margin: 10px;
 }
 
-/*
 #LinkedList {
     float: right;
     margin: 10px;
+    display: none;
 }
 
 #BinaryTree {
     float: right;
     margin: 10px;
+    display: none;
 }
-*/
 
 #showingContextButton {
     float: left;
@@ -77,6 +77,17 @@
 }
 
 #showingContext {
+    float: left;
+    margin-left: 10px;
+}
+
+
+#autoLayoutButton {
+    float: left;
+    margin-left: 10px;
+}
+
+#autoLayout {
     float: left;
     margin-left: 10px;
 }
