@@ -613,7 +613,7 @@ __$__.ASTTransforms.Context = function () {
                             )]
                         )
                     )
-                ),
+                );
                 // __loopLabels.pop();
                 node.body.body.push(
                     b.ExpressionStatement(
@@ -625,7 +625,7 @@ __$__.ASTTransforms.Context = function () {
                             []
                         )
                     )
-                ),
+                );
                 // __time_counter_stack.push({start: __time_counter});
                 node.body.body.unshift(
                     b.ExpressionStatement(
@@ -642,7 +642,7 @@ __$__.ASTTransforms.Context = function () {
                             )]
                         )
                     )
-                ),
+                );
                 // let __start = __time_counter;
                 node.body.body.unshift(
                     b.VariableDeclaration([
@@ -824,6 +824,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     }
                 });
             }
+
+            if (node.type === 'ForStatement' || node.type === 'ForInStatement') {
+                env.push(new __$__.Probe.BlockFlame());
+            }
             return [id, env.Variables()];
         },
         leave(node, path, enterData) {
@@ -834,7 +838,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 env.addVariable(node.id.name, parent.kind, true);
             }
 
-            if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression', 'BlockStatement'].indexOf(node.type) >= 0) {
+            if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression', 'BlockStatement', 'ForStatement', 'ForInStatement'].indexOf(node.type) >= 0) {
                 env.pop();
             }
 
