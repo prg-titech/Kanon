@@ -1,5 +1,4 @@
 __$__.Layout = {
-    ArraySize: 12,
     enabled: true,
 
     /**

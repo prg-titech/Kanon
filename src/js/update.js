@@ -306,7 +306,7 @@ __$__.Update = {
                 let idx0 = arrayLabels.indexOf(id);
                 let pos = __$__.network.getPositions(id)[id];
                 for (let i = 0; i < arrayLabels.length; i++) {
-                    __$__.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.Layout.ArraySize * 2, pos.y);
+                    __$__.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.arraySize * 2, pos.y);
                 }
 
                 if (__$__.Update.updateValueOfArray)
