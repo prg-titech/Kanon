@@ -110,16 +110,6 @@ __$__.Layout = {
             for (let j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
                 let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
-                // if (j === 0) {
-                //     node.x = pos.x;
-                //     node.y = pos.y;
-                // } else {
-                //     let prevNode = sortedListNode[i][j-1];
-                //     if (!isChanged && (pos.x !== prevNode.x + 100 || pos.y !== prevNode.y))
-                //         isChanged = true;
-                //     node.x = prevNode.x + 100;
-                //     node.y = prevNode.y;
-                // }
 
                 let newPos = {
                     x: sortedListNode_CenterPos[i].x + 100 * (j - (sortedListNode[i].length - 1) / 2),
@@ -333,11 +323,9 @@ __$__.Layout = {
             while (current && (current.__left || current.__right || current.__parent) || isTree && current === tree.root) {
                 if (current.__left && listNodes.indexOf(current.__left) >= 0) {
                     let left = current.__left;
-                    // delete current.__left;
                     current = left;
                 } else if (current.__right && listNodes.indexOf(current.__right) >= 0) {
                     let right = current.__right;
-                    // delete current.__right;
                     current = right;
                 } else {
                     let parent = current.__parent;
@@ -410,10 +398,6 @@ __$__.Layout = {
             oldCenterPos[i].x /= nodeSize;
             oldCenterPos[i].y /= nodeSize;
     
-            // mvRootPos.push({
-            //     x: __$__.StorePositions.oldNetworkNodesData[root.id].x - root.x,
-            //     y: __$__.StorePositions.oldNetworkNodesData[root.id].y - root.y
-            // });
             mvRootPos.push({
                 x: tree_CenterPos[i].x - oldCenterPos[i].x,
                 y: tree_CenterPos[i].y - oldCenterPos[i].y
@@ -458,20 +442,14 @@ __$__.Layout = {
     switchEnabled: () => {
         if (__$__.Layout.enabled) {
             __$__.Layout.enabled = false;
+            __$__.Update.updateValueOfArray = false;
             document.getElementById('autoLayout').textContent = 'OFF';
         } else {
             __$__.Layout.enabled = true;
+            __$__.Update.updateValueOfArray = true;
             document.getElementById('autoLayout').textContent = 'ON';
         }
+        __$__.Update.updateArrayValue();
         __$__.Update.ContextUpdate();
     }
-    // switchOnOff() {
-    //     if (__$__.ShowContext.on) {
-    //         __$__.ShowContext.on = false;
-    //         document.getElementById('showingContext').textContent = 'OFF';
-    //     } else {
-    //         __$__.ShowContext.on = true;
-    //         document.getElementById('showingContext').textContent = 'ON';
-    //     }
-    //     __$__.ShowContext.show();
 };

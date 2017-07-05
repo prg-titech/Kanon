@@ -39,7 +39,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                 } else if (node.type === 'ArrayExpression') {
                     c.counterName = '__arrLabelCounter';
                     c.LabelPos = __$__.Context.LabelPos.Arr;
-                    c.label_header = 'arry';
+                    c.label_header = 'arr';
                     c.this_node = b.ArrayExpression(
                         node.elements
                     );
@@ -1104,7 +1104,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     continue label; (or break label;)
                  * }
                  */
-                } else if (['ContinueStatement', 'BreakStatement'].indexOf(node.type) >= 0 && node.label.name) {
+                } else if (['ContinueStatement', 'BreakStatement'].indexOf(node.type) >= 0 && node.label && node.label.name) {
                     return b.BlockStatement([
                         checkPoint(start, data),
                         b.DoWhileStatement(

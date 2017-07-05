@@ -1,4 +1,5 @@
 __$__.Context = {
+    ArrayLabels: [],
     Arrays: [],
     ChangedGraph: true,
     CheckPointTable: {},
@@ -22,6 +23,7 @@ __$__.Context = {
     __loopCounter: {},
 
     Initialize: () => {
+        __$__.Context.ArrayLabels = [];
         __$__.Context.Arrays = [];
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
@@ -124,8 +126,8 @@ __$__.Context = {
         let checkPointId = __$__.Context.FindId(cursorPos);
     
         if (__$__.Context.Snapshot) {
+            let loopLabel, count, cpID, graph;
             try {
-                var loopLabel, count, cpID, graph;
                 if (checkPointId.afterId &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].column === cursorPos.column &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1)
@@ -137,13 +139,17 @@ __$__.Context = {
                 count = __$__.Context.LoopContext[loopLabel];
                 graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
 
+                // graph.nodes.forEach(node => {
+                //     node.fixed = true;
+                // });
+
                 __$__.Context.SnapshotContext['cpID'] = cpID;
                 __$__.Context.SnapshotContext['loopLabel'] = loopLabel;
                 __$__.Context.SnapshotContext['count'] = count;
     
                 if (!graph) graph = {nodes: [], edges: []};
             } catch (e) {
-                var graph = {nodes: [], edges: []};
+                graph = {nodes: [], edges: []};
             }
 
             __$__.StorePositions.setPositions(graph);
@@ -157,6 +163,9 @@ __$__.Context = {
     
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
                 __$__.Animation.setData(graph);
+                __$__.Context.Arrays.forEach(arr => {
+                    __$__.Update.updateArray({nodes: [arr[0]]});
+                });
                 __$__.StorePositions.registerPositions();
             }
         } else {

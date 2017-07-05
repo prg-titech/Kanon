@@ -32,6 +32,10 @@ __$__.ToVisjs = {
             } else if (graph.nodes[i].constructor === [].constructor) {
                 let arrayLabels = [];
                 for (let j = 0; j < graph.nodes[i].length; j++) {
+                    let arrLabel = __$__.Context.getObjectID(graph.nodes[i]);
+                    if (__$__.Context.ArrayLabels.indexOf(arrLabel) === -1) {
+                        __$__.Context.ArrayLabels.push(arrLabel);
+                    }
                     node = {
                         borderWidthSelected: 1,
                         color: {
@@ -40,7 +44,7 @@ __$__.ToVisjs = {
                                 border: 'black'
                             }
                         },
-                        id: __$__.Context.getObjectID(graph.nodes[i]) + '_' + j,
+                        id: arrLabel + '@block@' + j + '@',
                         physics: false,
                         shape: 'square',
                         size: __$__.Layout.ArraySize
@@ -64,12 +68,15 @@ __$__.ToVisjs = {
             let edge = {};
 
             edge.from = __$__.Context.getObjectID(graph.edges[i].from);
+            // if the type of the start node of the edge is Array
             if (graph.edges[i].from.constructor === [].constructor)
-                edge.from += '_' + graph.edges[i].label;
+                edge.from += '@block@' + graph.edges[i].label + '@';
 
             edge.to = __$__.Context.getObjectID(graph.edges[i].to);
-            if (graph.edges[i].to.constructor === [].constructor) 
-                edge.to += '_0';
+            // if the type of the end node of the edge is Array
+            if (graph.edges[i].from.constructor === [].constructor)
+            if (graph.edges[i].to.constructor === [].constructor)
+                edge.to += '@block@0@';
 
             edge.label = graph.edges[i].label;
 

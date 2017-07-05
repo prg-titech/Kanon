@@ -288,47 +288,42 @@ __$__.Update = {
     updateArray: params => {
         if (params.nodes.length > 0) {
             let id = params.nodes[0];
-            let indices = [-1, -1];
+            let arr_label;
+            let isBlock;
 
-            for (let i = 0; i < __$__.Context.Arrays.length; i++) {
-                let index = __$__.Context.Arrays[i].indexOf(id);
-                if (index >= 0) {
-                    indices[0] = i;
-                    indices[1] = index;
-                    break;
+            // check that the id is belong to array
+            __$__.Context.ArrayLabels.forEach(arr_l => {
+                if (id.indexOf(arr_l) >= 0) {
+                    arr_label = arr_l;
+                    isBlock = id.indexOf('@block@') >= 0;
                 }
-            }
+            });
 
-            if (indices[0] >= 0) {
-                let arrayIDs = __$__.Context.Arrays[indices[0]];
-                for (let i = 0; i < arrayIDs.length; i++) {
-                    let pos = __$__.network.getPositions(id)[id];
-                    __$__.network.moveNode(arrayIDs[i], pos.x + (i - indices[1]) * __$__.Layout.ArraySize * 2, pos.y);
+            if (isBlock) {
+                let arrayLabels = Object.keys(__$__.network.body.data.nodes._data).filter(label => {
+                    return label.indexOf(arr_label + '@block@') >= 0;
+                });
+                let idx0 = arrayLabels.indexOf(id);
+                let pos = __$__.network.getPositions(id)[id];
+                for (let i = 0; i < arrayLabels.length; i++) {
+                    __$__.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.Layout.ArraySize * 2, pos.y);
                 }
+
+                if (__$__.Update.updateValueOfArray)
+                    __$__.Update.updateArrayValue(arrayLabels);
             }
-            if (__$__.Update.updateValueOfArray)
-                __$__.Update.updateArrayValue();
         }
     },
 
-    updateArrayValue: () => {
-        // align each value of the ArrayExpression if that is Literal
+    updateArrayValue: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block@') >= 0;})) => {
         Object.values(__$__.network.body.data.edges._data).forEach(edge => {
-            let indices = [-1, -1];
-    
-            for (let i = 0; i < __$__.Context.Arrays.length; i++) {
-                let index = __$__.Context.Arrays[i].indexOf(edge.from);
-                if (index >= 0) {
-                    indices[0] = i;
-                    indices[1] = index;
-                    break;
-                }
-            }
-    
-            if (indices[0] >= 0) {
-                if (__$__.Context.Literals.indexOf(edge.to) >= 0) {
+            let index = arrayBlocks.indexOf(edge.from);
+
+            if (index >= 0) {
+                if (__$__.nodes._data[edge.to].color && __$__.nodes._data[edge.to].color === 'white') {
                     let pos = __$__.network.getPositions(edge.from)[edge.from];
                     __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
+                    __$__.nodes.update({id: edge.to, fixed: true});
                 }
             }
         });
