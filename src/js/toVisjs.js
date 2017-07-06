@@ -15,7 +15,8 @@ __$__.ToVisjs = {
                     label: "" + graph.nodes[i].value,
                     scaling: {
                         min: 10
-                    }
+                    },
+                    fixed: true
                 };
 
                 retData.nodes.push(node);
@@ -46,6 +47,7 @@ __$__.ToVisjs = {
                         },
                         id: arrLabel + '@block@' + j + '@',
                         physics: false,
+                        fixed: true,
                         shape: 'square',
                         size: __$__.arraySize
                     };
@@ -74,7 +76,6 @@ __$__.ToVisjs = {
 
             edge.to = __$__.Context.getObjectID(graph.edges[i].to);
             // if the type of the end node of the edge is Array
-            if (graph.edges[i].from.constructor === [].constructor)
             if (graph.edges[i].to.constructor === [].constructor)
                 edge.to += '@block@0@';
 

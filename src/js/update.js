@@ -49,8 +49,8 @@ __$__.Update = {
                 nodes: __$__.nodes,
                 edges: __$__.edges
             });
-            __$__.StorePositions.oldNetworkNodesData = __$__.network.body.data.nodes._data;
-            __$__.StorePositions.oldNetworkEdgesData = __$__.network.body.data.edges._data;
+            __$__.StorePositions.registerPositions();
+            __$__.StorePositions.oldNetwork.edges = __$__.network.body.data.edges._data;
     
             let stabilized = params => {
                 __$__.options.nodes.hidden = false;
@@ -162,7 +162,7 @@ __$__.Update = {
                 return [edge.from, edge.to, edge.label];
         });
         let networkNodes = [];
-        let temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetworkNodesData;
+        let temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetwork.nodes;
     
         Object.keys(temp).forEach(key => {
             if (snapshot && temp[key].color && temp[key].color !== 'white') {
@@ -174,7 +174,7 @@ __$__.Update = {
 
 
         let networkEdges = [];
-        temp = (snapshot) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetworkEdgesData;
+        temp = (snapshot) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetwork.edges;
     
         Object.keys(temp).forEach(function(key){
             if (snapshot && temp[key].color && temp[key].color !== 'white')

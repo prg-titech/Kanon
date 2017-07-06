@@ -108,7 +108,7 @@ __$__.Layout = {
             let region = {x: {from: NaN, to: NaN}, y: {from: NaN, to: NaN}};
             for (let j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
-                let pos = __$__.StorePositions.oldNetworkNodesData[node.id];
+                let pos = __$__.StorePositions.oldNetwork.nodes[node.id];
 
                 let newPos = {
                     x: sortedListNode_CenterPos[i].x + 100 * (j - (sortedListNode[i].length - 1) / 2),
@@ -130,7 +130,7 @@ __$__.Layout = {
                 node.y = newPos.y;
     
                 if (node.__val) {
-                    let valPos = __$__.StorePositions.oldNetworkNodesData[node.__val.id];
+                    let valPos = __$__.StorePositions.oldNetwork.nodes[node.__val.id];
 
                     if (!(node.x > region.x.from))
                         region.x.from = node.x;
@@ -407,7 +407,7 @@ __$__.Layout = {
     
         graph.nodes.forEach(node => {
             if (node.__tree_num !== undefined) {
-                let beforePos = __$__.StorePositions.oldNetworkNodesData[node.id];
+                let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
                 let mvPos = mvRootPos[node.__tree_num];
                 node.x += mvPos.x;
                 node.y += mvPos.y;

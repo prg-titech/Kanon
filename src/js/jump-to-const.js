@@ -1,6 +1,5 @@
 __$__.JumpToConstruction = {
     ClickElement: {},
-    ClickElementContext: {},
     GraphData: {nodes: [], edges: []},
 
 
@@ -60,7 +59,6 @@ __$__.JumpToConstruction = {
         }
     
     
-        __$__.JumpToConstruction.ClickElementContext = {};
         __$__.JumpToConstruction.ClickElement = {};
     }
 };
