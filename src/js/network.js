@@ -52,4 +52,5 @@ document.getElementById('viewmode').textContent = (__$__.Context.Snapshot) ? 'Vi
 
 window.onresize = function() {
     __$__.network.redraw();
+    __$__.ShowContext.show();
 };
