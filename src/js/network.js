@@ -26,6 +26,22 @@ __$__.options = {
 };
 __$__.arraySize = 12;
 __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
+__$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+__$__.network.on('dragStart', params => {
+    if (params.nodes.length > 0) {
+        let nodeId = params.nodes[0];
+        __$__.nodes.update({id: nodeId, fixed: false});
+    }
+});
+__$__.network.on('dragEnd', params => {
+    if (params.nodes.length > 0) {
+        let nodeId = params.nodes[0];
+        __$__.nodes.update({id: nodeId, fixed: true})
+    }
+});
+__$__.network.on('dragging', __$__.Update.updateArray);
+__$__.network.on('dragEnd', __$__.Update.updateArray);
+__$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
 __$__.StorePositions.registerPositions();
 __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
 

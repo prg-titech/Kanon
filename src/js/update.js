@@ -72,22 +72,6 @@ __$__.Update = {
                 __$__.Update.updateArray({nodes: [array[0]]});
             });
     
-            __$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
-            __$__.network.on('dragStart', params => {
-                if (params.nodes.length > 0) {
-                    let nodeId = params.nodes[0];
-                    __$__.nodes.update({id: nodeId, fixed: false});
-                }
-            });
-            __$__.network.on('dragEnd', params => {
-                if (params.nodes.length > 0) {
-                    let nodeId = params.nodes[0];
-                    __$__.nodes.update({id: nodeId, fixed: true})
-                }
-            });
-            __$__.network.on('dragging', __$__.Update.updateArray);
-            __$__.network.on('dragEnd', __$__.Update.updateArray);
-            __$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
             __$__.Update.wait = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
                 __$__.network.once('stabilized', stabilized);
