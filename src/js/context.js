@@ -177,14 +177,16 @@ __$__.Context = {
     
             let addedNodeId = [], addedEdgeData = [];
             let removedNodeId = [], removedEdgeData = [];
+            let beforeGraphs, afterGraphs;
+            let loopCount;
     
-            // If beforeLoopLabel same afterLoopLabel, calcurate the gap between before and after graph.
+            // If beforeLoopLabel same afterLoopLabel, calculate the difference between before and after graph.
             if (beforeLoopLabel === afterLoopLabel) {
-                let beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopLabel];
-                let afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopLabel];
+                beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopLabel];
+                afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopLabel];
     
                 // take the number of common loop here
-                let loopCount = [];
+                loopCount = [];
                 let afterGraphsCount = Object.keys(afterGraphs);
     
     
@@ -193,9 +195,10 @@ __$__.Context = {
                 });
     
     
-                // calculate the gap between before and after graph
+                // calculate the difference between before graph and after graph
                 for (let i = 0; i < loopCount.length; i++) {
-                    let beforeGraph = beforeGraphs[loopCount[i]], afterGraph = afterGraphs[loopCount[i]];
+                    let beforeGraph = beforeGraphs[loopCount[i]]
+                    let afterGraph = afterGraphs[loopCount[i]];
     
                     // this object checks whether each node is added or removed or not
                     // if 'node1' is added, changeNodeId[node1]: true.
@@ -288,22 +291,25 @@ __$__.Context = {
                     }
                 });
             });
-    
-            addedNodeId.forEach(id => {
-                let label = '';
 
-                afterGraph.nodes.forEach(node => {
-                    if (node.id === id) label = node.label;
-                });
-    
-                if (id && id.slice(0, 11) !== '__Variable-')
+            addedNodeId.forEach(id => {
+                if (id && id.slice(0, 11) !== '__Variable-' && loopCount) {
+                    let label = '';
+
+                    let afterGraph = afterGraphs[loopCount[loopCount.length-1]];
+                    afterGraph.nodes.forEach(node => {
+                        if (node.id === id) label = node.label;
+                    });
+
                     graph.nodes.push({
                         fixed: false,
                         id: id,
                         label: label,
                         physics: false,
                         color: __$__.SummarizedViewColor.AddNode
-                    });
+                        }
+                    );
+                }
             });
     
             addedEdgeData.forEach(data => {
