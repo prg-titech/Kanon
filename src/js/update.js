@@ -134,36 +134,35 @@ __$__.Update = {
      */
     isChange: function(graph, snapshot = false) {
         let graphNodes = graph.nodes.map(node => {
-            if (node.color && node.color !== 'white')
+            if (snapshot)
                 return [node.id, node.label, node.color];
             else 
                 return [node.id, node.label];
         });
         let graphEdges = graph.edges.map(edge => {
-            if (edge.color && edge.color !== 'white')
+            if (snapshot)
                 return [edge.from, edge.to, edge.label, edge.color];
             else
                 return [edge.from, edge.to, edge.label];
         });
         let networkNodes = [];
-        let temp = (snapshot) ? __$__.network.body.data.nodes._data : __$__.StorePositions.oldNetwork.nodes;
+        let temp = __$__.nodes._data;
     
         Object.keys(temp).forEach(key => {
-            if (snapshot && temp[key].color && temp[key].color !== 'white') {
+            if (snapshot)
                 networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
-            } else {
+            else if (temp[key].id && temp[key].id.slice(0, 11) !== '__Variable-')
                 networkNodes.push([temp[key].id, temp[key].label]);
-            }
         });
 
 
         let networkEdges = [];
-        temp = (snapshot) ? __$__.network.body.data.edges._data : __$__.StorePositions.oldNetwork.edges;
+        temp = __$__.edges._data;
     
         Object.keys(temp).forEach(function(key){
-            if (snapshot && temp[key].color && temp[key].color !== 'white')
+            if (snapshot)
                 networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);
-            else
+            else if (temp[key].from.slice(0, 11) !== '__Variable-')
                 networkEdges.push([temp[key].from, temp[key].to, temp[key].label]);
         });
     
