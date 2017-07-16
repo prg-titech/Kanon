@@ -3,6 +3,8 @@ __$__.Context = {
     Arrays: [],
     ChangedGraph: true,
     CheckPointTable: {},
+    CheckPointAroundCursor: {},
+    InfLoop: '',
     LabelPos: {
         Arr: {},
         Call: {},
@@ -13,7 +15,6 @@ __$__.Context = {
     LastGraph: undefined,
     Literals: [],
     LoopContext: {'noLoop': 1},
-    Objects: {},
     Snapshot: true,
     SnapshotContext: {},
     StackToCheckLoop: ['noLoop'],
@@ -28,7 +29,6 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
         __$__.Context.Literals = [];
-        __$__.Context.Objects = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];
@@ -124,7 +124,12 @@ __$__.Context = {
     Draw: function(e) {
         let cursorPos = __$__.editor.getCursorPosition();
         let checkPointId = __$__.Context.FindId(cursorPos);
-    
+        // if (__$__.Context.CheckPointAroundCursor.beforeId === checkPointId.beforeId
+        //     && __$__.Context.CheckPointAroundCursor.afterId === checkPointId.afterId)
+        //     return;
+        // else
+        //     __$__.Context.CheckPointAroundCursor = checkPointId;
+
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, graph;
             try {
@@ -138,10 +143,6 @@ __$__.Context = {
                 loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
                 count = __$__.Context.LoopContext[loopLabel];
                 graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
-
-                // graph.nodes.forEach(node => {
-                //     node.fixed = true;
-                // });
 
                 __$__.Context.SnapshotContext['cpID'] = cpID;
                 __$__.Context.SnapshotContext['loopLabel'] = loopLabel;
@@ -175,8 +176,8 @@ __$__.Context = {
             let beforeLoopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
             let afterLoopLabel  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
     
-            let addedNodeId = [], addedEdgeData = [];
-            let removedNodeId = [], removedEdgeData = [];
+            let addedNodeId = {}, addedEdgeData = [];
+            let removedEdgeData = [];
             let beforeGraphs, afterGraphs;
             let loopCount;
     
@@ -191,13 +192,14 @@ __$__.Context = {
     
     
                 Object.keys(beforeGraphs).forEach(num => {
-                    if (afterGraphsCount.indexOf(num) !== -1) loopCount.push(num);
+                    if (afterGraphsCount.indexOf(num) !== -1)
+                        loopCount.push(num);
                 });
     
     
                 // calculate the difference between before graph and after graph
                 for (let i = 0; i < loopCount.length; i++) {
-                    let beforeGraph = beforeGraphs[loopCount[i]]
+                    let beforeGraph = beforeGraphs[loopCount[i]];
                     let afterGraph = afterGraphs[loopCount[i]];
     
                     // this object checks whether each node is added or removed or not
@@ -220,9 +222,7 @@ __$__.Context = {
     
                     Object.keys(changeNodeId).forEach(id => {
                         if (changeNodeId[id])
-                            addedNodeId.push(id);
-                        else
-                            removedNodeId.push(id);
+                            addedNodeId[id] = true;
                     });
     
                     // this object checks whether each edge is added or removed or not
@@ -273,11 +273,9 @@ __$__.Context = {
     
             // change color of added node to orange in this part
             graph.nodes.forEach(node => {
-                let index = addedNodeId.indexOf(node.id);
-    
-                if (index >= 0) {
+                if (addedNodeId[node.id]) {
                     node.color = __$__.SummarizedViewColor.AddNode;
-                    delete addedNodeId[index];
+                    delete addedNodeId[node.id];
                 }
             });
             // change color of added edge to orange in this part
@@ -292,7 +290,7 @@ __$__.Context = {
                 });
             });
 
-            addedNodeId.forEach(id => {
+            Object.keys(addedNodeId).forEach(id => {
                 if (id && id.slice(0, 11) !== '__Variable-' && loopCount) {
                     let label = '';
 
@@ -392,7 +390,7 @@ __$__.Context = {
         let start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
     
         Object.keys(__$__.Context.StartEndInLoop).forEach(key => {
-            if (loopLabel === key)
+            if (loopLabel === key || key === 'noLoop')
                 return;
     
             let current_loop_count = __$__.Context.LoopContext[key];
@@ -463,12 +461,7 @@ __$__.Context = {
     
     
     getObjectID: function(obj) {
-        let index = Object.values(__$__.Context.Objects).indexOf(obj);
-        if (index === -1) {
-            return undefined;
-        } else {
-            return Object.keys(__$__.Context.Objects)[index];
-        }
+        return obj.__id;
     },
 
     setLoopContext: function(label, ope, n) {

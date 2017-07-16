@@ -20,12 +20,12 @@ __$__.ToVisjs = {
                 };
 
                 retData.nodes.push(node);
-                __$__.Context.Literals.push(node.id);
+                __$__.Context.Literals.push(node.__id);
             } else if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
                 node = {
                     hidden: true,
                     id: __$__.Context.getObjectID(graph.nodes[i]),
-                    label: graph.nodes[i].id,
+                    label: graph.nodes[i].label,
                     fixed: false
                 };
 

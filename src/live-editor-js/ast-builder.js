@@ -273,5 +273,12 @@ __$__.ASTBuilder = {
             id: id,
             init: init
         };
-    }
+    },
+    WhileStatement(test, body) {
+        return {
+            type: 'WhileStatement',
+            test: test,
+            body: body
+        };
+    },
 };

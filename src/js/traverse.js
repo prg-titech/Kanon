@@ -6,8 +6,8 @@ __$__.Traverse = {
     },
 
     __VariableNode: function(id) {
-        this.id = id;
-        __$__.Context.Objects['__Variable-' + id] = this;
+        this.label = id;
+        Object.setProperty(this, '__id', '__Variable-' + id);
     },
 
     __Literal: function(value) {
@@ -18,6 +18,13 @@ __$__.Traverse = {
     __Graph: function() {
         this.nodes = [];
         this.edges = [];
+    },
+
+    literals: {
+        boolean: true,
+        number: true,
+        string: true,
+        symbol: true
     },
     
     
@@ -30,14 +37,14 @@ __$__.Traverse = {
             if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined)
                 continue;
     
-            __$__.Traverse.dfs(ret, obj);
+            __$__.Traverse.dfs(ret, obj, {});
         }
     
         Object.keys(variables).forEach(function(key) {
-            let tempNode = new __$__.Traverse.__VariableNode(key);
             let index = ret.nodes.indexOf(variables[key]);
     
             if (index >= 0) {
+                let tempNode = new __$__.Traverse.__VariableNode(key);
                 let tempEdge = new __$__.Traverse.__Edge(tempNode, ret.nodes[index], key);
     
                 ret.nodes.push(tempNode);
@@ -66,7 +73,7 @@ __$__.Traverse = {
         });
     
         for (let i = 0; i < ret.nodes.length; i++) {
-            if (Object.values(__$__.Context.Objects).indexOf(ret.nodes[i]) > 0)
+            if (ret.nodes[i].__id)
                 continue;
     
             __$__.Traverse.CheckId(ret.nodes[i], ret.edges);
@@ -76,11 +83,10 @@ __$__.Traverse = {
         return ret;
     },
     
-    dfs: function(graph, node) {
-        let literals = ["boolean", "number", "string", "symbol"];
-    
-        if (graph.nodes.indexOf(node) === -1) {
+    dfs: function(graph, node, graphNodes) {
+        if (!graphNodes[node.__id]) {
             graph.nodes.push(node);
+            graphNodes[node.__id] = true;
         } else {
             return;
         }
@@ -93,18 +99,18 @@ __$__.Traverse = {
             // "to" is destination of edge
             let to = node[key];
     
-            if (!(typeof(to) === "function") && (to !== null && to !== undefined)) {
-                if (literals.indexOf(typeof(to)) >= 0) { // if "to" is literal
+            if (typeof to !== "function" && to !== null && to !== undefined) {
+                if (__$__.Traverse.literals[typeof to]) { // if "to" is literal
                     let temp = new __$__.Traverse.__Literal(to);
     
                     graph.nodes.push(temp);
                     graph.edges.push(new __$__.Traverse.__Edge(node, temp, key));
                 } else {
                     graph.edges.push(new __$__.Traverse.__Edge(node, to, key));
-                    __$__.Traverse.dfs(graph, to);
+                    __$__.Traverse.dfs(graph, to, graphNodes);
                 }
             }
-        })
+        });
     },
     
     // check whether all of the nodes have an id or not
@@ -112,11 +118,11 @@ __$__.Traverse = {
     CheckId: function(node, edges) {
         for (let i = 0; i < edges.length; i++) {
             if (node === edges[i].to) {
-                if (Object.values(__$__.Context.Objects).indexOf(edges[i].from) === -1)
+                if (!edges[i].from.__id)
                     __$__.Traverse.CheckId(edges[i].from, edges);
     
                 let newID = __$__.Context.getObjectID(edges[i].from) + '-' + edges[i].label;
-                __$__.Context.Objects[newID] = node;
+                Object.setProperty(node, '__id', newID);
                 return;
             }
         }

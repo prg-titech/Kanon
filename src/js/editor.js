@@ -51,7 +51,7 @@ __$__.editor.commands.addCommand({
     exec: function(editor) {
         let isChanged = __$__.Context.MoveContextOnCursorPosition('next');
         if (isChanged)
-            __$__.Context.Draw('redraw');
+            __$__.Context.Draw();
     }
 });
 __$__.editor.commands.addCommand({
@@ -60,7 +60,7 @@ __$__.editor.commands.addCommand({
     exec: function(editor) {
         let isChanged = __$__.Context.MoveContextOnCursorPosition('prev');
         if (isChanged)
-            __$__.Context.Draw('redraw');
+            __$__.Context.Draw();
     }
 });
 

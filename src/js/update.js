@@ -14,23 +14,40 @@ __$__.Update = {
         __$__.editor.task.ContextUpdate = [];
     
         try {
-            eval(__$__.CodeConversion.TransformCode(__$__.editor.getValue(), true));
-            document.getElementById('console').textContent = '';
+            let __objs = [];
+            try {
+                eval(__$__.CodeConversion.TransformCode(__$__.editor.getValue(), true));
+                document.getElementById('console').textContent = '';
+                __$__.Context.InfLoop = '';
+            } catch (e) {
+                if (e === 'Infinite Loop') {
+                    document.getElementById('console').textContent = 'infinite loop?';
+                } else {
+                    throw e;
+                }
+            }
             Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                if (__$__.Context.StartEndInLoop[loopLabel] === undefined)
+                if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
                     delete __$__.Context.LoopContext[loopLabel];
             });
-    
+
             __$__.Context.Initialize();
             __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
             __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
 
-            var __objs;
-            eval(__$__.Update.CodeWithCP);
-    
+            // var __objs;
+            __objs = [];
+            try {
+                eval(__$__.Update.CodeWithCP);
+                __$__.Context.InfLoop = '';
+            } catch (e) {
+                if (e === 'Infinite Loop') {
+                    document.getElementById('console').textContent = 'infinite loop?';
+                }
+            }
+
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
-            
-    
+
             if (!__$__.Update.isChange(graph, false)) {
                 __$__.Update.wait = false;
                 if (__$__.editor.task.ContextUpdate.length === 0)
@@ -89,13 +106,16 @@ __$__.Update = {
         } catch (e) {}
     },
     
-    
+
     /**
      * This function is called when the cursor position in ace editor is changed.
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
-        if (__$__.Update.wait === false && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length) && document.getElementById('console').textContent === '' || e === 'changed') {
+        if (__$__.Update.wait === false
+            && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length)
+            // && document.getElementById('console').textContent === ''
+            || e === 'changed') {
             try {
                 // check maximum of Context.LoopContext
                 // if loop doesn't include now context, now context is changed at the max of loop count
@@ -187,35 +207,59 @@ __$__.Update = {
     
         let modify_by_insert = function(pos) {
             // if inserted code is the upper part of the loop
-            if (compare(start, '<', pos.start)) {
-                if (pos.start.line === start.line)
-                    pos.start.column += e.lines[e.lines.length-1].length;
-                if (pos.end.line   === start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-    
+            if (compare(start, '<=', pos.start)) {
+                if (pos.start.line === start.line) {
+                    if (e.lines.length > 1) {
+                        pos.start.column -= start.column;
+                    }
+                    pos.start.column += e.lines.last().length;
+                }
+                if (pos.end.line === start.line) {
+                    if (e.lines.length > 1) {
+                        pos.end.column -= start.column;
+                    }
+                    pos.end.column += e.lines.last().length;
+                }
+
                 pos.start.line += e.lines.length - 1;
                 pos.end.line   += e.lines.length - 1;
             } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line   === start.line)
-                    pos.end.column   += e.lines[e.lines.length-1].length;
-    
-                pos.end.line   += e.lines.length - 1;
+                if (pos.end.line === start.line) {
+                    if (e.lines.length > 1) {
+                        pos.end.column -= start.column;
+                    }
+                    pos.end.column += e.lines.last().length;
+                }
+
+                pos.end.line += e.lines.length - 1;
             }
         };
         let modify_by_remove = function(pos) {
             // if removed code is the upper part of the loop
-            if (compare(end, '<', pos.start)) {
-                if (pos.start.line === end.line)
-                    pos.start.column -= e.lines[e.lines.length-1].length;
-                if (pos.end.line   === end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
+            if (compare(end, '<=', pos.start)) {
+                if (pos.start.line === end.line) {
+                    if (e.lines.length > 1) {
+                        pos.start.column += start.column;
+                    }
+                    pos.start.column -= e.lines.last().length;
+                }
+                if (pos.end.line === end.line) {
+                    if (e.lines.length > 1) {
+                        pos.end.column += start.column;
+                    }
+                    pos.end.column -= e.lines.last().length;
+                }
     
                 pos.start.line -= e.lines.length - 1;
                 pos.end.line   -= e.lines.length - 1;
             } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                if (pos.end.line   === end.line)
-                    pos.end.column   -= e.lines[e.lines.length-1].length;
-    
+                if (pos.end.line === end.line) {
+                    if (e.lines.length > 1) {
+                        pos.end.column += start.column;
+                    }
+                    pos.end.column -= e.lines.last().length;
+                }
+
                 pos.end.line   -= e.lines.length - 1;
             } else if (compare(start, '<', pos.start) && compare(pos.end, '<', end)) { // if removed code is the outer part of the loop
                 return true;

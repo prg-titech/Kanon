@@ -1,5 +1,13 @@
 __$__.ShowContext = {
     on: true,
+    infLoopMessage: 'Infinite Loop? ',
+    editorSize: setTimeout(() => {
+        let elem = $('#editor');
+        __$__.ShowContext.editorSize = {
+            h: parseInt(elem.css('height').slice(0, -2)),
+            w: parseInt(elem.css('width').slice(0, -2))
+        }
+    }, 0),
 
     /**
      * this function displays the context of the loop or the function.
@@ -10,21 +18,21 @@ __$__.ShowContext = {
         let divs = show_div.children();
 
         for (let i = 0; i < divs.length; i++) {
-            let div = divs[i];
-            let id = div.id;
+            let id = divs[i].id;
+            let elem = $('#' + id);
 
-            if (Object.keys(__$__.Context.LabelPos.Loop).indexOf(id) === -1)
-                $('#' + id).remove();
+            if (!__$__.Context.LabelPos.Loop[id])
+                elem.remove();
             else {
                 let pos = __$__.ShowContext.position(id);
 
-                $('#' + id).css('top', '' + pos.y + 'px');
-                $('#' + id).css('left', '' + pos.x + 'px');
+                elem.css('top', '' + pos.y + 'px');
+                elem.css('left', '' + pos.x + 'px');
 
                 if (__$__.ShowContext.on && __$__.ShowContext.inEditor(pos))
-                    $('#' + id).css('display', 'block');
+                    elem.css('display', 'block');
                 else
-                    $('#' + id).css('display', 'none');
+                    elem.css('display', 'none');
 
                 __$__.ShowContext.update(id);
                 checked_arr.push(id);
@@ -52,11 +60,10 @@ __$__.ShowContext = {
      * this function calculates where the context of the loop or the function should be displayed.
      */
     position: function(id) {
-        let pos = {
-            column: __$__.Context.LabelPos.Loop[id].start.column,
-            row: __$__.Context.LabelPos.Loop[id].start.line-1
-        };
-        let coord = __$__.editor.renderer.textToScreenCoordinates(pos.row, pos.column);
+        let coord = __$__.editor.renderer.textToScreenCoordinates(
+            __$__.Context.LabelPos.Loop[id].start.line-1,
+            __$__.Context.LabelPos.Loop[id].start.column
+        );
         return {x: coord.pageX - 5 + $(window).scrollLeft(), y: coord.pageY - 40 + $(window).scrollTop()};
     },
 
@@ -67,34 +74,32 @@ __$__.ShowContext = {
      * this function judges whether the argument that represents position is included in the editor.
      */
     inEditor: function(pos) {
-        let editor = {
-            h: parseInt($('#editor').css('height').slice(0, -2)),
-            w: parseInt($('#editor').css('width').slice(0, -2))
-        };
-
-        return 40 <= pos.x && pos.x <= 40 + editor.w && -30 <= pos.y && pos.y <= -20 + editor.h;
+        return 40 <= pos.x && pos.x <= __$__.ShowContext.editorSize.w
+           && -30 <= pos.y && pos.y <= -20 + __$__.ShowContext.editorSize.h;
     },
 
 
     /**
-     * @param label_s {string or Array of string}
+     * @param labels {string or Array of string}
      *
      * This function updates the displayed context.
      * If the type of the argument is Array, the contexts of the all element of the Array are updated.
      */
-    update: function(label_s) {
-        if (label_s.constructor === 'Array') {
-            let labels = label_s;
-
+    update: function(labels) {
+        if (labels.constructor === 'Array') {
             labels.forEach(label => {
-                if (label !== 'noLoop')
+                if (label !== 'noLoop' && __$__.Context.InfLoop !== label)
                     document.getElementById(label).textContent = __$__.Context.LoopContext[label];
+                else
+                    document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + __$__.Context.LoopContext[label];
             })
         } else {
-            let label = label_s;
+            let label = labels;
 
-            if (label !== 'noLoop')
+            if (label !== 'noLoop' && __$__.Context.InfLoop !== label)
                 document.getElementById(label).textContent = __$__.Context.LoopContext[label];
+            else
+                document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + __$__.Context.LoopContext[label];
         }
     },
 
@@ -106,7 +111,10 @@ __$__.ShowContext = {
      * @param content {string or number} : the displayed content
      */
     makeDivElement(id, display, top, left, content) {
-        return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + content + '</div>';
+        if (__$__.Context.InfLoop !== id)
+            return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + content + '</div>';
+        else
+            return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + __$__.ShowContext.infLoopMessage + content + '</div>';
     },
 
     switchOnOff() {
