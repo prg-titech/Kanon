@@ -798,7 +798,7 @@ __$__.ASTTransforms.Context = function () {
                                                             b.Identifier('__$__'),
                                                             b.Identifier('Context')
                                                         ),
-                                                        b.Identifier('StartEndInLoop'),
+                                                        b.Identifier('StartEndInLoop')
                                                     ),
                                                     b.CallExpression(
                                                         b.MemberExpression(
