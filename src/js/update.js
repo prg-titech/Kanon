@@ -48,7 +48,7 @@ __$__.Update = {
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
-            if (!__$__.Update.isChange(graph, false)) {
+            if (!__$__.Update.isChange(graph)) {
                 __$__.Update.wait = false;
                 if (__$__.editor.task.ContextUpdate.length === 0)
                     __$__.Update.ContextUpdate();
@@ -66,7 +66,7 @@ __$__.Update = {
                 nodes: __$__.nodes,
                 edges: __$__.edges
             });
-            __$__.StorePositions.registerPositions();
+            __$__.StorePositions.registerPositions(true);
             __$__.StorePositions.oldNetwork.edges = __$__.network.body.data.edges._data;
     
             let stabilized = params => {
@@ -81,7 +81,7 @@ __$__.Update = {
                     __$__.Update.updateArrayValue();
     
                 __$__.Update.wait = false;
-                __$__.StorePositions.registerPositions();
+                __$__.StorePositions.registerPositions(true);
                 __$__.Update.ContextUpdate();
             };
     
@@ -166,8 +166,10 @@ __$__.Update = {
                 return [edge.from, edge.to, edge.label];
         });
         let networkNodes = [];
-        let temp = __$__.nodes._data;
-    
+        // let temp = (snapshot) ? __$__.nodes._data : __$__.Context.LastGraph.nodes;
+        let temp = (snapshot) ? __$__.nodes._data : __$__.StorePositions.oldNetwork._nodesData;
+        // let temp = __$__.nodes._data;
+
         Object.keys(temp).forEach(key => {
             if (snapshot)
                 networkNodes.push([temp[key].id, temp[key].label, temp[key].color]);
@@ -177,8 +179,10 @@ __$__.Update = {
 
 
         let networkEdges = [];
-        temp = __$__.edges._data;
-    
+        // temp = (snapshot) ? __$__.edges._data : __$__.Context.LastGraph.edges;
+        temp = (snapshot) ? __$__.edges._data : __$__.StorePositions.oldNetwork._edgesData;
+        // temp = __$__.edges._data;
+
         Object.keys(temp).forEach(function(key){
             if (snapshot)
                 networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);

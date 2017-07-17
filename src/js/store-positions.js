@@ -1,5 +1,10 @@
 __$__.StorePositions = {
-    oldNetwork: {nodes: {}, edges: {}},
+    oldNetwork: {
+        nodes: {},
+        edges: {},
+        _nodesData: {},
+        _edgesData: {}
+    },
 
 
     // if nodePositions have the position of node.id, set the position at graph.node.
@@ -19,7 +24,7 @@ __$__.StorePositions = {
     
     
     // register the positions of the nodes to be able to use old network data
-    registerPositions: function() {
+    registerPositions: function(snapshot = false) {
         let pos = __$__.network.getPositions();
 
     
@@ -33,5 +38,9 @@ __$__.StorePositions = {
                 temp[id] = {x: pos[id].x, y: pos[id].y};
             }
         });
+        if (snapshot) {
+            __$__.StorePositions.oldNetwork._nodesData = __$__.nodes._data;
+            __$__.StorePositions.oldNetwork._edgesData = __$__.edges._data;
+        }
     }
 };

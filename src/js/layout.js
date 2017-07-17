@@ -124,7 +124,7 @@ __$__.Layout = {
                 if (!(region.y.to > newPos.y))
                     region.y.to = newPos.y;
 
-                if (!isChanged && pos.x !== newPos.x || pos.y !== newPos.y)
+                if (!isChanged && (pos.x !== newPos.x || pos.y !== newPos.y))
                     isChanged = true;
                 node.x = newPos.x;
                 node.y = newPos.y;
