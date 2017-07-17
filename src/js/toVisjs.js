@@ -15,8 +15,7 @@ __$__.ToVisjs = {
                     label: "" + graph.nodes[i].value,
                     scaling: {
                         min: 10
-                    },
-                    fixed: true
+                    }
                 };
 
                 retData.nodes.push(node);
@@ -25,8 +24,7 @@ __$__.ToVisjs = {
                 node = {
                     hidden: true,
                     id: __$__.Context.getObjectID(graph.nodes[i]),
-                    label: graph.nodes[i].label,
-                    fixed: false
+                    label: graph.nodes[i].label
                 };
 
                 retData.nodes.push(node);
@@ -47,7 +45,6 @@ __$__.ToVisjs = {
                         },
                         id: arrLabel + '@block@' + j + '@',
                         physics: false,
-                        fixed: true,
                         shape: 'square',
                         size: __$__.arraySize
                     };
