@@ -30,63 +30,43 @@ __$__.Traverse = {
     
     traverse: function(objs, variables = {}) {
         let ret = new __$__.Traverse.__Graph();
+        let graphNodes = {};
 
         for (let i = 0; i < objs.length; i++) {
             let obj = objs[i];
     
-            if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined)
+            // if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined)
+            if (graphNodes[obj.__id] || obj === null || obj === undefined)
                 continue;
     
-            __$__.Traverse.dfs(ret, obj, {});
+            __$__.Traverse.dfs(ret, obj, graphNodes);
         }
-    
-        Object.keys(variables).forEach(function(key) {
-            let index = ret.nodes.indexOf(variables[key]);
-    
-            if (index >= 0) {
+
+        Object.keys(variables).forEach(key => {
+            if (graphNodes[variables[key].__id]) {
                 let tempNode = new __$__.Traverse.__VariableNode(key);
-                let tempEdge = new __$__.Traverse.__Edge(tempNode, ret.nodes[index], key);
-    
+                let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[variables[key].__id], key);
+
                 ret.nodes.push(tempNode);
                 ret.edges.push(tempEdge);
-            // } else {
-            //     if (typeof variables[key] === 'function') {
-            //         var fun_node = new __$__.Traverse.__Function(variables[key]);
-            //         var tempEdge = new __$__.Traverse.__Edge(tempNode, fun_node, key);
-            //         ret.nodes.push(fun_node);
-            //         ret.nodes.push(tempNode);
-            //         ret.edges.push(tempEdge);
-            //     } else if (typeof variables[key] === 'number') {
-            //         var num_node = new __$__.Traverse.__Literal(variables[key]);
-            //         var tempEdge = new __$__.Traverse.__Edge(tempNode, num_node, key);
-            //         ret.nodes.push(num_node);
-            //         ret.nodes.push(tempNode);
-            //         ret.edges.push(tempEdge);
-            //     } else if (typeof variables[key] === 'string') {
-            //         var str_node = new __$__.Traverse.__Literal(variables[key]);
-            //         var tempEdge = new __$__.Traverse.__Edge(tempNode, str_node, key);
-            //         ret.nodes.push(str_node);
-            //         ret.nodes.push(tempNode);
-            //         ret.edges.push(tempEdge);
-            //     }
             }
         });
     
         for (let i = 0; i < ret.nodes.length; i++) {
             if (ret.nodes[i].__id)
                 continue;
-    
+
             __$__.Traverse.CheckId(ret.nodes[i], ret.edges);
         }
-    
-    
+
+
         return ret;
     },
     
     dfs: function(graph, node, graphNodes) {
         if (!graphNodes[node.__id]) {
             graph.nodes.push(node);
-            graphNodes[node.__id] = true;
+            graphNodes[node.__id] = node;
         } else {
             return;
         }
