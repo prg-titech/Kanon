@@ -1,13 +1,19 @@
 __$__.ShowContext = {
     on: true,
     infLoopMessage: 'Infinite Loop? ',
-    editorSize: setTimeout(() => {
-        let elem = $('#editor');
-        __$__.ShowContext.editorSize = {
-            h: parseInt(elem.css('height').slice(0, -2)),
-            w: parseInt(elem.css('width').slice(0, -2))
+    editorSize: setTimeout(function timeout() {
+        try {
+            let elem = $('#editor');
+            __$__.ShowContext.editorSize = {
+                h: parseInt(elem.css('height').slice(0, -2)),
+                w: parseInt(elem.css('width').slice(0, -2))
+            };
+            console.log('ok');
+        } catch (e) {
+            console.log('ng');
+            setTimeout(timeout, 1);
         }
-    }, 0),
+    }, 1),
 
     /**
      * this function displays the context of the loop or the function.
