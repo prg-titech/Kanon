@@ -8,9 +8,7 @@ __$__.ShowContext = {
                 h: parseInt(elem.css('height').slice(0, -2)),
                 w: parseInt(elem.css('width').slice(0, -2))
             };
-            console.log('ok');
         } catch (e) {
-            console.log('ng');
             setTimeout(timeout, 1);
         }
     }, 1),
