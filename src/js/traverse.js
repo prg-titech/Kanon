@@ -43,7 +43,7 @@ __$__.Traverse = {
         }
 
         Object.keys(variables).forEach(key => {
-            if (graphNodes[variables[key].__id]) {
+            if (variables[key] && graphNodes[variables[key].__id]) {
                 let tempNode = new __$__.Traverse.__VariableNode(key);
                 let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[variables[key].__id], key);
 
