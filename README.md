@@ -24,12 +24,18 @@ After downloaded, go to the Kanon directory and execute the following command.
 npm install
 ```
 
-Then, you can open [index.html](https://github.com/prg-titech/Kanon/blob/master/index.html) in your browser.
-
-You can also use __Kanon__ by desktop application.
+Then, execute a following command and open http://localhost:8000/ to view the application.
 
 ```
 npm start
+```
+
+(You can change the port by using `npm start -- --port=8001`).
+
+And You can also use __Kanon__ by desktop application.
+
+```
+npm run-script app
 ```
 
 ## Samples
