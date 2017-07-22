@@ -32,7 +32,9 @@ npm start
 
 (You can change the port by using `npm start -- --port=8001`).
 
-And You can also use __Kanon__ by desktop application.
+### Desptop Application
+
+You can also use __Kanon__ by desktop application.
 
 ```
 npm run-script app
