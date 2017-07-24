@@ -71,6 +71,11 @@ __$__.Animation = {
             nodes: __$__.nodes,
             edges: __$__.edges
         });
+        __$__.network.once('stabilized', param => {
+            __$__.nodes.forEach(node => {
+                __$__.nodes.update({id: node.id, fixed: true});
+            });
+        });
         Object.keys(__$__.nodes._data).forEach(label => {
             if (pos[label])
                 __$__.network.moveNode(label, pos[label].x, pos[label].y);

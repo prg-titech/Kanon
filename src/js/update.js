@@ -144,6 +144,7 @@ __$__.Update = {
             try {
                 __$__.ShowContext.show();
             } catch (e) {}
+            __$__.network.redraw();
         }
     },
 
