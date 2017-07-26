@@ -78,7 +78,8 @@ __$__.Update = {
                 __$__.options.edges.hidden = false;
                 __$__.network.setOptions(__$__.options);
                 __$__.nodes.forEach(node => {
-                    __$__.nodes.update({id: node.id, fixed: true});
+                    if (node.id.slice(0, 11) !== '--Variable-')
+                        __$__.nodes.update({id: node.id, fixed: true});
                 });
     
                 if (__$__.Update.updateValueOfArray)
@@ -352,7 +353,7 @@ __$__.Update = {
     },
 
     updateArrayValue: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block@') >= 0;})) => {
-        Object.values(__$__.network.body.data.edges._data).forEach(edge => {
+        Object.values(__$__.edges._data).forEach(edge => {
             let index = arrayBlocks.indexOf(edge.from);
 
             if (index >= 0) {
