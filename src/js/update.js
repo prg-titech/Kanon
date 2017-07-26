@@ -117,7 +117,7 @@ __$__.Update = {
      */
     ContextUpdate: function(e) {
         if (__$__.Update.wait === false
-            && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length)
+            // && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length)
             // && document.getElementById('console').textContent === ''
             || e === 'changed') {
             try {
