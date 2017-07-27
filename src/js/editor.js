@@ -10,21 +10,22 @@ __$__.editor.getSession().setUseWorker(false);
 __$__.editor.task = {PositionUpdate: [], ContextUpdate: []};
 __$__.editor.executeTask = () => {
     if (__$__.editor.task.PositionUpdate.length > 0) {
-        let arg;
+        let arg = [];
         while (__$__.editor.task.PositionUpdate.length > 0) {
-            let a = __$__.editor.task.PositionUpdate.shift();
-            if (arg === undefined) {
-                arg = a
+            let act = __$__.editor.task.PositionUpdate.shift();
+            let lst = arg.last();
+            if (arg.length === 0 || arg.last().action !== act.action) {
+                arg.push(act);
             } else {
-                if (arg.start.column === a.end.column && arg.start.row === a.end.row) {
-                    arg.start = a.start;
-                    a.lines[a.lines.length-1] += arg.lines.shift();
-                    Array.prototype.push.apply(a.lines, arg.lines);
-                    arg.lines = a.lines;
-                } else if (arg.end.column === a.start.column && arg.end.row === a.start.row) {
-                    arg.end = a.end;
-                    arg.lines[arg.lines.length-1] += a.lines.shift();
-                    Array.prototype.push.apply(arg.lines, a.lines);
+                if (lst.start.column === act.end.column && lst.start.row === act.end.row) {
+                    lst.start = act.start;
+                    act.lines[act.lines.length-1] += lst.lines.shift();
+                    Array.prototype.push.apply(act.lines, lst.lines);
+                    lst.lines = act.lines;
+                } else if (lst.end.column === act.start.column && lst.end.row === act.start.row) {
+                    lst.end = act.end;
+                    lst.lines[lst.lines.length-1] += act.lines.shift();
+                    Array.prototype.push.apply(lst.lines, act.lines);
                 }
             }
         }

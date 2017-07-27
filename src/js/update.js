@@ -7,8 +7,11 @@ __$__.Update = {
     PositionUpdate: function(__arg__) {
         window.localStorage["Kanon-Code"] = __$__.editor.getValue();
     
-        if (__arg__)
-            __$__.Update.UpdateLabelPositions(__arg__);
+        if (__arg__) {
+            __arg__.forEach(act => {
+                __$__.Update.UpdateLabelPositions(act);
+            });
+        }
         __$__.Context.Initialize();
         __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
         __$__.editor.task.ContextUpdate = [];
