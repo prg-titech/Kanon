@@ -16,7 +16,7 @@ __$__.StorePositions = {
             if (nodeData && nodeData.x !== undefined) {
                 node.x = nodeData.x;
                 node.y = nodeData.y;
-                if (node.id.slice(0, 11) !== '--Variable-')
+                if (node.id.slice(0, 11) !== '__Variable-')
                     node.fixed = true;
             }
         }

@@ -73,7 +73,7 @@ __$__.Animation = {
         });
         __$__.network.once('stabilized', param => {
             __$__.nodes.forEach(node => {
-                if (node.id.slice(0, 11) !== '--Variable-')
+                if (node.id.slice(0, 11) !== '__Variable-')
                     __$__.nodes.update({id: node.id, fixed: true});
             });
         });
