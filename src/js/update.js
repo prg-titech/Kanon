@@ -26,7 +26,7 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
-                    document.getElementById('console').textContent = 'Error?';
+                    document.getElementById('console').textContent = 'Error?: ' + e.message;
                     throw e;
                 }
             }
@@ -48,7 +48,7 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
-                    document.getElementById('console').textContent = 'Error?';
+                    document.getElementById('console').textContent = 'Error?: ' + e.message;
                     throw e;
                 }
             }
