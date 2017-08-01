@@ -70,9 +70,19 @@
     display: none;
 }
 
-#showingContextButton {
+#BackButton {
     float: left;
     clear: left;
+    margin-left: 10px;
+}
+
+#ForwardButton {
+    float: left;
+    margin-left: 10px;
+}
+
+#showingContextButton {
+    float: left;
     margin-left: 10px;
 }
 
@@ -80,7 +90,6 @@
     float: left;
     margin-left: 10px;
 }
-
 
 #autoLayoutButton {
     float: left;

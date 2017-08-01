@@ -49,7 +49,7 @@ __$__.editor.getSelection().on('changeCursor', (e) => {
 __$__.editor.commands.addCommand({
     name: 'NextContext',
     bindKey: {win: 'Ctrl-Shift-.', mac: 'Command-Shift-.'},
-    exec: function(editor) {
+    exec: function() {
         let isChanged = __$__.Context.MoveContextOnCursorPosition('next');
         if (isChanged)
             __$__.Context.Draw();
@@ -58,7 +58,7 @@ __$__.editor.commands.addCommand({
 __$__.editor.commands.addCommand({
     name: 'PreviousContext',
     bindKey: {win: 'Ctrl-Shift-,', mac: 'Command-Shift-,'},
-    exec: function(editor) {
+    exec: function() {
         let isChanged = __$__.Context.MoveContextOnCursorPosition('prev');
         if (isChanged)
             __$__.Context.Draw();

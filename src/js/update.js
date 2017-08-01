@@ -18,8 +18,17 @@ __$__.Update = {
     
         try {
             let __objs = [];
+            let __transformed_code__;
             try {
-                eval(__$__.CodeConversion.TransformCode(__$__.editor.getValue(), true));
+                __transformed_code__ = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
+            } catch (e) {
+                document.getElementById('console').textContent = 'Error?';
+                if (e.message.slice(0, 5) === 'Line ')
+                    document.getElementById('console').textContent += ': ' + e.message;
+                throw e;
+            }
+            try {
+                eval(__transformed_code__);
                 document.getElementById('console').textContent = '';
                 __$__.Context.InfLoop = '';
             } catch (e) {
