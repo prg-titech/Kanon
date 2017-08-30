@@ -15,7 +15,7 @@ Kanon runs on your browser.  Open the following page: [https://prg-titech.github
 To build __Kanon__ in your local environment,
 execute the following command.
 ```
-git clone https://github.com/prg-titech/Kanon.git
+git clone --recurse https://github.com/prg-titech/Kanon.git
 ```
 This will copy the source code of Kanon.
 After downloaded, go to the Kanon directory and execute the following command.
