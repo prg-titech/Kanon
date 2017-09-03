@@ -15,13 +15,17 @@
         };
 
         Object.setProperty = function(o, prop, val) {
-            Object.defineProperty(o, prop, {
-                value: val,
-                enumerable: false,
-                writable: false
-            });
+            if (o[prop] === undefined) {
+                Object.defineProperty(o, prop, {
+                    value: val,
+                    enumerable: false,
+                    writable: false
+                });
 
-            return val;
+                return val;
+            } else {
+                return false;
+            }
         }
     }
 
