@@ -6,16 +6,20 @@ __$__.ASTTransforms = {
  * before: new Hoge()
  *
  * after:  (() => {
- *             var __temp = new Hoge(), __objectID = '';
+ *             var __newObjectId = '';
  *             __call_stack.forEach(label => {
- *                 __objectID += label + '-' + __call_count[label] + '-';
+ *                 __newObjectId += label + '-' + __call_count[label] + '-';
  *             });
- *             __objectID += 'unique ID';
+ *             __newObjectId += 'unique ID';
  *
- *             if (__newLabelCounter[__objectID]) __newLabelCounter[__objectID]++;
- *             else __newLabelCounter[__objectID] = 1;
+ *             if (__newLabelCounter[__newObjectId]) __newLabelCounter[__newObjectId]++;
+ *             else __newLabelCounter[__newObjectId] = 1;
  *
- *             Object.setProperty(__temp, __id, __objectID + '-' + __newLabelCounter[__objectID]);
+ *             __newObjectId += '-' + newLabelCounter[__newObjectId];
+ *             __newObjectIds.push(__newObjectId);
+ *             var __temp = new Hoge();
+ *             if (!__temp.__id)
+ *                 Object.setProperty(__temp, '__id', __newObjectIds.pop());
  *             __objs.push(__temp);
  *             return __temp;
  *         })()
@@ -52,6 +56,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                     );
                 }
 
+
                 // In this part, register the position of this NewExpression.
                 // If already registered, use the Label
                 let label;
@@ -82,16 +87,12 @@ __$__.ASTTransforms.CollectObjects = function() {
                     b.ArrowFunctionExpression(
                         [],
                         b.BlockStatement([
-                            b.VariableDeclaration(
-                                [b.VariableDeclarator(
-                                    b.Identifier("__temp"),
-                                    c.this_node
-                                ), b.VariableDeclarator(
-                                    b.Identifier('__objectID'),
+                            b.VariableDeclaration([
+                                b.VariableDeclarator(
+                                    b.Identifier('__newObjectId'),
                                     b.Literal('')
-                                )],
-                                "var"
-                            ),
+                                )
+                            ], 'var'),
                             b.ExpressionStatement(
                                 b.CallExpression(
                                     b.MemberExpression(
@@ -103,7 +104,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                                         b.BlockStatement(
                                             [b.ExpressionStatement(
                                                 b.AssignmentExpression(
-                                                    b.Identifier('__objectID'),
+                                                    b.Identifier('__newObjectId'),
                                                     "+=",
                                                     b.BinaryExpression(
                                                         b.BinaryExpression(
@@ -130,7 +131,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                             ),
                             b.ExpressionStatement(
                                 b.AssignmentExpression(
-                                    b.Identifier('__objectID'),
+                                    b.Identifier('__newObjectId'),
                                     "+=",
                                     b.Literal(label)
                                 )
@@ -138,14 +139,14 @@ __$__.ASTTransforms.CollectObjects = function() {
                             b.IfStatement(
                                 b.MemberExpression(
                                     b.Identifier(c.counterName),
-                                    b.Identifier('__objectID'),
+                                    b.Identifier('__newObjectId'),
                                     true
                                 ),
                                 b.ExpressionStatement(
                                     b.UpdateExpression(
                                         b.MemberExpression(
                                             b.Identifier(c.counterName),
-                                            b.Identifier('__objectID'),
+                                            b.Identifier('__newObjectId'),
                                             true
                                         ),
                                         "++",
@@ -156,7 +157,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                                     b.AssignmentExpression(
                                         b.MemberExpression(
                                             b.Identifier(c.counterName),
-                                            b.Identifier('__objectID'),
+                                            b.Identifier('__newObjectId'),
                                             true
                                         ),
                                         "=",
@@ -164,10 +165,45 @@ __$__.ASTTransforms.CollectObjects = function() {
                                     )
                                 )
                             ),
-                            // Object.setProperty(__temp, '__id', __objectID + '-' + __newLabelCounter[__objectID]);
                             b.ExpressionStatement(
-                                b.Identifier('Object.setProperty(__temp, "__id", __objectID + "-" + ' + c.counterName +'[__objectID])')
+                                b.Identifier('__newObjectId += "-" + ' + c.counterName +'[__newObjectId]')
                             ),
+                            // __newObjectIds.push(__newObjectId);
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newObjectIds'),
+                                        b.Identifier('push')
+                                    ), [
+                                        b.Identifier('__newObjectId')
+                                    ]
+                                )
+                            ),
+                            b.VariableDeclaration([
+                                b.VariableDeclarator(
+                                    b.Identifier('__temp'),
+                                    c.this_node
+                                )
+                            ], 'var'),
+                            /**
+                             * if (!__temp.__id)
+                             *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
+                             */
+                            b.IfStatement(
+                                b.UnaryExpression(
+                                    '!',
+                                    b.MemberExpression(
+                                        b.Identifier('__temp'),
+                                        b.Identifier('__id')
+                                    )
+                                ),
+                                b.ExpressionStatement(
+                                    b.Identifier('Object.setProperty(__temp, "__id", __newObjectIds.pop())')
+                                )
+                            ),
+                            // b.ExpressionStatement(
+                            //     b.Identifier((node.type === 'NewExpression') ? '' : 'Object.setProperty(__temp, "__id", __newObjectIds.pop())')
+                            // ),
                             b.ExpressionStatement(
                                 b.CallExpression(
                                     b.MemberExpression(
@@ -324,7 +360,8 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __time_counter = 0,
  *     __time_counter_stack = [],
  *     __call_count = {},
- *     __call_stack = [];
+ *     __call_stack = [],
+ *     __newObjectIds = [];
  * __objs = [];
  * __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
  * ...
@@ -393,6 +430,10 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__call_stack'),
+                            b.ArrayExpression([])
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__newObjectIds'),
                             b.ArrayExpression([])
                         )
                     ], 'let')
@@ -463,6 +504,8 @@ __$__.ASTTransforms.Loop = {"DoWhileStatement": true, "WhileStatement": true, "F
  *     }
  *     let __start = __time_counter;
  *     __time_counter_stack.push({start: __time_counter});
+ *     if (__newObjectIds.length)
+ *       Object.setProperty(this, '__id', __newObjectIds.pop());
  *
  *     ...
  *
@@ -479,9 +522,9 @@ __$__.ASTTransforms.Context = function () {
     let b = __$__.ASTBuilder;
     return {
         enter(node, path) {
-            const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
-
             if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
+                const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
+
                 // In this part, register the position of this loop.
                 // If already registered, use the label
                 let label;
@@ -513,7 +556,13 @@ __$__.ASTTransforms.Context = function () {
                 }
 
                 if (node.body.type !== "BlockStatement") {
-                    node.body = b.BlockStatement([node.body]);
+                    if (node.type === 'ArrowFunctionExpression') {
+                        let retState = b.ReturnStatement(node.body);
+                        retState.loc = "";
+                        node.body = b.BlockStatement([retState]);
+                        node.expression = false;
+                    } else
+                        node.body = b.BlockStatement([node.body]);
                 }
                 // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
                 node.body.body.push(
@@ -648,6 +697,33 @@ __$__.ASTTransforms.Context = function () {
                     )
                 );
                 */
+                node.body.body.unshift(
+                    b.IfStatement(
+                        b.MemberExpression(
+                            b.Identifier('__newObjectIds'),
+                            b.Identifier('length')
+                        ),
+                        b.ExpressionStatement(
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('Object'),
+                                    b.Identifier('setProperty')
+                                ), [
+                                    b.Identifier('this'),
+                                    b.Literal('__id'),
+                                    b.CallExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__newObjectIds'),
+                                            b.Identifier('pop')
+                                        ),
+                                        []
+                                    )
+                                ]
+                            )
+                        ),
+                    )
+                );
+
                 // __time_counter_stack.push({start: __time_counter});
                 node.body.body.unshift(
                     b.ExpressionStatement(
@@ -1061,13 +1137,15 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
             if (funcTypes[node.type]) {
                 env.push(new __$__.Probe.FunctionFlame());
 
-                node.body.body.forEach(s => {
-                    if (s.type === 'VariableDeclaration' && s.kind === 'var') {
-                        s.declarations.forEach(declarator => {
-                            env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
-                        });
-                    }
-                });
+                if (!node.expression) {
+                    node.body.body.forEach(s => {
+                        if (s.type === 'VariableDeclaration' && s.kind === 'var') {
+                            s.declarations.forEach(declarator => {
+                                env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
+                            });
+                        }
+                    });
+                }
             }
 
             if (node.type === 'BlockStatement') {

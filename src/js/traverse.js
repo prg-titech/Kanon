@@ -39,7 +39,7 @@ __$__.Traverse = {
             if (graphNodes[obj.__id] || obj === null || obj === undefined)
                 continue;
     
-            __$__.Traverse.dfs(ret, obj, graphNodes);
+            __$__.Traverse.dfs(ret, obj, graphNodes, objs);
         }
 
         Object.keys(variables).forEach(key => {
@@ -63,7 +63,7 @@ __$__.Traverse = {
         return ret;
     },
     
-    dfs: function(graph, node, graphNodes) {
+    dfs: function(graph, node, graphNodes, objs) {
         if (!graphNodes[node.__id]) {
             graph.nodes.push(node);
             graphNodes[node.__id] = node;
@@ -87,7 +87,8 @@ __$__.Traverse = {
                     graph.edges.push(new __$__.Traverse.__Edge(node, temp, key));
                 } else {
                     graph.edges.push(new __$__.Traverse.__Edge(node, to, key));
-                    __$__.Traverse.dfs(graph, to, graphNodes);
+                    if (objs.indexOf(to) === -1)
+                        __$__.Traverse.dfs(graph, to, graphNodes, objs);
                 }
             }
         });

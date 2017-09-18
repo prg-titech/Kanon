@@ -2,7 +2,6 @@ __$__.ToVisjs = {
     Translator: function(graph) {
         // initialize
         __$__.Context.Arrays = [];
-        __$__.Context.Literals = [];
         let retData = {nodes: [], edges: []};
 
         for (let i = 0; i < graph.nodes.length; i++) {
@@ -19,7 +18,6 @@ __$__.ToVisjs = {
                 };
 
                 retData.nodes.push(node);
-                __$__.Context.Literals.push(node.__id);
             } else if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
                 node = {
                     hidden: true,

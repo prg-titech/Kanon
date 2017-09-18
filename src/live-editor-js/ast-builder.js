@@ -187,7 +187,7 @@ __$__.ASTBuilder = {
         };
     },
     /**
-     * @param {Array of Property} properties
+     * @param {Array} properties
      */
     ObjectExpression(properties) {
         return {
@@ -264,7 +264,7 @@ __$__.ASTBuilder = {
         };
     },
     /**
-     * @param {String} id
+     * @param {Identifier} id
      * @param {Expression?} init
      */
     VariableDeclarator(id, init) {

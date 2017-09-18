@@ -32,4 +32,12 @@
     Array.prototype.last = function() {
         return this[this.length - 1];
     };
+
+    Array.prototype.indexOf = function(elem) {
+        for (let i = 0; i < this.length; i++) {
+            if (this[i] === elem)
+                return i;
+        }
+        return -1;
+    };
 })();

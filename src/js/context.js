@@ -13,7 +13,6 @@ __$__.Context = {
         New: {}
     },
     LastGraph: undefined,
-    Literals: [],
     LoopContext: {'noLoop': 1},
     Snapshot: true,
     SnapshotContext: {},
@@ -28,7 +27,6 @@ __$__.Context = {
         __$__.Context.Arrays = [];
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
-        __$__.Context.Literals = [];
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];
