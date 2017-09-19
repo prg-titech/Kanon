@@ -28,7 +28,7 @@ __$__.Update = {
                 throw e;
             }
             try {
-                eval(__transformed_code__);
+                (() => {eval(__transformed_code__)})();
                 document.getElementById('console').textContent = '';
                 __$__.Context.InfLoop = '';
             } catch (e) {
@@ -51,7 +51,7 @@ __$__.Update = {
             // var __objs;
             __objs = [];
             try {
-                eval(__$__.Update.CodeWithCP);
+                (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
             } catch (e) {
                 if (e === 'Infinite Loop') {

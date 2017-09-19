@@ -1535,6 +1535,25 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 } else if (node.type !== 'VariableDeclaration' || ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)) {
                     // So that the body of 'LabeledStatement' is not checkpoint(CallExpression).
                     if (!loopTypes[node.type] || parent.type !== 'LabeledStatement') {
+                        let parent = path[path.length - 2];
+                        if (parent && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
+                            if (node.type === 'BlockStatement')
+                                return [
+                                    changedGraphStmt(),
+                                    checkPoint(start, data),
+                                    Object.assign({}, node),
+                                    changedGraphStmt(),
+                                    checkPoint(end, variables)
+                                ];
+                            else
+                                return [
+                                    checkPoint(start, data),
+                                    Object.assign({}, node),
+                                    changedGraphStmt(),
+                                    checkPoint(end, variables)
+                                ];
+                        }
+
                         if (node.type === 'BlockStatement')
                             return b.BlockStatement([
                                 changedGraphStmt(),
