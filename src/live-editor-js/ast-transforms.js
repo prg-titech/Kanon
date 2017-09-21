@@ -720,7 +720,7 @@ __$__.ASTTransforms.Context = function () {
                                     )
                                 ]
                             )
-                        ),
+                        )
                     )
                 );
 

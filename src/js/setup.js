@@ -51,7 +51,10 @@ var __$__ = {
 
     FontSizeUpdate: function() {
         let font = document.getElementById('fontSizeForm').value;
-        __$__.editor.setFontSize(parseInt(font));
+        if (font === '')
+            __$__.editor.setFontSize(12);
+        else
+            __$__.editor.setFontSize(parseInt(font));
         __$__.ShowContext.show();
     }
 };
