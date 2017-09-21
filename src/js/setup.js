@@ -41,3 +41,17 @@
         return -1;
     };
 })();
+
+var __$__ = {
+    SummarizedViewColor: {
+        AddNode: 'orange',
+        AddEdge: 'orange',
+        RemoveEdge: 'seagreen'
+    },
+
+    FontSizeUpdate: function() {
+        let font = document.getElementById('fontSizeForm').value;
+        __$__.editor.setFontSize(parseInt(font));
+        __$__.ShowContext.show();
+    }
+};

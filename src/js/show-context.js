@@ -130,5 +130,13 @@ __$__.ShowContext = {
             document.getElementById('showingContext').textContent = 'ON';
         }
         __$__.ShowContext.show();
+    },
+
+    updateEditorSize() {
+        let elem = $('#editor');
+        __$__.ShowContext.editorSize = {
+            h: parseInt(elem.css('height').slice(0, -2)),
+            w: parseInt(elem.css('width').slice(0, -2))
+        };
     }
 };
