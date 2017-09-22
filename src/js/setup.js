@@ -50,7 +50,7 @@ var __$__ = {
     },
 
     FontSizeUpdate: function() {
-        let font = document.getElementById('fontSizeForm').value;
+        let font = document.getElementById('fontSize').value;
         if (font === '')
             __$__.editor.setFontSize(12);
         else
