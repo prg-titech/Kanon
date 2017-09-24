@@ -5,9 +5,10 @@
   "main": "app.js",
   "scripts": {
     "create": "node_modules/.bin/electron-packager . --platform=darwin --overwrite",
-    "start": "electron .",
+    "app": "electron .",
     "open": "open Kanon-darwin-x64/Kanon.app",
     "test": "mocha tests/**/*.js",
+    "start": "grunt serve",
     "preinstall": "git submodule update --init --recursive"
   },
   "repository": {
@@ -30,5 +31,11 @@
     "jquery-ui-dist": "1.12.1",
     "mocha": "3.4.1",
     "vis": "4.17.0"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-connect": "^1.0.2",
+    "grunt-contrib-watch": "^1.0.0"
   }
 }
