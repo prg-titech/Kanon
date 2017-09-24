@@ -15,7 +15,7 @@ Kanon runs on your browser.  Open the following page: [https://prg-titech.github
 To build __Kanon__ in your local environment,
 execute the following command.
 ```
-git clone --recurse https://github.com/prg-titech/Kanon.git
+git clone https://github.com/prg-titech/Kanon.git
 ```
 This will copy the source code of Kanon.
 After downloaded, go to the Kanon directory and execute the following command.
@@ -59,6 +59,10 @@ __Kanon__ uses the following libraries.
 
 - escodegen (https://github.com/estools/escodegen)
 
+- [jQuery](https://jquery.com/) (https://github.com/jquery/jquery)
+
+- [jQuery UI](https://jqueryui.com/) (https://github.com/jquery/jquery-ui) 
+
 
 ## References
 
@@ -69,4 +73,3 @@ __Kanon__ uses the following libraries.
 Kanon is distributed under the MIT License. See [LICENSE](https://github.com/prg-titech/Kanon/blob/master/LICENSE) for more information.
 
 [*]: Our repository includes esprima.js in the externals directory, which is taken from https://unpkg.com/esprima@3.1.1/dist/esprima.js .
-
