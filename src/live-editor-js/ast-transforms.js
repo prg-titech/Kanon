@@ -1219,14 +1219,16 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                                     '!==',
                                                     b.Literal('string')
                                                 ),
-                                                b.CallExpression(
-                                                    b.Identifier('eval'),
-                                                    [b.Identifier(val)]
-                                                ),
+                                                b.Identifier(val),
                                                 b.Identifier("undefined")
                                             )
                                         );
-                                    })
+                                    }).concat([
+                                        b.Property(
+                                            b.Identifier('this'),
+                                            b.Identifier('this')
+                                        )
+                                    ])
                                 )
                             ]
                         )
