@@ -18,9 +18,10 @@ __$__.ASTTransforms = {
  *             __newObjectId += '-' + newLabelCounter[__newObjectId];
  *             __newObjectIds.push(__newObjectId);
  *             var __temp = new Hoge();
- *             if (!__temp.__id)
+ *             if (!__temp.__id) {
  *                 Object.setProperty(__temp, '__id', __newObjectIds.pop());
- *             __objs.push(__temp);
+ *                 __objs.push(__temp);
+ *             }
  *             return __temp;
  *         })()
  *
@@ -186,8 +187,10 @@ __$__.ASTTransforms.CollectObjects = function() {
                                 )
                             ], 'var'),
                             /**
-                             * if (!__temp.__id)
+                             * if (!__temp.__id) {
                              *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
+                             *     __objs.push(__temp);
+                             * }
                              */
                             b.IfStatement(
                                 b.UnaryExpression(
@@ -197,21 +200,38 @@ __$__.ASTTransforms.CollectObjects = function() {
                                         b.Identifier('__id')
                                     )
                                 ),
-                                b.ExpressionStatement(
-                                    b.Identifier('Object.setProperty(__temp, "__id", __newObjectIds.pop())')
-                                )
-                            ),
-                            // b.ExpressionStatement(
-                            //     b.Identifier((node.type === 'NewExpression') ? '' : 'Object.setProperty(__temp, "__id", __newObjectIds.pop())')
-                            // ),
-                            b.ExpressionStatement(
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier("__objs"),
-                                        b.Identifier("push")
+                                b.BlockStatement([
+                                    b.ExpressionStatement(
+                                        // Object.setProperty(__temp, "__id", __newObjectIds.pop())
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('Object'),
+                                                b.Identifier('setProperty')
+                                            ), [
+                                                b.Identifier('__temp'),
+                                                b.Literal('__id'),
+                                                b.CallExpression(
+                                                    b.MemberExpression(
+                                                        b.Identifier('__newObjectIds'),
+                                                        b.Identifier('pop')
+                                                    ),
+                                                    []
+                                                )
+                                            ]
+                                        )
+
                                     ),
-                                    [b.Identifier("__temp")]
-                                )
+                                    b.ExpressionStatement(
+                                        // __objs.push(__temp)
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__objs'),
+                                                b.Identifier('push')
+                                            ),
+                                            [b.Identifier('__temp')]
+                                        )
+                                    )
+                                ])
                             ),
                             b.ReturnStatement(
                                 b.Identifier("__temp")
@@ -504,8 +524,10 @@ __$__.ASTTransforms.Loop = {"DoWhileStatement": true, "WhileStatement": true, "F
  *     }
  *     let __start = __time_counter;
  *     __time_counter_stack.push({start: __time_counter});
- *     if (__newObjectIds.length)
+ *     if (__newObjectIds.length) {
  *       Object.setProperty(this, '__id', __newObjectIds.pop());
+ *       __objs.push(this);
+ *     }
  *
  *     ...
  *
@@ -649,78 +671,48 @@ __$__.ASTTransforms.Context = function () {
                         b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop())')
                     )
                 );
-                /*
-                node.body.body.push(
-                    b.ExpressionStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('StartEndInLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                b.Identifier('push')
-                            ),
-                            [b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__time_counter_stack'),
-                                    b.Identifier('pop')
-                                ),
-                                []
-                            )]
-                        )
-                    )
-                );
-                */
                 // __loopLabels.pop();
                 node.body.body.push(
                     b.ExpressionStatement(
                         b.Identifier('__loopLabels.pop()')
                     )
                 );
-                /*
-                node.body.body.push(
-                    b.ExpressionStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.Identifier(loopLabels),
-                                b.Identifier('pop')
-                            ),
-                            []
-                        )
-                    )
-                );
-                */
                 node.body.body.unshift(
                     b.IfStatement(
                         b.MemberExpression(
                             b.Identifier('__newObjectIds'),
                             b.Identifier('length')
                         ),
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('Object'),
-                                    b.Identifier('setProperty')
-                                ), [
-                                    b.Identifier('this'),
-                                    b.Literal('__id'),
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newObjectIds'),
-                                            b.Identifier('pop')
-                                        ),
-                                        []
-                                    )
-                                ]
+                        b.BlockStatement([
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('Object'),
+                                        b.Identifier('setProperty')
+                                    ), [
+                                        b.Identifier('this'),
+                                        b.Literal('__id'),
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__newObjectIds'),
+                                                b.Identifier('pop')
+                                            ),
+                                            []
+                                        )
+                                    ]
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                // b.Identifier('__objs.push(this)')
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__objs'),
+                                        b.Identifier('push')
+                                    ),
+                                    [b.Identifier('this')]
+                                )
                             )
-                        )
+                        ])
                     )
                 );
 
@@ -730,52 +722,26 @@ __$__.ASTTransforms.Context = function () {
                         b.Identifier('__time_counter_stack.push({start: __time_counter})')
                     )
                 );
-                /*
-                node.body.body.unshift(
-                    b.ExpressionStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.Identifier('__time_counter_stack'),
-                                b.Identifier('push')
-                            ),
-                            [b.ObjectExpression(
-                                [b.Property(
-                                    b.Identifier('start'),
-                                    b.Identifier('__time_counter')
-                                )]
-                            )]
-                        )
-                    )
-                );
-                */
                 // let __start = __time_counter;
                 node.body.body.unshift(
                     b.ExpressionStatement(
                         b.Identifier('let __start = __time_counter')
                     )
                 );
-                /*
-                node.body.body.unshift(
-                    b.VariableDeclaration([
-                        b.VariableDeclarator(
-                            b.Identifier('__start'),
-                            b.Identifier('__time_counter')
-                        )
-                    ], 'let')
-                );
-                */
-                // if (__loopCount > 100) {
-                //     while (__time_counter_stack.length) {
-                //         __loopLabels.pop();
-                //         __time_counter_stack.last().end = __time_counter - 1;
-                //         if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
-                //             __$__.Context.StartEndInLoop[__loopLabels.last())] = [];
-                //         __$__.Context.StartEndInLoop[__loopLabels.last())].push(__time_counter_stack.pop());
-                //     }
-                //     __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
-                //     __$__.Context.InfLoop = __loopLabel;
-                //     throw 'Infinite Loop';
-                // }
+                /**
+                 *  if (__loopCount > 100) {
+                 *      while (__time_counter_stack.length) {
+                 *          __loopLabels.pop();
+                 *          __time_counter_stack.last().end = __time_counter - 1;
+                 *          if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
+                 *              __$__.Context.StartEndInLoop[__loopLabels.last())] = [];
+                 *          __$__.Context.StartEndInLoop[__loopLabels.last())].push(__time_counter_stack.pop());
+                 *      }
+                 *      __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
+                 *      __$__.Context.InfLoop = __loopLabel;
+                 *      throw 'Infinite Loop';
+                 *  }
+                 */
                 node.body.body.unshift(
                     b.IfStatement(
                         b.BinaryExpression(
@@ -945,101 +911,19 @@ __$__.ASTTransforms.Context = function () {
                         b.Identifier('let __loopCount = (__$__.Context.__loopCounter[__loopLabel]) ? ++__$__.Context.__loopCounter[__loopLabel] : __$__.Context.__loopCounter[__loopLabel] = 1')
                     )
                 );
-                /*
-                node.body.body.unshift(
-                    b.VariableDeclaration([
-                        b.VariableDeclarator(
-                            b.Identifier(loopCount),
-                            b.ConditionalExpression(
-                                b.MemberExpression(
-                                    b.Identifier(loopCounter),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                b.UpdateExpression(
-                                    b.MemberExpression(
-                                        b.Identifier(loopCounter),
-                                        b.Identifier('__loopLabel'),
-                                        true
-                                    ),
-                                    "++",
-                                    true
-                                ),
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.Identifier(loopCounter),
-                                        b.Identifier('__loopLabel'),
-                                        true
-                                    ),
-                                    "=",
-                                    b.Literal(1)
-                                )
-                            )
-                        )
-                    ], "let")
-                );
-                */
-                // if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = 1;
+                // if (!__$__.Context.LoopContext[__loopLabel])
+                //     __$__.Context.LoopContext[__loopLabel] = 1;
                 node.body.body.unshift(
                     b.ExpressionStatement(
                         b.Identifier('if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = 1')
                     )
                 );
-                /*
-                node.body.body.unshift(
-                    b.IfStatement(
-                        b.UnaryExpression(
-                            "!",
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__$__'),
-                                        b.Identifier('Context')
-                                    ),
-                                    b.Identifier(loopContext)
-                                ),
-                                b.Identifier('__loopLabel'),
-                                true
-                            ),
-                            true
-                        ),
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.Identifier("__$__.Context"),
-                                        b.Identifier(loopContext)
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                "=",
-                                b.Literal(1)
-                            )
-                        )
-                    )
-                );
-                */
                 // __loopLabels.push(__loopLabel);
                 node.body.body.unshift(
                     b.ExpressionStatement(
                         b.Identifier('__loopLabels.push(__loopLabel)')
                     )
                 );
-                /*
-                node.body.body.unshift(
-                    b.ExpressionStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.Identifier(loopLabels),
-                                b.Identifier('push'),
-                                false
-                            ),
-                            [b.Identifier('__loopLabel')]
-                        )
-                    )
-                );
-                */
                 // let __loopLabel = 'loop' + label;
                 node.body.body.unshift(
                     b.VariableDeclaration([
