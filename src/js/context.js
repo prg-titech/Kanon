@@ -41,10 +41,11 @@ __$__.Context = {
      * @param {int} timeCounter
      * @param {int} checkPointId
      * @param {Object} probe
+     * @param {Object} newExpInfo
      *
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
-    CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe) {
+    CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo) {
 
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
     
@@ -54,20 +55,22 @@ __$__.Context = {
         if (__$__.Context.ChangedGraph) {
             // the node of storedGraph is whether first appearing or not in this part
             storedGraph.nodes.forEach(node => {
-                let flag = false;
-    
-                __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
-                    flag = flag || (node.id === nodeData.id);
-                });
-    
-    
-                if (!flag) {
-                    __$__.JumpToConstruction.GraphData.nodes.push({
-                        id: node.id,
-                        loopLabel: loopLabel,
-                        count: count,
-                        pos: __$__.Context.CheckPointTable[checkPointId]
-                    });
+                if (!__$__.JumpToConstruction.GraphData.nodes[node.id]) {
+                    if (newExpInfo) {
+                        __$__.JumpToConstruction.GraphData.nodes[node.id] = {
+                            id: node.id,
+                            loopLabel: newExpInfo.loopLabel,
+                            count: newExpInfo.loopCount,
+                            pos: newExpInfo.pos
+                        };
+                    } else {
+                        __$__.JumpToConstruction.GraphData.nodes[node.id] = {
+                            id: node.id,
+                            loopLabel: loopLabel,
+                            count: count,
+                            pos: __$__.Context.CheckPointTable[checkPointId]
+                        };
+                    }
                 }
             });
     
@@ -82,14 +85,25 @@ __$__.Context = {
     
     
                 if (!flag) {
-                    __$__.JumpToConstruction.GraphData.edges.push({
-                        from: edge.from,
-                        to: edge.to,
-                        label: edge.label,
-                        loopLabel: loopLabel,
-                        count: count,
-                        pos: __$__.Context.CheckPointTable[checkPointId]
-                    });
+                    if (newExpInfo) {
+                        __$__.JumpToConstruction.GraphData.edges.push({
+                            from: edge.from,
+                            to: edge.to,
+                            label: edge.label,
+                            loopLabel: newExpInfo.loopLabel,
+                            count: newExpInfo.loopCount,
+                            pos: newExpInfo.pos
+                        });
+                    } else {
+                        __$__.JumpToConstruction.GraphData.edges.push({
+                            from: edge.from,
+                            to: edge.to,
+                            label: edge.label,
+                            loopLabel: loopLabel,
+                            count: count,
+                            pos: __$__.Context.CheckPointTable[checkPointId]
+                        });
+                    }
                 }
             });
 

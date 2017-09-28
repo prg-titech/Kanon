@@ -154,7 +154,7 @@ __$__.ASTBuilder = {
         };
     },
     /**
-     * @param {Number|String|null|RegExp} value
+     * @param {Number|String|boolean|null|RegExp} value
      */
     Literal(value) {
         return {

@@ -1,6 +1,6 @@
 __$__.JumpToConstruction = {
     ClickElement: {},
-    GraphData: {nodes: [], edges: []},
+    GraphData: {nodes: {}, edges: []},
 
 
     /**
@@ -8,7 +8,7 @@ __$__.JumpToConstruction = {
      */
     ClickEventFunction: function(param) {
         // choose node
-        if (param.nodes.length) {
+        if (param.nodes.length && param.nodes[0] !== '__Variable-this') {
             __$__.JumpToConstruction.ClickElement.node = param.nodes[0];
         }
     
@@ -22,22 +22,37 @@ __$__.JumpToConstruction = {
         else return;
     
         __$__.Context.SwitchViewMode(true);
-    
-        if (__$__.JumpToConstruction.ClickElement.node)
-            __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
-                if (__$__.JumpToConstruction.ClickElement.node === nodeData.id) {
-                    if (nodeData.loopLabel !== 'noLoop') {
-                        __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
-                        __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
-                    }
-    
-                    __$__.editor.moveCursorToPosition({
-                        row: nodeData.pos.line - 1,
-                        column: nodeData.pos.column
-                    });
+
+        if (__$__.JumpToConstruction.ClickElement.node) {
+            let nodeData = __$__.JumpToConstruction.GraphData.nodes[__$__.JumpToConstruction.ClickElement.node];
+            if (nodeData) {
+                if (nodeData.loopLabel !== 'noLoop') {
+                    __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
+                    __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
                 }
-            });
-    
+
+                __$__.editor.moveCursorToPosition({
+                    row: nodeData.pos.line - 1,
+                    column: nodeData.pos.column
+                });
+            }
+        }
+
+        // if (__$__.JumpToConstruction.ClickElement.node)
+        //     __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
+        //         if (__$__.JumpToConstruction.ClickElement.node === nodeData.id) {
+        //             if (nodeData.loopLabel !== 'noLoop') {
+        //                 __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
+        //                 __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
+        //             }
+        //
+        //             __$__.editor.moveCursorToPosition({
+        //                 row: nodeData.pos.line - 1,
+        //                 column: nodeData.pos.column
+        //             });
+        //         }
+        //     });
+
         else
             __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
                 if (__$__.JumpToConstruction.ClickElement.edge.from === edgeData.from &&
@@ -48,7 +63,7 @@ __$__.JumpToConstruction = {
                         __$__.Context.setLoopContext(edgeData.loopLabel, '=', edgeData.count);
                         __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
                     }
-    
+
                     __$__.editor.moveCursorToPosition({
                         row: edgeData.pos.line - 1,
                         column: edgeData.pos.column
@@ -64,5 +79,9 @@ __$__.JumpToConstruction = {
     
     
         __$__.JumpToConstruction.ClickElement = {};
+    },
+
+    resetGraphData: function() {
+        __$__.JumpToConstruction.GraphData = {nodes: {}, edges: []};
     }
 };

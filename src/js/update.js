@@ -13,7 +13,7 @@ __$__.Update = {
             });
         }
         __$__.Context.Initialize();
-        __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
+        __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
     
         try {
@@ -45,7 +45,7 @@ __$__.Update = {
             });
 
             __$__.Context.Initialize();
-            __$__.JumpToConstruction.GraphData = {nodes: [], edges: []};
+            __$__.JumpToConstruction.resetGraphData();
             __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
 
             // var __objs;

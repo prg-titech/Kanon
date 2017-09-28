@@ -11,14 +11,14 @@ __$__.CodeConversion = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    TransformCode: function(code, checkInfiniteLoop = false) {
+    TransformCode: function(code, checkInfLoop = false) {
         let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];
     
     
-        if (checkInfiniteLoop) {
-            visitors.push(tf.Context());
+        if (checkInfLoop) {
+            visitors.push(tf.Context(true));
             visitors.push(tf.AddSomeCodeInHeadAndTail());
             __$__.walkAST(ast, null, visitors);
 

@@ -35,7 +35,6 @@ __$__.Traverse = {
         for (let i = 0; i < objs.length; i++) {
             let obj = objs[i];
     
-            // if (ret.nodes.indexOf(obj) >= 0 || obj === null || obj === undefined)
             if (graphNodes[obj.__id] || obj === null || obj === undefined)
                 continue;
     
