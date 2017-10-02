@@ -56,11 +56,11 @@
 </form>
 
 <div id='BackButton'>
-    <input type="button" value="< back" onclick="if (__$__.Context.MoveContextOnCursorPosition('prev')) __$__.Context.Draw();">
+    <input type="button" value="< back" onclick="if (__$__.Context.MoveContextOnCursorPosition(-1)) __$__.Context.Draw();">
 </div>
 
 <div id='ForwardButton'>
-    <input type="button" value="forward >" onclick="if (__$__.Context.MoveContextOnCursorPosition('next')) __$__.Context.Draw();">
+    <input type="button" value="forward >" onclick="if (__$__.Context.MoveContextOnCursorPosition(1)) __$__.Context.Draw();">
 </div>
 
 <div id='showingContextButton'>

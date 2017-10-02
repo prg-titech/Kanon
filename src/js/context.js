@@ -14,6 +14,8 @@ __$__.Context = {
     },
     LastGraph: undefined,
     LoopContext: {'noLoop': 1},
+    ParentAndChildrenLoop: {noLoop: {child: []}},
+    ParentAndChildrenLoopStack: ['noLoop'],
     Snapshot: true,
     SnapshotContext: {},
     StackToCheckLoop: ['noLoop'],
@@ -27,6 +29,8 @@ __$__.Context = {
         __$__.Context.Arrays = [];
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
+        __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
+        __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];
@@ -389,7 +393,7 @@ __$__.Context = {
             __$__.Context.SnapshotContext = {};
     },
     
-    
+
     /**
      * @param {string} loopLabel
      *
@@ -400,15 +404,34 @@ __$__.Context = {
     ChangeInnerAndParentContext: function(loopLabel) {
         let new_loop_count = __$__.Context.LoopContext[loopLabel];
         let start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
-    
-        Object.keys(__$__.Context.StartEndInLoop).forEach(key => {
+        let parentAndChildren = __$__.Context.ParentAndChildrenLoop[loopLabel];
+        let checkLoops = [];
+        let traverse = function(label, parent) {
+            let comp = __$__.Update.ComparePosition;
+            checkLoops.push(label);
+            if (parent) {
+                if (__$__.Context.ParentAndChildrenLoop[label].parent) {
+                    traverse(__$__.Context.ParentAndChildrenLoop[label].parent, true);
+                }
+            } else {
+                __$__.Context.ParentAndChildrenLoop[label].children.forEach(l => {
+                    traverse(l, false);
+                });
+            }
+        };
+        traverse(parentAndChildren.parent, true);
+        parentAndChildren.children.forEach(l => {
+            traverse(l, false);
+        });
+
+        checkLoops.forEach(key => {
             if (loopLabel === key || key === 'noLoop')
                 return;
     
             let current_loop_count = __$__.Context.LoopContext[key];
             let s_e = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
-            if (s_e.start <= start_end.start && start_end.end <= s_e.end ||
-                start_end.start <= s_e.start && s_e.end <= start_end.end)
+            if (s_e && (s_e.start <= start_end.start && start_end.end <= s_e.end ||
+                start_end.start <= s_e.start && s_e.end <= start_end.end))
                 return;
     
             let correct_context = __$__.Context.StartEndInLoop[key].map(checked_s_e => {
@@ -416,10 +439,12 @@ __$__.Context = {
                        start_end.start <= checked_s_e.start && checked_s_e.end <= start_end.end
             }).indexOf(true);
     
-            if (correct_context === -1)
-                return;
+            if (correct_context === -1) {
+                __$__.Context.setLoopContext(key, '=', null);
+            } else {
+                __$__.Context.setLoopContext(key, '=', correct_context + 1);
+            }
     
-            __$__.Context.setLoopContext(key, '=', correct_context + 1);
         });
     },
 
@@ -431,47 +456,50 @@ __$__.Context = {
      */
     MoveContextOnCursorPosition: function(moveTo) {
         let isChanged = false;
-        let cursor = __$__.editor.getCursorPosition();
-        cursor.line = cursor.row + 1;
-    
-        let compare = __$__.Update.ComparePosition;
-        let nearestLoopLabel = 'noLoop';
-    
+
         // Find which loop should be changed.
-        Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
-            let loop = __$__.Context.LabelPos.Loop[loopLabel];
-            // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
-            let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabel];
-    
-            if (compare(loop.start, "<=", cursor) && compare(cursor, "<=", loop.end)) {
-                if (nearestLoopLabel === 'noLoop'
-                    || compare(nearestLoop.start, "<=", loop.start) && compare(loop.end, "<=", nearestLoop.end))
-                    nearestLoopLabel = loopLabel;
+        let nearestLoopLabelObj = __$__.Context.findNearestLoopLabel();
+        let nearestLoopLabel = nearestLoopLabelObj.loop,
+            nearestFuncLabel = nearestLoopLabelObj.func,
+            nearestLoop = __$__.Context.StartEndInLoop[nearestLoopLabel],
+            nearestFunc = __$__.Context.StartEndInLoop[nearestFuncLabel],
+            nearestLoopContext = __$__.Context.LoopContext[nearestLoopLabel],
+            nearestFuncContext = __$__.Context.LoopContext[nearestFuncLabel];
+
+        let moveLoopContext = function() {
+            if (nearestLoop[nearestLoopContext - 1 + moveTo]) {
+                __$__.Context.setLoopContext(nearestLoopLabel, '+=', moveTo);
+                __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
+                isChanged = true;
             }
-        });
-    
-        if (__$__.Context.StartEndInLoop[nearestLoopLabel] === undefined)
+        };
+
+        if (nearestLoop === undefined)
             return isChanged;
-    
-        if (moveTo === 'next') {
-            let maxContext = __$__.Context.StartEndInLoop[nearestLoopLabel].length;
-            if (__$__.Context.LoopContext[nearestLoopLabel] < maxContext) {
-                __$__.Context.setLoopContext(nearestLoopLabel, '+=', 1);
-                __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
-                isChanged = true;
-            }
-        } else if (moveTo === 'prev') {
-            if (1 < __$__.Context.LoopContext[nearestLoopLabel]) {
-                __$__.Context.setLoopContext(nearestLoopLabel, '-=', 1);
-                __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
-                isChanged = true;
+
+        if (nearestLoopLabel !== 'noLoop') {
+            if (nearestFuncLabel === 'noLoop') {
+                moveLoopContext();
+            } else if (nearestFuncLabel === nearestLoopLabel) {
+                moveLoopContext();
+            } else {
+                if (nearestLoop[nearestLoopContext - 1 + moveTo]) {
+                    let loopStartEndAfterMove = nearestLoop[nearestLoopContext - 1 + moveTo];
+                    let funcStartEndBeforeMove = nearestFunc[nearestFuncContext - 1];
+
+                    // the case that the context of outer function even if the context of this loop is changed
+                    // The context of the nearest loop changes in this case
+                    if (nearestLoopContext !== null && funcStartEndBeforeMove.start <= loopStartEndAfterMove.start && loopStartEndAfterMove.end <= funcStartEndBeforeMove.end) {
+                        moveLoopContext();
+                    }
+                }
             }
         }
-    
+
         return isChanged;
     },
     
-    
+
     getObjectID: function(obj) {
         return obj.__id;
     },
@@ -480,5 +508,32 @@ __$__.Context = {
         let prog = '__$__.Context.LoopContext[label] ' + ope + ' ' + n + ';';
         eval(prog);
         __$__.ShowContext.update(label);
+    },
+
+    findNearestLoopLabel: function() {
+        let cursor = __$__.editor.getCursorPosition();
+        cursor.line = cursor.row + 1;
+        let compare = __$__.Update.ComparePosition;
+        let nearestLoopLabels = {loop: 'noLoop', func: 'noLoop'};
+
+        Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
+            let checkProperty = ['loop'];
+            if (loopLabel.slice(0, 3) !== 'For' && loopLabel.slice(0, 5) !== 'While')
+                checkProperty.push('func');
+
+            let loop = __$__.Context.LabelPos.Loop[loopLabel];
+
+            if (compare(loop.start, "<", cursor) && compare(cursor, "<", loop.end)) {
+                checkProperty.forEach(prop => {
+                    // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
+                    let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabels[prop]];
+                    if (nearestLoopLabels[prop] === 'noLoop'
+                        || compare(nearestLoop.start, "<", loop.start) && compare(loop.end, "<", nearestLoop.end))
+                        nearestLoopLabels[prop] = loopLabel;
+                });
+            }
+        });
+
+        return nearestLoopLabels;
     }
 };

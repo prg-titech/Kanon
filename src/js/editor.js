@@ -50,7 +50,7 @@ __$__.editor.commands.addCommand({
     name: 'NextContext',
     bindKey: {win: 'Ctrl-Shift-.', mac: 'Command-Shift-.'},
     exec: function() {
-        let isChanged = __$__.Context.MoveContextOnCursorPosition('next');
+        let isChanged = __$__.Context.MoveContextOnCursorPosition(1);
         if (isChanged)
             __$__.Context.Draw();
     }
@@ -59,7 +59,7 @@ __$__.editor.commands.addCommand({
     name: 'PreviousContext',
     bindKey: {win: 'Ctrl-Shift-,', mac: 'Command-Shift-,'},
     exec: function() {
-        let isChanged = __$__.Context.MoveContextOnCursorPosition('prev');
+        let isChanged = __$__.Context.MoveContextOnCursorPosition(-1);
         if (isChanged)
             __$__.Context.Draw();
     }

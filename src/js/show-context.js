@@ -12,6 +12,7 @@ __$__.ShowContext = {
             setTimeout(timeout, 1);
         }
     }, 1),
+    contextDictionary: {},
 
     /**
      * this function displays the context of the loop or the function.
@@ -84,26 +85,16 @@ __$__.ShowContext = {
 
 
     /**
-     * @param labels {string or Array of string}
+     * @param label {string}
      *
      * This function updates the displayed context.
      * If the type of the argument is Array, the contexts of the all element of the Array are updated.
      */
-    update: function(labels) {
-        if (labels.constructor === 'Array') {
-            labels.forEach(label => {
-                if (label !== 'noLoop' && __$__.Context.InfLoop !== label)
-                    document.getElementById(label).textContent = __$__.Context.LoopContext[label];
-                else
-                    document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + __$__.Context.LoopContext[label];
-            })
+    update: function(label) {
+        if (label !== 'noLoop' && __$__.Context.InfLoop !== label) {
+            document.getElementById(label).textContent = (__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label];
         } else {
-            let label = labels;
-
-            if (label !== 'noLoop' && __$__.Context.InfLoop !== label)
-                document.getElementById(label).textContent = __$__.Context.LoopContext[label];
-            else
-                document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + __$__.Context.LoopContext[label];
+            document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + (__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label];
         }
     },
 
@@ -138,5 +129,32 @@ __$__.ShowContext = {
             h: parseInt(elem.css('height').slice(0, -2)),
             w: parseInt(elem.css('width').slice(0, -2))
         };
+    },
+
+    makeDictionary() {
+        Object.keys(__$__.Context.ParentAndChildrenLoop).forEach(label => {
+            let parentLabel = __$__.Context.ParentAndChildrenLoop[label].parent;
+            __$__.ShowContext.contextDictionary[label] = {};
+            if (label === 'noLoop' || parentLabel === 'noLoop') {
+                for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
+                    __$__.ShowContext.contextDictionary[label][i+1] = i+1;
+                }
+                return;
+            }
+
+            let count = 1;
+            let idx = 0;
+            for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
+                let SE = __$__.Context.StartEndInLoop[label][i];
+                let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start < SE.start && SE.end < parentSE.end).indexOf(true);
+                if (idx === parentIndex) {
+                    __$__.ShowContext.contextDictionary[label][i+1] = count++;
+                } else {
+                    count = 1;
+                    __$__.ShowContext.contextDictionary[label][i+1] = count++;
+                    idx = parentIndex;
+                }
+            }
+        });
     }
 };

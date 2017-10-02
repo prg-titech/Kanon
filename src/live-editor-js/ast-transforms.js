@@ -585,7 +585,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *   while(condition) {
  *     let __loopLabel = 'loop' + label;
  *     __loopLabels.push(__loopLabel);
- *     if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = 1;
+ *     if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1;
  *     let __loopCount =
  *         (__loopCounter[__loopLabel])
  *         ? ++__loopCounter[__loopLabel]
@@ -668,6 +668,10 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     } else
                         node.body = b.BlockStatement([node.body]);
                 }
+
+                __$__.Context.ParentAndChildrenLoop[label] = {parent: __$__.Context.ParentAndChildrenLoopStack.last(), children: []};
+                __$__.Context.ParentAndChildrenLoop[__$__.Context.ParentAndChildrenLoopStack.last()].children.push(label);
+                __$__.Context.ParentAndChildrenLoopStack.push(label);
 
                 if (!checkInfLoop && __$__.ASTTransforms.funcTypes[node.type]) {
                     node.params.unshift(
@@ -939,11 +943,11 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         b.Identifier('let __loopCount = (__$__.Context.__loopCounter[__loopLabel]) ? ++__$__.Context.__loopCounter[__loopLabel] : __$__.Context.__loopCounter[__loopLabel] = 1')
                     )
                 );
-                // if (!__$__.Context.LoopContext[__loopLabel])
+                // if (__$__.Context.LoopContext[__loopLabel] === undefined)
                 //     __$__.Context.LoopContext[__loopLabel] = 1;
                 node.body.body.unshift(
                     b.ExpressionStatement(
-                        b.Identifier('if (!__$__.Context.LoopContext[__loopLabel]) __$__.Context.LoopContext[__loopLabel] = 1')
+                        b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
                     )
                 );
                 // __loopLabels.push(__loopLabel);
@@ -961,6 +965,11 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         )
                     ], 'let')
                 );
+            }
+        },
+        leave(node, path) {
+            if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
+                __$__.Context.ParentAndChildrenLoopStack.pop();
             }
         }
     };

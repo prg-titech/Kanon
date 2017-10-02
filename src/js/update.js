@@ -64,14 +64,16 @@ __$__.Update = {
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
+            __$__.ShowContext.makeDictionary();
+
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.wait = false;
                 if (__$__.editor.task.ContextUpdate.length === 0)
                     __$__.Update.ContextUpdate();
                 return;
             }
-    
-    
+
+
             __$__.options.nodes.hidden = true;
             __$__.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
@@ -105,7 +107,23 @@ __$__.Update = {
             __$__.Context.Arrays.forEach(array => {
                 __$__.Update.updateArray({nodes: [array[0]]});
             });
-    
+
+            // check the context of all loops whether initial context of each loop is correct.
+            let task = ['noLoop'];
+            while (task.length) {
+                let label = task.shift();
+                let SE = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
+                let children = __$__.Context.ParentAndChildrenLoop[label].children;
+                children.forEach(l => {
+                    let childSE = __$__.Context.StartEndInLoop[l][__$__.Context.LoopContext[l]-1];
+                    if (childSE && (SE.start < childSE.start && childSE.end < SE.end)) {
+                        task.push(l);
+                    } else {
+                        __$__.Context.LoopContext[l] = null;
+                    }
+                });
+            }
+
             __$__.Update.wait = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
                 __$__.network.once('stabilized', stabilized);
