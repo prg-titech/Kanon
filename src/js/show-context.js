@@ -145,7 +145,7 @@ __$__.ShowContext = {
 
             let count = 1;
             let idx = 0;
-            if (__$__.Context.StartEndInLoop[label].length) {
+            if (__$__.Context.StartEndInLoop[label]) {
                 for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
                     let SE = __$__.Context.StartEndInLoop[label][i];
                     let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start < SE.start && SE.end < parentSE.end).indexOf(true);
