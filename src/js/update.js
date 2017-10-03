@@ -115,11 +115,13 @@ __$__.Update = {
                 let SE = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
                 let children = __$__.Context.ParentAndChildrenLoop[label].children;
                 children.forEach(l => {
-                    let childSE = __$__.Context.StartEndInLoop[l][__$__.Context.LoopContext[l]-1];
-                    if (childSE && (SE.start < childSE.start && childSE.end < SE.end)) {
-                        task.push(l);
-                    } else {
-                        __$__.Context.LoopContext[l] = null;
+                    if (__$__.Context.StartEndInLoop[l]) {
+                        let childSE = __$__.Context.StartEndInLoop[l][__$__.Context.LoopContext[l]-1];
+                        if (childSE && (SE.start < childSE.start && childSE.end < SE.end)) {
+                            task.push(l);
+                        } else {
+                            __$__.Context.LoopContext[l] = null;
+                        }
                     }
                 });
             }

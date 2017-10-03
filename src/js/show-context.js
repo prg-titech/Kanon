@@ -136,9 +136,10 @@ __$__.ShowContext = {
             let parentLabel = __$__.Context.ParentAndChildrenLoop[label].parent;
             __$__.ShowContext.contextDictionary[label] = {};
             if (label === 'noLoop' || parentLabel === 'noLoop') {
-                for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
-                    __$__.ShowContext.contextDictionary[label][i+1] = i+1;
-                }
+                if (__$__.Context.StartEndInLoop[label])
+                    for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
+                        __$__.ShowContext.contextDictionary[label][i+1] = i+1;
+                    }
                 return;
             }
 
