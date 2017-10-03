@@ -145,15 +145,17 @@ __$__.ShowContext = {
 
             let count = 1;
             let idx = 0;
-            for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
-                let SE = __$__.Context.StartEndInLoop[label][i];
-                let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start < SE.start && SE.end < parentSE.end).indexOf(true);
-                if (idx === parentIndex) {
-                    __$__.ShowContext.contextDictionary[label][i+1] = count++;
-                } else {
-                    count = 1;
-                    __$__.ShowContext.contextDictionary[label][i+1] = count++;
-                    idx = parentIndex;
+            if (__$__.Context.StartEndInLoop[label].length) {
+                for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
+                    let SE = __$__.Context.StartEndInLoop[label][i];
+                    let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start < SE.start && SE.end < parentSE.end).indexOf(true);
+                    if (idx === parentIndex) {
+                        __$__.ShowContext.contextDictionary[label][i+1] = count++;
+                    } else {
+                        count = 1;
+                        __$__.ShowContext.contextDictionary[label][i+1] = count++;
+                        idx = parentIndex;
+                    }
                 }
             }
         });
