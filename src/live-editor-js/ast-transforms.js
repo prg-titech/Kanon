@@ -65,7 +65,9 @@ __$__.ASTTransforms = {
  *
  *             __newObjectId += '-' + newLabelCounter[__newObjectId];
  *             __newObjectIds.push(__newObjectId);
- *             var __temp = new Hoge(true, arg1, ...);
+ *             __newExpInfo.push({loopLabel , loopCount, pos}});
+ *             var __temp = new Hoge(arg1, ...);
+ *             __newExpInfo.pop();
  *             if (!__temp.__id) {
  *                 Object.setProperty(__temp, '__id', __newObjectIds.pop());
  *                 __objs.push(__temp);
@@ -87,36 +89,37 @@ __$__.ASTTransforms.CollectObjects = function() {
                     c.label_header = 'new';
                     c.this_node = b.NewExpression(
                         node.callee,
-                        [b.ObjectExpression([
-                            b.Property(
-                                b.Identifier('loopLabel'),
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__loopLabels'),
-                                        b.Identifier('last')
-                                    ),
-                                    []
-                                )
-                            ),
-                            b.Property(
-                                b.Identifier('loopCount'),
-                                b.Identifier('__loopCount')
-                            ),
-                            b.Property(
-                                b.Identifier('pos'),
-                                b.ObjectExpression([
-                                    b.Property(
-                                        b.Identifier('line'),
-                                        b.Literal(node.loc.end.line)
-                                    ),
-                                    b.Property(
-                                        b.Identifier('column'),
-                                        b.Literal(node.loc.end.column)
-                                    )
-                                ])
-                            )
-                        ])].concat(node.arguments)
+                        node.arguments
                     );
+                    c.newExpInfo = b.ObjectExpression([
+                        b.Property(
+                            b.Identifier('loopLabel'),
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__loopLabels'),
+                                    b.Identifier('last')
+                                ),
+                                []
+                            )
+                        ),
+                        b.Property(
+                            b.Identifier('loopCount'),
+                            b.Identifier('__loopCount')
+                        ),
+                        b.Property(
+                            b.Identifier('pos'),
+                            b.ObjectExpression([
+                                b.Property(
+                                    b.Identifier('line'),
+                                    b.Literal(node.loc.end.line)
+                                ),
+                                b.Property(
+                                    b.Identifier('column'),
+                                    b.Literal(node.loc.end.column)
+                                )
+                            ])
+                        )
+                    ]);
                 } else if (node.type === 'ArrayExpression') {
                     c.counterName = '__arrLabelCounter';
                     c.LabelPos = __$__.Context.LabelPos.Arr;
@@ -124,6 +127,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                     c.this_node = b.ArrayExpression(
                         node.elements
                     );
+                    c.newExpInfo = b.Literal(false);
                 } else {
                     c.counterName = '__objLabelCounter';
                     c.LabelPos = __$__.Context.LabelPos.Obj;
@@ -131,6 +135,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                     c.this_node = b.ObjectExpression(
                         node.properties
                     );
+                    c.newExpInfo = b.Literal(false);
                 }
 
 
@@ -256,12 +261,30 @@ __$__.ASTTransforms.CollectObjects = function() {
                                     ]
                                 )
                             ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newExpInfo'),
+                                        b.Identifier('push')
+                                    ), [
+                                        c.newExpInfo
+                                    ]
+                                )
+                            ),
                             b.VariableDeclaration([
                                 b.VariableDeclarator(
                                     b.Identifier('__temp'),
                                     c.this_node
                                 )
                             ], 'var'),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newExpInfo'),
+                                        b.Identifier('pop')
+                                    ), []
+                                )
+                            ),
                             /**
                              * if (!__temp.__id) {
                              *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
@@ -334,7 +357,9 @@ __$__.ASTTransforms.CollectObjects = function() {
  *     if (__call_count['unique Label']) __call_count['unique Label']++;
  *     else __call_count['unique Label'] = 1;
  *     __call_stack.push('unique Label');
- *     var __temp = func(false, arg1, arg2, ...);
+ *     __newExpInfo.posh(false);
+ *     var __temp = func(arg1, arg2, ...);
+ *     __newExpInfo.pop();
  *     __call_stack.pop();
  *     return __temp;
  * })()
@@ -414,15 +439,32 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                     [b.Literal(label)]
                                 )
                             ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newExpInfo'),
+                                        b.Identifier("push")
+                                    ),
+                                    [b.Literal(false)]
+                                )
+                            ),
                             b.VariableDeclaration([
                                 b.VariableDeclarator(
                                     b.Identifier('__temp'),
                                     b.CallExpression(
                                         node.callee,
-                                        [b.Literal(false)].concat(node.arguments)
+                                        node.arguments
                                     )
                                 )],
                                 'var'
+                            ),
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newExpInfo'),
+                                        b.Identifier("pop")
+                                    ), []
+                                )
                             ),
                             b.ExpressionStatement(
                                 b.CallExpression(
@@ -458,7 +500,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __call_count = {},
  *     __call_stack = [],
  *     __newObjectIds = [],
- *     __newExpInfo = false;
+ *     __newExpInfo = [];
  * __objs = [];
  * __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
  * ...
@@ -535,7 +577,7 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__newExpInfo'),
-                            b.Literal(false)
+                            b.ArrayExpression([])
                         )
                     ], 'let')
                 );
@@ -606,7 +648,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *     __time_counter_stack.push({start: __time_counter});
  *
  *     // there if following IfStatement only in functions
- *     if (__newExpInfo) {
+ *     if (__newExpInfo.last()) {
  *       Object.setProperty(this, '__id', __newObjectIds.pop());
  *       __objs.push(this);
  *     }
@@ -673,12 +715,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 __$__.Context.ParentAndChildrenLoop[__$__.Context.ParentAndChildrenLoopStack.last()].children.push(label);
                 __$__.Context.ParentAndChildrenLoopStack.push(label);
 
-                if (!checkInfLoop && __$__.ASTTransforms.funcTypes[node.type]) {
-                    node.params.unshift(
-                        b.Identifier('__newExpInfo')
-                    );
-                }
-
                 // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
                 node.body.body.push(
                     b.ExpressionStatement(
@@ -706,7 +742,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
 
                 /*
                  * // there if following IfStatement only in functions
-                 * if (__newExpInfo) {
+                 * if (__newExpInfo.last()) {
                  *   Object.setProperty(this, '__id', __newObjectIds.pop());
                  *   __objs.push(this);
                  * }
@@ -714,7 +750,12 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 if (!checkInfLoop && __$__.ASTTransforms.funcTypes[node.type])
                     node.body.body.unshift(
                         b.IfStatement(
-                            b.Identifier('__newExpInfo'),
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__newExpInfo'),
+                                    b.Identifier('last')
+                                ), []
+                            ),
                             b.BlockStatement([
                                 b.ExpressionStatement(
                                     b.CallExpression(
@@ -1119,7 +1160,12 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                         )
                                     ])
                                 ),
-                                b.Identifier('__newExpInfo')
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__newExpInfo'),
+                                        b.Identifier('last')
+                                    ), []
+                                )
                             ]
                         )
                     )
