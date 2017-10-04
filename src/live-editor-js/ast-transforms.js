@@ -594,12 +594,181 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
 };
 
 
+/**
+ * try {
+ *     body;
+ * } catch (__e__) {
+ *     while (__time_counter_stack.length) {
+ *         __time_counter_stack.last().end = __time_counter - 1;
+ *         if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
+ *             __$__.Context.StartEndInLoop[__loopLabels.last()] = [];
+ *         __$__.Context.StartEndInLoop[__loopLabels.last()].push(__time_counter_stack.pop());
+ *         __loopLabels.pop();
+ *     }
+ *     __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
+ *     throw __e__;
+ * }
+ */
 __$__.ASTTransforms.BlockedProgram = function() {
     let b = __$__.ASTBuilder;
     return {
         leave(node, path) {
             if (node.type === 'Program') {
-                node.body = [b.BlockStatement(node.body)];
+                node.body = [
+                    b.TryStatement(
+                        b.BlockStatement(node.body),
+                        b.CatchClause(
+                            b.Identifier('__e__'),
+                            b.BlockStatement([
+                                b.WhileStatement(
+                                    b.MemberExpression(
+                                        b.Identifier('__time_counter_stack'),
+                                        b.Identifier('length')
+                                    ),
+                                    b.BlockStatement([
+                                        b.ExpressionStatement(
+                                            b.AssignmentExpression(
+                                                b.MemberExpression(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__time_counter_stack'),
+                                                            b.Identifier('last')
+                                                        ),
+                                                        []
+                                                    ),
+                                                    b.Identifier('end')
+                                                ),
+                                                '=',
+                                                b.BinaryExpression(
+                                                    b.Identifier('__time_counter'),
+                                                    '-',
+                                                    b.Literal(1)
+                                                )
+                                            )
+                                        ),
+                                        b.IfStatement(
+                                            b.UnaryExpression(
+                                                '!',
+                                                b.MemberExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__$__'),
+                                                            b.Identifier('Context')
+                                                        ),
+                                                        b.Identifier('StartEndInLoop')
+                                                    ),
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__loopLabels'),
+                                                            b.Identifier('last')
+                                                        ),
+                                                        []
+                                                    ),
+                                                    true
+                                                ),
+                                                true
+                                            ),
+                                            b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Context')
+                                                            ),
+                                                            b.Identifier('StartEndInLoop')
+                                                        ),
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__loopLabels'),
+                                                                b.Identifier('last')
+                                                            ),
+                                                            []
+                                                        ),
+                                                        true
+                                                    ),
+                                                    '=',
+                                                    b.ArrayExpression([])
+                                                )
+                                            )
+                                        ),
+                                        b.ExpressionStatement(
+                                            b.CallExpression(
+                                                b.MemberExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Context')
+                                                            ),
+                                                            b.Identifier('StartEndInLoop')
+                                                        ),
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__loopLabels'),
+                                                                b.Identifier('last')
+                                                            ),
+                                                            []
+                                                        ),
+                                                        true
+                                                    ),
+                                                    b.Identifier('push')
+                                                ),
+                                                [b.CallExpression(
+                                                    b.MemberExpression(
+                                                        b.Identifier('__time_counter_stack'),
+                                                        b.Identifier('pop')
+                                                    ),
+                                                    []
+                                                )]
+                                            )
+                                        ),
+                                        b.ExpressionStatement(
+                                            b.CallExpression(
+                                                b.MemberExpression(
+                                                    b.Identifier('__loopLabels'),
+                                                    b.Identifier('pop')
+                                                ),
+                                                []
+                                            )
+                                        )
+                                    ])
+                                ),
+                                b.ExpressionStatement(
+                                    b.AssignmentExpression(
+                                        b.MemberExpression(
+                                            b.MemberExpression(
+                                                b.MemberExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__$__'),
+                                                            b.Identifier('Context')
+                                                        ),
+                                                        b.Identifier('StartEndInLoop')
+                                                    ),
+                                                    b.Literal('noLoop'),
+                                                    true
+                                                ),
+                                                b.Literal(0),
+                                                true
+                                            ),
+                                            b.Identifier('end')
+                                        ),
+                                        '=',
+                                        b.BinaryExpression(
+                                            b.Identifier('__time_counter'),
+                                            '-',
+                                            b.Literal(1)
+                                        )
+                                    )
+                                ),
+                                b.ThrowStatement(
+                                    b.Identifier('__e__')
+                                )
+                            ])
+                        )
+                    )
+                ];
             }
         }
     };
@@ -633,14 +802,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         ? ++__loopCounter[__loopLabel]
  *         : __loopCounter[__loopLabel] = 1;
  *     if (__loopCount > 100){
- *         while (__time_counter_stack.length) {
- *             __loopLabels.pop();
- *             __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter - 1;
- *             if (!__$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length-1]])
- *                 __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length-1]] = [];
- *             __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length-1]].push(__time_counter_stack.pop());
- *         }
- *         __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
  *         __$__.Context.InfLoop = __loopLabel;
  *         throw 'Infinite Loop';
  *     }
@@ -803,14 +964,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 );
                 /**
                  *  if (__loopCount > 100) {
-                 *      while (__time_counter_stack.length) {
-                 *          __loopLabels.pop();
-                 *          __time_counter_stack.last().end = __time_counter - 1;
-                 *          if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
-                 *              __$__.Context.StartEndInLoop[__loopLabels.last())] = [];
-                 *          __$__.Context.StartEndInLoop[__loopLabels.last())].push(__time_counter_stack.pop());
-                 *      }
-                 *      __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
                  *      __$__.Context.InfLoop = __loopLabel;
                  *      throw 'Infinite Loop';
                  *  }
@@ -823,148 +976,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                             b.Literal(100)
                         ),
                         b.BlockStatement([
-                            b.WhileStatement(
-                                b.MemberExpression(
-                                    b.Identifier('__time_counter_stack'),
-                                    b.Identifier('length')
-                                ),
-                                b.BlockStatement([
-                                    b.ExpressionStatement(
-                                        b.CallExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__loopLabels'),
-                                                b.Identifier('pop')
-                                            ),
-                                            []
-                                        )
-                                    ),
-                                    b.ExpressionStatement(
-                                        b.AssignmentExpression(
-                                            b.MemberExpression(
-                                                b.CallExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__time_counter_stack'),
-                                                        b.Identifier('last')
-                                                    ),
-                                                    []
-                                                ),
-                                                b.Identifier('end')
-                                            ),
-                                            '=',
-                                            b.BinaryExpression(
-                                                b.Identifier('__time_counter'),
-                                                '-',
-                                                b.Literal(1)
-                                            )
-                                        )
-                                    ),
-                                    b.IfStatement(
-                                        b.UnaryExpression(
-                                            '!',
-                                            b.MemberExpression(
-                                                b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__$__'),
-                                                        b.Identifier('Context')
-                                                    ),
-                                                    b.Identifier('StartEndInLoop')
-                                                ),
-                                                b.CallExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__loopLabels'),
-                                                        b.Identifier('last')
-                                                    ),
-                                                    []
-                                                ),
-                                                true
-                                            ),
-                                            true
-                                        ),
-                                        b.ExpressionStatement(
-                                            b.AssignmentExpression(
-                                                b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.MemberExpression(
-                                                            b.Identifier('__$__'),
-                                                            b.Identifier('Context')
-                                                        ),
-                                                        b.Identifier('StartEndInLoop')
-                                                    ),
-                                                    b.CallExpression(
-                                                        b.MemberExpression(
-                                                            b.Identifier('__loopLabels'),
-                                                            b.Identifier('last')
-                                                        ),
-                                                        []
-                                                    ),
-                                                    true
-                                                ),
-                                                '=',
-                                                b.ArrayExpression([])
-                                            )
-                                        )
-                                    ),
-                                    b.ExpressionStatement(
-                                        b.CallExpression(
-                                            b.MemberExpression(
-                                                b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.MemberExpression(
-                                                            b.Identifier('__$__'),
-                                                            b.Identifier('Context')
-                                                        ),
-                                                        b.Identifier('StartEndInLoop')
-                                                    ),
-                                                    b.CallExpression(
-                                                        b.MemberExpression(
-                                                            b.Identifier('__loopLabels'),
-                                                            b.Identifier('last')
-                                                        ),
-                                                        []
-                                                    ),
-                                                    true
-                                                ),
-                                                b.Identifier('push')
-                                            ),
-                                            [b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__time_counter_stack'),
-                                                    b.Identifier('pop')
-                                                ),
-                                                []
-                                            )]
-                                        )
-                                    )
-                                ])
-                            ),
-                            b.ExpressionStatement(
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__$__'),
-                                                        b.Identifier('Context')
-                                                    ),
-                                                    b.Identifier('StartEndInLoop')
-                                                ),
-                                                b.Literal('noLoop'),
-                                                true
-                                            ),
-                                            b.Literal(0),
-                                            true
-                                        ),
-                                        b.Identifier('end')
-                                    ),
-                                    '=',
-                                    b.BinaryExpression(
-                                        b.Identifier('__time_counter'),
-                                        '-',
-                                        b.Literal(1)
-                                    )
-                                )
-                            ),
                             b.ExpressionStatement(
                                 b.AssignmentExpression(
                                     b.Identifier('__$__.Context.InfLoop'),
@@ -1191,17 +1202,11 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     ),
                                     b.Identifier('StartEndInLoop')
                                 ),
-                                b.MemberExpression(
-                                    b.Identifier('__loopLabels'),
-                                    b.BinaryExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__loopLabels'),
-                                            b.Identifier('length')
-                                        ),
-                                        '-',
-                                        b.Literal(1)
-                                    ),
-                                    true
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__loopLabels'),
+                                        b.Identifier('last')
+                                    ), []
                                 ),
                                 true
                             ),

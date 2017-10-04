@@ -36,7 +36,7 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    throw e;
+                    // throw e;
                 }
             }
             Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
@@ -54,11 +54,16 @@ __$__.Update = {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
             } catch (e) {
+                // if (e instanceof Object && e.__error__type === 'Infinite Loop') {
+                //     document.getElementById('console').textContent = 'infinite loop?';
+                // } else {
+                //     document.getElementById('console').textContent = 'Error?: ' + e.message;
+                // }
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    throw e;
+                    // throw e;
                 }
             }
 

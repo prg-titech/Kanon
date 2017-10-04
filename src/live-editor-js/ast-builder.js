@@ -8,6 +8,7 @@ __$__.ASTBuilder = {
             elements: elements
         };
     },
+
     /**
      * @param {Array} params
      * @param {BlockStatement or Expression} body
@@ -22,6 +23,7 @@ __$__.ASTBuilder = {
             generator: false
         };
     },
+
     /**
      * @param {Expression} left
      * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
@@ -35,6 +37,7 @@ __$__.ASTBuilder = {
             right: right
         };
     },
+
     /**
      * @param {Expression} left
      * @param {string} operator: "+", "-", "*", "/", "<", ">", "<=", ">=", etc.
@@ -48,6 +51,7 @@ __$__.ASTBuilder = {
             right: right
         };
     },
+
     /**
      * @param {Array} body: an array of Expressions
      */
@@ -57,6 +61,7 @@ __$__.ASTBuilder = {
             body: body
         };
     },
+
     /**
      * @param {Expression} callee
      * @param {Array} args
@@ -68,6 +73,19 @@ __$__.ASTBuilder = {
             arguments: args
         };
     },
+
+    /**
+     * @param {Identifier} param
+     * @param {BlockStatement} body
+     */
+    CatchClause(param, body) {
+        return {
+            type: 'CatchClause',
+            param: param,
+            body: body
+        };
+    },
+
     /**
      * @param {boolean} test
      * @param {Expression} consequent
@@ -81,6 +99,7 @@ __$__.ASTBuilder = {
             alternate: alternate
         };
     },
+
     /**
      * @param {Statement} body
      * @param {Expression} test
@@ -92,6 +111,7 @@ __$__.ASTBuilder = {
             test: test
         };
     },
+
     /**
      * @param {Expression} expression
      */
@@ -101,6 +121,7 @@ __$__.ASTBuilder = {
             expression: expression
         };
     },
+
     /**
      * @param {Statement} init
      * @param {Expression} test
@@ -116,6 +137,7 @@ __$__.ASTBuilder = {
             body: body
         }
     },
+
     /**
      * @param {string} id
      * @param {Array} params
@@ -131,6 +153,7 @@ __$__.ASTBuilder = {
             expression: false
         }
     },
+
     /**
      * @param {string} name
      */
@@ -140,6 +163,7 @@ __$__.ASTBuilder = {
             name: name
         };
     },
+
     /**
      * @param {Expression} test
      * @param {Statement} consequent: usually a BlockStatement
@@ -153,6 +177,7 @@ __$__.ASTBuilder = {
             alternate: alternate
         };
     },
+
     /**
      * @param {Number|String|boolean|null|RegExp} value
      */
@@ -162,6 +187,7 @@ __$__.ASTBuilder = {
             value: value
         };
     },
+
     /**
      * @param {Expression} object
      * @param {Expression} property
@@ -175,6 +201,7 @@ __$__.ASTBuilder = {
             computed: computed
         };
     },
+
     /**
      * @param {Identifier} callee
      * @param {Array} args
@@ -186,6 +213,7 @@ __$__.ASTBuilder = {
             arguments: args
         };
     },
+
     /**
      * @param {Array} properties
      */
@@ -195,6 +223,7 @@ __$__.ASTBuilder = {
             properties: properties
         };
     },
+
     /**
      * @param {Literal | Idenrifier} key
      * @param {Expression} value
@@ -208,6 +237,7 @@ __$__.ASTBuilder = {
             kind: kind
         };
     },
+
     /**
      * @param {Expression?} argument
      */
@@ -217,6 +247,7 @@ __$__.ASTBuilder = {
             argument: argument
         };
     },
+
     /**
      * @param {Expression} argument
      */
@@ -226,6 +257,21 @@ __$__.ASTBuilder = {
             argument: argument
         };
     },
+
+    /**
+     * @param {BlockStatement} block
+     * @param {CatchClause} handler
+     * @param {} finalizzer
+     */
+    TryStatement(block, handler, finalizer = null) {
+        return {
+            type: 'TryStatement',
+            block: block,
+            handler: handler,
+            finalizer: finalizer
+        };
+    },
+
     /**
      * @param {String} operator
      * @param {Expression} argument
@@ -239,6 +285,7 @@ __$__.ASTBuilder = {
             prefix: prefix
         };
     },
+
     /**
      * @param {Expression} argument
      * @param {string} operator
@@ -252,6 +299,7 @@ __$__.ASTBuilder = {
             prefix: prefix
         };
     },
+
     /**
      * @param {Array} declarations
      * @param {string} kind: "var", "let", "const"
@@ -263,6 +311,7 @@ __$__.ASTBuilder = {
             kind: kind
         };
     },
+
     /**
      * @param {Identifier} id
      * @param {Expression?} init
@@ -274,11 +323,12 @@ __$__.ASTBuilder = {
             init: init
         };
     },
+
     WhileStatement(test, body) {
         return {
             type: 'WhileStatement',
             test: test,
             body: body
         };
-    },
+    }
 };
