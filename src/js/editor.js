@@ -10,6 +10,7 @@ __$__.editor.getSession().setUseWorker(false);
 __$__.editor.task = {PositionUpdate: [], ContextUpdate: []};
 __$__.editor.executeTask = () => {
     if (__$__.editor.task.PositionUpdate.length > 0) {
+        __$__.Update.onlyMoveCursor = false;
         let arg = [];
         while (__$__.editor.task.PositionUpdate.length > 0) {
             let act = __$__.editor.task.PositionUpdate.shift();
@@ -31,6 +32,7 @@ __$__.editor.executeTask = () => {
         }
         __$__.Update.PositionUpdate(arg);
     } else if (__$__.editor.task.ContextUpdate.length > 0) {
+        __$__.Update.onlyMoveCursor = true;
         __$__.editor.task.ContextUpdate = [];
         __$__.Update.ContextUpdate();
     }

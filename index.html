@@ -89,7 +89,7 @@
     __$__.__networkSelector = $('#resizableNetwork');
     __$__.__resetBottonSelector = $('#resetButton');
     __$__.__networkSelector.resizable({
-        resize: function(event, ui) {
+        resize: function (event, ui) {
             let width = __$__.__networkSelector.css('width');
             let height = __$__.__networkSelector.css('height');
             __$__.network.setSize(width, height);
@@ -97,7 +97,7 @@
             __$__.__resetBottonSelector.css('left', width);
             __$__.__resetBottonSelector.css('top', height);
         }
-        // direction: ['right', 'bottom'],
+    });
 </script>
 
 </body>

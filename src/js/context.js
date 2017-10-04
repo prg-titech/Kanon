@@ -140,11 +140,6 @@ __$__.Context = {
     Draw: function(e) {
         let cursorPos = __$__.editor.getCursorPosition();
         let checkPointId = __$__.Context.FindId(cursorPos);
-        // if (__$__.Context.CheckPointAroundCursor.beforeId === checkPointId.beforeId
-        //     && __$__.Context.CheckPointAroundCursor.afterId === checkPointId.afterId)
-        //     return;
-        // else
-        //     __$__.Context.CheckPointAroundCursor = checkPointId;
 
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, graph;
@@ -156,9 +151,17 @@ __$__.Context = {
                 else
                     cpID = checkPointId.beforeId;
 
-                loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
-                count = __$__.Context.LoopContext[loopLabel];
-                graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
+                try {
+                    loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                    count = __$__.Context.LoopContext[loopLabel];
+                    graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
+                } catch (e) {
+                    if (!__$__.Update.onlyMoveCursor) {
+                        graph = __$__.Context.LastGraph;
+                    } else {
+                        graph = {nodes: [], edges: []};
+                    }
+                }
 
                 __$__.Context.SnapshotContext['cpID'] = cpID;
                 __$__.Context.SnapshotContext['loopLabel'] = loopLabel;

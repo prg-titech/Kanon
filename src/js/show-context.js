@@ -92,9 +92,15 @@ __$__.ShowContext = {
      */
     update: function(label) {
         if (label !== 'noLoop' && __$__.Context.InfLoop !== label) {
-            document.getElementById(label).textContent = (__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label];
+            document.getElementById(label).textContent =
+                (__$__.ShowContext.contextDictionary[label])
+                    ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]]
+                    : __$__.Context.LoopContext[label];
         } else {
-            document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + ((__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label]);
+            document.getElementById(label).textContent =
+                (__$__.ShowContext.contextDictionary[label] && __$__.Context.LoopContext[label])
+                    ? __$__.ShowContext.infLoopMessage + __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]]
+                    : __$__.Context.LoopContext[label];
         }
     },
 
@@ -109,7 +115,7 @@ __$__.ShowContext = {
         if (__$__.Context.InfLoop !== id)
             return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + content + '</div>';
         else
-            return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + __$__.ShowContext.infLoopMessage + content + '</div>';
+            return '<div id=' + id + ' style="display: ' + display + '; top: ' + top + 'px; left: ' + left + 'px;">' + ((content) ? __$__.ShowContext.infLoopMessage + content : "") + '</div>';
     },
 
     switchOnOff() {
@@ -148,7 +154,7 @@ __$__.ShowContext = {
             if (__$__.Context.StartEndInLoop[label] && __$__.Context.StartEndInLoop[parentLabel]) {
                 for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
                     let SE = __$__.Context.StartEndInLoop[label][i];
-                    let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start < SE.start && SE.end < parentSE.end).indexOf(true);
+                    let parentIndex = __$__.Context.StartEndInLoop[parentLabel].map(parentSE => parentSE.start <= SE.start && SE.end <= parentSE.end).indexOf(true);
                     if (idx === parentIndex) {
                         __$__.ShowContext.contextDictionary[label][i+1] = count++;
                     } else {

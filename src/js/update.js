@@ -2,6 +2,7 @@ __$__.Update = {
     CodeWithCP: '',
     wait: false,
     updateValueOfArray: true,
+    onlyMoveCursor: false,
     
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
@@ -67,8 +68,7 @@ __$__.Update = {
 
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.wait = false;
-                if (__$__.editor.task.ContextUpdate.length === 0)
-                    __$__.Update.ContextUpdate();
+                __$__.Update.ContextUpdate();
                 return;
             }
 
