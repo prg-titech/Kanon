@@ -36,14 +36,8 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    // throw e;
                 }
             }
-            Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
-                    delete __$__.Context.LoopContext[loopLabel];
-            });
-
             __$__.Context.Initialize();
             __$__.JumpToConstruction.resetGraphData();
             __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
@@ -54,18 +48,18 @@ __$__.Update = {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
             } catch (e) {
-                // if (e instanceof Object && e.__error__type === 'Infinite Loop') {
-                //     document.getElementById('console').textContent = 'infinite loop?';
-                // } else {
-                //     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                // }
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    // throw e;
                 }
             }
+
+            Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+                if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
+                    delete __$__.Context.LoopContext[loopLabel];
+            });
+
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
