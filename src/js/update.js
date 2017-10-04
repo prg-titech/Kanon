@@ -36,8 +36,9 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
-                __$__.Context.InfLoop = '';
+                    __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
+                    throw e;
                 }
             }
             __$__.Context.Initialize();
@@ -53,8 +54,9 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
-                __$__.Context.InfLoop = '';
+                    __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
+                    throw e;
                 }
             }
 
@@ -117,12 +119,15 @@ __$__.Update = {
                 let children = __$__.Context.ParentAndChildrenLoop[label].children;
                 children.forEach(l => {
                     if (__$__.Context.StartEndInLoop[l]) {
-                        let childSE = __$__.Context.StartEndInLoop[l][__$__.Context.LoopContext[l]-1];
-                        if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
-                            task.push(l);
-                        } else {
-                            __$__.Context.LoopContext[l] = null;
+                        for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
+                            let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
+                            if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
+                                task.push(l);
+                                __$__.Context.LoopContext[l] = cntxt;
+                                return;
+                            }
                         }
+                        __$__.Context.LoopContext[l] = null;
                     }
                 });
             }

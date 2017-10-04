@@ -156,11 +156,11 @@ __$__.Context = {
                     count = __$__.Context.LoopContext[loopLabel];
                     graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
                 } catch (e) {
-                    if (!__$__.Update.onlyMoveCursor) {
-                        graph = __$__.Context.LastGraph;
-                    } else {
+                    // if (!__$__.Update.onlyMoveCursor) {
+                    //     graph = __$__.Context.LastGraph;
+                    // } else {
                         graph = {nodes: [], edges: []};
-                    }
+                    // }
                 }
 
                 __$__.Context.SnapshotContext['cpID'] = cpID;
