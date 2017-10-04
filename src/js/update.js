@@ -117,7 +117,7 @@ __$__.Update = {
                 children.forEach(l => {
                     if (__$__.Context.StartEndInLoop[l]) {
                         let childSE = __$__.Context.StartEndInLoop[l][__$__.Context.LoopContext[l]-1];
-                        if (childSE && (SE.start < childSE.start && childSE.end < SE.end)) {
+                        if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
                             task.push(l);
                         } else {
                             __$__.Context.LoopContext[l] = null;

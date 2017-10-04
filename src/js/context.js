@@ -489,7 +489,7 @@ __$__.Context = {
 
                     // the case that the context of outer function even if the context of this loop is changed
                     // The context of the nearest loop changes in this case
-                    if (nearestLoopContext !== null && funcStartEndBeforeMove.start <= loopStartEndAfterMove.start && loopStartEndAfterMove.end <= funcStartEndBeforeMove.end) {
+                    if (nearestLoopContext !== null && funcStartEndBeforeMove && funcStartEndBeforeMove.start <= loopStartEndAfterMove.start && loopStartEndAfterMove.end <= funcStartEndBeforeMove.end) {
                         moveLoopContext();
                     }
                 }

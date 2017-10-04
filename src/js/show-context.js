@@ -94,7 +94,7 @@ __$__.ShowContext = {
         if (label !== 'noLoop' && __$__.Context.InfLoop !== label) {
             document.getElementById(label).textContent = (__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label];
         } else {
-            document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + (__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label];
+            document.getElementById(label).textContent = __$__.ShowContext.infLoopMessage + ((__$__.ShowContext.contextDictionary[label]) ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]] : __$__.Context.LoopContext[label]);
         }
     },
 

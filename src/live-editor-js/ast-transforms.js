@@ -657,7 +657,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *
  *     if (!__$__.Context.StartEndInLoop[__loopLabel])
  *         __$__.Context.StartEndInLoop[__loopLabel] = [];
- *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
+ *     __time_counter_stack.last().end = __time_counter-1;
  *     __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
  *     __loopLabels.pop();
  *   }
@@ -721,10 +721,10 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
                     )
                 );
-                // __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
+                // __time_counter_stack.last().end = __time_counter-1;
                 node.body.body.push(
                     b.ExpressionStatement(
-                        b.Identifier('__time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1')
+                        b.Identifier('__time_counter_stack.last().end = __time_counter-1')
                     )
                 );
                 // __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
@@ -1173,10 +1173,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
                 /**
                  * {
-                 *     if (!__$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]])
-                 *         __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]] = [];
-                 *     __time_counter_stack[__time_counter_stack.length - 1].end = __time_counter-1;
-                 *     __$__.Context.StartEndInLoop[__loopLabels[__loopLabels.length - 1]].push(__time_counter_stack.pop());
+                 *     if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
+                 *         __$__.Context.StartEndInLoop[__loopLabels.last()] = [];
+                 *     __time_counter_stack.last().end = __time_counter-1;
+                 *     __$__.Context.StartEndInLoop[__loopLabels.last()].push(__time_counter_stack.pop());
                  * }
                  */
                 let out_loop = () => b.BlockStatement([
