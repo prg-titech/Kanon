@@ -14,6 +14,8 @@ __$__.editor.executeTask = () => {
         let arg = [];
         while (__$__.editor.task.PositionUpdate.length > 0) {
             let act = __$__.editor.task.PositionUpdate.shift();
+            if (act.lines && act.lines.length === 0)
+                continue;
             let lst = arg.last();
             if (arg.length === 0 || arg.last().action !== act.action) {
                 arg.push(act);

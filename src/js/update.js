@@ -36,6 +36,7 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
+                __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
                 }
             }
@@ -52,6 +53,7 @@ __$__.Update = {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
+                __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
                 }
             }
