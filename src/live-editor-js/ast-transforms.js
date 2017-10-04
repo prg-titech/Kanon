@@ -598,6 +598,8 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
  * try {
  *     body;
  * } catch (__e__) {
+ *     if (__e__ === 'Infinite Loop')
+ *         __loopLabels.pop();
  *     while (__time_counter_stack.length) {
  *         __time_counter_stack.last().end = __time_counter - 1;
  *         if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
@@ -620,6 +622,21 @@ __$__.ASTTransforms.BlockedProgram = function() {
                         b.CatchClause(
                             b.Identifier('__e__'),
                             b.BlockStatement([
+                                b.IfStatement(
+                                    b.BinaryExpression(
+                                        b.Identifier('__e__'),
+                                        '===',
+                                        b.Literal('Infinite Loop')
+                                    ),
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__loopLabels'),
+                                                b.Identifier('pop')
+                                            ), []
+                                        )
+                                    )
+                                ),
                                 b.WhileStatement(
                                     b.MemberExpression(
                                         b.Identifier('__time_counter_stack'),
