@@ -19,9 +19,9 @@ __$__.options = {
     },
     physics: {
         enabled: true
-    },
-    interaction: {
-        zoomView: false
+    // },
+    // interaction: {
+    //     zoomView: false
     }
 };
 __$__.arraySize = 12;
