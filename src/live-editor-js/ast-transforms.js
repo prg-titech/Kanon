@@ -604,7 +604,7 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
  *         __time_counter_stack.last().end = __time_counter - 1;
  *         if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
  *             __$__.Context.StartEndInLoop[__loopLabels.last()] = [];
- *         __$__.Context.StartEndInLoop[__loopLabels.last()].push(__time_counter_stack.pop());
+ *         __time_counter_stack.pop();
  *         __loopLabels.pop();
  *     }
  *     __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
@@ -712,32 +712,10 @@ __$__.ASTTransforms.BlockedProgram = function() {
                                         b.ExpressionStatement(
                                             b.CallExpression(
                                                 b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.MemberExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('__$__'),
-                                                                b.Identifier('Context')
-                                                            ),
-                                                            b.Identifier('StartEndInLoop')
-                                                        ),
-                                                        b.CallExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('__loopLabels'),
-                                                                b.Identifier('last')
-                                                            ),
-                                                            []
-                                                        ),
-                                                        true
-                                                    ),
-                                                    b.Identifier('push')
+                                                    b.Identifier('__time_counter_stack'),
+                                                    b.Identifier('pop')
                                                 ),
-                                                [b.CallExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__time_counter_stack'),
-                                                        b.Identifier('pop')
-                                                    ),
-                                                    []
-                                                )]
+                                                []
                                             )
                                         ),
                                         b.ExpressionStatement(
@@ -823,7 +801,11 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         throw 'Infinite Loop';
  *     }
  *     let __start = __time_counter;
- *     __time_counter_stack.push({start: __time_counter});
+ *     let __startEndObject__ = {start: __time_counter};
+ *     __time_counter_stack.push(__startEndObject__);
+ *     if (!__$__.Context.StartEndInLoop[__loopLabel])
+ *       __$__.Context.StartEndInLoop[__loopLabel] = [];
+ *     __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *
  *     // there if following IfStatement only in functions
  *     if (__newExpInfo.last()) {
@@ -833,10 +815,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *
  *     ...
  *
- *     if (!__$__.Context.StartEndInLoop[__loopLabel])
- *         __$__.Context.StartEndInLoop[__loopLabel] = [];
- *     __time_counter_stack.last().end = __time_counter-1;
- *     __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
+ *     __startEndObject__.end = __time_counter-1;
+ *     __time_counter_stack.pop();
  *     __loopLabels.pop();
  *   }
  *
@@ -893,24 +873,21 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 __$__.Context.ParentAndChildrenLoop[__$__.Context.ParentAndChildrenLoopStack.last()].children.push(label);
                 __$__.Context.ParentAndChildrenLoopStack.push(label);
 
-                // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
+
+                // __startEndObject__.end = __time_counter-1;
                 node.body.body.push(
                     b.ExpressionStatement(
-                        b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
+                        b.Identifier('__startEndObject__.end = __time_counter-1')
                     )
                 );
-                // __time_counter_stack.last().end = __time_counter-1;
+
+                // __time_counter_stack.pop();
                 node.body.body.push(
                     b.ExpressionStatement(
-                        b.Identifier('__time_counter_stack.last().end = __time_counter-1')
+                        b.Identifier('__time_counter_stack.pop()')
                     )
                 );
-                // __$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop());
-                node.body.body.push(
-                    b.ExpressionStatement(
-                        b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__time_counter_stack.pop())')
-                    )
-                );
+
                 // __loopLabels.pop();
                 node.body.body.push(
                     b.ExpressionStatement(
@@ -967,12 +944,34 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         )
                     );
 
-                // __time_counter_stack.push({start: __time_counter});
+                // __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
                 node.body.body.unshift(
                     b.ExpressionStatement(
-                        b.Identifier('__time_counter_stack.push({start: __time_counter})')
+                        b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__)')
                     )
                 );
+
+                // if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
+                node.body.body.unshift(
+                    b.ExpressionStatement(
+                        b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
+                    )
+                );
+
+                // __time_counter_stack.push(__startEndObject__);
+                node.body.body.unshift(
+                    b.ExpressionStatement(
+                        b.Identifier('__time_counter_stack.push(__startEndObject__)')
+                    )
+                );
+
+                // let __startEndObject__ = {start: __time_counter};
+                node.body.body.unshift(
+                    b.ExpressionStatement(
+                        b.Identifier('let __startEndObject__ = {start: __time_counter}')
+                    )
+                );
+
                 // let __start = __time_counter;
                 node.body.body.unshift(
                     b.ExpressionStatement(
@@ -1201,63 +1200,11 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
                 /**
                  * {
-                 *     if (!__$__.Context.StartEndInLoop[__loopLabels.last()])
-                 *         __$__.Context.StartEndInLoop[__loopLabels.last()] = [];
-                 *     __time_counter_stack.last().end = __time_counter-1;
-                 *     __$__.Context.StartEndInLoop[__loopLabels.last()].push(__time_counter_stack.pop());
+                 *    __time_counter_stack.last().end = __time_counter-1;
+                 *    __time_counter_stack.pop();
                  * }
                  */
                 let out_loop = () => b.BlockStatement([
-                    b.IfStatement(
-                        b.UnaryExpression(
-                            '!',
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__$__'),
-                                        b.Identifier('Context')
-                                    ),
-                                    b.Identifier('StartEndInLoop')
-                                ),
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__loopLabels'),
-                                        b.Identifier('last')
-                                    ), []
-                                ),
-                                true
-                            ),
-                            true
-                        ),
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('StartEndInLoop')
-                                    ),
-                                    b.MemberExpression(
-                                        b.Identifier('__loopLabels'),
-                                        b.BinaryExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__loopLabels'),
-                                                b.Identifier('length')
-                                            ),
-                                            '-',
-                                            b.Literal(1)
-                                        ),
-                                        true
-                                    ),
-                                    true
-                                ),
-                                '=',
-                                b.ArrayExpression([])
-                            )
-                        )
-                    ),
                     b.ExpressionStatement(
                         b.AssignmentExpression(
                             b.MemberExpression(
@@ -1286,37 +1233,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     b.ExpressionStatement(
                         b.CallExpression(
                             b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('StartEndInLoop')
-                                    ),
-                                    b.MemberExpression(
-                                        b.Identifier('__loopLabels'),
-                                        b.BinaryExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__loopLabels'),
-                                                b.Identifier('length')
-                                            ),
-                                            '-',
-                                            b.Literal(1)
-                                        ),
-                                        true
-                                    ),
-                                    true
-                                ),
-                                b.Identifier('push')
+                                b.Identifier('__time_counter_stack'),
+                                b.Identifier('pop')
                             ),
-                            [b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__time_counter_stack'),
-                                    b.Identifier('pop')
-                                ),
-                                []
-                            )]
+                            []
                         )
                     )
                 ]);
@@ -1349,6 +1269,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     } while (__loopLabels.pop().indexOf('Statement') >= 0)
                  *     __$__.Context.ChangedGraph = true;
                  *     return __temp;
+                 *     checkpoint;
                  * }
                  */
                 if (node.type === 'ReturnStatement') {
@@ -1383,7 +1304,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         changedGraphStmt(),
                         b.ReturnStatement(
                             b.Identifier('__temp')
-                        )
+                        ),
+                        checkPoint(end, variables)
                     ]);
                 /**
                  * // before
@@ -1397,6 +1319,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     } while (__loopLabels.pop().indexOf(label) === 0)
                  *     __$__.Context.ChangedGraph = true;
                  *     continue label; (or break label;)
+                 *     checkpoint;
                  * }
                  */
                 } else if (('ContinueStatement' === node.type || 'BreakStatement' === node.type) && node.label && node.label.name) {
@@ -1427,7 +1350,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                             )
                         ),
                         changedGraphStmt(),
-                        Object.assign({}, node)
+                        Object.assign({}, node),
+                        checkPoint(end, variables)
                     ]);
                 /**
                  * // before
@@ -1440,6 +1364,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     __loopLabels.pop()
                  *     __$__.Context.ChangedGraph = true;
                  *     continue; (or break;)
+                 *     checkpoint;
                  * }
                  */
                 } else if ('ContinueStatement' === node.type || 'BreakStatement' === node.type) {
@@ -1456,7 +1381,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                             )
                         ),
                         changedGraphStmt(),
-                        Object.assign({}, node)
+                        Object.assign({}, node),
+                        checkPoint(end, variables)
                     ]);
                 } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)
                            || node.type === 'ClassDeclaration') {

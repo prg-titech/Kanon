@@ -70,6 +70,27 @@ __$__.Update = {
 
             __$__.ShowContext.makeDictionary();
 
+            // check the context of all loops whether initial context of each loop is correct.
+            let task = ['noLoop'];
+            while (task.length) {
+                let label = task.shift();
+                let SE = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
+                let children = __$__.Context.ParentAndChildrenLoop[label].children;
+                children.forEach(l => {
+                    if (__$__.Context.StartEndInLoop[l]) {
+                        for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
+                            let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
+                            if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
+                                task.push(l);
+                                __$__.Context.LoopContext[l] = cntxt;
+                                return;
+                            }
+                        }
+                        __$__.Context.LoopContext[l] = undefined;
+                    }
+                });
+            }
+
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.wait = false;
                 __$__.Update.ContextUpdate();
@@ -110,27 +131,6 @@ __$__.Update = {
             __$__.Context.Arrays.forEach(array => {
                 __$__.Update.updateArray({nodes: [array[0]]});
             });
-
-            // check the context of all loops whether initial context of each loop is correct.
-            let task = ['noLoop'];
-            while (task.length) {
-                let label = task.shift();
-                let SE = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
-                let children = __$__.Context.ParentAndChildrenLoop[label].children;
-                children.forEach(l => {
-                    if (__$__.Context.StartEndInLoop[l]) {
-                        for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
-                            let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
-                            if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
-                                task.push(l);
-                                __$__.Context.LoopContext[l] = cntxt;
-                                return;
-                            }
-                        }
-                        __$__.Context.LoopContext[l] = null;
-                    }
-                });
-            }
 
             __$__.Update.wait = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
