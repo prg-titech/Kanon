@@ -26,7 +26,7 @@ __$__.options = {
 };
 __$__.arraySize = 12;
 __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
-__$__.network.on('click', __$__.JumpToConstruction.ClickEventFunction);
+__$__.network.on('doubleClick', __$__.JumpToConstruction.ClickEventFunction);
 __$__.network.on('dragStart', params => {
     if (params.nodes.length > 0) {
         let nodeId = params.nodes[0];
