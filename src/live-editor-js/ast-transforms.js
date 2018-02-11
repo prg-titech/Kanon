@@ -405,7 +405,7 @@ __$__.ASTTransforms.CollectObjects = function() {
  *     if (__call_count['unique Label']) __call_count['unique Label']++;
  *     else __call_count['unique Label'] = 1;
  *
- *     __stackForSensitiveContext.reduce((loopCounter, frame) => loopCounter[frame.label], __loopCountForSensitiveContext)['unique Label'] = {};
+ *     // __stackForSensitiveContext.reduce((loopCounter, frame) => loopCounter[frame.label], __loopCountForSensitiveContext)['unique Label'] = {};
  *     __stackForSensitiveContext.push({
  *         type: 'FunctionCall',
  *         label: 'unique Label'
@@ -480,39 +480,6 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                                         "=",
                                         b.Literal(1)
                                     )
-                                )
-                            ),
-                            // __stackForSensitiveContext.reduce((loopCounter, frame) => loopCounter[frame.label], __loopCountForSensitiveContext)['unique Label'] = {};
-                            b.ExpressionStatement(
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.CallExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__stackForSensitiveContext'),
-                                                b.Identifier('reduce')
-                                            ),
-                                            [
-                                                b.ArrowFunctionExpression([
-                                                    b.Identifier('loopCounter'),
-                                                    b.Identifier('frame')
-                                                ],
-                                                    b.MemberExpression(
-                                                        b.Identifier('loopCounter'),
-                                                        b.MemberExpression(
-                                                            b.Identifier('frame'),
-                                                            b.Identifier('label')
-                                                        ),
-                                                        true
-                                                    )
-                                                ),
-                                                b.Identifier('__loopCountForSensitiveContext')
-                                            ]
-                                        ),
-                                        b.Literal(label),
-                                        true
-                                    ),
-                                    '=',
-                                    b.ObjectExpression([])
                                 )
                             ),
                             b.ExpressionStatement(
@@ -593,7 +560,6 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __time_counter_stack = [],
  *     __call_count = {},
  *     __stackForSensitiveContext = [],
- *     __loopCountForSensitiveContext = {},
  *     __newObjectIds = [],
  *     __newExpInfo = [];
  * __objs = [];
@@ -665,10 +631,6 @@ __$__.ASTTransforms.AddSomeCodeInHeadAndTail = function() {
                         b.VariableDeclarator(
                             b.Identifier('__stackForSensitiveContext'),
                             b.ArrayExpression([])
-                        ),
-                        b.VariableDeclarator(
-                            b.Identifier('__loopCountForSensitiveContext'),
-                            b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__newObjectIds'),
@@ -887,54 +849,59 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *   }
  *
  * after:
- *   while(condition) {
- *     let __loopLabel = 'loop' + label;
- *     __loopLabels.push(__loopLabel);
- *     if (__$__.Context.LoopContext[__loopLabel] === undefined)
- *         __$__.Context.LoopContext[__loopLabel] = 1;
- *     let __loopCount = ++__loopCounter[__loopLabel] || (__loopCounter[__loopLabel] = 1);
- *     if (__loopCount > 100){
- *         __$__.Context.InfLoop = __loopLabel;
- *         throw 'Infinite Loop';
- *     }
- *     let __start = __time_counter;
- *     let __startEndObject__ = {start: __time_counter};
- *     __time_counter_stack.push(__startEndObject__);
+ *   {
+ *       let __loopLabel = 'loop' + label;
+ *       __loopLabels.push(__loopLabel);
+ *       if (__$__.Context.LoopContext[__loopLabel] === undefined)
+ *           __$__.Context.LoopContext[__loopLabel] = 1;
+ *       __stackForSensitiveContext.push({
+ *           type: 'Loop',
+ *           label: __loopLabel,
+ *           count: 0
+ *       });
+ *       while(condition) {
+ *           let __loopCount = ++__loopCounter[__loopLabel] || (__loopCounter[__loopLabel] = 1);
+ *           if (__loopCount > 100){
+ *               __$__.Context.InfLoop = __loopLabel;
+ *               throw 'Infinite Loop';
+ *           }
+ *           let __start = __time_counter;
+ *           let __startEndObject__ = {start: __time_counter};
+ *           __time_counter_stack.push(__startEndObject__);
  *
- *     let __loopCounterForSensitiveContext = __stackForSensitiveContext.reduce((pv, frame) => pv[frame.label], __loopCountForSensitiveContext);
- *     __loopCounterForSensitiveContext[__loopLabel] = {count: 1 + (__loopCounterForSensitiveContext[__loopLabel]) ? __loopCounterForSensitiveContext[__loopLabel].count : 0};
- *     __stackForSensitiveContext.push({
- *         type: 'Loop',
- *         label: __loopLabel,
- *         count: __loopCounterForSensitiveContext[__loopLabel].count
- *     });
+ *           __stackForSensitiveContext.last().count++;
  *
- *     if (!__$__.Context.StartEndInLoop[__loopLabel])
- *       __$__.Context.StartEndInLoop[__loopLabel] = [];
- *     __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
+ *           if (!__$__.Context.StartEndInLoop[__loopLabel])
+ *               __$__.Context.StartEndInLoop[__loopLabel] = [];
+ *           __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *
- *     // there is following IfStatement in the case only of functions
- *     if (__newExpInfo.last()) {
- *       Object.setProperty(this, '__id', __newObjectIds.pop());
- *       __objs.push(this);
- *     }
+ *           // there is following IfStatement in the case only of functions
+ *           if (__newExpInfo.last()) {
+ *               Object.setProperty(this, '__id', __newObjectIds.pop());
+ *               __objs.push(this);
+ *           }
  *
- *     ...
+ *           ...
  *
- *     __startEndObject__.end = __time_counter-1;
- *     __time_counter_stack.pop();
- *     __stackForSensitiveContext.pop();
- *     __loopLabels.pop();
+ *         __startEndObject__.end = __time_counter-1;
+ *         __time_counter_stack.pop();
+ *       }
+ *       __stackForSensitiveContext.pop();
+ *       __loopLabels.pop();
  *   }
  *
  * __loopLabel is unique label
  */
 __$__.ASTTransforms.Context = function (checkInfLoop) {
     let b = __$__.ASTBuilder;
+    let id = 'context';
+    const loopLabels = "__loopLabels",
+          loopCount = "__loopCount",
+          loopCounter = "__$__.Context.__loopCounter",
+          loopContext = "LoopContext";
     return {
         enter(node, path) {
             if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
-                const loopLabels = "__loopLabels", loopCount = "__loopCount", loopCounter = "__$__.Context.__loopCounter", loopContext = "LoopContext";
 
                 // In this part, register the position of this loop.
                 // If already registered, use the label
@@ -980,6 +947,18 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 __$__.Context.ParentAndChildrenLoop[__$__.Context.ParentAndChildrenLoopStack.last()].children.push(label);
                 __$__.Context.ParentAndChildrenLoopStack.push(label);
 
+                return [id, {label: label, checkInfLoop: checkInfLoop}];
+            }
+        },
+        leave(node, path, enterData) {
+            if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
+                let data = enterData[id],
+                    label = data.label,
+                    checkInfLoop = data.checkInfLoop,
+                    notFunction = __$__.ASTTransforms.loopTypes[node.type];
+
+                __$__.Context.ParentAndChildrenLoopStack.pop();
+
 
                 // __startEndObject__.end = __time_counter-1;
                 node.body.body.push(
@@ -987,14 +966,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         b.Identifier('__startEndObject__.end = __time_counter-1')
                     )
                 );
-
-                // __stackForSensitiveContext.pop();
-                if (__$__.ASTTransforms.loopTypes[node.type])
-                    node.body.body.push(
-                        b.ExpressionStatement(
-                            b.Identifier('__stackForSensitiveContext.pop()')
-                        )
-                    );
 
                 // __time_counter_stack.pop();
                 node.body.body.push(
@@ -1004,11 +975,12 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 );
 
                 // __loopLabels.pop();
-                node.body.body.push(
-                    b.ExpressionStatement(
-                        b.Identifier('__loopLabels.pop()')
-                    )
-                );
+                if (!notFunction)
+                    node.body.body.push(
+                        b.ExpressionStatement(
+                            b.Identifier('__loopLabels.pop()')
+                        )
+                    );
 
                 /*
                  * // there if following IfStatement only in functions
@@ -1073,113 +1045,25 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     )
                 );
 
-                if (__$__.ASTTransforms.loopTypes[node.type]) {
-                    // __stackForSensitiveContext.push({
-                    //     type: 'Loop',
-                    //     label: __loopLabel,
-                    //     count: __loopCounterForSensitiveContext[__loopLabel].count
-                    // });
+                if (notFunction) {
+                    // __stackForSensitiveContext.last().count++;
                     node.body.body.unshift(
                         b.ExpressionStatement(
-                            b.CallExpression(
+                            b.UnaryExpression(
+                                '++',
                                 b.MemberExpression(
-                                    b.Identifier('__stackForSensitiveContext'),
-                                    b.Identifier('push')
-                                ),
-                                [b.ObjectExpression([
-                                    b.Property(
-                                        b.Identifier('type'),
-                                        b.Literal('Loop')
-                                    ),
-                                    b.Property(
-                                        b.Identifier('label'),
-                                        b.Identifier('__loopLabel')
-                                    ),
-                                    b.Property(
-                                        b.Identifier('count'),
+                                    b.CallExpression(
                                         b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__loopCounterForSensitiveContext'),
-                                                b.Identifier('__loopLabel'),
-                                                true
-                                            ),
-                                            b.Identifier('count')
-                                        )
-                                    )
-                                ])]
-                            )
-                        )
-                    );
-
-                    // __loopCounterForSensitiveContext[__loopLabel] = {count: 1 + ((__loopCounterForSensitiveContext[__loopLabel]) ? __loopCounterForSensitiveContext[__loopLabel].count : 0)};
-                    node.body.body.unshift(
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__loopCounterForSensitiveContext'),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                '=',
-                                b.ObjectExpression([
-                                    b.Property(
-                                        b.Identifier('count'),
-                                        b.BinaryExpression(
-                                            b.Literal(1),
-                                            '+',
-                                            b.ConditionalExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__loopCounterForSensitiveContext'),
-                                                    b.Identifier('__loopLabel'),
-                                                    true
-                                                ),
-                                                b.MemberExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__loopCounterForSensitiveContext'),
-                                                        b.Identifier('__loopLabel'),
-                                                        true
-                                                    ),
-                                                    b.Identifier('count')
-                                                ),
-                                                b.Literal(0)
-                                            )
-                                        )
-                                    )
-                                ])
-                            )
-                        )
-                    );
-
-                    // let __loopCounterForSensitiveContext = __stackForSensitiveContext.reduce((pv, frame) => pv[frame.label], __loopCountForSensitiveContext);
-                    node.body.body.unshift(
-                        b.VariableDeclaration([
-                            b.VariableDeclarator(
-                                b.Identifier('__loopCounterForSensitiveContext'),
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__stackForSensitiveContext'),
-                                        b.Identifier('reduce')
-                                    ),
-                                    [
-                                        b.ArrowFunctionExpression(
-                                            [
-                                                b.Identifier('pv'),
-                                                b.Identifier('frame')
-                                            ],
-                                            b.MemberExpression(
-                                                b.Identifier('pv'),
-                                                b.MemberExpression(
-                                                    b.Identifier('frame'),
-                                                    b.Identifier('label')
-                                                ),
-                                                true
-                                            )
+                                            b.Identifier('__stackForSensitiveContext'),
+                                            b.Identifier('last')
                                         ),
-                                        b.Identifier('__loopCountForSensitiveContext')
-                                    ]
-                                )
+                                        []
+                                    ),
+                                    b.Identifier('count')
+                                ),
+                                false
                             )
-                        ], 'let')
+                        )
                     );
                 }
 
@@ -1203,6 +1087,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         b.Identifier('let __start = __time_counter')
                     )
                 );
+
                 /**
                  *  if (__loopCount > 100) {
                  *      __$__.Context.InfLoop = __loopLabel;
@@ -1261,35 +1146,77 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     ], 'let')
                 );
 
-                // if (__$__.Context.LoopContext[__loopLabel] === undefined)
-                //     __$__.Context.LoopContext[__loopLabel] = 1;
-                node.body.body.unshift(
-                    b.ExpressionStatement(
-                        b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
-                    )
-                );
-
-                // __loopLabels.push(__loopLabel);
-                node.body.body.unshift(
-                    b.ExpressionStatement(
-                        b.Identifier('__loopLabels.push(__loopLabel)')
-                    )
-                );
-
-                // let __loopLabel = 'loop' + label;
-                node.body.body.unshift(
-                    b.VariableDeclaration([
-                        b.VariableDeclarator(
-                            b.Identifier('__loopLabel'),
-                            b.Literal(label)
+                if (!notFunction) {
+                    // if (__$__.Context.LoopContext[__loopLabel] === undefined)
+                    //     __$__.Context.LoopContext[__loopLabel] = 1;
+                    node.body.body.unshift(
+                        b.ExpressionStatement(
+                            b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
                         )
-                    ], 'let')
-                );
-            }
-        },
-        leave(node, path) {
-            if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
-                __$__.Context.ParentAndChildrenLoopStack.pop();
+                    );
+
+                    // __loopLabels.push(__loopLabel);
+                    node.body.body.unshift(
+                        b.ExpressionStatement(
+                            b.Identifier('__loopLabels.push(__loopLabel)')
+                        )
+                    );
+
+                    // let __loopLabel = 'loop' + label;
+                    node.body.body.unshift(
+                        b.VariableDeclaration([
+                            b.VariableDeclarator(
+                                b.Identifier('__loopLabel'),
+                                b.Literal(label)
+                            )
+                        ], 'let')
+                    );
+
+                } else {
+                    return b.BlockStatement([
+                        b.VariableDeclaration([
+                            b.VariableDeclarator(
+                                b.Identifier('__loopLabel'),
+                                b.Literal(label)
+                            )
+                        ], 'let'),
+                        b.ExpressionStatement(
+                            b.Identifier('__loopLabels.push(__loopLabel)')
+                        ),
+                        b.ExpressionStatement(
+                            b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
+                        ),
+                        b.ExpressionStatement(
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__stackForSensitiveContext'),
+                                    b.Identifier('push')
+                                ),
+                                [b.ObjectExpression([
+                                    b.Property(
+                                        b.Identifier('type'),
+                                        b.Literal('Loop')
+                                    ),
+                                    b.Property(
+                                        b.Identifier('label'),
+                                        b.Identifier('__loopLabel')
+                                    ),
+                                    b.Property(
+                                        b.Identifier('count'),
+                                        b.Literal(0)
+                                    )
+                                ])]
+                            )
+                        ),
+                        Object.assign({}, node),
+                        b.ExpressionStatement(
+                            b.Identifier('__stackForSensitiveContext.pop()')
+                        ),
+                        b.ExpressionStatement(
+                            b.Identifier('__loopLabels.pop()')
+                        )
+                    ]);
+                }
             }
         }
     };
