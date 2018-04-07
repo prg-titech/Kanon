@@ -16,6 +16,8 @@ __$__.Context = {
     LoopContext: {'noLoop': 1},
     ParentAndChildrenLoop: {noLoop: {child: []}},
     ParentAndChildrenLoopStack: ['noLoop'],
+    SensitiveContextForLoop: {},
+    BeforeSensitiveContextForLoop: {},
     Snapshot: true,
     SnapshotContext: {},
     StackToCheckLoop: ['noLoop'],
@@ -31,6 +33,7 @@ __$__.Context = {
         __$__.Context.CheckPointTable = {};
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
+        __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];

@@ -63,7 +63,24 @@ __$__.Update = {
             Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
                 if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
                     delete __$__.Context.LoopContext[loopLabel];
+                else {
+                    let beforeSensitiveContextForLoop = __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
+                    if (beforeSensitiveContextForLoop) {
+                        let sensitiveContext = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
+                        let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
+                        if (newSensitiveContextForLoop) {
+                            Object.keys(newSensitiveContextForLoop).forEach(num => {
+                                if (newSensitiveContextForLoop[num] === sensitiveContext) {
+                                    __$__.Context.LoopContext[loopLabel] = parseInt(num);
+                                }
+                            });
+                        }
+                    }
+                }
             });
+
+
+            __$__.Context.BeforeSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop;
 
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
