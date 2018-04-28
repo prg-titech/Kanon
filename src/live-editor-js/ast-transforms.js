@@ -890,6 +890,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *     ...
  *   }
  *
+ *
  * after:
  *   {
  *       let __loopLabel = 'loop' + label;
@@ -944,6 +945,69 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *   }
  *
  * __loopLabel is unique label
+ *
+ * // TODO: use try-catch-finally to manage loops
+ * after:
+ *     {
+ *         let __loopLabel = 'loop' + label;
+ *         __loopLabels.push(__loopLabel);
+ *         if (__$__.Context.LoopContext[__loopLabel] === undefined)
+ *             __$__.Context.LoopContext[__loopLabel] = 1;
+ *         __stackForSensitiveContext.push({
+ *             type: 'Loop',
+ *             label: __loopLabel,
+ *             count: 0
+ *         });
+ *         if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
+ *             __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
+ *
+ *         try {
+ *             while (condition) {
+ *                 let __loopCount = ++__loopCounter[__loopLabel] || (__loopCounter[__loopLabel] = 1);
+ *                 if (__loopCount > 100){
+ *                     __$__.Context.InfLoop = __loopLabel;
+ *                     throw 'Infinite Loop';
+ *                 }
+ *                 let __start = __time_counter;
+ *                 let __startEndObject__ = {start: __time_counter};
+ *                 __time_counter_stack.push(__startEndObject__);
+ *
+ *                 __stackForSensitiveContext.last().count++;
+ *                 __$__.Context.SensitiveContextForLoop[__loopLabel][__loopCount] = __stackForSensitiveContext.reduce((context, frame) => {
+ *                     if (frame.type === 'Loop') {
+ *                         return context + frame.label + '-' + frame.count + '-';
+ *                     } else if (frame.type === 'FunctionCall' || frame.type === 'newExp') {
+ *                         return context + frame.label + '-';
+ *                     } else {
+ *                         return context;
+ *                     }
+ *                 }, '');
+ *
+ *                 if (!__$__.Context.StartEndInLoop[__loopLabel])
+ *                     __$__.Context.StartEndInLoop[__loopLabel] = [];
+ *                 __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
+ *
+ *                 // there is following IfStatement in the case only of functions
+ *                 if (__newExpInfo.last()) {
+ *                 Object.setProperty(this, '__id', __newObjectIds.pop());
+ *                 __objs.push(this);
+ *
+ *                 try {
+ *                     ....
+ *                 } catch (e) {
+ *                     throw e;
+ *                 } finally {
+ *                     __startEndObject__.end = __time_counter-1;
+ *                     __time_counter_stack.pop();
+ *                 }
+ *             }
+ *         } catch (e) {
+ *             throw e;
+ *         } finally {
+ *             __stackForSensitiveContext.pop();
+ *             __loopLabels.pop();
+ *         }
+ *     }
  */
 __$__.ASTTransforms.Context = function (checkInfLoop) {
     let b = __$__.ASTBuilder;
@@ -952,11 +1016,12 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
           loopCount = "__loopCount",
           loopCounter = "__$__.Context.__loopCounter",
           loopContext = "LoopContext";
+    let labelCount = 0;
     return {
         enter(node, path) {
             if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
 
-                // In this part, register the position of this loop.
+
                 // If already registered, use the label
                 let label;
                 Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
@@ -1005,6 +1070,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
         },
         leave(node, path, enterData) {
             if (__$__.ASTTransforms.Loop[node.type] && node.loc) {
+                let parent = path[path.length - 2];
                 let data = enterData[id],
                     label = data.label,
                     checkInfLoop = data.checkInfLoop,
@@ -1385,6 +1451,14 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     );
 
                 } else {
+                    let labelCounter;
+                    if (parent.type === 'LabeledStatement') {
+                        let label = parent.label;
+                        parent.label = b.Identifier('______' + ++labelCount);
+                        labelCounter = b.LabeledStatement(label, Object.assign({}, node));
+                    } else {
+                        labelCounter = Object.assign({}, node);
+                    }
                     return b.BlockStatement([
                         b.VariableDeclaration([
                             b.VariableDeclarator(
@@ -1456,7 +1530,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                 ])]
                             )
                         ),
-                        Object.assign({}, node),
+                        labelCounter,
                         b.ExpressionStatement(
                             b.Identifier('__stackForSensitiveContext.pop()')
                         ),
@@ -1708,6 +1782,20 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     return __temp;
                  *     checkpoint;
                  * }
+                 *
+                 * // after
+                 * {
+                 *     checkpoint;
+                 *     let __temp = hoge;
+                 *     __time_counter_stack.last().end = __time_counter-1;
+                 *     __time_counter_stack.pop();
+                 *     while (__loopLabels.pop().indexOf('Statement') >= 0) {
+                 *         out_loop
+                 *     }
+                 *     __$__.Context.ChangedGraph = true;
+                 *     return __temp;
+                 *     checkpoint;
+                 * }
                  */
                 if (node.type === 'ReturnStatement') {
                     return b.BlockStatement([
@@ -1718,8 +1806,41 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 node.argument
                             )
                         ], 'let'),
-                        b.DoWhileStatement(
-                            out_loop(),
+                        b.ExpressionStatement(
+                            b.AssignmentExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__time_counter_stack'),
+                                        b.BinaryExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__time_counter_stack'),
+                                                b.Identifier('length')
+                                            ),
+                                            '-',
+                                            b.Literal(1)
+                                        ),
+                                        true
+                                    ),
+                                    b.Identifier('end')
+                                ),
+                                '=',
+                                b.BinaryExpression(
+                                    b.Identifier('__time_counter'),
+                                    '-',
+                                    b.Literal(1)
+                                )
+                            )
+                        ),
+                        b.ExpressionStatement(
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.Identifier('pop')
+                                ),
+                                []
+                            )
+                        ),
+                        b.WhileStatement(
                             b.BinaryExpression(
                                 b.CallExpression(
                                     b.MemberExpression(
@@ -1736,7 +1857,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 ),
                                 '>=',
                                 b.Literal(0)
-                            )
+                            ),
+                            out_loop()
                         ),
                         changedGraphStmt(),
                         b.ReturnStatement(
@@ -1751,9 +1873,14 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * // after
                  * {
                  *     checkpoint;
-                 *     do {
+                 *     __time_counter_stack.last().end = __time_counter-1;
+                 *     __time_counter_stack.pop();
+                 *     // while (__loopLabels.pop().indexOf(label) === -1) {
+                 *     while (__loopLabels.last().indexOf(label) === -1) {
+                 *     // while (__loopLabels.length >= 2 && __loopLabels[__loopLabels.length - 2].indexOf(label) === 0) {
+                 *         __loopLabels.pop();
                  *         out_loop
-                 *     } while (__loopLabels.pop().indexOf(label) === 0)
+                 *     }
                  *     __$__.Context.ChangedGraph = true;
                  *     continue label; (or break label;)
                  *     checkpoint;
@@ -1762,15 +1889,48 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 } else if (('ContinueStatement' === node.type || 'BreakStatement' === node.type) && node.label && node.label.name) {
                     return b.BlockStatement([
                         checkPoint(start, data),
-                        b.DoWhileStatement(
-                            out_loop(),
+                        b.ExpressionStatement(
+                            b.AssignmentExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__time_counter_stack'),
+                                        b.BinaryExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__time_counter_stack'),
+                                                b.Identifier('length')
+                                            ),
+                                            '-',
+                                            b.Literal(1)
+                                        ),
+                                        true
+                                    ),
+                                    b.Identifier('end')
+                                ),
+                                '=',
+                                b.BinaryExpression(
+                                    b.Identifier('__time_counter'),
+                                    '-',
+                                    b.Literal(1)
+                                )
+                            )
+                        ),
+                        b.ExpressionStatement(
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__time_counter_stack'),
+                                    b.Identifier('pop')
+                                ),
+                                []
+                            )
+                        ),
+                        b.WhileStatement(
                             b.BinaryExpression(
                                 b.CallExpression(
                                     b.MemberExpression(
                                         b.CallExpression(
                                             b.MemberExpression(
                                                 b.Identifier('__loopLabels'),
-                                                b.Identifier('pop')
+                                                b.Identifier('last')
                                             ),
                                             []
                                         ),
@@ -1784,7 +1944,61 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     b.Literal(1),
                                     true
                                 )
-                            )
+                            ),
+                            b.BlockStatement([
+                                b.ExpressionStatement(
+                                    b.CallExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__loopLabels'),
+                                            b.Identifier('pop')
+                                        ),
+                                        []
+                                    )
+                                ),
+                                b.ExpressionStatement(
+                                    b.AssignmentExpression(
+                                        b.MemberExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__time_counter_stack'),
+                                                b.BinaryExpression(
+                                                    b.MemberExpression(
+                                                        b.Identifier('__time_counter_stack'),
+                                                        b.Identifier('length')
+                                                    ),
+                                                    '-',
+                                                    b.Literal(1)
+                                                ),
+                                                true
+                                            ),
+                                            b.Identifier('end')
+                                        ),
+                                        '=',
+                                        b.BinaryExpression(
+                                            b.Identifier('__time_counter'),
+                                            '-',
+                                            b.Literal(1)
+                                        )
+                                    )
+                                ),
+                                b.ExpressionStatement(
+                                    b.CallExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__time_counter_stack'),
+                                            b.Identifier('pop')
+                                        ),
+                                        []
+                                    )
+                                ),
+                                b.ExpressionStatement(
+                                    b.CallExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__stackForSensitiveContext'),
+                                            b.Identifier('pop')
+                                        ),
+                                        []
+                                    )
+                                )
+                            ])
                         ),
                         changedGraphStmt(),
                         Object.assign({}, node),
@@ -1797,8 +2011,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * // after
                  * {
                  *     checkpoint;
-                 *     out_loop;
-                 *     __loopLabels.pop();
+                 *     __time_counter_stack.last().end = __time_counter-1;
+                 *     __time_counter_stack.pop();
                  *     __$__.Context.ChangedGraph = true;
                  *     continue; (or break;)
                  *     checkpoint;
@@ -1807,11 +2021,35 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 } else if ('ContinueStatement' === node.type || 'BreakStatement' === node.type) {
                     return b.BlockStatement([
                         checkPoint(start, data),
-                        out_loop(),
+                        b.ExpressionStatement(
+                            b.AssignmentExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__time_counter_stack'),
+                                        b.BinaryExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__time_counter_stack'),
+                                                b.Identifier('length')
+                                            ),
+                                            '-',
+                                            b.Literal(1)
+                                        ),
+                                        true
+                                    ),
+                                    b.Identifier('end')
+                                ),
+                                '=',
+                                b.BinaryExpression(
+                                    b.Identifier('__time_counter'),
+                                    '-',
+                                    b.Literal(1)
+                                )
+                            )
+                        ),
                         b.ExpressionStatement(
                             b.CallExpression(
                                 b.MemberExpression(
-                                    b.Identifier('__loopLabels'),
+                                    b.Identifier('__time_counter_stack'),
                                     b.Identifier('pop')
                                 ),
                                 []

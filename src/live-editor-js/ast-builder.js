@@ -179,6 +179,18 @@ __$__.ASTBuilder = {
     },
 
     /**
+     * @param {Identifier} label
+     * @param {Statement} body
+     */
+    LabeledStatement(label, body) {
+        return {
+            type: "LabeledStatement",
+            label: label,
+            body: body
+        };
+    },
+
+    /**
      * @param {Number|String|boolean|null|RegExp} value
      */
     Literal(value) {
