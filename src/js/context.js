@@ -12,6 +12,7 @@ __$__.Context = {
         Obj: {},
         New: {}
     },
+    LastCPID: undefined,
     LastGraph: undefined,
     LoopContext: {'noLoop': 1},
     ParentAndChildrenLoop: {noLoop: {child: []}},
@@ -31,6 +32,7 @@ __$__.Context = {
         __$__.Context.Arrays = [];
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
+        __$__.Context.LastCPID = undefined;
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
         __$__.Context.SensitiveContextForLoop = {};
@@ -53,6 +55,7 @@ __$__.Context = {
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
     CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo) {
+        __$__.Context.LastCPID = checkPointId;
 
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
     
@@ -146,13 +149,20 @@ __$__.Context = {
 
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, graph;
+            let showLightly = false;
             try {
                 if (checkPointId.afterId &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].column === cursorPos.column &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1)
+                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1) {
                     cpID = checkPointId.afterId;
-                else
+                } else {
                     cpID = checkPointId.beforeId;
+                }
+
+                if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastCPID) {
+                    showLightly = true;
+                    cpID = __$__.Context.LastCPID;
+                }
 
                 try {
                     loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
@@ -176,6 +186,11 @@ __$__.Context = {
             }
 
             __$__.StorePositions.setPositions(graph);
+
+            __$__.options.nodes.color.border = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
+            __$__.options.nodes.color.background = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
+            __$__.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
+            __$__.network.setOptions(__$__.options);
 
             let isChanged = false;
 
@@ -327,8 +342,7 @@ __$__.Context = {
                         label: label,
                         physics: false,
                         color: __$__.SummarizedViewColor.AddNode
-                        }
-                    );
+                    });
                 }
             });
     

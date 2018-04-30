@@ -2,14 +2,24 @@ __$__.container = document.getElementById('mynetwork');
 __$__.nodes = new vis.DataSet({});
 __$__.edges = new vis.DataSet({});
 __$__.data = {nodes: __$__.nodes, edges: __$__.edges};
+__$__.colorRGB = {
+    skyblue: '135,206,235'
+};
 __$__.options = {
     autoResize: false,
     nodes: {
-        color: 'skyblue'
+        color: {
+            border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
+            background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
+        }
+        // color: 'skyblue'
     },
     edges: {
         arrows: 'to',
-        color: 'skyblue',
+        color: {
+            color: 'skyblue',
+            opacity: 1.0
+        },
         width: 3,
         smooth: {
             enabled: true,

@@ -1,5 +1,6 @@
 __$__.ASTTransforms = {
     checkPoint_idCounter: 1, // this is used to count id of each check point
+    pairCPID: {}, // {int to int}
     stmtTypes: {
         ExpressionStatement: true,
         BlockStatement: true,
@@ -1798,6 +1799,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * }
                  */
                 if (node.type === 'ReturnStatement') {
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                     return b.BlockStatement([
                         checkPoint(start, data),
                         b.VariableDeclaration([
@@ -1887,6 +1890,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * }
                  */
                 } else if (('ContinueStatement' === node.type || 'BreakStatement' === node.type) && node.label && node.label.name) {
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                     return b.BlockStatement([
                         checkPoint(start, data),
                         b.ExpressionStatement(
@@ -2019,6 +2024,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * }
                  */
                 } else if ('ContinueStatement' === node.type || 'BreakStatement' === node.type) {
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                     return b.BlockStatement([
                         checkPoint(start, data),
                         b.ExpressionStatement(
@@ -2061,6 +2068,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     ]);
                 } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)
                            || node.type === 'ClassDeclaration') {
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                     return [
                         checkPoint(start, data),
                         Object.assign({}, node),
@@ -2069,6 +2078,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     ];
                 } else if (node.type === 'VariableDeclarator') {
                     if (node.init) {
+                        __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                        __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         let expression = Object.assign({}, node.init);
                         let name = node.id.name;
 
@@ -2098,7 +2109,9 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                     if (!__$__.ASTTransforms.loopTypes[node.type] || parent.type !== 'LabeledStatement') {
                         let parent = path[path.length - 2];
                         if (parent && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
-                            if (node.type === 'BlockStatement')
+                            if (node.type === 'BlockStatement') {
+                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return [
                                     changedGraphStmt(),
                                     checkPoint(start, data),
@@ -2106,16 +2119,21 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     changedGraphStmt(),
                                     checkPoint(end, variables)
                                 ];
-                            else
+                            } else {
+                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return [
                                     checkPoint(start, data),
                                     Object.assign({}, node),
                                     changedGraphStmt(),
                                     checkPoint(end, variables)
                                 ];
+                            }
                         }
 
-                        if (node.type === 'BlockStatement')
+                        if (node.type === 'BlockStatement') {
+                            __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                            __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                             return b.BlockStatement([
                                 changedGraphStmt(),
                                 checkPoint(start, data),
@@ -2123,13 +2141,16 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 changedGraphStmt(),
                                 checkPoint(end, variables)
                             ]);
-                        else
+                        } else {
+                            __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                            __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                             return b.BlockStatement([
                                 checkPoint(start, data),
                                 Object.assign({}, node),
                                 changedGraphStmt(),
                                 checkPoint(end, variables)
                             ]);
+                        }
                     }
                 }
             }

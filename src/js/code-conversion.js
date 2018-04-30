@@ -23,6 +23,7 @@ __$__.CodeConversion = {
             __$__.walkAST(ast, null, visitors);
 
         } else {
+            __$__.ASTTransforms.pairCPID = {};
             visitors.push(tf.InsertCheckPoint());
             __$__.walkAST(ast, null, visitors);
     

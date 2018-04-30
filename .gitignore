@@ -1,2 +1,3 @@
 node_modules/
 *-darwin-x64/
+.idea/

@@ -38,7 +38,7 @@ __$__.Update = {
                 } else {
                     __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    throw e;
+                    // throw e;
                 }
             }
             __$__.Context.Initialize();
@@ -56,7 +56,7 @@ __$__.Update = {
                 } else {
                     __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    throw e;
+                    // throw e;
                 }
             }
 
