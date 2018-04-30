@@ -1776,18 +1776,6 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * {
                  *     checkpoint;
                  *     let __temp = hoge;
-                 *     do {
-                 *         out_loop
-                 *     } while (__loopLabels.pop().indexOf('Statement') >= 0)
-                 *     __$__.Context.ChangedGraph = true;
-                 *     return __temp;
-                 *     checkpoint;
-                 * }
-                 *
-                 * // after
-                 * {
-                 *     checkpoint;
-                 *     let __temp = hoge;
                  *     __time_counter_stack.last().end = __time_counter-1;
                  *     __time_counter_stack.pop();
                  *     while (__loopLabels.pop().indexOf('Statement') >= 0) {
@@ -1795,7 +1783,6 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     }
                  *     __$__.Context.ChangedGraph = true;
                  *     return __temp;
-                 *     checkpoint;
                  * }
                  */
                 if (node.type === 'ReturnStatement') {
@@ -1866,8 +1853,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         changedGraphStmt(),
                         b.ReturnStatement(
                             b.Identifier('__temp')
-                        ),
-                        checkPoint(end, variables)
+                        )
                     ]);
                 /**
                  * // before
