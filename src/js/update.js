@@ -3,6 +3,7 @@ __$__.Update = {
     wait: false,
     updateValueOfArray: true,
     onlyMoveCursor: false,
+    executable: true,
     
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
@@ -50,7 +51,13 @@ __$__.Update = {
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
+                if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable) {
+                    __$__.Context.LoopContext = __$__.Context.LoopContextWhenExecutable;
+                    __$__.Update.executable = true;
+                }
+                __$__.Context.LoopContextWhenExecutable = Object.assign({}, __$__.Context.LoopContext);
             } catch (e) {
+                __$__.Update.executable = false;
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {

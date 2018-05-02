@@ -14,7 +14,9 @@ __$__.Context = {
     },
     LastCPID: undefined,
     LastGraph: undefined,
+    // LastCPId: undefined,
     LoopContext: {'noLoop': 1},
+    LoopContextWhenExecutable: undefined,
     ParentAndChildrenLoop: {noLoop: {child: []}},
     ParentAndChildrenLoopStack: ['noLoop'],
     SensitiveContextForLoop: {},
@@ -121,6 +123,7 @@ __$__.Context = {
         }
     
         __$__.Context.LastGraph = storedGraph;
+        // __$__.Context.LastCPId = checkPointId;
     },
     
     
@@ -145,7 +148,7 @@ __$__.Context = {
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
         let cursorPos = __$__.editor.getCursorPosition();
-        let checkPointId = __$__.Context.FindId(cursorPos);
+        let checkPointId = __$__.Context.CheckPointAroundCursor = __$__.Context.FindId(cursorPos);
 
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, graph;
@@ -187,8 +190,7 @@ __$__.Context = {
 
             __$__.StorePositions.setPositions(graph);
 
-            __$__.options.nodes.color.border = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
-            __$__.options.nodes.color.background = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
+            __$__.options.nodes.color = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
             __$__.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
             __$__.network.setOptions(__$__.options);
 
@@ -377,7 +379,7 @@ __$__.Context = {
     },
     
     
-    FindId: function(pos) {
+    FindId: function(pos = __$__.editor.getCursorPosition()) {
         let before;
         let after;
         let res = {};
@@ -409,10 +411,13 @@ __$__.Context = {
         let elem = document.getElementById('viewmode');
     
         elem.textContent = (isSnapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
-        if (isSnapshot)
+        if (isSnapshot) {
             __$__.Context.SnapshotContext = {};
+        }
+        __$__.options.manipulation.enabled = isSnapshot;
+        __$__.network.setOptions(__$__.options);
     },
-    
+
 
     /**
      * @param {string} loopLabel
@@ -527,6 +532,8 @@ __$__.Context = {
     setLoopContext: function(label, ope, n) {
         let prog = '__$__.Context.LoopContext[label] ' + ope + ' ' + n + ';';
         eval(prog);
+        if (__$__.Update.executable)
+            eval('__$__.Context.LoopContextWhenExecutable[label]' + ope + ' ' + n + ';');
         __$__.ShowContext.update(label);
     },
 

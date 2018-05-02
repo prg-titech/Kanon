@@ -8,17 +8,19 @@ __$__.colorRGB = {
 __$__.options = {
     autoResize: false,
     nodes: {
-        color: {
-            border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
-            background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
-        }
-        // color: 'skyblue'
+        // color: {
+        //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
+        //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
+        // }
+        color: 'skyblue'
     },
     edges: {
         arrows: 'to',
         color: {
             color: 'skyblue',
-            opacity: 1.0
+            opacity: 1.0,
+            highlight: 'skyblue',
+            hover: 'skyblue'
         },
         width: 3,
         smooth: {
@@ -29,12 +31,23 @@ __$__.options = {
     },
     physics: {
         enabled: true
-    // },
-    // interaction: {
-    //     zoomView: false
+    },
+    interaction: {
+        hover: true
+        // zoomView: false
+    },
+    manipulation: {
+        enabled: true,
+        initiallyActive: true,
+        addNode: false,
+        addEdge: __$__.Manipulate.addEdge,
+        editEdge: __$__.Manipulate.editEdge,
+        deleteNode: false,
+        deleteEdge: false
     }
 };
 __$__.arraySize = 12;
+
 __$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
 __$__.network.on('doubleClick', __$__.JumpToConstruction.ClickEventFunction);
 __$__.network.on('dragStart', params => {
@@ -52,6 +65,7 @@ __$__.network.on('dragEnd', params => {
 __$__.network.on('dragging', __$__.Update.updateArray);
 __$__.network.on('dragEnd', __$__.Update.updateArray);
 __$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
+
 __$__.StorePositions.registerPositions();
 __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
 
