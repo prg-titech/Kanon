@@ -62,8 +62,8 @@ __$__.network.on('dragEnd', params => {
         __$__.nodes.update({id: nodeId, fixed: true})
     }
 });
-__$__.network.on('dragging', __$__.Update.updateArray);
-__$__.network.on('dragEnd', __$__.Update.updateArray);
+__$__.network.on('dragging', __$__.Update.updateArrayPosition);
+__$__.network.on('dragEnd', __$__.Update.updateArrayPosition);
 __$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
 
 __$__.StorePositions.registerPositions();

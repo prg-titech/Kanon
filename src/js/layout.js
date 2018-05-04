@@ -448,7 +448,7 @@ __$__.Layout = {
             __$__.Update.updateValueOfArray = true;
             document.getElementById('autoLayout').textContent = 'ON';
         }
-        __$__.Update.updateArrayValue();
+        __$__.Update.updateArrayValuePosition();
         __$__.Update.ContextUpdate();
     }
 };

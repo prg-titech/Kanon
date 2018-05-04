@@ -204,7 +204,7 @@ __$__.Context = {
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
                 __$__.Animation.setData(graph);
                 __$__.Context.Arrays.forEach(arr => {
-                    __$__.Update.updateArray({nodes: [arr[0]]});
+                    __$__.Update.updateArrayPosition({nodes: [arr[0]]});
                 });
                 __$__.StorePositions.registerPositions();
             }

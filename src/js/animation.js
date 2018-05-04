@@ -25,7 +25,7 @@ __$__.Animation = {
             let currentTime = (new Date).getTime();
             if (currentTime - startTime >= ms) {
                 __$__.network.moveNode(id, to.x, to.y);
-                __$__.Update.updateArray({nodes: [id]});
+                __$__.Update.updateArrayPosition({nodes: [id]});
                 __$__.StorePositions.registerPositions();
                 clearInterval(interval);
                 return;
@@ -36,7 +36,7 @@ __$__.Animation = {
             }
             
             __$__.network.moveNode(id, pos.x + Math.floor(delta.x * (currentTime - startTime) / ms), pos.y + Math.floor(delta.y * (currentTime - startTime) / ms));
-            __$__.Update.updateArray({nodes: [id]});
+            __$__.Update.updateArrayPosition({nodes: [id]});
             __$__.StorePositions.registerPositions();
         }, 1);
     },
@@ -81,7 +81,7 @@ __$__.Animation = {
             if (pos[label])
                 __$__.network.moveNode(label, pos[label].x, pos[label].y);
         });
-        __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArray({nodes: [arr[0]]})});
+        __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArrayPosition({nodes: [arr[0]]})});
         if (nextPos.length) {
             __$__.Animation.nowAnimationID++;
             nextPos.forEach(pos => {

@@ -145,7 +145,7 @@ __$__.Update = {
                 });
     
                 if (__$__.Update.updateValueOfArray)
-                    __$__.Update.updateArrayValue();
+                    __$__.Update.updateArrayValuePosition();
     
                 __$__.Update.wait = false;
                 __$__.StorePositions.registerPositions(true);
@@ -153,7 +153,8 @@ __$__.Update = {
             };
     
             __$__.Context.Arrays.forEach(array => {
-                __$__.Update.updateArray({nodes: [array[0]]});
+                if (array.length)
+                    __$__.Update.updateArrayPosition({nodes: [array[0]]});
             });
 
             __$__.Update.wait = true;
@@ -384,7 +385,7 @@ __$__.Update = {
         return ret;
     },
 
-    updateArray: params => {
+    updateArrayPosition: params => {
         if (params.nodes.length > 0) {
             let id = params.nodes[0];
             let arr_label;
@@ -394,13 +395,13 @@ __$__.Update = {
             __$__.Context.ArrayLabels.forEach(arr_l => {
                 if (id.indexOf(arr_l) >= 0) {
                     arr_label = arr_l;
-                    isBlock = id.indexOf('@block@') >= 0;
+                    isBlock = id.indexOf('@block') >= 0;
                 }
             });
 
             if (isBlock) {
                 let arrayLabels = Object.keys(__$__.network.body.data.nodes._data).filter(label => {
-                    return label.indexOf(arr_label + '@block@') >= 0;
+                    return label.indexOf(arr_label + '@block') >= 0;
                 });
                 let idx0 = arrayLabels.indexOf(id);
                 let pos = __$__.network.getPositions(id)[id];
@@ -409,12 +410,12 @@ __$__.Update = {
                 }
 
                 if (__$__.Update.updateValueOfArray)
-                    __$__.Update.updateArrayValue(arrayLabels);
+                    __$__.Update.updateArrayValuePosition(arrayLabels);
             }
         }
     },
 
-    updateArrayValue: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block@') >= 0;})) => {
+    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block') >= 0;})) => {
         Object.values(__$__.edges._data).forEach(edge => {
             let index = arrayBlocks.indexOf(edge.from);
 

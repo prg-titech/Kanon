@@ -1,20 +1,6 @@
 __$__.langTools = ace.require('ace/ext/language_tools');
 __$__.editor = ace.edit("editor");
 __$__.editor.setOption('enableBasicAutocompletion', true);
-let staticWordCompleter = {
-    getCompletions: function(editor, session, pos, prefix, callback) {
-        let wordList = ["foo", "bar", "baz"];
-        callback(null, wordList.map(function(word) {
-            return {
-                caption: word,
-                value: word,
-                meta: "static"
-            };
-        }));
-
-    }
-};
-__$__.langTools.setCompleters([staticWordCompleter]);
 __$__.startAutocomplete = __$__.editor.keyBinding.$handlers[0].commands.startAutocomplete.exec;
 
 if (window.localStorage["Kanon-Code"] && window.localStorage["Kanon-Code"].indexOf('__$__') === -1)
