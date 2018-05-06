@@ -118,7 +118,7 @@ __$__.Manipulate = {
 
                             to[nodeId2].forEach(labels_r => {
                                 let exp_r = labels_r.label.join('.');
-                                let score_r = labels_l.label.length;
+                                let score_r = labels_r.label.length;
                                 if (labels_r.label[0] === 'this') score_r += 0.2;
 
                                 let score = score_l + score_r;
@@ -126,7 +126,7 @@ __$__.Manipulate = {
                                     // score_l: score_l,
                                     // score_r: score_r,
                                     prop: prop,
-                                    score: 10 - score,
+                                    score: -score,
                                     stmt: exp_l + ' = ' + exp_r + ';',
                                     exp_l: exp_l,
                                     exp_r: exp_r
