@@ -1039,7 +1039,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 if (!label) {
                     let i = 1;
                     let loopLabel;
-                    while(!label) {
+                    while (!label) {
                         loopLabel = node.type + i;
                         if (!__$__.Context.LabelPos.Loop[loopLabel])
                             break;
@@ -1054,9 +1054,9 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
 
                 if (node.body.type !== "BlockStatement") {
                     if (node.type === 'ArrowFunctionExpression') {
-                        let retState = b.ReturnStatement(node.body);
-                        retState.loc = "";
-                        node.body = b.BlockStatement([retState]);
+                        let retStmt = b.ReturnStatement(node.body);
+                        retStmt.loc = node.body.loc;
+                        node.body = b.BlockStatement([retStmt]);
                         node.expression = false;
                     } else
                         node.body = b.BlockStatement([node.body]);
@@ -1612,6 +1612,17 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 });
             }
 
+            if (__$__.ASTTransforms.Loop[node.type] && node.loc && node.body.type !== "BlockStatement") {
+                if (node.type === 'ArrowFunctionExpression') {
+                    let retStmt = b.ReturnStatement(node.body);
+                    retStmt.loc = node.body.loc;
+                    node.body = b.BlockStatement([retStmt]);
+                    node.expression = false;
+                } else
+                    node.body = b.BlockStatement([node.body]);
+            }
+
+
             if (node.type === 'ForStatement' || node.type === 'ForInStatement') {
                 env.push(new __$__.Probe.BlockFlame());
             }
@@ -1629,7 +1640,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 env.pop();
             }
 
-            if (__$__.ASTTransforms.stmtTypes[node.type] || node.type === 'VariableDeclarator') {
+            if (node.loc && __$__.ASTTransforms.stmtTypes[node.type] || node.type === 'VariableDeclarator') {
                 let start = node.loc.start;
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
@@ -1783,6 +1794,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  *     }
                  *     __$__.Context.ChangedGraph = true;
                  *     return __temp;
+                 *     checkpoint;
                  * }
                  */
                 if (node.type === 'ReturnStatement') {
@@ -1853,7 +1865,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         changedGraphStmt(),
                         b.ReturnStatement(
                             b.Identifier('__temp')
-                        )
+                        ),
+                        checkPoint(end, data)
                     ]);
                 /**
                  * // before
