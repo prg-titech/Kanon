@@ -112,7 +112,9 @@ __$__.Manipulate = {
                 Object.keys(to).forEach(nodeId2 => {
                     if (nodeId2.slice(0, 11) === '__Variable-') {
                         from[nodeId1].forEach(labels_l => {
-                            let exp_l = labels_l.label.join('.') + '.' + ((prop) ? __$__.edges._data[prop].label : '${0:prop}');
+                            if (!labels_l.length && nodeId1 === '__Variable-this')
+                                return;
+                            let exp_l = labels_l.label.concat([((prop) ? __$__.edges._data[prop].label : '${0:prop}')]).join('.');
                             let score_l = labels_l.label.length;
                             if (labels_l.label[0] === 'this') score_l += 0.2;
 
