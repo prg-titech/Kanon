@@ -160,6 +160,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                             pos.end.column === node.loc.end.column) {
                         label = labelName;
                         pos.useLabel = true;
+                        pos.closed = true;
                     }
                 });
                 // the case of not registered yet.
@@ -173,6 +174,7 @@ __$__.ASTTransforms.CollectObjects = function() {
                     }
                     c.LabelPos[label] = node.loc;
                     c.LabelPos[label].useLabel = true;
+                    c.LabelPos[label].closed = true;
                 }
 
                 return b.CallExpression(
@@ -478,6 +480,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                             pos.end.column === node.loc.end.column) {
                         label = callLabel;
                         pos.useLabel = true;
+                        pos.closed = true;
                     }
                 });
                 // the case of not registered yet.
@@ -490,6 +493,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
                     }
                     __$__.Context.LabelPos.Call[label] = node.loc;
                     __$__.Context.LabelPos.Call[label].useLabel = true;
+                    __$__.Context.LabelPos.Call[label].closed = true;
                 }
 
                 return b.CallExpression(
@@ -1033,6 +1037,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                             pos.end.column === node.loc.end.column) {
                         label = loopLabel;
                         pos.useLabel = true;
+                        if (checkInfLoop)
+                            pos.closed = node.body.type === 'BlockStatement';
                     }
                 });
                 // the case that the Label have not been registered yet.
@@ -1050,6 +1056,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         label += '-' + path[path.length - 2].label.name;
                     __$__.Context.LabelPos.Loop[label] = node.loc;
                     __$__.Context.LabelPos.Loop[label].useLabel = true;
+                    if (checkInfLoop)
+                        __$__.Context.LabelPos.Loop[label].closed = node.body.type === 'BlockStatement';
                 }
 
                 if (node.body.type !== "BlockStatement") {

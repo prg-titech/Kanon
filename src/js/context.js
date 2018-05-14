@@ -162,7 +162,7 @@ __$__.Context = {
                     cpID = checkPointId.beforeId;
                 }
 
-                if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastCPID) {
+                if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastCPID && !__$__.Update.executable) {
                     showLightly = true;
                     cpID = __$__.Context.LastCPID;
                 }
@@ -550,7 +550,7 @@ __$__.Context = {
 
             let loop = __$__.Context.LabelPos.Loop[loopLabel];
 
-            if (compare(loop.start, "<", cursor) && compare(cursor, "<", loop.end)) {
+            if (compare(loop.start, "<", cursor) && compare(cursor, (loop.closed) ? "<" : "<=", loop.end)) {
                 checkProperty.forEach(prop => {
                     // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
                     let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabels[prop]];

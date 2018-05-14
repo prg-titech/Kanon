@@ -278,68 +278,40 @@ __$__.Update = {
         let end = {line: e.end.row + 1, column: e.end.column};
         let compare = __$__.Update.ComparePosition;
     
-        let modify_by_insert = function(pos) {
-            // if inserted code is the upper part of the loop
-            if (compare(start, '<=', pos.start)) {
-                if (pos.start.line === start.line) {
-                    if (e.lines.length > 1) {
-                        pos.start.column -= start.column;
-                    }
-                    pos.start.column += e.lines.last().length;
-                }
-                if (pos.end.line === start.line) {
-                    if (e.lines.length > 1) {
-                        pos.end.column -= start.column;
-                    }
-                    pos.end.column += e.lines.last().length;
-                }
-
-                pos.start.line += e.lines.length - 1;
-                pos.end.line   += e.lines.length - 1;
-            } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                if (pos.end.line === start.line) {
-                    if (e.lines.length > 1) {
-                        pos.end.column -= start.column;
-                    }
-                    pos.end.column += e.lines.last().length;
-                }
-
-                pos.end.line += e.lines.length - 1;
-            }
-        };
-        let modify_by_remove = function(pos) {
-            // if removed code is the upper part of the loop
-            if (compare(end, '<=', pos.start)) {
-                if (pos.start.line === end.line) {
-                    if (e.lines.length > 1) {
-                        pos.start.column += start.column;
-                    }
-                    pos.start.column -= e.lines.last().length;
-                }
-                if (pos.end.line === end.line) {
-                    if (e.lines.length > 1) {
-                        pos.end.column += start.column;
-                    }
-                    pos.end.column -= e.lines.last().length;
-                }
-    
-                pos.start.line -= e.lines.length - 1;
-                pos.end.line   -= e.lines.length - 1;
-            } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                if (pos.end.line === end.line) {
-                    if (e.lines.length > 1) {
-                        pos.end.column += start.column;
-                    }
-                    pos.end.column -= e.lines.last().length;
-                }
-
-                pos.end.line   -= e.lines.length - 1;
-            } else if (compare(start, '<', pos.start) && compare(pos.end, '<', end)) { // if removed code is the outer part of the loop
-                return true;
-            }
-        };
-    
         if (e.action === 'insert') {
+            let modify_by_insert = function(pos) {
+                // if inserted code is the upper part of the loop
+                if (compare(start, '<=', pos.start)) {
+                    if (pos.start.line === start.line) {
+                        if (e.lines.length > 1) {
+                            pos.start.column -= start.column;
+                        }
+                        pos.start.column += e.lines.last().length;
+                    }
+                    if (pos.end.line === start.line) {
+                        if (e.lines.length > 1) {
+                            pos.end.column -= start.column;
+                        }
+                        pos.end.column += e.lines.last().length;
+                    }
+
+                    pos.start.line += e.lines.length - 1;
+                    pos.end.line   += e.lines.length - 1;
+                } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
+                    if (pos.end.line === start.line) {
+                        if (e.lines.length > 1) {
+                            pos.end.column -= start.column;
+                        }
+                        pos.end.column += e.lines.last().length;
+                    }
+
+                    pos.end.line += e.lines.length - 1;
+                } else if (compare(start, '==', pos.end) && !pos.closed) {
+                    let space = e.lines[0].indexOf(' ');
+                    pos.end.column += (space !== -1 ? space : e.lines[0].length);
+                }
+            };
+
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
@@ -347,6 +319,41 @@ __$__.Update = {
                 });
             });
         } else { // e.action == 'remove'
+            let modify_by_remove = function(pos) {
+                // if removed code is the upper part of the loop
+                if (compare(end, '<=', pos.start)) {
+                    if (pos.start.line === end.line) {
+                        if (e.lines.length > 1) {
+                            pos.start.column += start.column;
+                        }
+                        pos.start.column -= e.lines.last().length;
+                    }
+                    if (pos.end.line === end.line) {
+                        if (e.lines.length > 1) {
+                            pos.end.column += start.column;
+                        }
+                        pos.end.column -= e.lines.last().length;
+                    }
+
+                    pos.start.line -= e.lines.length - 1;
+                    pos.end.line   -= e.lines.length - 1;
+                } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
+                    if (pos.end.line === end.line) {
+                        if (e.lines.length > 1) {
+                            pos.end.column += start.column;
+                        }
+                        pos.end.column -= e.lines.last().length;
+                    }
+
+                    pos.end.line   -= e.lines.length - 1;
+                } else if (compare(start, '<', pos.start) && compare(pos.end, '<', end)) { // if removed code is the outer part of the loop
+                    return true;
+                } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
+                    pos.end.column = start.column;
+                    pos.end.line -= e.lines.length - 1;
+                }
+            };
+
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
