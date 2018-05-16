@@ -346,7 +346,7 @@ __$__.Update = {
                     }
 
                     pos.end.line   -= e.lines.length - 1;
-                } else if (compare(start, '<', pos.start) && compare(pos.end, '<', end)) { // if removed code is the outer part of the loop
+                } else if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) { // if removed code is the outer part of the loop
                     return true;
                 } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
                     pos.end.column = start.column;
