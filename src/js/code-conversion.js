@@ -19,7 +19,7 @@ __$__.CodeConversion = {
     
         if (checkInfLoop) {
             visitors.push(tf.Context(true));
-            visitors.push(tf.AddSomeCodeInHeadAndTail());
+            visitors.push(tf.AddSomeCodeInHead());
             __$__.walkAST(ast, null, visitors);
 
         } else {
@@ -30,7 +30,7 @@ __$__.CodeConversion = {
             visitors = [];
     
             visitors.push(tf.BlockedProgram());
-            visitors.push(tf.AddSomeCodeInHeadAndTail());
+            visitors.push(tf.AddSomeCodeInHead());
             visitors.push(tf.Context());
             visitors.push(tf.CallExpressionToFunction());
             visitors.push(tf.CollectObjects());
