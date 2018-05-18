@@ -52,6 +52,9 @@ __$__.Update = {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
                 if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable) {
+                    Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+                        __$__.Context.LoopContextWhenExecutable[loopLabel] = __$__.Context.LoopContextWhenExecutable[loopLabel] ||  __$__.Context.LoopContext[loopLabel];
+                    });
                     __$__.Context.LoopContext = __$__.Context.LoopContextWhenExecutable;
                     __$__.Update.executable = true;
                 }
