@@ -695,8 +695,6 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
 /**
  * try {
  *     body; (program)
- * } catch (__e__) {
- *     throw __e__;
  * } finally {
  *     __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
  * }
@@ -709,14 +707,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
                 node.body = [
                     b.TryStatement(
                         b.BlockStatement(node.body),
-                        b.CatchClause(
-                            b.Identifier('__e__'),
-                            b.BlockStatement([
-                                b.ThrowStatement(
-                                    b.Identifier('__e__')
-                                )
-                            ])
-                        ),
+                        undefined,
                         b.BlockStatement([
                             b.ExpressionStatement(
                                 b.Identifier("__$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1")
@@ -780,8 +771,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *       }
  *       try {
  *           ... (body)
- *       } catch (e) {
- *           throw e;
  *       } finally {
  *           __startEndObject__.end = __time_counter - 1;
  *           __time_counter_stack.pop();
@@ -846,15 +835,11 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *
  *                 try {
  *                     ... (body of the loop)
- *                 } catch (e) {
- *                     throw e;
  *                 } finally {
  *                     __startEndObject__.end = __time_counter-1;
  *                     __time_counter_stack.pop();
  *                 }
  *             }
- *         } catch (e) {
- *             throw e;
  *         } finally {
  *             __stackForSensitiveContext.pop();
  *             __loopLabels.pop();
@@ -951,22 +936,31 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         )
                     );
 
-                let body = Object.assign({}, node.body);
 
+                let newBlockStmt = b.BlockStatement([]);
                 if (isFunction) {
-                    node.body = b.BlockStatement([
+                    newBlockStmt.body.push(
                         b.VariableDeclaration([
                             b.VariableDeclarator(
                                 b.Identifier('__loopLabel'),
                                 b.Literal(label)
                             )
-                        ], 'let'),
+                        ], 'let')
+                    );
+
+                    newBlockStmt.body.push(
                         b.ExpressionStatement(
                             b.Identifier('__loopLabels.push(__loopLabel)')
                         ),
+                    );
+
+                    newBlockStmt.body.push(
                         b.ExpressionStatement(
                             b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
-                        ),
+                        )
+                    );
+
+                    newBlockStmt.body.push(
                         b.IfStatement(
                             b.UnaryExpression(
                                 '!',
@@ -1000,368 +994,128 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                     b.ObjectExpression([])
                                 )
                             )
-                        ),
-                        b.VariableDeclaration([
-                            b.VariableDeclarator(
-                                b.Identifier(loopCount),
-                                b.BinaryExpression(
-                                    b.UnaryExpression(
-                                        '++',
-                                        b.MemberExpression(
-                                            b.Identifier(loopCounter),
-                                            b.Identifier('__loopLabel'),
-                                            true
-                                        ),
-                                        true
-                                    ),
-                                    '||',
-                                    b.AssignmentExpression(
-                                        b.MemberExpression(
-                                            b.Identifier(loopCounter),
-                                            b.Identifier('__loopLabel'),
-                                            true
-                                        ),
-                                        '=',
-                                        b.Literal(1)
-                                    )
-                                )
-                            )
-                        ], 'let'),
-                        b.IfStatement(
+                        )
+                    );
+                }
+
+                newBlockStmt.body.push(
+                    b.VariableDeclaration([
+                        b.VariableDeclarator(
+                            b.Identifier(loopCount),
                             b.BinaryExpression(
-                                b.Identifier(loopCount),
-                                ">",
-                                b.Literal(100)
-                            ),
-                            b.BlockStatement([
-                                b.ExpressionStatement(
-                                    b.AssignmentExpression(
-                                        b.Identifier('__$__.Context.InfLoop'),
-                                        '=',
-                                        b.Identifier('__loopLabel')
-                                    )
-                                ),
-                                b.ThrowStatement(
-                                    b.Literal('Infinite Loop')
-                                )
-                            ])
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('let __start = __time_counter')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('let __startEndObject__ = {start: __time_counter}')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__time_counter_stack.push(__startEndObject__)')
-                        ),
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
-                                b.MemberExpression(
+                                b.UnaryExpression(
+                                    '++',
                                     b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__$__'),
-                                                b.Identifier('Context')
-                                            ),
-                                            b.Identifier('SensitiveContextForLoop')
-                                        ),
+                                        b.Identifier(loopCounter),
                                         b.Identifier('__loopLabel'),
                                         true
                                     ),
-                                    b.Identifier('__loopCount'),
                                     true
                                 ),
-                                '=',
-                                b.CallExpression(
+                                '||',
+                                b.AssignmentExpression(
                                     b.MemberExpression(
-                                        b.Identifier('__stackForSensitiveContext'),
-                                        b.Identifier('reduce')
-                                    ),
-                                    [b.ArrowFunctionExpression(
-                                        [
-                                            b.Identifier('context'),
-                                            b.Identifier('frame')
-                                        ],
-                                        b.BlockStatement([
-                                            b.IfStatement(
-                                                b.BinaryExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('frame'),
-                                                        b.Identifier('type')
-                                                    ),
-                                                    '===',
-                                                    b.Literal('Loop')
-                                                ),
-                                                b.ReturnStatement(
-                                                    b.BinaryExpression(
-                                                        b.BinaryExpression(
-                                                            b.BinaryExpression(
-                                                                b.BinaryExpression(
-                                                                    b.Identifier('context'),
-                                                                    '+',
-                                                                    b.MemberExpression(
-                                                                        b.Identifier('frame'),
-                                                                        b.Identifier('label')
-                                                                    )
-                                                                ),
-                                                                '+',
-                                                                b.Literal('-')
-                                                            ),
-                                                            '+',
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('count')
-                                                            )
-                                                        ),
-                                                        '+',
-                                                        b.Literal('-')
-                                                    )
-                                                ),
-                                                b.IfStatement(
-                                                    b.BinaryExpression(
-                                                        b.BinaryExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('type')
-                                                            ),
-                                                            '===',
-                                                            b.Literal('FunctionCall')
-                                                        ),
-                                                        '||',
-                                                        b.BinaryExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('type')
-                                                            ),
-                                                            '===',
-                                                            b.Literal('newExp')
-                                                        )
-                                                    ),
-                                                    b.ReturnStatement(
-                                                        b.BinaryExpression(
-                                                            b.BinaryExpression(
-                                                                b.Identifier('context'),
-                                                                '+',
-                                                                b.MemberExpression(
-                                                                    b.Identifier('frame'),
-                                                                    b.Identifier('label')
-                                                                )
-                                                            ),
-                                                            '+',
-                                                            b.Literal('-')
-                                                        )
-                                                    ),
-                                                    b.ReturnStatement(
-                                                        b.Identifier('context')
-                                                    )
-                                                )
-                                            )
-                                        ])
-                                    ), b.Literal('')]
-                                )
-                            )
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__)')
-                        ),
-                        b.IfStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__newExpInfo'),
-                                    b.Identifier('last')
-                                ), []
-                            ),
-                            b.BlockStatement([
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('Object'),
-                                            b.Identifier('setProperty')
-                                        ), [
-                                            b.Identifier('this'),
-                                            b.Literal('__id'),
-                                            b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__newObjectIds'),
-                                                    b.Identifier('pop')
-                                                ),
-                                                []
-                                            )
-                                        ]
-                                    )
-                                ),
-                                b.ExpressionStatement(
-                                    // b.Identifier('__objs.push(this)')
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__objs'),
-                                            b.Identifier('push')
-                                        ),
-                                        [b.Identifier('this')]
-                                    )
-                                )
-                            ])
-                        ),
-                        b.TryStatement(
-                            body,
-                            b.CatchClause(
-                                b.Identifier('e'),
-                                b.BlockStatement([
-                                    b.ThrowStatement(
-                                        b.Identifier('e')
-                                    )
-                                ])
-                            ),
-                            b.BlockStatement(finallyBody)
-                        )
-                    ]);
-                } else {
-                    node.body = b.BlockStatement([
-                        b.VariableDeclaration([
-                            b.VariableDeclarator(
-                                b.Identifier(loopCount),
-                                b.BinaryExpression(
-                                    b.UnaryExpression(
-                                        '++',
-                                        b.MemberExpression(
-                                            b.Identifier(loopCounter),
-                                            b.Identifier('__loopLabel'),
-                                            true
-                                        ),
+                                        b.Identifier(loopCounter),
+                                        b.Identifier('__loopLabel'),
                                         true
                                     ),
-                                    '||',
-                                    b.AssignmentExpression(
-                                        b.MemberExpression(
-                                            b.Identifier(loopCounter),
-                                            b.Identifier('__loopLabel'),
-                                            true
-                                        ),
-                                        '=',
-                                        b.Literal(1)
-                                    )
+                                    '=',
+                                    b.Literal(1)
                                 )
                             )
-                        ], 'let'),
-                        b.IfStatement(
-                            b.BinaryExpression(
-                                b.Identifier(loopCount),
-                                ">",
-                                b.Literal(100)
-                            ),
-                            b.BlockStatement([
-                                b.ExpressionStatement(
-                                    b.AssignmentExpression(
-                                        b.Identifier('__$__.Context.InfLoop'),
-                                        '=',
-                                        b.Identifier('__loopLabel')
-                                    )
-                                ),
-                                b.ThrowStatement(
-                                    b.Literal('Infinite Loop')
+                        )
+                    ], 'let')
+                );
+
+                newBlockStmt.body.push(
+                    b.IfStatement(
+                        b.BinaryExpression(
+                            b.Identifier(loopCount),
+                            ">",
+                            b.Literal(100)
+                        ),
+                        b.BlockStatement([
+                            b.ExpressionStatement(
+                                b.AssignmentExpression(
+                                    b.Identifier('__$__.Context.InfLoop'),
+                                    '=',
+                                    b.Identifier('__loopLabel')
                                 )
-                            ])
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('let __start = __time_counter')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('let __startEndObject__ = {start: __time_counter}')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__time_counter_stack.push(__startEndObject__)')
-                        ),
+                            ),
+                            b.ThrowStatement(
+                                b.Literal('Infinite Loop')
+                            )
+                        ])
+                    )
+                );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('let __start = __time_counter')
+                    ),
+                );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('let __startEndObject__ = {start: __time_counter}')
+                    ),
+                );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('__time_counter_stack.push(__startEndObject__)')
+                    ),
+                );
+
+                if (!isFunction)
+                    newBlockStmt.body.push(
                         b.ExpressionStatement(
                             b.Identifier('++__stackForSensitiveContext.last().count')
-                        ),
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
+                        )
+                    );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.AssignmentExpression(
+                            b.MemberExpression(
                                 b.MemberExpression(
                                     b.MemberExpression(
                                         b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__$__'),
-                                                b.Identifier('Context')
-                                            ),
-                                            b.Identifier('SensitiveContextForLoop')
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
                                         ),
-                                        b.Identifier('__loopLabel'),
-                                        true
+                                        b.Identifier('SensitiveContextForLoop')
                                     ),
-                                    b.Identifier('__loopCount'),
+                                    b.Identifier('__loopLabel'),
                                     true
                                 ),
-                                '=',
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__stackForSensitiveContext'),
-                                        b.Identifier('reduce')
-                                    ),
-                                    [b.ArrowFunctionExpression(
-                                        [
-                                            b.Identifier('context'),
-                                            b.Identifier('frame')
-                                        ],
-                                        b.BlockStatement([
-                                            b.IfStatement(
+                                b.Identifier('__loopCount'),
+                                true
+                            ),
+                            '=',
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__stackForSensitiveContext'),
+                                    b.Identifier('reduce')
+                                ),
+                                [b.ArrowFunctionExpression(
+                                    [
+                                        b.Identifier('context'),
+                                        b.Identifier('frame')
+                                    ],
+                                    b.BlockStatement([
+                                        b.IfStatement(
+                                            b.BinaryExpression(
+                                                b.MemberExpression(
+                                                    b.Identifier('frame'),
+                                                    b.Identifier('type')
+                                                ),
+                                                '===',
+                                                b.Literal('Loop')
+                                            ),
+                                            b.ReturnStatement(
                                                 b.BinaryExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('frame'),
-                                                        b.Identifier('type')
-                                                    ),
-                                                    '===',
-                                                    b.Literal('Loop')
-                                                ),
-                                                b.ReturnStatement(
                                                     b.BinaryExpression(
-                                                        b.BinaryExpression(
-                                                            b.BinaryExpression(
-                                                                b.BinaryExpression(
-                                                                    b.Identifier('context'),
-                                                                    '+',
-                                                                    b.MemberExpression(
-                                                                        b.Identifier('frame'),
-                                                                        b.Identifier('label')
-                                                                    )
-                                                                ),
-                                                                '+',
-                                                                b.Literal('-')
-                                                            ),
-                                                            '+',
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('count')
-                                                            )
-                                                        ),
-                                                        '+',
-                                                        b.Literal('-')
-                                                    )
-                                                ),
-                                                b.IfStatement(
-                                                    b.BinaryExpression(
-                                                        b.BinaryExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('type')
-                                                            ),
-                                                            '===',
-                                                            b.Literal('FunctionCall')
-                                                        ),
-                                                        '||',
-                                                        b.BinaryExpression(
-                                                            b.MemberExpression(
-                                                                b.Identifier('frame'),
-                                                                b.Identifier('type')
-                                                            ),
-                                                            '===',
-                                                            b.Literal('newExp')
-                                                        )
-                                                    ),
-                                                    b.ReturnStatement(
                                                         b.BinaryExpression(
                                                             b.BinaryExpression(
                                                                 b.Identifier('context'),
@@ -1373,75 +1127,128 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                                             ),
                                                             '+',
                                                             b.Literal('-')
+                                                        ),
+                                                        '+',
+                                                        b.MemberExpression(
+                                                            b.Identifier('frame'),
+                                                            b.Identifier('count')
                                                         )
                                                     ),
-                                                    b.ReturnStatement(
-                                                        b.Identifier('context')
+                                                    '+',
+                                                    b.Literal('-')
+                                                )
+                                            ),
+                                            b.IfStatement(
+                                                b.BinaryExpression(
+                                                    b.BinaryExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('frame'),
+                                                            b.Identifier('type')
+                                                        ),
+                                                        '===',
+                                                        b.Literal('FunctionCall')
+                                                    ),
+                                                    '||',
+                                                    b.BinaryExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('frame'),
+                                                            b.Identifier('type')
+                                                        ),
+                                                        '===',
+                                                        b.Literal('newExp')
                                                     )
+                                                ),
+                                                b.ReturnStatement(
+                                                    b.BinaryExpression(
+                                                        b.BinaryExpression(
+                                                            b.Identifier('context'),
+                                                            '+',
+                                                            b.MemberExpression(
+                                                                b.Identifier('frame'),
+                                                                b.Identifier('label')
+                                                            )
+                                                        ),
+                                                        '+',
+                                                        b.Literal('-')
+                                                    )
+                                                ),
+                                                b.ReturnStatement(
+                                                    b.Identifier('context')
                                                 )
                                             )
-                                        ])
-                                    ), b.Literal('')]
+                                        )
+                                    ])
+                                ), b.Literal('')]
+                            )
+                        )
+                    )
+                );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
+                    )
+                );
+
+                newBlockStmt.body.push(
+                    b.ExpressionStatement(
+                        b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__)')
+                    )
+                );
+
+                newBlockStmt.body.push(
+                    b.IfStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__newExpInfo'),
+                                b.Identifier('last')
+                            ), []
+                        ),
+                        b.BlockStatement([
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('Object'),
+                                        b.Identifier('setProperty')
+                                    ), [
+                                        b.Identifier('this'),
+                                        b.Literal('__id'),
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__newObjectIds'),
+                                                b.Identifier('pop')
+                                            ),
+                                            []
+                                        )
+                                    ]
+                                )
+                            ),
+                            b.ExpressionStatement(
+                                // b.Identifier('__objs.push(this)')
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__objs'),
+                                        b.Identifier('push')
+                                    ),
+                                    [b.Identifier('this')]
                                 )
                             )
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = []')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__)')
-                        ),
-                        b.IfStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__newExpInfo'),
-                                    b.Identifier('last')
-                                ), []
-                            ),
-                            b.BlockStatement([
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('Object'),
-                                            b.Identifier('setProperty')
-                                        ), [
-                                            b.Identifier('this'),
-                                            b.Literal('__id'),
-                                            b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__newObjectIds'),
-                                                    b.Identifier('pop')
-                                                ),
-                                                []
-                                            )
-                                        ]
-                                    )
-                                ),
-                                b.ExpressionStatement(
-                                    // b.Identifier('__objs.push(this)')
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__objs'),
-                                            b.Identifier('push')
-                                        ),
-                                        [b.Identifier('this')]
-                                    )
-                                )
-                            ])
-                        ),
-                        b.TryStatement(
-                            body,
-                            b.CatchClause(
-                                b.Identifier('e'),
-                                b.BlockStatement([
-                                    b.ThrowStatement(
-                                        b.Identifier('e')
-                                    )
-                                ])
-                            ),
-                            b.BlockStatement(finallyBody)
-                        )
-                    ]);
+                        ])
+                    )
+                );
+
+                newBlockStmt.body.push(
+                    b.TryStatement(
+                        Object.assign({}, node.body),
+                        undefined,
+                        b.BlockStatement(finallyBody)
+                    )
+                );
+
+
+                node.body = newBlockStmt;
+
+                if (!isFunction) {
 
                     let stmt;
 
@@ -1466,8 +1273,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         b.ExpressionStatement(
                             b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
                         ),
-                        // if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
-                        //     __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
                         b.IfStatement(
                             b.UnaryExpression(
                                 '!',
@@ -1526,14 +1331,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         ),
                         b.TryStatement(
                             b.BlockStatement([stmt]),
-                            b.CatchClause(
-                                b.Identifier('e'),
-                                b.BlockStatement([
-                                    b.ThrowStatement(
-                                        b.Identifier('e')
-                                    )
-                                ])
-                            ),
+                            undefined,
                             b.BlockStatement([
                                 b.ExpressionStatement(
                                     b.Identifier('__stackForSensitiveContext.pop()')
