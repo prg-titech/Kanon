@@ -13,8 +13,8 @@ __$__.Context = {
         New: {}
     },
     LastCPID: undefined,
+    LastInfo: {},
     LastGraph: undefined,
-    // LastCPId: undefined,
     LoopContext: {'noLoop': 1},
     LoopContextWhenExecutable: undefined,
     ParentAndChildrenLoop: {noLoop: {child: []}},
@@ -35,6 +35,7 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointTable = {};
         __$__.Context.LastCPID = undefined;
+        __$__.Context.LastInfo = {};
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
         __$__.Context.SensitiveContextForLoop = {};
@@ -58,6 +59,11 @@ __$__.Context = {
      */
     CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo) {
         __$__.Context.LastCPID = checkPointId;
+        __$__.Context.LastInfo = {
+            CPID: checkPointId,
+            loopLabel: loopLabel,
+            loopCount: count
+        };
 
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
     
@@ -123,7 +129,6 @@ __$__.Context = {
         }
     
         __$__.Context.LastGraph = storedGraph;
-        // __$__.Context.LastCPId = checkPointId;
     },
     
     
@@ -162,14 +167,20 @@ __$__.Context = {
                     cpID = checkPointId.beforeId;
                 }
 
-                if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastCPID && !__$__.Update.executable) {
-                    showLightly = true;
-                    cpID = __$__.Context.LastCPID;
-                }
-
                 try {
                     loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
                     count = __$__.Context.LoopContext[loopLabel];
+
+                    if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastInfo.CPID &&
+                        loopLabel === __$__.Context.LastInfo.loopLabel &&
+                        count === __$__.Context.LastInfo.loopCount &&
+                        !__$__.Update.executable) {
+                        showLightly = true;
+                        cpID = __$__.Context.LastCPID;
+                        loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                        count = __$__.Context.LoopContext[loopLabel];
+                    }
+
                     graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
                 } catch (e) {
                     // if (!__$__.Update.onlyMoveCursor) {
@@ -271,16 +282,23 @@ __$__.Context = {
                     let changeEdgeData = {};
     
                     beforeGraph.edges.forEach(edge => {
-                        changeEdgeData[[edge.from, edge.to, edge.label].toString()] = false;
+                        if (edge.from.slice(0, 11) === '__Variable-')
+                            return;
+
+                        let edgeData = [edge.from, edge.to, edge.label].toString();
+                        changeEdgeData[edgeData] = false;
                     });
     
                     afterGraph.edges.forEach(edge => {
-                        let data = [edge.from, edge.to, edge.label].toString();
+                        if (edge.from.slice(0, 11) === '__Variable-')
+                            return;
+
+                        let edgeData = [edge.from, edge.to, edge.label].toString();
     
-                        if (changeEdgeData[data] === false)
-                            delete changeEdgeData[data];
-                        else if (changeEdgeData[data] === undefined)
-                            changeEdgeData[data] = true;
+                        if (changeEdgeData[edgeData] === false)
+                            delete changeEdgeData[edgeData];
+                        else if (changeEdgeData[edgeData] === undefined)
+                            changeEdgeData[edgeData] = true;
                     });
     
                     Object.keys(changeEdgeData).forEach(data => {
@@ -288,7 +306,7 @@ __$__.Context = {
                             addedEdgeData.push(data.split(','));
                         else
                             removedEdgeData.push(data.split(','));
-                    })
+                    });
                 }
             }
     
