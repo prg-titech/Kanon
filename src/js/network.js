@@ -38,7 +38,6 @@ __$__.options = {
     },
     manipulation: {
         enabled: true,
-        initiallyActive: true,
         addNode: false,
         addEdge: __$__.Manipulate.addEdge,
         editEdge: __$__.Manipulate.editEdge,
