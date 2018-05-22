@@ -50,15 +50,14 @@ __$__.Update = {
             __objs = [];
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
+                __$__.Update.executable = true;
                 __$__.Context.InfLoop = '';
                 if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable) {
                     Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
                         __$__.Context.LoopContextWhenExecutable[loopLabel] = __$__.Context.LoopContextWhenExecutable[loopLabel] ||  __$__.Context.LoopContext[loopLabel];
                     });
                     __$__.Context.LoopContext = __$__.Context.LoopContextWhenExecutable;
-                    __$__.Update.executable = true;
                 }
-                __$__.Context.LoopContextWhenExecutable = Object.assign({}, __$__.Context.LoopContext);
             } catch (e) {
                 __$__.Update.executable = false;
                 if (e === 'Infinite Loop') {
@@ -66,7 +65,6 @@ __$__.Update = {
                 } else {
                     __$__.Context.InfLoop = '';
                     document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    // throw e;
                 }
             }
 
@@ -74,13 +72,18 @@ __$__.Update = {
                 if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
                     delete __$__.Context.LoopContext[loopLabel];
                 else {
-                    let beforeSensitiveContextForLoop = __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
+                    let beforeSensitiveContextForLoop =
+                        (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
+                            __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
+                            __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
+
                     if (beforeSensitiveContextForLoop) {
-                        let sensitiveContext = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
+                        let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
                         let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
+
                         if (newSensitiveContextForLoop) {
                             Object.keys(newSensitiveContextForLoop).forEach(num => {
-                                if (newSensitiveContextForLoop[num] === sensitiveContext) {
+                                if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
                                     __$__.Context.LoopContext[loopLabel] = parseInt(num);
                                 }
                             });
@@ -90,6 +93,10 @@ __$__.Update = {
             });
 
 
+            if (__$__.Update.executable) {
+                __$__.Context.SensitiveContextForLoopWhenExecutable = Object.assign({}, __$__.Context.SensitiveContextForLoop);
+                __$__.Context.LoopContextWhenExecutable = Object.assign({}, __$__.Context.LoopContext);
+            }
             __$__.Context.BeforeSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop;
 
 

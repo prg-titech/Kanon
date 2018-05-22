@@ -20,6 +20,7 @@ __$__.Context = {
     ParentAndChildrenLoop: {noLoop: {child: []}},
     ParentAndChildrenLoopStack: ['noLoop'],
     SensitiveContextForLoop: {},
+    SensitiveContextForLoopWhenExecutable: undefined,
     BeforeSensitiveContextForLoop: {},
     Snapshot: true,
     SnapshotContext: {},
