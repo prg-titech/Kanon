@@ -21,6 +21,8 @@ __$__.Update = {
         try {
             let __objs = [];
             let __transformed_code__;
+
+            // fist code conversion
             try {
                 __transformed_code__ = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
             } catch (e) {
@@ -29,6 +31,9 @@ __$__.Update = {
                     document.getElementById('console').textContent += ': ' + e.message;
                 throw e;
             }
+
+            // first execution of the converted program
+            // here, we check whether the program includes infinite loops.
             try {
                 (() => {eval(__transformed_code__)})();
                 document.getElementById('console').textContent = '';
@@ -44,10 +49,15 @@ __$__.Update = {
             }
             __$__.Context.Initialize();
             __$__.JumpToConstruction.resetGraphData();
+
+            // second code conversion
             __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
 
-            // var __objs;
             __objs = [];
+            // second execution of the converted program
+            // here, we collect constructed objects in the program
+            // and duplicate object structure graphs at each checkpoint
+            // inserted before and after all statements.
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Update.executable = true;
@@ -68,6 +78,8 @@ __$__.Update = {
                 }
             }
 
+            // check preserving user's mental map by using context-sensitive ID.
+            // if necessary, we change the loop count in order to preserve the mental map.
             Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
                 if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
                     delete __$__.Context.LoopContext[loopLabel];
@@ -101,6 +113,7 @@ __$__.Update = {
 
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
+
 
             __$__.ShowContext.makeDictionary();
 
@@ -150,7 +163,7 @@ __$__.Update = {
                 __$__.options.edges.hidden = false;
                 __$__.network.setOptions(__$__.options);
                 __$__.nodes.forEach(node => {
-                    if (node.id.slice(0, 11) !== '--Variable-')
+                    if (node.id.slice(0, 11) !== '__Variable-')
                         __$__.nodes.update({id: node.id, fixed: true});
                 });
     
@@ -179,6 +192,7 @@ __$__.Update = {
             }
             __$__.Update.wait = true;
         }
+
         try {
             __$__.ShowContext.show();
         } catch (e) {}

@@ -1600,7 +1600,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         let expression = Object.assign({}, node.init);
-                        let name = node.id.name;
+                        // let name = node.id.name;
 
                         node.init = b.CallExpression(
                             b.ArrowFunctionExpression(
@@ -1609,14 +1609,14 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                     checkPoint(node.init.loc.start, data),
                                     b.VariableDeclaration([
                                         b.VariableDeclarator(
-                                            b.Identifier(name),
+                                            b.Identifier('__temp'),
                                             expression
                                         )
                                     ], 'var'),
                                     changedGraphStmt(),
                                     checkPoint(node.init.loc.end, variables),
                                     b.ReturnStatement(
-                                        b.Identifier(name)
+                                        b.Identifier('__temp')
                                     )
                                 ])
                             ),
