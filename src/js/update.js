@@ -60,7 +60,6 @@ __$__.Update = {
             // inserted before and after all statements.
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
-                __$__.Update.executable = true;
                 __$__.Context.InfLoop = '';
                 if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable) {
                     Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
@@ -68,6 +67,7 @@ __$__.Update = {
                     });
                     __$__.Context.LoopContext = __$__.Context.LoopContextWhenExecutable;
                 }
+                __$__.Update.executable = true;
             } catch (e) {
                 __$__.Update.executable = false;
                 if (e === 'Infinite Loop') {
