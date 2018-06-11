@@ -919,6 +919,9 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
 
                 __$__.Context.ParentAndChildrenLoopStack.pop();
 
+                // if (node.type is 'funcitondeclaration' or 'functionexpression'or ...,
+                // then, node.params is the parameters of the function
+
 
                 let finallyBody = [
                     b.ExpressionStatement(
@@ -929,16 +932,29 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     )
                 ];
 
-                if (isFunction)
-                    finallyBody.push(
-                        b.ExpressionStatement(
-                            b.Identifier('__loopLabels.pop()')
-                        )
-                    );
-
 
                 let newBlockStmt = b.BlockStatement([]);
                 if (isFunction) {
+					finallyBody.push(
+						b.ExpressionStatement(
+							b.Identifier('__loopLabels.pop()')
+						)
+					);
+
+					newBlockStmt.body.push(
+					    b.FunctionDeclaration(
+								node.params.map(x => b.Identifier(x)),
+                                node.body.map(x => b.BlockStatement(x))
+                        )
+                    );
+
+					newBlockStmt.body.push(
+					    b.FunctionExpression(
+					        node.params.map(x => b.Identifier(x)),
+                            node.body.map(x => b.BlockStatement(x))
+                        )
+                    );
+
                     newBlockStmt.body.push(
                         b.VariableDeclaration([
                             b.VariableDeclarator(

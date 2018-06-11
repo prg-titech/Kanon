@@ -138,6 +138,17 @@ __$__.ASTBuilder = {
         }
     },
 
+    FunctionDeclaration(params, body){
+        return {
+            type: "FunctionDeclaration",
+            id: null,
+            params: params,
+            body: body,
+            generator: false,
+            expression: false,
+        }
+    },
+
     /**
      * @param {string} id
      * @param {Array} params
