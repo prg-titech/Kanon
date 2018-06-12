@@ -52,7 +52,10 @@ __$__.ASTTransforms = {
 };
 
 /**
- * before: new Hoge(arg1, ...)
+ * In this visitor a program is converted as the follow example.
+ * This visitor is executed when the traversing AST leaved a node whose type is NewExpression, ArrayExpression, or ObjectExpression.
+ *
+ * before: new Class(arg1, ...)
  *
  * after:  (() => {
  *             var __newObjectId = '';
@@ -75,7 +78,7 @@ __$__.ASTTransforms = {
  *                 type: 'newExp',
  *                 label: 'unique Id'
  *             });
- *             var __temp = new Hoge(arg1, ...);
+ *             var __temp = new Class(arg1, ...);
  *             __stackForSensitiveContext.pop();
  *             __newExpInfo.pop();
  *             if (!__temp.__id) {
@@ -769,6 +772,11 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *           Object.setProperty(this, '__id', __newObjectIds.pop());
  *           __objs.push(this);
  *       }
+ *       // TODO
+ *       __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
+ *       __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
+ *       __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
+ *
  *       try {
  *           ... (body)
  *       } finally {
@@ -800,6 +808,10 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         });
  *         if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
  *             __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
+ *         // TODO
+ *         __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
+ *         __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
+ *         __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
  *
  *         try {
  *             while (condition) {
@@ -1237,6 +1249,27 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     )
                 );
 
+                if (isFunction) {
+                    // __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
+                    // __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
+                    // __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
+                    newBlockStmt.body.push(
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true')
+                        )
+                    );
+                    newBlockStmt.body.push(
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}}')
+                        )
+                    );
+                    newBlockStmt.body.push(
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;')
+                        )
+                    );
+                }
+
                 newBlockStmt.body.push(
                     b.TryStatement(
                         Object.assign({}, node.body),
@@ -1328,6 +1361,15 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                     )
                                 ])]
                             )
+                        ),
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true')
+                        ),
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}}')
+                        ),
+                        b.ExpressionStatement(
+                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;')
                         ),
                         b.TryStatement(
                             b.BlockStatement([stmt]),
@@ -1520,12 +1562,12 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 
                 /**
                  * // before
-                 * return hoge;
+                 * return ret;
                  *
                  * // after
                  * {
                  *     checkpoint;
-                 *     let __temp = hoge;
+                 *     let __temp = ret;
                  *     return __temp;
                  *     checkpoint;
                  * }

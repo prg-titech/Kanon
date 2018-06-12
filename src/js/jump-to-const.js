@@ -38,21 +38,6 @@ __$__.JumpToConstruction = {
             }
         }
 
-        // if (__$__.JumpToConstruction.ClickElement.node)
-        //     __$__.JumpToConstruction.GraphData.nodes.forEach(nodeData => {
-        //         if (__$__.JumpToConstruction.ClickElement.node === nodeData.id) {
-        //             if (nodeData.loopLabel !== 'noLoop') {
-        //                 __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
-        //                 __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
-        //             }
-        //
-        //             __$__.editor.moveCursorToPosition({
-        //                 row: nodeData.pos.line - 1,
-        //                 column: nodeData.pos.column
-        //             });
-        //         }
-        //     });
-
         else
             __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
                 if (__$__.JumpToConstruction.ClickElement.edge.from === edgeData.from &&

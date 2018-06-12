@@ -273,6 +273,8 @@ __$__.Layout = {
          * if height of a tree is 1, then width = 2;
          * if height of a tree is 2, then width = 4;
          * if height of a tree is 3, then width = 8;
+         * ...
+         * if height of a tree is n, then width = 2^n;
          */
         let heightBinaryTree = rootNode => {
             if (rootNode === undefined) {

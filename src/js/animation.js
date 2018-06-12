@@ -3,40 +3,40 @@ __$__.Animation = {
 
 
     /**
-     * @param: id{String or int} id of the node you want to move by using animation
-     * @param: to{Object {x: int, y: int}} the destination position of the node
-     * @param: timeID{int}
-     * @param: ms{int}
+     * @param: node_id {String or int} id of the node you want to move by using animation
+     * @param: to {Object {x: int, y: int}} the destination position of the node
+     * @param: animationID {int} this argument represents an identifier for animation.
+     * @param: ms {int}
      *
      * This function enables node to move by using animation.
      */
-    moveWithAnimation: function(id, to, animationID, ms = 1000) {
-        const startTime = (new Date).getTime();
+    moveWithAnimation: function(node_id, to, animationID, ms = 1000) {
+        const start_time = (new Date).getTime();
     
-        let pos = __$__.network.getPositions()[id];
+        let node_pos = __$__.network.getPositions()[node_id];
         let delta = {
-            x: to.x - pos.x,
-            y: to.y - pos.y
+            x: to.x - node_pos.x,
+            y: to.y - node_pos.y
         };
         if (delta.x === 0 && delta.y === 0)
             return;
     
         let interval = setInterval(() => {
-            let currentTime = (new Date).getTime();
-            if (currentTime - startTime >= ms) {
-                __$__.network.moveNode(id, to.x, to.y);
-                __$__.Update.updateArrayPosition({nodes: [id]});
+            let current_time = (new Date).getTime();
+            if (current_time - start_time >= ms) {
+                __$__.network.moveNode(node_id, to.x, to.y);
+                __$__.Update.updateArrayPosition({nodes: [node_id]});
                 __$__.StorePositions.registerPositions();
                 clearInterval(interval);
                 return;
             }
-            if (currentTime - startTime >= ms || animationID !== __$__.Animation.nowAnimationID) {
+            if (current_time - start_time >= ms || animationID !== __$__.Animation.nowAnimationID) {
                 clearInterval(interval);
                 return;
             }
             
-            __$__.network.moveNode(id, pos.x + Math.floor(delta.x * (currentTime - startTime) / ms), pos.y + Math.floor(delta.y * (currentTime - startTime) / ms));
-            __$__.Update.updateArrayPosition({nodes: [id]});
+            __$__.network.moveNode(node_id, node_pos.x + Math.floor(delta.x * (current_time - start_time) / ms), node_pos.y + Math.floor(delta.y * (current_time - start_time) / ms));
+            __$__.Update.updateArrayPosition({nodes: [node_id]});
             __$__.StorePositions.registerPositions();
         }, 1);
     },
@@ -52,17 +52,17 @@ __$__.Animation = {
      * we use animation to move the node.
      */
     setData: function(graph) {
-        let nextPos = [];
-        let pos = __$__.network.getPositions();
+        let next_position = [];
+        let node_positions = __$__.network.getPositions();
         graph.nodes.forEach(node => {
-            if (pos[node.id] && node.x) {
-                nextPos.push({
+            if (node_positions[node.id] && node.x) {
+                next_position.push({
                     id: node.id,
                     x: node.x,
                     y: node.y
                 });
-                node.x = pos[node.id].x;
-                node.y = pos[node.id].y;
+                node.x = node_positions[node.id].x;
+                node.y = node_positions[node.id].y;
             }
         });
         __$__.nodes = new vis.DataSet(graph.nodes);
@@ -78,20 +78,15 @@ __$__.Animation = {
             });
         });
         Object.keys(__$__.nodes._data).forEach(label => {
-            if (pos[label])
-                __$__.network.moveNode(label, pos[label].x, pos[label].y);
+            if (node_positions[label])
+                __$__.network.moveNode(label, node_positions[label].x, node_positions[label].y);
         });
         __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArrayPosition({nodes: [arr[0]]})});
-        if (nextPos.length) {
+        if (next_position.length) {
             __$__.Animation.nowAnimationID++;
-            nextPos.forEach(pos => {
+            next_position.forEach(pos => {
                 __$__.Animation.moveWithAnimation(pos.id, pos, __$__.Animation.nowAnimationID, 500);
             });
-            // __$__.network.fit({
-            //     animation: {
-            //         easingFuncion: 'linear'
-            //     }
-            // });
         }
     }
 };

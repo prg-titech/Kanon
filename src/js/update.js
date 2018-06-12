@@ -1,6 +1,6 @@
 __$__.Update = {
     CodeWithCP: '',
-    wait: false,
+    waitForStabilized: false,
     updateValueOfArray: true,
     onlyMoveCursor: false,
     executable: true,
@@ -78,32 +78,7 @@ __$__.Update = {
                 }
             }
 
-            // check preserving user's mental map by using context-sensitive ID.
-            // if necessary, we change the loop count in order to preserve the mental map.
-            Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
-                    delete __$__.Context.LoopContext[loopLabel];
-                else {
-                    let beforeSensitiveContextForLoop =
-                        (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
-                            __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
-                            __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
-
-                    if (beforeSensitiveContextForLoop) {
-                        let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
-                        let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
-
-                        if (newSensitiveContextForLoop) {
-                            Object.keys(newSensitiveContextForLoop).forEach(num => {
-                                if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
-                                    __$__.Context.LoopContext[loopLabel] = parseInt(num);
-                                }
-                            });
-                        }
-                    }
-                }
-            });
-
+            __$__.Update.changeContextBasedOnContextSensitiveID();
 
             if (__$__.Update.executable) {
                 __$__.Context.SensitiveContextForLoopWhenExecutable = Object.assign({}, __$__.Context.SensitiveContextForLoop);
@@ -121,15 +96,16 @@ __$__.Update = {
             let task = ['noLoop'];
             while (task.length) {
                 let label = task.shift();
-                let SE = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
-                let children = __$__.Context.ParentAndChildrenLoop[label].children;
+                let parent_start_end = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
+                let children = Object.keys(__$__.Context.ParentAndChildOnCallTree[label].children);
                 children.forEach(l => {
-                    if (__$__.Context.StartEndInLoop[l]) {
+                    if (__$__.Context.StartEndInLoop[l] && !__$__.Context.ParentAndChildOnCallTree[l].passed) {
                         for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
                             let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
-                            if (childSE && (SE.start <= childSE.start && childSE.end <= SE.end)) {
+                            if (childSE && (parent_start_end.start <= childSE.start && childSE.end <= parent_start_end.end)) {
                                 task.push(l);
                                 __$__.Context.LoopContext[l] = cntxt;
+                                __$__.Context.ParentAndChildOnCallTree[l].passed = true;
                                 return;
                             }
                         }
@@ -139,7 +115,7 @@ __$__.Update = {
             }
 
             if (!__$__.Update.isChange(graph)) {
-                __$__.Update.wait = false;
+                __$__.Update.waitForStabilized = false;
                 __$__.Update.ContextUpdate();
                 return;
             }
@@ -170,17 +146,16 @@ __$__.Update = {
                 if (__$__.Update.updateValueOfArray)
                     __$__.Update.updateArrayValuePosition();
     
-                __$__.Update.wait = false;
+                __$__.Update.waitForStabilized = false;
                 __$__.StorePositions.registerPositions(true);
                 __$__.Update.ContextUpdate();
             };
     
             __$__.Context.Arrays.forEach(array => {
-                if (array.length)
-                    __$__.Update.updateArrayPosition({nodes: [array[0]]});
+                if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
             });
 
-            __$__.Update.wait = true;
+            __$__.Update.waitForStabilized = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
                 __$__.network.once('stabilized', stabilized);
             else
@@ -190,7 +165,7 @@ __$__.Update = {
             if (e === 'Infinite Loop') {
                 document.getElementById('console').textContent = 'infinite loop?';
             }
-            __$__.Update.wait = true;
+            __$__.Update.waitForStabilized = true;
         }
 
         try {
@@ -204,7 +179,7 @@ __$__.Update = {
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
-        if (__$__.Update.wait === false
+        if (__$__.Update.waitForStabilized === false
             // && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length)
             // && document.getElementById('console').textContent === ''
             || e === 'changed') {
@@ -455,6 +430,36 @@ __$__.Update = {
                     let pos = __$__.network.getPositions(edge.from)[edge.from];
                     __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
                     __$__.nodes.update({id: edge.to, fixed: true});
+                }
+            }
+        });
+    },
+
+    /**
+     * check preserving user's mental map by using context-sensitive ID.
+     * if necessary, we change the loop count in order to preserve the mental map.
+     */
+    changeContextBasedOnContextSensitiveID() {
+        Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+            if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
+                delete __$__.Context.LoopContext[loopLabel];
+            else {
+                let beforeSensitiveContextForLoop =
+                    (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
+                        __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
+                        __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
+
+                if (beforeSensitiveContextForLoop) {
+                    let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
+                    let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
+
+                    if (newSensitiveContextForLoop) {
+                        Object.keys(newSensitiveContextForLoop).forEach(num => {
+                            if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
+                                __$__.Context.LoopContext[loopLabel] = parseInt(num);
+                            }
+                        });
+                    }
                 }
             }
         });

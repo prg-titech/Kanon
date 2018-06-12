@@ -5,9 +5,9 @@ __$__.CodeConversion = {
      * @param {string} code
      * @param {Boolean} checkInfiniteLoop
      *
-     * First, user code is converted into AST using esprima parser.
+     * First, user code is converted into AST using esprima which is parser for JavaScript.
      * Second, we define visitors to use walkAST(),
-     * and executes walkAST() using the visitors.
+     * and execute walkAST() using the visitors.
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */

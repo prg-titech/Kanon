@@ -2,6 +2,7 @@ __$__.Context = {
     ArrayLabels: [],
     Arrays: [],
     ChangedGraph: true,
+    CheckPointID2LoopLabel: {},
     CheckPointTable: {},
     CheckPointAroundCursor: {},
     InfLoop: '',
@@ -17,8 +18,9 @@ __$__.Context = {
     LastGraph: undefined,
     LoopContext: {'noLoop': 1},
     LoopContextWhenExecutable: undefined,
-    ParentAndChildrenLoop: {noLoop: {child: []}},
+    ParentAndChildrenLoop: {noLoop: {children: []}},
     ParentAndChildrenLoopStack: ['noLoop'],
+    ParentAndChildOnCallTree: {noLoop: {children: {}}},
     SensitiveContextForLoop: {},
     SensitiveContextForLoopWhenExecutable: undefined,
     BeforeSensitiveContextForLoop: {},
@@ -34,11 +36,13 @@ __$__.Context = {
         __$__.Context.ArrayLabels = [];
         __$__.Context.Arrays = [];
         __$__.Context.ChangedGraph = true;
+        __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
         __$__.Context.LastCPID = undefined;
         __$__.Context.LastInfo = {};
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
+        __$__.Context.ParentAndChildOnCallTree = {noLoop: {children: {}}};
         __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
@@ -69,7 +73,8 @@ __$__.Context = {
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
     
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
-    
+        __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
+
     
         if (__$__.Context.ChangedGraph) {
             // the node of storedGraph is whether first appearing or not in this part
@@ -96,8 +101,7 @@ __$__.Context = {
             // the edge of storedGraph is whether first appearing or not in this part
             storedGraph.edges.forEach(edge => {
                 let flag = false;
-    
-    
+
                 __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
                     flag = flag || (edge.from === edgeData.from && edge.to === edgeData.to && edge.label === edgeData.label);
                 });
@@ -153,33 +157,37 @@ __$__.Context = {
     
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
-        let cursorPos = __$__.editor.getCursorPosition();
-        let checkPointId = __$__.Context.CheckPointAroundCursor = __$__.Context.FindId(cursorPos);
+        let cursor_position = __$__.editor.getCursorPosition();
+        let checkPointId = __$__.Context.CheckPointAroundCursor = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
 
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, graph;
             let showLightly = false;
             try {
                 if (checkPointId.afterId &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].column === cursorPos.column &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursorPos.row + 1) {
+                    __$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
+                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
                     cpID = checkPointId.afterId;
                 } else {
                     cpID = checkPointId.beforeId;
                 }
 
                 try {
-                    loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                    loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     count = __$__.Context.LoopContext[loopLabel];
 
                     if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastInfo.CPID &&
-                        loopLabel === __$__.Context.LastInfo.loopLabel &&
-                        count === __$__.Context.LastInfo.loopCount &&
                         !__$__.Update.executable) {
-                        showLightly = true;
-                        cpID = __$__.Context.LastCPID;
-                        loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
-                        count = __$__.Context.LoopContext[loopLabel];
+
+                        let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
+                        let tmp_count = __$__.Context.LoopContext[tmp_loopLabel];
+
+                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel && tmp_count === __$__.Context.LastInfo.loopCount) {
+                            showLightly = true;
+                            cpID = __$__.Context.LastCPID;
+                            loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                            count = __$__.Context.LoopContext[loopLabel];
+                        }
                     }
 
                     graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
@@ -191,9 +199,9 @@ __$__.Context = {
                     // }
                 }
 
-                __$__.Context.SnapshotContext['cpID'] = cpID;
-                __$__.Context.SnapshotContext['loopLabel'] = loopLabel;
-                __$__.Context.SnapshotContext['count'] = count;
+                __$__.Context.SnapshotContext.cpID = cpID;
+                __$__.Context.SnapshotContext.loopLabel = loopLabel;
+                __$__.Context.SnapshotContext.count = count;
     
                 if (!graph) graph = {nodes: [], edges: []};
             } catch (e) {
@@ -398,7 +406,7 @@ __$__.Context = {
     },
     
     
-    FindId: function(pos = __$__.editor.getCursorPosition()) {
+    FindCPIDNearCursorPosition: function(pos = __$__.editor.getCursorPosition()) {
         let before;
         let after;
         let res = {};
@@ -473,9 +481,9 @@ __$__.Context = {
                 return;
     
             let current_loop_count = __$__.Context.LoopContext[key];
-            let s_e = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
-            if (s_e && (s_e.start <= start_end.start && start_end.end <= s_e.end ||
-                start_end.start <= s_e.start && s_e.end <= start_end.end))
+            let range_of_key = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
+            if (range_of_key && (range_of_key.start <= start_end.start && start_end.end <= range_of_key.end ||
+                start_end.start <= range_of_key.start && range_of_key.end <= start_end.end))
                 return;
     
             let correct_context = __$__.Context.StartEndInLoop[key].map(checked_s_e => {
