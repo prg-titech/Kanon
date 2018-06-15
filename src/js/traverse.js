@@ -50,6 +50,18 @@ __$__.Traverse = {
                 ret.edges.push(tempEdge);
             }
         });
+
+        Object.keys(objs).forEach(obj => {
+            if(objs[obj] && objs[obj].__id && graphNodes[objs[obj].__id]){
+                let tempNode = new __$__.Traverse.__VariableNode(obj);
+                let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[objs[obj].__id], obj);
+
+                ret.nodes.push(tempNode);
+                ret.edges.push(tempEdge);
+            }
+        });
+
+
     
         for (let i = 0; i < ret.nodes.length; i++) {
             if (ret.nodes[i].__id)

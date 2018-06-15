@@ -138,6 +138,14 @@ __$__.ASTBuilder = {
         }
     },
 
+	/**
+     *
+	 * @param {Identifier[]} params
+	 * @param {Statement} body
+	 * @constructor
+	 */
+
+
     FunctionDeclaration(params, body){
         return {
             type: "FunctionDeclaration",
@@ -154,10 +162,10 @@ __$__.ASTBuilder = {
      * @param {Array} params
      * @param {Statement} body
      */
-    FunctionExpression(id, params, body) {
+    FunctionExpression(params, body) {
         return {
             type: "FunctionExpression",
-            id: id,
+            id: null,
             params: params,
             body: body,
             generator: false,
