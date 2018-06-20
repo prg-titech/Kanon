@@ -1441,6 +1441,13 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 env.addVariable(node.id.name, parent.kind, true);
             }
 
+            if(node.type === 'FunctionDeclaration'){
+                let parent = path[path.length - 2];
+                node.params.forEach(param => {
+                    if(param instanceof Object)  env.addVariable(param, parent.kind, true)
+				});
+            }
+
             if (__$__.ASTTransforms.varScopes[node.type]) {
                 env.pop();
             }
@@ -1450,6 +1457,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                 let end = node.loc.end;
                 let parent = path[path.length - 2];
                 let variables = env.Variables();
+
 
                 let checkPoint = function(loc, variables, temp_var) {
                     __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
@@ -1675,23 +1683,6 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
 						}
 					}
 				}
-				// TODO: insert checkpoints for function declarations and function expressions
-                // } else if(node.type === "FunctionDeclaration"){
-                //     const pars = node.params.map(param => param.name);
-                //     return b.FunctionDeclaration(pars,[
-                //         checkPoint(start, data),
-                //         Object.assign({}, node),
-                //         changedGraphStmt(),
-                //         checkPoint(end, variables)
-                //     ]);
-                // } else if(node.type === "FunctionExpression"){
-                //     return b.FunctionExpression([
-					// 	checkPoint(start, data),
-					// 	Object.assign({}, node),
-					// 	changedGraphStmt(),
-					// 	checkPoint(end, variables)
-                //     ])
-                // }
             }
         }
     };

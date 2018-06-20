@@ -51,15 +51,15 @@ __$__.Traverse = {
             }
         });
 
-        Object.keys(objs).forEach(obj => {
-            if(objs[obj] && objs[obj].__id && graphNodes[objs[obj].__id]){
-                let tempNode = new __$__.Traverse.__VariableNode(obj);
-                let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[objs[obj].__id], obj);
-
-                ret.nodes.push(tempNode);
-                ret.edges.push(tempEdge);
-            }
-        });
+        // Object.keys(objs).forEach(obj => {
+        //     if(objs[obj] && objs[obj].__id && graphNodes[objs[obj].__id]){
+        //         let tempNode = new __$__.Traverse.__VariableNode(obj);
+        //         let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[objs[obj].__id], obj);
+		//
+        //         ret.nodes.push(tempNode);
+        //         ret.edges.push(tempEdge);
+        //     }
+        // });
 
 
     
