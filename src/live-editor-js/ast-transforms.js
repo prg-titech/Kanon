@@ -1403,13 +1403,12 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         }
                     });
                 }
-            }
 
-			if(node.type === 'FunctionDeclaration'){
 				node.params.forEach(param => {
 					if(param instanceof Object)  env.addVariable(param.name, "var", true)
 				});
-			}
+            }
+
 
             if (node.type === 'BlockStatement') {
                 env.push(new __$__.Probe.BlockFlame());
