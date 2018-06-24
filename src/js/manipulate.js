@@ -8,9 +8,9 @@ __$__.Manipulate = {
     addEdge: function(edgeData, callback) {
         // TODO: should search simultaneously for efficiency
         // search candidates for reference of the node on the from side
-        let from = __$__.Manipulate.searchNode(edgeData.from);
+        let from = __$__.Manipulate.DFSBasedOnNode(edgeData.from);
         // search candidates for reference of the node on the to side
-        let to = __$__.Manipulate.searchNode(edgeData.to);
+        let to = __$__.Manipulate.DFSBasedOnNode(edgeData.to);
 
         let candidates = __$__.Manipulate.candidates(from, to);
         callback();
@@ -26,15 +26,16 @@ __$__.Manipulate = {
     editEdge: function(edgeData, callback) {
         if (__$__.edges._data[edgeData.id].from !== edgeData.from) {
             // In the case that the user edits the from-side of the edge
+            // In current implementation, do nothing
             callback();
         } else {
             // In the case that the user edits the to-side of the edge
 
             // TODO: should search simultaneously for efficiency
             // search candidates for reference of the node on the from side
-            let from = __$__.Manipulate.searchNode(edgeData.from);
+            let from = __$__.Manipulate.DFSBasedOnNode(edgeData.from);
             // search candidates for reference of the node on the to side
-            let to = __$__.Manipulate.searchNode(edgeData.to);
+            let to = __$__.Manipulate.DFSBasedOnNode(edgeData.to);
 
             let candidates = __$__.Manipulate.candidates(from, to, edgeData.id);
             callback();
@@ -43,12 +44,65 @@ __$__.Manipulate = {
         }
     },
 
+
     /**
      * @param endNodeId{String}
      *
      * @return Object
      */
-    searchNode: function(/*startNodeIds, */endNodeId) {
+    DFSBasedOnNode: function(/*startNodeIds, */endNodeId) {
+        // this variable is a table that represents which edges the node is pointed to.
+        // {nodeId: [edgeId1, edgeId2, ...]}
+        let edgesThatReferTo = new Object();
+        Object.keys(__$__.edges._data).forEach(edgeId => {
+            let edge = __$__.edges._data[edgeId];
+            if (edgesThatReferTo[edge.to]) {
+                edgesThatReferTo[edge.to].push(edge.id);
+            } else {
+                edgesThatReferTo[edge.to] = [edge.id];
+            }
+        });
+
+        // this table is a memo for dynamic programming.
+        let table = new Object();
+        table[endNodeId] = [{label: []}];
+
+        let rec = function(nodeId, acc) {
+            if (acc.passedNodeIds[nodeId]) {
+                return;
+            }
+
+            acc.passedNodeIds[nodeId] = true;
+            if (!table[nodeId])
+                table[nodeId] = [];
+            table[nodeId].push({
+                label: Object.assign([], acc.label)
+            });
+
+            if (edgesThatReferTo[nodeId])
+                edgesThatReferTo[nodeId].forEach(eId => {
+                    let edge = __$__.edges._data[eId];
+                    acc.label.unshift(edge.label);
+
+                    rec(edge.from, acc);
+
+                    acc.label.shift();
+                });
+
+            delete acc.passedNodeIds[nodeId];
+        };
+
+        rec(endNodeId, {label: [], passedNodeIds: {}});
+        return table;
+    },
+
+
+    /**
+     * @param endNodeId{String}
+     *
+     * @return Object
+     */
+    DFSBasedOnEdge: function(/*startNodeIds, */endNodeId) {
         // this variable is a table that represents which edges the node is pointed to.
         // {nodeId: [edgeId1, edgeId2, ...]}
         let node2Edges = new Object();
@@ -95,6 +149,7 @@ __$__.Manipulate = {
             node2Edges[endNodeId].forEach(edgeId => {
                 rec(edgeId, {label: [], passedEdgeIds: {}});
             });
+        console.log(table);
         return table;
     },
 
