@@ -202,7 +202,8 @@ __$__.Manipulate = {
      * @param candidates
      */
     startAutoCompletion(candidates) {
-        if (Object.keys(candidates).length === 0) {
+        console.log(candidates);
+        if (candidates.length === 0) {
             let staticWordCompleter = {
                 getCompletions: function(editor, session, pos, prefix, callback) {
                     callback(null, [{
@@ -214,6 +215,16 @@ __$__.Manipulate = {
             };
             __$__.langTools.setCompleters([staticWordCompleter]);
             __$__.startAutocomplete(__$__.editor);
+        } else if (candidates.length === 1) {
+            let candidate = candidates[0];
+            let statement = candidate.stmt.replace(/\$\{[\s\S]*\}/, "_prop_");
+            let start = statement.indexOf('_prop_'),
+                end = start + 6,
+                cursor_position = __$__.editor.getCursorPosition();
+
+            __$__.editor.insert(statement);
+            if (!candidate.prop)
+                __$__.editor.selection.setRange(new __$__.Range(cursor_position.row, cursor_position.column + start, cursor_position.row, cursor_position.column + end));
         } else {
             let staticWordCompleter = {
                 getCompletions: function (editor, session, pos, prefix, callback) {
