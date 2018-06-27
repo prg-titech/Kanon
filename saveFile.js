@@ -11,12 +11,7 @@ function saveFile(){
 
 		document.body.removeChild(element);
 	}
-
-// Start file download.
-	document.getElementById("saveButton").addEventListener("click", function(){
-		// Generate download of hello.txt file with some content
 		const content = __$__.editor.getValue();
-		const filename = "savedFile.js";
+		const filename = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
 		download(filename, content);
-	}, false);
-}
+	}

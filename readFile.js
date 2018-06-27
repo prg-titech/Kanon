@@ -19,11 +19,6 @@ function readSingleFile(evt) {
 		const r = new FileReader();
 		r.onload = function(e) {
 			const contents = e.target.result;
-			alert( "Got the file.\n"
-				+"name: " + f.name + "\n"
-				+"type: " + f.type + "\n"
-				+"size: " + f.size + " bytes\n"
-			);
 			__$__.editor.setValue(contents);
 			__$__.editor.selection.clearSelection();
 		};

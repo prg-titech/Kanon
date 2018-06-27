@@ -46,11 +46,12 @@
     top: 625px;
     margin-left: -80px;
     margin-top: 10px;
+    border: 1px;
 }
 
-#saveInput {
+#saveButton {
     position: absolute;
-    left: 910px;
+    left: 950px;
     top: 624px;
     margin-left: -80px;
     margin-top: 10px;
