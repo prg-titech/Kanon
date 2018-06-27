@@ -1,21 +1,21 @@
 <!doctype html>
 <html>
 <head>
-    <title>Kanon</title>
+	<title>Kanon</title>
 
-    <script type="text/javascript" src="src/js/setup.js"></script>
-    <script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
-    <script type="text/javascript" src="node_modules/ace-builds/src/ace.js"></script>
-    <script type="text/javascript" src="node_modules/ace-builds/src/ext-language_tools.js"></script>
-    <script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>
-    <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>
-    <script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>
-    <script type="text/javascript" src="readFile.js"></script>
-    <script type="text/javascript" src="saveFile.js"></script>
-    <link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
-    <link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="src/css/style.css">
+	<script type="text/javascript" src="src/js/setup.js"></script>
+	<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
+	<script type="text/javascript" src="node_modules/ace-builds/src/ace.js"></script>
+	<script type="text/javascript" src="node_modules/ace-builds/src/ext-language_tools.js"></script>
+	<script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>
+	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>
+	<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>
+	<script type="text/javascript" src="readFile.js"></script>
+	<script type="text/javascript" src="saveFile.js"></script>
+	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
+	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
+	<link rel="stylesheet" type="text/css" href="src/css/style.css">
 </head>
 <body>
 
@@ -36,55 +36,59 @@
 <script type="text/javascript" src="src/live-editor-js/ast-transforms.js"></script>
 
 <div id="editor_wrapper">
-    <div id="editor">
-        <script type="text/javascript" src="src/js/editor.js"></script>
-    </div>
-    <div id="show_context"></div>
+	<div id="editor">
+		<script type="text/javascript" src="src/js/editor.js"></script>
+	</div>
+	<div id="show_context"></div>
 </div>
 
 <div id="saveInput">
-    <input id="saveButton" type="button" value="Save file" onclick="saveFile()">
+	<input id="saveButton" type="button" value="Save file" onclick="saveFile()">
 </div>
 
 <div id="readInput">
-    <input type="button" id="readButton" value="Read file" onclick="document.getElementById('readFile')">
-    <input type="file" id="readFile"  onclick="readFile()"/>
+	<input type="file" id="readFile" onclick="readFile()"/>
 </div>
 
 
 <div id="resizableNetwork">
-    <div id="mynetwork"></div>
-    <input id="resetButton" type="button" value="Redraw" onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
+	<div id="mynetwork"></div>
+	<input id="resetButton" type="button" value="Redraw"
+		   onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 </div>
 
 <div id='viewmodebutton'>
-    <input type="button" value="Summarized" onclick="__$__.Context.SwitchViewMode(false); __$__.Update.ContextUpdate('changed');">
-    <input type="button" value="Snapshot" onclick="__$__.Context.SwitchViewMode(true); __$__.Update.ContextUpdate('changed');">
+	<input type="button" value="Summarized"
+		   onclick="__$__.Context.SwitchViewMode(false); __$__.Update.ContextUpdate('changed');">
+	<input type="button" value="Snapshot"
+		   onclick="__$__.Context.SwitchViewMode(true); __$__.Update.ContextUpdate('changed');">
 </div>
 
 <div id='viewmode'></div>
 
 <form id='fontSizeForm' name='fontSizeForm'>
-    font size:
-    <input id="fontSize" name="fontSize" oninput="__$__.FontSizeUpdate();" placeholder="12">
+	font size:
+	<input id="fontSize" name="fontSize" oninput="__$__.FontSizeUpdate();" placeholder="12">
 </form>
 
 <div id='BackButton'>
-    <input type="button" value="< back" onclick="if (__$__.Context.MoveContextOnCursorPosition(-1)) __$__.Context.Draw();">
+	<input type="button" value="< back"
+		   onclick="if (__$__.Context.MoveContextOnCursorPosition(-1)) __$__.Context.Draw();">
 </div>
 
 <div id='ForwardButton'>
-    <input type="button" value="forward >" onclick="if (__$__.Context.MoveContextOnCursorPosition(1)) __$__.Context.Draw();">
+	<input type="button" value="forward >"
+		   onclick="if (__$__.Context.MoveContextOnCursorPosition(1)) __$__.Context.Draw();">
 </div>
 
 <div id='showingContextButton'>
-    <input type="button" value="Showing Context" onclick="__$__.ShowContext.switchOnOff();">
+	<input type="button" value="Showing Context" onclick="__$__.ShowContext.switchOnOff();">
 </div>
 
 <div id='showingContext'>ON</div>
 
 <div id='autoLayoutButton'>
-    <input type="button" value="Auto Layout" onclick="__$__.Layout.switchEnabled();">
+	<input type="button" value="Auto Layout" onclick="__$__.Layout.switchEnabled();">
 </div>
 
 <div id='autoLayout'>ON</div>
@@ -93,25 +97,25 @@
 
 <script type="text/javascript" src="src/js/network.js"></script>
 <script>
-    $("#editor_wrapper").resizable({
-        resize: function(event, ui) {
-            __$__.editor.resize();
-            __$__.ShowContext.updateEditorSize();
-            __$__.ShowContext.show();
-        }
-    });
-    __$__.__networkSelector = $('#resizableNetwork');
-    __$__.__resetBottonSelector = $('#resetButton');
-    __$__.__networkSelector.resizable({
-        resize: function (event, ui) {
-            let width = __$__.__networkSelector.css('width');
-            let height = __$__.__networkSelector.css('height');
-            __$__.network.setSize(width, height);
-            __$__.network.redraw();
-            __$__.__resetBottonSelector.css('left', width);
-            __$__.__resetBottonSelector.css('top', height);
-        }
-    });
+	$("#editor_wrapper").resizable({
+		resize: function (event, ui) {
+			__$__.editor.resize();
+			__$__.ShowContext.updateEditorSize();
+			__$__.ShowContext.show();
+		}
+	});
+	__$__.__networkSelector = $('#resizableNetwork');
+	__$__.__resetBottonSelector = $('#resetButton');
+	__$__.__networkSelector.resizable({
+		resize: function (event, ui) {
+			let width = __$__.__networkSelector.css('width');
+			let height = __$__.__networkSelector.css('height');
+			__$__.network.setSize(width, height);
+			__$__.network.redraw();
+			__$__.__resetBottonSelector.css('left', width);
+			__$__.__resetBottonSelector.css('top', height);
+		}
+	});
 </script>
 
 </body>
