@@ -40,6 +40,22 @@
     float: left;
 }
 
+#readInput {
+    position: absolute;
+    left: 700px;
+    top: 625px;
+    margin-left: -80px;
+    margin-top: 10px;
+}
+
+#saveInput {
+    position: absolute;
+    left: 910px;
+    top: 624px;
+    margin-left: -80px;
+    margin-top: 10px;
+}
+
 #mynetwork {
     position: absolute;
     top: 0;

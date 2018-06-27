@@ -11,6 +11,8 @@
     <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>
     <script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>
+    <script type="text/javascript" src="readFile.js"></script>
+    <script type="text/javascript" src="saveFile.js"></script>
     <link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
     <link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" type="text/css" href="src/css/style.css">
@@ -39,6 +41,16 @@
     </div>
     <div id="show_context"></div>
 </div>
+
+<div id="saveInput">
+    <input id="saveButton" type="button" value="Save file" onclick="saveFile()">
+</div>
+
+<div id="readInput">
+    <input type="button" id="readButton" value="Read file" onclick="document.getElementById('readFile')">
+    <input type="file" id="readFile"  onclick="readFile()"/>
+</div>
+
 
 <div id="resizableNetwork">
     <div id="mynetwork"></div>
