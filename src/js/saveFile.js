@@ -1,4 +1,4 @@
-function saveFile(){
+__$__.saveFile = function () {
 	function download(filename, text) {
 		const element = document.createElement('a');
 		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -11,8 +11,8 @@ function saveFile(){
 
 		document.body.removeChild(element);
 	}
-		const content = __$__.editor.getValue();
-		const fileExists = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
-		const filename = fileExists ? fileExists : "saveFile.js";
-		download(filename, content);
-	}
+	const content = __$__.editor.getValue();
+	const fileExists = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
+	const filename = fileExists ? fileExists : "saveFile.js";
+	download(filename, content);
+};

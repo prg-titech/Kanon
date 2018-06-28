@@ -1,17 +1,12 @@
-const Range = require("ace/range").Range;
-const topRow = __$__.editor.selection.lead.row;
-
-
-
-function readFile() {
+__$__.readFile = function () {
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		document.getElementById('readFile').addEventListener('change', readSingleFile, false);
+		document.getElementById('readFile').addEventListener('change', __$__.readSingleFile, false);
 	} else {
 		console.error("The File APIs are not fully supported in this browser.")
 	}
-}
+};
 
-function readSingleFile(evt) {
+__$__.readSingleFile = function (evt) {
 	//Retrieve the first (and only!) File from the FileList object
 	const f = evt.target.files[0];
 
@@ -27,6 +22,4 @@ function readSingleFile(evt) {
 	} else {
 		alert("Failed to load file");
 	}
-}
-
-
+};

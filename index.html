@@ -11,8 +11,6 @@
 	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>
 	<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>
-	<script type="text/javascript" src="readFile.js"></script>
-	<script type="text/javascript" src="saveFile.js"></script>
 	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
 	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
 	<link rel="stylesheet" type="text/css" href="src/css/style.css">
@@ -31,6 +29,8 @@
 <script type="text/javascript" src="src/js/layout.js"></script>
 <script type="text/javascript" src="src/js/probe.js"></script>
 <script type="text/javascript" src="src/js/manipulate.js"></script>
+<script type="text/javascript" src="src/js/readFile.js"></script>
+<script type="text/javascript" src="src/js/saveFile.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-walker.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-builder.js"></script>
 <script type="text/javascript" src="src/live-editor-js/ast-transforms.js"></script>
@@ -43,11 +43,11 @@
 </div>
 
 <div id="saveInput">
-	<input id="saveButton" type="button" value="Save file" onclick="saveFile()">
+	<input id="saveButton" type="button" value="Save file" onclick="__$__.saveFile()">
 </div>
 
 <div id="readInput">
-	<input type="file" id="readFile" onclick="readFile()"/>
+	<input type="file" id="readFile" onclick="__$__.readFile()"/>
 </div>
 
 
