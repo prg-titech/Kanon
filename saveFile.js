@@ -12,6 +12,7 @@ function saveFile(){
 		document.body.removeChild(element);
 	}
 		const content = __$__.editor.getValue();
-		const filename = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
+		const fileExists = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
+		const filename = fileExists ? fileExists : "saveFile.js";
 		download(filename, content);
 	}
