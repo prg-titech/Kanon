@@ -119,22 +119,21 @@ class BST {
 	 * @returns {Node} containing value or new Node containing error message
 	 */
 	search(val) {
-		if(this.root === null) return new Node("Node has not been found.");
-		if(this.root.val === val) return this.root;
+		if (this.root === null) return new Node("Node has not been found.");
+		if (this.root.val === val) return this.root;
 		let result;
-		if(val < this.root.val && this.root.left){
-			this.root = this.root.left;
-			result = this.search(val);
-		} else if(val > this.root.val && this.root.right){
-			this.root = this.root.right;
-			result = this.search(val);
-		} else {
-			return new Node("Node has not been found");
+		if (val < this.root.val && this.root.left) {
+			const temp = new BST();
+			temp.root = this.root.left;
+			result = temp.search(val);
+			delete temp.root;
+		} else if (val > this.root.val && this.root.right) {
+			const temp = new BST();
+			temp.root = this.root.right;
+			result = temp.search(val);
+			delete temp.root;
 		}
-		while(this.root.parent){
-			this.root = this.root.parent;
-		}
-		return result;
+		return result ? result : new Node("Node has not been found.");
 	}
 }
 
@@ -148,4 +147,4 @@ tree.add(7);
 tree.add(5);
 tree.add(1);
 tree.rotateRight();
-tree.search(4);
+const result = tree.search(5);
