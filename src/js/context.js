@@ -158,26 +158,33 @@ __$__.Context = {
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
         let cursor_position = __$__.editor.getCursorPosition();
-        let checkPointId = __$__.Context.CheckPointAroundCursor = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
+        let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
+        let checkPointId = __$__.Context.CheckPointAroundCursor = {
+            beforeId: checkPointIds.beforeIds.last(),
+            afterId: checkPointIds.afterIds.last()
+        };
 
         if (__$__.Context.Snapshot) {
-            let loopLabel, count, cpID, graph;
+            let loopLabel, count, cpID, cpIDs, graph;
             let showLightly = false;
             try {
                 if (checkPointId.afterId &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
                     __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
                     cpID = checkPointId.afterId;
+                    cpIDs = checkPointIds.afterIds;
                 } else {
                     cpID = checkPointId.beforeId;
+                    cpIDs = checkPointIds.beforeIds;
                 }
 
                 try {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     count = __$__.Context.LoopContext[loopLabel];
 
-                    if (__$__.ASTTransforms.pairCPID[cpID] === __$__.Context.LastInfo.CPID &&
-                        !__$__.Update.executable) {
+                    if (!__$__.Update.executable &&
+                        cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
+
 
                         let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
                         let tmp_count = __$__.Context.LoopContext[tmp_loopLabel];
@@ -189,6 +196,7 @@ __$__.Context = {
                             count = __$__.Context.LoopContext[loopLabel];
                         }
                     }
+
 
                     graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
                 } catch (e) {
@@ -409,21 +417,30 @@ __$__.Context = {
     FindCPIDNearCursorPosition: function(pos = __$__.editor.getCursorPosition()) {
         let before;
         let after;
-        let res = {};
+        let res = {
+            beforeIds: [],
+            afterIds: []
+        };
     
         Object.keys(__$__.Context.CheckPointTable).forEach(function(key) {
             let temp = __$__.Context.CheckPointTable[key];
     
             // the case that temp can become before
             if (temp.line < pos.row + 1 || temp.line === pos.row + 1 && temp.column < pos.column) {
-                if (!before || before.line < temp.line || before.line === temp.line && before.column <= temp.column) {
+                if (!before || before.line === temp.line && before.column === temp.column) {
                     before = temp;
-                    res.beforeId = key;
+                    res.beforeIds.push(key);
+                } else if (before.line < temp.line || before.line === temp.line && before.column < temp.column) {
+                    before = temp;
+                    res.beforeIds = [key];
                 }
             } else {
-                if (!after || temp.line < after.line || after.line === temp.line && after.column >= temp.column) {
+                if (!after || after.line === temp.line && after.column === temp.column) {
                     after = temp;
-                    res.afterId = key;
+                    res.afterIds.push(key);
+                } else if (temp.line < after.line || after.line === temp.line && after.column > temp.column) {
+                    after = temp;
+                    res.afterIds = [key];
                 }
             }
         });

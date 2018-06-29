@@ -1,4 +1,5 @@
 __$__.langTools = ace.require('ace/ext/language_tools');
+__$__.Range = ace.require('ace/range').Range;
 __$__.editor = ace.edit("editor");
 __$__.editor.setOption('enableBasicAutocompletion', true);
 __$__.startAutocomplete = __$__.editor.keyBinding.$handlers[0].commands.startAutocomplete.exec;

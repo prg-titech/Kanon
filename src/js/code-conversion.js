@@ -3,7 +3,7 @@ __$__.CodeConversion = {
      * memo: code(string) -> ast -> new ast -> code(string)
      *
      * @param {string} code
-     * @param {Boolean} checkInfiniteLoop
+     * @param {Boolean} checkInfLoop
      *
      * First, user code is converted into AST using esprima which is parser for JavaScript.
      * Second, we define visitors to use walkAST(),
