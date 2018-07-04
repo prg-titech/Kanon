@@ -1,5 +1,5 @@
 const ast = esprima.parse(__$__.editor.getValue());
-
+const vis = require("vis");
 const graph = {
 	nodes: [],
 	edges: [],
@@ -30,12 +30,22 @@ expressionStatements.forEach(exp => {
 	})
 });
 
+function createNodeDataSet(set){
+	let nodeDataSet = [];
+	for(let i = 0; i < set.length; i++){
+		nodeDataSet.push({id: i, label: set[i]});
+	}
+	return new vis.DataSet(nodeDataSet);
+}
+
+
+
 callToDeclaration.forEach(exp => {
-	let argNodes = exp.expression.arguments.map(arg => arg.value);
-	let func = callToDeclaration.get(exp);
+	let args = exp.expression.arguments.map(arg => arg.value);
+	let func = callToDeclaration.get(exp).id.name + "()";
+	graph.nodes.push(createNodeDataSet(args.concat(func)));
+
 	let funcParams = func.params.map(param => param.name);
-	let funcNode = func.id.name + "()";
-	graph.nodes.push(argNodes, funcNode);
 	for(let i = 0; i < funcParams.length; i++){
 		let edge = {
 			from: argNodes[i],
@@ -46,9 +56,15 @@ callToDeclaration.forEach(exp => {
 	}
 });
 
+graph.nodes = new vis.DataSet(graph.nodes);
+graph.edges = new vis.DataSet(graph.edges);
 
 
-const drawn =__$__.ToVisjs.Translator(graph);
+const options = {};
+const container = document.getElementById('callTree');
+const network = new vis.Network(container, graph, options);
+
+
 
 
 

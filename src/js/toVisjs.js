@@ -9,13 +9,13 @@ __$__.ToVisjs = {
 
             if (graph.nodes[i] instanceof __$__.Traverse.__Literal) {
                 node = {
-                    color: 'white',
-                    id: __$__.Context.getObjectID(graph.nodes[i]),
-                    label: "" + graph.nodes[i].value,
-                    scaling: {
-                        min: 10
-                    }
-                };
+					color: 'white',
+					id: __$__.Context.getObjectID(graph.nodes[i]),
+					label: "" + graph.nodes[i].value,
+					scaling: {
+						min: 10
+					}
+				};
 
                 retData.nodes.push(node);
             } else if (graph.nodes[i] instanceof __$__.Traverse.__VariableNode) {
