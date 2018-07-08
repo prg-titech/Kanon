@@ -101,8 +101,8 @@ __$__.Update = {
                 children.forEach(l => {
                     if (__$__.Context.StartEndInLoop[l] && !__$__.Context.ParentAndChildOnCallTree[l].passed) {
                         for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
-                            let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
-                            if (childSE && (parent_start_end.start <= childSE.start && childSE.end <= parent_start_end.end)) {
+                            let child_start_end = __$__.Context.StartEndInLoop[l][cntxt-1];
+                            if (child_start_end && (parent_start_end.start <= child_start_end.start && child_start_end.end <= parent_start_end.end)) {
                                 task.push(l);
                                 __$__.Context.LoopContext[l] = cntxt;
                                 __$__.Context.ParentAndChildOnCallTree[l].passed = true;
