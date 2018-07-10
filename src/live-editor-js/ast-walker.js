@@ -7,7 +7,7 @@
  * @param visitors: One or more objects containing 'enter' and/or 'leave'
  *                  methods which accept a single AST node as an argument.
  */
-__$__.walkAST = function(node, path, visitors) {
+ __$__.walkAST = function(node, path, visitors) {
     if (node === null) {
         return 1;
     }

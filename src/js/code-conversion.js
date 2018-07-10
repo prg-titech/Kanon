@@ -7,11 +7,11 @@ __$__.CodeConversion = {
      *
      * First, user code is converted into AST using esprima which is parser for JavaScript.
      * Second, we define visitors to use walkAST(),
-     * and execute walkAST() using the visitors.
-     * Finally, AST is converted into code whose type is string using escodegen.
-     * (walkAST() is executed twice if 'isSnapshot' is true.)
-     */
-    TransformCode: function(code, checkInfLoop = false) {
+	* and execute walkAST() using the visitors.
+		* Finally, AST is converted into code whose type is string using escodegen.
+		* (walkAST() is executed twice if 'isSnapshot' is true.)
+	*/
+		TransformCode: function(code, checkInfLoop = false) {
         let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];

@@ -26,9 +26,14 @@ __$__.Traverse = {
         string: true,
         symbol: true
     },
-    
-    
-    traverse: function(objs, variables = {}) {
+
+	/**
+     * Traversing the Object graph, not the AST
+	 * @param objs Objects in object graph
+	 * @param variables pre-defined variables, OPTIONAL
+	 * @returns {__$__.Traverse.__Graph}
+	 */
+	traverse: function(objs, variables = {}) {
         let ret = new __$__.Traverse.__Graph();
         let graphNodes = {};
 
@@ -50,16 +55,6 @@ __$__.Traverse = {
                 ret.edges.push(tempEdge);
             }
         });
-
-        // Object.keys(objs).forEach(obj => {
-        //     if(objs[obj] && objs[obj].__id && graphNodes[objs[obj].__id]){
-        //         let tempNode = new __$__.Traverse.__VariableNode(obj);
-        //         let tempEdge = new __$__.Traverse.__Edge(tempNode, graphNodes[objs[obj].__id], obj);
-		//
-        //         ret.nodes.push(tempNode);
-        //         ret.edges.push(tempEdge);
-        //     }
-        // });
 
 
     
