@@ -7,6 +7,7 @@ document.write('<script type="text/javascript" src="node_modules/jquery/dist/jqu
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
+document.write('<script type="text/javascript" src="src/js/call-tree.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-conversion.js"></script>');
 document.write('<script type="text/javascript" src="src/js/context.js"></script>');
 document.write('<script type="text/javascript" src="src/js/jump-to-const.js"></script>');

@@ -64,16 +64,3 @@ __$__.network.on('dragEnd', params => {
 __$__.network.on('dragging', __$__.Update.updateArrayPosition);
 __$__.network.on('dragEnd', __$__.Update.updateArrayPosition);
 __$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
-
-__$__.StorePositions.registerPositions();
-__$__.StorePositions.oldNetwork.edges = __$__.edges._data;
-
-__$__.Update.PositionUpdate();
-__$__.editor.getSelection().clearSelection();
-
-document.getElementById('viewmode').textContent = (__$__.Context.Snapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
-
-window.onresize = function() {
-    __$__.network.redraw();
-    __$__.ShowContext.show();
-};

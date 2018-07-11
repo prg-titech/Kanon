@@ -13,13 +13,13 @@ __$__.ASTBuilder = {
      * @param {Array} params
      * @param {BlockStatement or Expression} body
      */
-    ArrowFunctionExpression(params, body) {
+    ArrowFunctionExpression(params, body, expression = false) {
         return {
             type: "ArrowFunctionExpression",
             id: null,
             params: params,
             body: body,
-            expression: false,
+            expression: expression,
             generator: false
         };
     },
@@ -258,7 +258,7 @@ __$__.ASTBuilder = {
     /**
      * @param {Literal | Idenrifier} key
      * @param {Expression} value
-     * @param {"init" | "get" | "set"}
+     * @param {"init" | "getDisplayedLabel" | "set"}
      */
     Property(key, value, kind = "init") {
         return {

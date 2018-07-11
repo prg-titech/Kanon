@@ -15,6 +15,7 @@ __$__.Update = {
             });
         }
         __$__.Context.Initialize();
+        __$__.CallTree.Initialize();
         __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
     
@@ -48,6 +49,7 @@ __$__.Update = {
                 }
             }
             __$__.Context.Initialize();
+            __$__.CallTree.Initialize();
             __$__.JumpToConstruction.resetGraphData();
 
             // second code conversion
@@ -113,6 +115,8 @@ __$__.Update = {
                     }
                 });
             }
+
+            __$__.CallTreeNetwork.draw();
 
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.waitForStabilized = false;
