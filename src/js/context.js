@@ -5,6 +5,7 @@ __$__.Context = {
     CheckPointID2LoopLabel: {},
     CheckPointTable: {},
     CheckPointAroundCursor: {},
+    ContextSensitiveIDsEachLoop: {},
     InfLoop: '',
     LabelPos: {
         Arr: {},
@@ -28,6 +29,7 @@ __$__.Context = {
     SnapshotContext: {},
     StackToCheckLoop: ['noLoop'],
     StoredGraph: {},
+    StoredGraph_temp: {},
     StartEndInLoop: {},
     TableTimeCounter: [],
     __loopCounter: {},
@@ -38,6 +40,7 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
+        __$__.Context.ContextSensitiveIDsEachLoop = {};
         __$__.Context.LastCPID = undefined;
         __$__.Context.LastInfo = {};
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
@@ -45,6 +48,7 @@ __$__.Context = {
         __$__.Context.ParentAndChildOnCallTree = {noLoop: {children: {}}};
         __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
+        __$__.Context.StoredGraph_temp = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['noLoop'];
         __$__.Context.TableTimeCounter = [];
@@ -59,10 +63,11 @@ __$__.Context = {
      * @param {int} checkPointId
      * @param {Object} probe
      * @param {Object} newExpInfo
+     * @param {string} contextSensitiveID
      *
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
-    CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo) {
+    CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo, contextSensitiveID) {
         __$__.Context.LastCPID = checkPointId;
         __$__.Context.LastInfo = {
             CPID: checkPointId,
@@ -70,7 +75,7 @@ __$__.Context = {
             loopCount: count
         };
 
-        let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
+        let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe, contextSensitiveID);
     
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
         __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
@@ -137,18 +142,25 @@ __$__.Context = {
     },
     
     
-    StoreGraph: function(objects, loopLabel, count, timeCounter, checkPointId, probe) {
+    StoreGraph: function(objects, loopLabel, count, timeCounter, checkPointId, probe, contextSensitiveID) {
         let graph = (__$__.Context.ChangedGraph)
             ? __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe))
             : __$__.Context.LastGraph;
 
+        // TODO
         if (!__$__.Context.StoredGraph[checkPointId])
             __$__.Context.StoredGraph[checkPointId] = {};
-    
+
         if (!__$__.Context.StoredGraph[checkPointId][loopLabel])
             __$__.Context.StoredGraph[checkPointId][loopLabel] = {};
-    
+
         __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
+
+
+        if (!__$__.Context.StoredGraph_temp[checkPointId])
+            __$__.Context.StoredGraph_temp[checkPointId] = {};
+
+        __$__.Context.StoredGraph_temp[checkPointId][contextSensitiveID] = graph;
     
     
         return graph;
