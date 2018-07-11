@@ -17,17 +17,17 @@ __$__.Context = {
     LastCPID: undefined,
     LastInfo: {},
     LastGraph: undefined,
-    LoopContext: {'noLoop': 1},
+    LoopContext: {'main': 1},
     LoopContextWhenExecutable: undefined,
-    ParentAndChildrenLoop: {noLoop: {children: []}},
-    ParentAndChildrenLoopStack: ['noLoop'],
-    ParentAndChildOnCallTree: {noLoop: {children: {}}},
+    ParentAndChildrenLoop: {main: {children: []}},
+    ParentAndChildrenLoopStack: ['main'],
+    ParentAndChildOnCallTree: {main: {children: {}}},
     SensitiveContextForLoop: {},
     SensitiveContextForLoopWhenExecutable: undefined,
     BeforeSensitiveContextForLoop: {},
     Snapshot: true,
     SnapshotContext: {},
-    StackToCheckLoop: ['noLoop'],
+    StackToCheckLoop: ['main'],
     StoredGraph: {},
     StoredGraph_temp: {},
     StartEndInLoop: {},
@@ -43,14 +43,14 @@ __$__.Context = {
         __$__.Context.ContextSensitiveIDsEachLoop = {};
         __$__.Context.LastCPID = undefined;
         __$__.Context.LastInfo = {};
-        __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
-        __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
-        __$__.Context.ParentAndChildOnCallTree = {noLoop: {children: {}}};
+        __$__.Context.ParentAndChildrenLoop = {main: {children: []}};
+        __$__.Context.ParentAndChildrenLoopStack = ['main'];
+        __$__.Context.ParentAndChildOnCallTree = {main: {children: {}}};
         __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StoredGraph_temp = {};
         __$__.Context.StartEndInLoop = {};
-        __$__.Context.StackToCheckLoop = ['noLoop'];
+        __$__.Context.StackToCheckLoop = ['main'];
         __$__.Context.TableTimeCounter = [];
         __$__.Context.__loopCounter = {};
     },
@@ -506,7 +506,7 @@ __$__.Context = {
         });
 
         checkLoops.forEach(key => {
-            if (loopLabel === key || key === 'noLoop')
+            if (loopLabel === key || key === 'main')
                 return;
     
             let current_loop_count = __$__.Context.LoopContext[key];
@@ -558,8 +558,8 @@ __$__.Context = {
         if (nearestLoop === undefined)
             return isChanged;
 
-        if (nearestLoopLabel !== 'noLoop') {
-            if (nearestFuncLabel === 'noLoop') {
+        if (nearestLoopLabel !== 'main') {
+            if (nearestFuncLabel === 'main') {
                 moveLoopContext();
             } else if (nearestFuncLabel === nearestLoopLabel) {
                 moveLoopContext();
@@ -597,7 +597,7 @@ __$__.Context = {
         let cursor = __$__.editor.getCursorPosition();
         cursor.line = cursor.row + 1;
         let compare = __$__.Update.ComparePosition;
-        let nearestLoopLabels = {loop: 'noLoop', func: 'noLoop'};
+        let nearestLoopLabels = {loop: 'main', func: 'main'};
 
         Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {
             let checkProperty = ['loop'];
@@ -608,9 +608,9 @@ __$__.Context = {
 
             if (compare(loop.start, "<", cursor) && compare(cursor, (loop.closed) ? "<" : "<=", loop.end)) {
                 checkProperty.forEach(prop => {
-                    // if nearestLoopLabel === 'noLoop' then nearestLoop is undefined.
+                    // if nearestLoopLabel === 'main' then nearestLoop is undefined.
                     let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabels[prop]];
-                    if (nearestLoopLabels[prop] === 'noLoop'
+                    if (nearestLoopLabels[prop] === 'main'
                         || compare(nearestLoop.start, "<", loop.start) && compare(loop.end, "<", nearestLoop.end))
                         nearestLoopLabels[prop] = loopLabel;
                 });

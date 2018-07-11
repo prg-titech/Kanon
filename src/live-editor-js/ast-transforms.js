@@ -506,7 +506,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
 /**
  * Add some code in the head of user code.
  *
- * let __loopLabels = ['noLoop'],
+ * let __loopLabels = ['main'],
  *     __loopCount = 1,
  *     __time_counter = 0,
  *     __time_counter_stack = [],
@@ -515,7 +515,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __newExpInfo = [],
  *     __stackForCallTree = [__$__.CallTree.rootNode];
  * __objs = [];
- * __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
+ * __$__.Context.StartEndInLoop['main'] = [{start: 0}];
  *
  * ...
  *
@@ -525,10 +525,10 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
     return {
         leave(node, path) {
             if (node.type === 'Program') {
-                // __$__.Context.StartEndInLoop['noLoop'] = [{start: 0}];
+                // __$__.Context.StartEndInLoop['main'] = [{start: 0}];
                 node.body.unshift(
                     b.ExpressionStatement(
-                        b.Identifier('__$__.Context.StartEndInLoop["noLoop"] = [{start: 0}]')
+                        b.Identifier('__$__.Context.StartEndInLoop["main"] = [{start: 0}]')
                     )
                 );
 
@@ -547,7 +547,7 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
                     b.VariableDeclaration([
                         b.VariableDeclarator(
                             b.Identifier('__loopLabels'),
-                            b.ArrayExpression([b.Literal('noLoop')])
+                            b.ArrayExpression([b.Literal('main')])
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__loopCount'),
@@ -597,7 +597,7 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
  * try {
  *     body; (program)
  * } finally {
- *     __$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1;
+ *     __$__.Context.StartEndInLoop['main'][0].end = __time_counter - 1;
  * }
  */
 __$__.ASTTransforms.BlockedProgram = function() {
@@ -611,7 +611,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
                         undefined,
                         b.BlockStatement([
                             b.ExpressionStatement(
-                                b.Identifier("__$__.Context.StartEndInLoop['noLoop'][0].end = __time_counter - 1")
+                                b.Identifier("__$__.Context.StartEndInLoop['main'][0].end = __time_counter - 1")
                             )
                         ])
                     )
