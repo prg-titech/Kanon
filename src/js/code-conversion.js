@@ -23,37 +23,36 @@ __$__.CodeConversion = {
             __$__.walkAST(ast, null, visitors);
 
         } else {
-            __$__.ASTTransforms.pairCPID = {};
-            visitors.push(tf.InsertCheckPoint());
-            __$__.walkAST(ast, null, visitors);
-    
-            visitors = [];
-    
-            visitors.push(tf.BlockedProgram());
-            visitors.push(tf.AddSomeCodeInHead());
-            visitors.push(tf.Context());
-            visitors.push(tf.CallExpressionToFunction());
-            visitors.push(tf.CollectObjects());
-    
-    
-            Object.keys(__$__.Context.LabelPos).forEach(kind => {
-                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    __$__.Context.LabelPos[kind][label].useLabel = false;
-                });
-            });
-    
-    
-            __$__.walkAST(ast, null, visitors);
-    
-    
-            Object.keys(__$__.Context.LabelPos).forEach(kind => {
-                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    if (!__$__.Context.LabelPos[kind][label].useLabel)
-                        delete __$__.Context.LabelPos[kind][label];
-                });
-            });
-        }
-    
+			__$__.ASTTransforms.pairCPID = {};
+			visitors.push(tf.InsertCheckPoint());
+			__$__.walkAST(ast, null, visitors);
+
+			visitors = [];
+
+			visitors.push(tf.BlockedProgram());
+			visitors.push(tf.AddSomeCodeInHead());
+			visitors.push(tf.Context());
+			visitors.push(tf.CallExpressionToFunction());
+			visitors.push(tf.CollectObjects());
+
+
+			Object.keys(__$__.Context.LabelPos).forEach(kind => {
+				Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+					__$__.Context.LabelPos[kind][label].useLabel = false;
+				});
+			});
+
+
+			__$__.walkAST(ast, null, visitors);
+
+
+			Object.keys(__$__.Context.LabelPos).forEach(kind => {
+				Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+					if (!__$__.Context.LabelPos[kind][label].useLabel)
+						delete __$__.Context.LabelPos[kind][label];
+				});
+			});
+		}
         return escodegen.generate(ast);
     }
 };
