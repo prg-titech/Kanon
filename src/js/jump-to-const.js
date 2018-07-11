@@ -26,7 +26,7 @@ __$__.JumpToConstruction = {
         if (__$__.JumpToConstruction.ClickElement.node) {
             let nodeData = __$__.JumpToConstruction.GraphData.nodes[__$__.JumpToConstruction.ClickElement.node];
             if (nodeData) {
-                if (nodeData.loopLabel !== 'noLoop') {
+                if (nodeData.loopLabel !== 'main') {
                     __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
                 }
@@ -44,7 +44,7 @@ __$__.JumpToConstruction = {
                     __$__.JumpToConstruction.ClickElement.edge.to === edgeData.to &&
                     __$__.JumpToConstruction.ClickElement.edge.label === edgeData.label) {
 
-                    if (edgeData.loopLabel !== 'noLoop') {
+                    if (edgeData.loopLabel !== 'main') {
                         __$__.Context.setLoopContext(edgeData.loopLabel, '=', edgeData.count);
                         __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
                     }

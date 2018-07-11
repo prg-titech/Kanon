@@ -95,7 +95,7 @@ __$__.Update = {
             __$__.ShowContext.makeDictionary();
 
             // check the context of all loops whether initial context of each loop is correct.
-            let task = ['noLoop'];
+            let task = ['main'];
             while (task.length) {
                 let label = task.shift();
                 let parent_start_end = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
@@ -197,7 +197,7 @@ __$__.Update = {
                     labels.push(loopLabel);
                 });
                 Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                    if (labels.indexOf(loopLabel) === -1 && loopLabel !== 'noLoop')
+                    if (labels.indexOf(loopLabel) === -1 && loopLabel !== 'main')
                         delete __$__.Context.LoopContext[loopLabel]
                 });
     
@@ -445,7 +445,7 @@ __$__.Update = {
      */
     changeContextBasedOnContextSensitiveID() {
         Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-            if (loopLabel !== 'noLoop' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
+            if (loopLabel !== 'main' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
                 delete __$__.Context.LoopContext[loopLabel];
             else {
                 let beforeSensitiveContextForLoop =

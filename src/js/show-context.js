@@ -92,7 +92,7 @@ __$__.ShowContext = {
      * If the type of the argument is Array, the contexts of the all element of the Array are updated.
      */
     update: function(label) {
-        if (label !== 'noLoop' && __$__.Context.InfLoop !== label) {
+        if (label !== 'main' && __$__.Context.InfLoop !== label) {
             document.getElementById(label).textContent =
                 (__$__.ShowContext.contextDictionary[label])
                     ? __$__.ShowContext.contextDictionary[label][__$__.Context.LoopContext[label]]
@@ -142,7 +142,7 @@ __$__.ShowContext = {
         Object.keys(__$__.Context.ParentAndChildrenLoop).forEach(label => {
             let parentLabel = __$__.Context.ParentAndChildrenLoop[label].parent;
             __$__.ShowContext.contextDictionary[label] = {};
-            if (label === 'noLoop' || parentLabel === 'noLoop') {
+            if (label === 'main' || parentLabel === 'main') {
                 if (__$__.Context.StartEndInLoop[label])
                     for (let i = 0; i < __$__.Context.StartEndInLoop[label].length; i++) {
                         __$__.ShowContext.contextDictionary[label][i+1] = i+1;
