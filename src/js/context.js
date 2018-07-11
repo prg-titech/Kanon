@@ -5,7 +5,7 @@ __$__.Context = {
     CheckPointID2LoopLabel: {},
     CheckPointTable: {},
     CheckPointAroundCursor: {},
-    ContextSensitiveIDsEachLoop: {},
+    CallTreeNodesOfEachLoop: {},
     InfLoop: '',
     LabelPos: {
         Arr: {},
@@ -29,7 +29,6 @@ __$__.Context = {
     SnapshotContext: {},
     StackToCheckLoop: ['main'],
     StoredGraph: {},
-    StoredGraph_temp: {},
     StartEndInLoop: {},
     TableTimeCounter: [],
     __loopCounter: {},
@@ -40,7 +39,7 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
-        __$__.Context.ContextSensitiveIDsEachLoop = {};
+        __$__.Context.CallTreeNodesOfEachLoop = {main: [__$__.CallTree.rootNode]};
         __$__.Context.LastCPID = undefined;
         __$__.Context.LastInfo = {};
         __$__.Context.ParentAndChildrenLoop = {main: {children: []}};
@@ -48,7 +47,6 @@ __$__.Context = {
         __$__.Context.ParentAndChildOnCallTree = {main: {children: {}}};
         __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
-        __$__.Context.StoredGraph_temp = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['main'];
         __$__.Context.TableTimeCounter = [];
@@ -72,7 +70,8 @@ __$__.Context = {
         __$__.Context.LastInfo = {
             CPID: checkPointId,
             loopLabel: loopLabel,
-            loopCount: count
+            loopCount: count,
+            contextSensitiveID: contextSensitiveID
         };
 
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe, contextSensitiveID);
@@ -147,20 +146,11 @@ __$__.Context = {
             ? __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe))
             : __$__.Context.LastGraph;
 
-        // TODO
+
         if (!__$__.Context.StoredGraph[checkPointId])
             __$__.Context.StoredGraph[checkPointId] = {};
 
-        if (!__$__.Context.StoredGraph[checkPointId][loopLabel])
-            __$__.Context.StoredGraph[checkPointId][loopLabel] = {};
-
-        __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
-
-
-        if (!__$__.Context.StoredGraph_temp[checkPointId])
-            __$__.Context.StoredGraph_temp[checkPointId] = {};
-
-        __$__.Context.StoredGraph_temp[checkPointId][contextSensitiveID] = graph;
+        __$__.Context.StoredGraph[checkPointId][contextSensitiveID] = graph;
     
     
         return graph;
@@ -178,6 +168,7 @@ __$__.Context = {
 
         if (__$__.Context.Snapshot) {
             let loopLabel, count, cpID, cpIDs, graph;
+            let contextSensitiveID;
             let showLightly = false;
             try {
                 if (checkPointId.afterId &&
@@ -192,31 +183,30 @@ __$__.Context = {
 
                 try {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
-                    count = __$__.Context.LoopContext[loopLabel];
-
-                    if (!__$__.Update.executable &&
+                    if (loopLabel) {
+                        count = __$__.Context.LoopContext[loopLabel];
+                        contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][count - 1].getContextSensitiveID();
+                    } else if (!__$__.Update.executable &&
                         cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
 
 
                         let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
                         let tmp_count = __$__.Context.LoopContext[tmp_loopLabel];
+                        let tmp_contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[tmp_loopLabel][tmp_count-1].getContextSensitiveID();
 
-                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel && tmp_count === __$__.Context.LastInfo.loopCount) {
+                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
                             showLightly = true;
                             cpID = __$__.Context.LastCPID;
-                            loopLabel = Object.keys(__$__.Context.StoredGraph[cpID])[0];
+                            loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                             count = __$__.Context.LoopContext[loopLabel];
+                            contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][count-1].getContextSensitiveID();
                         }
                     }
 
 
-                    graph = __$__.Context.StoredGraph[cpID][loopLabel][count];
+                    graph = __$__.Context.StoredGraph[cpID][contextSensitiveID];
                 } catch (e) {
-                    // if (!__$__.Update.onlyMoveCursor) {
-                    //     graph = __$__.Context.LastGraph;
-                    // } else {
-                        graph = {nodes: [], edges: []};
-                    // }
+                    graph = {nodes: [], edges: []};
                 }
 
                 __$__.Context.SnapshotContext.cpID = cpID;
@@ -252,64 +242,57 @@ __$__.Context = {
             if (!checkPointId.afterId)
                 checkPointId.afterId = checkPointId.beforeId;
     
-            let beforeLoopLabel = Object.keys(__$__.Context.StoredGraph[checkPointId.beforeId])[0];
-            let afterLoopLabel  = Object.keys(__$__.Context.StoredGraph[checkPointId.afterId])[0];
-    
+            let beforeLoopLabel = __$__.Context.CheckPointID2LoopLabel[checkPointId.beforeId];
+            let afterLoopLabel = __$__.Context.CheckPointID2LoopLabel[checkPointId.afterId];
+
             let addedNodeId = {}, addedEdgeData = [];
             let removedEdgeData = [];
             let beforeGraphs, afterGraphs;
-            let loopCount;
-    
+
             // If beforeLoopLabel same afterLoopLabel, calculate the difference between before and after graph.
-            if (beforeLoopLabel === afterLoopLabel) {
-                beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId][beforeLoopLabel];
-                afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId][afterLoopLabel];
-    
-                // take the number of common loop here
-                loopCount = [];
-                let afterGraphsCount = Object.keys(afterGraphs);
-    
-    
-                Object.keys(beforeGraphs).forEach(num => {
-                    if (afterGraphsCount.indexOf(num) !== -1)
-                        loopCount.push(num);
-                });
-    
-    
+            if (beforeLoopLabel && afterLoopLabel && beforeLoopLabel === afterLoopLabel) {
+                beforeGraphs = __$__.Context.StoredGraph[checkPointId.beforeId];
+                afterGraphs  = __$__.Context.StoredGraph[checkPointId.afterId];
+
+                let loopLabelsShouldBeChecked =
+                    __$__.Context.CallTreeNodesOfEachLoop[afterLoopLabel]
+                        .map(n => n.getContextSensitiveID())
+                        .filter(csid => beforeGraphs[csid] && afterGraphs[csid]);
+
                 // calculate the difference between before graph and after graph
-                for (let i = 0; i < loopCount.length; i++) {
-                    let beforeGraph = beforeGraphs[loopCount[i]];
-                    let afterGraph = afterGraphs[loopCount[i]];
-    
+                loopLabelsShouldBeChecked.forEach(csid => {
+                    let beforeGraph = beforeGraphs[csid];
+                    let afterGraph = afterGraphs[csid];
+
                     // this object checks whether each node is added or removed or not
                     // if 'node1' is added, changeNodeId[node1]: true.
                     // if 'node2' is removed, changeNodeId[node2] : false.
                     // if there is 'node3' in before graph and after graph, changeNodeId[node3]: undefined
                     let changeNodeId = {};
-    
+
                     beforeGraph.nodes.forEach(node => {
                         changeNodeId[node.id] = false;
                     });
-    
+
                     afterGraph.nodes.forEach(node => {
                         if (changeNodeId[node.id] === false)
                             delete changeNodeId[node.id];
                         else if (changeNodeId[node.id] === undefined)
                             changeNodeId[node.id] = true;
                     });
-    
-    
+
+
                     Object.keys(changeNodeId).forEach(id => {
                         if (changeNodeId[id])
                             addedNodeId[id] = true;
                     });
-    
+
                     // this object checks whether each edge is added or removed or not
                     // if 'edge1' is added, changeEdgeData[edge1]: true.
                     // if 'edge2' is removed, changeEdgeData[edge2] : false.
                     // if there is 'edge3' in before graph and after graph, changeEdgeData[edge3]: undefined
                     let changeEdgeData = {};
-    
+
                     beforeGraph.edges.forEach(edge => {
                         if (edge.from.slice(0, 11) === '__Variable-')
                             return;
@@ -317,9 +300,9 @@ __$__.Context = {
                         let edgeData = [edge.from, edge.to, edge.label].toString();
                         changeEdgeData[edgeData] = false;
                     });
-    
+
                     afterGraph.edges.forEach(edge => {
-                        if (edge.from.slice(0, 11) === '__Variable-')
+                        if (edge.from.slice(0, 11) === '__variable-')
                             return;
 
                         let edgeData = [edge.from, edge.to, edge.label].toString();
@@ -329,14 +312,76 @@ __$__.Context = {
                         else if (changeEdgeData[edgeData] === undefined)
                             changeEdgeData[edgeData] = true;
                     });
-    
+
                     Object.keys(changeEdgeData).forEach(data => {
                         if (changeEdgeData[data])
                             addedEdgeData.push(data.split(','));
                         else
                             removedEdgeData.push(data.split(','));
                     });
-                }
+                });
+
+                // // calculate the difference between before graph and after graph
+                // for (let i = 0; i < loopCount.length; i++) {
+                //     let beforeGraph = beforeGraphs[loopCount[i]];
+                //     let afterGraph = afterGraphs[loopCount[i]];
+                //
+                //     // this object checks whether each node is added or removed or not
+                //     // if 'node1' is added, changeNodeId[node1]: true.
+                //     // if 'node2' is removed, changeNodeId[node2] : false.
+                //     // if there is 'node3' in before graph and after graph, changeNodeId[node3]: undefined
+                //     let changeNodeId = {};
+                //
+                //     beforeGraph.nodes.forEach(node => {
+                //         changeNodeId[node.id] = false;
+                //     });
+                //
+                //     afterGraph.nodes.forEach(node => {
+                //         if (changeNodeId[node.id] === false)
+                //             delete changeNodeId[node.id];
+                //         else if (changeNodeId[node.id] === undefined)
+                //             changeNodeId[node.id] = true;
+                //     });
+                //
+                //
+                //     Object.keys(changeNodeId).forEach(id => {
+                //         if (changeNodeId[id])
+                //             addedNodeId[id] = true;
+                //     });
+                //
+                //     // this object checks whether each edge is added or removed or not
+                //     // if 'edge1' is added, changeEdgeData[edge1]: true.
+                //     // if 'edge2' is removed, changeEdgeData[edge2] : false.
+                //     // if there is 'edge3' in before graph and after graph, changeEdgeData[edge3]: undefined
+                //     let changeEdgeData = {};
+                //
+                //     beforeGraph.edges.forEach(edge => {
+                //         if (edge.from.slice(0, 11) === '__Variable-')
+                //             return;
+                //
+                //         let edgeData = [edge.from, edge.to, edge.label].toString();
+                //         changeEdgeData[edgeData] = false;
+                //     });
+                //
+                //     afterGraph.edges.forEach(edge => {
+                //         if (edge.from.slice(0, 11) === '__Variable-')
+                //             return;
+                //
+                //         let edgeData = [edge.from, edge.to, edge.label].toString();
+                //
+                //         if (changeEdgeData[edgeData] === false)
+                //             delete changeEdgeData[edgeData];
+                //         else if (changeEdgeData[edgeData] === undefined)
+                //             changeEdgeData[edgeData] = true;
+                //     });
+                //
+                //     Object.keys(changeEdgeData).forEach(data => {
+                //         if (changeEdgeData[data])
+                //             addedEdgeData.push(data.split(','));
+                //         else
+                //             removedEdgeData.push(data.split(','));
+                //     });
+                // }
             }
     
             let graph = {nodes: [], edges: []};
@@ -377,12 +422,13 @@ __$__.Context = {
             });
 
             Object.keys(addedNodeId).forEach(id => {
-                if (id && id.slice(0, 11) !== '__Variable-' && loopCount) {
+                if (id && id.slice(0, 11) !== '__Variable-') {
                     let label = '';
 
-                    let afterGraph = afterGraphs[loopCount[loopCount.length-1]];
-                    afterGraph.nodes.forEach(node => {
-                        if (node.id === id) label = node.label;
+                    Object.values(afterGraphs).forEach(graph => {
+                        graph.nodes.forEach(node => {
+                            if (node.id === id) label = node.label;
+                        })
                     });
 
                     graph.nodes.push({

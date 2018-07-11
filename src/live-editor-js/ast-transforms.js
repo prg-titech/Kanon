@@ -649,8 +649,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *       if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
  *           __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
  *       // TODO
- *       if (__$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] === undefined)
- *           __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] = [];
+ *       if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
+ *           __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
  *       let __loopCount = ++__$__.Context.__loopCounter[__loopLabel] || (__$__.Context.__loopCounter[__loopLabel] = 1);
  *       if (__loopCount > 100) {
  *           __$__.Context.InfLoop = __loopLabel;
@@ -672,7 +672,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *       if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
  *       __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *       // TODO
- *       __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel].push(__stackForCallTree.last().getContextSensitiveID());
+ *       __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
  *
  *       // if this function is called as a constructor, assign a unique object ID to this.
  *       if (__newExpInfo.last()) {
@@ -712,8 +712,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
  *             __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
  *         // TODO
- *         if (__$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] === undefined)
- *             __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] = [];
+ *         if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
+ *             __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
  *         __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
  *         __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
  *         __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
@@ -745,7 +745,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *                 __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *
  *                 // TODO
- *                 __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel].push(__stackForCallTree.last().getContextSensitiveID());
+ *                 __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
  *
  *                 // there is following IfStatement in the case only of functions
  *                 if (__newExpInfo.last()) {
@@ -960,8 +960,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     );
 
                     /**
-                     * if (__$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] === undefined)
-                     *     __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] = [];
+                     * if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
+                     *     __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
                      */
                     newBlockStmt.body.push(
                         b.IfStatement(
@@ -972,7 +972,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                             b.Identifier('__$__'),
                                             b.Identifier('Context'),
                                         ),
-                                        b.Identifier('ContextSensitiveIDsEachLoop')
+                                        b.Identifier('CallTreeNodesOfEachLoop')
                                     ),
                                     b.Identifier('__loopLabel'),
                                     true
@@ -988,7 +988,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                                 b.Identifier('__$__'),
                                                 b.Identifier('Context'),
                                             ),
-                                            b.Identifier('ContextSensitiveIDsEachLoop')
+                                            b.Identifier('CallTreeNodesOfEachLoop')
                                         ),
                                         b.Identifier('__loopLabel'),
                                         true
@@ -1255,7 +1255,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 );
 
                 /**
-                 * __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel].push(__stackForCallTree.last().getContextSensitiveID());
+                 * __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
                  */
                 newBlockStmt.body.push(
                     b.ExpressionStatement(
@@ -1267,7 +1267,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                             b.Identifier('__$__'),
                                             b.Identifier('Context')
                                         ),
-                                        b.Identifier('ContextSensitiveIDsEachLoop')
+                                        b.Identifier('CallTreeNodesOfEachLoop')
                                     ),
                                     b.Identifier('__loopLabel'),
                                     true
@@ -1276,14 +1276,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                             ),
                             [b.CallExpression(
                                 b.MemberExpression(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier('last')
-                                        ),
-                                        []
-                                    ),
-                                    b.Identifier('getContextSensitiveID')
+                                     b.Identifier('__stackForCallTree'),
+                                     b.Identifier('last')
                                 ),
                                 []
                             )]
@@ -1429,8 +1423,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                             )
                         ),
                         /**
-                         * if (__$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] === undefined)
-                         *     __$__.Context.ContextSensitiveIDsEachLoop[__loopLabel] = [];
+                         * if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
+                         *     __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
                          */
                         b.IfStatement(
                             b.BinaryExpression(
@@ -1440,7 +1434,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                             b.Identifier('__$__'),
                                             b.Identifier('Context'),
                                         ),
-                                        b.Identifier('ContextSensitiveIDsEachLoop')
+                                        b.Identifier('CallTreeNodesOfEachLoop')
                                     ),
                                     b.Identifier('__loopLabel'),
                                     true
@@ -1456,7 +1450,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                                 b.Identifier('__$__'),
                                                 b.Identifier('Context'),
                                             ),
-                                            b.Identifier('ContextSensitiveIDsEachLoop')
+                                            b.Identifier('CallTreeNodesOfEachLoop')
                                         ),
                                         b.Identifier('__loopLabel'),
                                         true
