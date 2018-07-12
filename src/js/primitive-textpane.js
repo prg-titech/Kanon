@@ -2,41 +2,39 @@ __$__.editor.on('click', (e) => {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
 	const range = getWordRangeFromClick(e);
 	const node = findNodeInAST(ast, range);
-	const fd = getFunctionDeclaration(ast, node);
-	// console.log(node);
-	getResult(node, fd);
+	getResult(node);
 
 });
 
 
-function getResult(node, fd) {
+function getResult(node) {
 	eval(__$__.Update.CodeWithCP);
-	let fnName = fd.id.name;
-	let args = node.expression.arguments.map(x => x.value);
-	console.log(add(...args));
-	// console.log(window[fnName](...args)); //TODO Instead of manually adding add, it needs to use the function name to call the method.
+	let fnName = node.expression.callee.name;
+	let args = typeOfArgs(node.expression.arguments);
+	console.log(eval(fnName)(...args));
+}
 
+function typeOfArgs(args){
+	for(let i = 0; i < args.length; i++){
+		args[i] = findPrimitiveValue(args[i]);
+	}
+	return args;
 }
 
 
+function findPrimitiveValue(arg) {
+	if(arg.arguments && arg.arguments.length > 1) typeOfArgs(arg.arguments);
+	switch(arg.type){
+		case "CallExpression":
+			eval(__$__.Update.CodeWithCP);
+			arg = eval(arg.callee.name)(...arg.arguments.map(x => findPrimitiveValue(x)));
+			break;
+		case "Literal":
+			arg = arg.value;
+			break;
+	}
 
-function getFunctionDeclaration(ast, node) {
-	let fds = [];
-	ast.body.forEach(st => {
-		if (st.type === "FunctionDeclaration") {
-			fds.push(st);
-		}
-	});
-
-	let finalFd;
-
-	fds.forEach(fd => {
-		if (node.expression.callee.name === fd.id.name) {
-			finalFd = fd;
-		}
-	});
-
-	return finalFd;
+	return arg;
 }
 
 
