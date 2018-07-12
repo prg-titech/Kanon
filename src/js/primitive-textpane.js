@@ -18,6 +18,7 @@ function typeOfArgs(args){
 	for(let i = 0; i < args.length; i++){
 		args[i] = findPrimitiveValue(args[i]);
 	}
+	console.log(args);
 	return args;
 }
 
@@ -25,6 +26,13 @@ function typeOfArgs(args){
 function findPrimitiveValue(arg) {
 	if(arg.arguments && arg.arguments.length > 1) typeOfArgs(arg.arguments);
 	switch(arg.type){
+		// case "BinaryExpression":
+		// 	arg = new Function(arg.left.name, arg.right.name, arg.left.name + arg.operator + arg.right.name);
+		// 	break;
+		case "ArrowFunctionExpression":
+			eval(__$__.Update.CodeWithCP);
+			arg = findPrimitiveValue(arg.body);
+			break;
 		case "CallExpression":
 			eval(__$__.Update.CodeWithCP);
 			arg = eval(arg.callee.name)(...arg.arguments.map(x => findPrimitiveValue(x)));
@@ -33,7 +41,6 @@ function findPrimitiveValue(arg) {
 			arg = arg.value;
 			break;
 	}
-
 	return arg;
 }
 
