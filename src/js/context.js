@@ -17,17 +17,12 @@ __$__.Context = {
     LastCPID: undefined,
     LastInfo: {},
     LastGraph: undefined,
-    LoopContext: {main: 1},
-    LoopContextWhenExecutable: undefined,
     // {loopLabel: 'context-sensitive id'}
-    LoopContext_temp: {main: 'main'}, // this property represents the user-selected context. So the name of this key should be improved. (e.g., UserSelectedContext)
-    LoopContextWhenExecutable_temp: undefined,
+    SpecifiedContext: {main: 'main'}, // this property represents the user-selected context. So the name of this key should be improved. (e.g., UserSelectedContext)
+    SpecifiedContextWhenExecutable: undefined,
     ParentAndChildrenLoop: {main: {children: []}},
     ParentAndChildrenLoopStack: ['main'],
     ParentAndChildOnCallTree: {main: {children: {}}},
-    SensitiveContextForLoop: {},
-    SensitiveContextForLoopWhenExecutable: undefined,
-    BeforeSensitiveContextForLoop: {},
     Snapshot: true,
     SnapshotContext: {},
     StackToCheckLoop: ['main'],
@@ -48,7 +43,6 @@ __$__.Context = {
         __$__.Context.ParentAndChildrenLoop = {main: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['main'];
         __$__.Context.ParentAndChildOnCallTree = {main: {children: {}}};
-        __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
         __$__.Context.StackToCheckLoop = ['main'];
@@ -191,20 +185,20 @@ __$__.Context = {
                 try {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     if (loopLabel) {
-                        contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
+                        contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
                     } else if (!__$__.Update.executable &&
                         cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
 
 
                         let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
-                        let tmp_contextSensitiveID = __$__.Context.LoopContext_temp[tmp_loopLabel];
+                        let tmp_contextSensitiveID = __$__.Context.SpecifiedContext[tmp_loopLabel];
 
                         if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel
                             && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
                             showLightly = true;
                             cpID = __$__.Context.LastCPID;
                             loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
-                            contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
+                            contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
                         }
                     }
 
@@ -474,7 +468,7 @@ __$__.Context = {
      * TODO: refactor depending on the context-sensitive ID
      */
     ChangeInnerAndParentContext: function(loopLabel) {
-        // let new_contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
+        // let new_contextSensitiveID = __$__.Context.LoopContext[loopLabel];
         // let new_loop_count = __$__.Context.LoopContext[loopLabel];
         // let start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
         // let parentAndChildren = __$__.Context.ParentAndChildrenLoop[loopLabel];
@@ -533,20 +527,20 @@ __$__.Context = {
         // Find which loop should be changed.
         let nearestLoopLabelObj = __$__.Context.findLoopLabelNearestCursorPosition();
         let nearestLoopLabel = nearestLoopLabelObj.loop,
-            contextSensitiveIDOfNearestLoop = __$__.Context.LoopContext_temp[nearestLoopLabel];
+            contextSensitiveIDOfNearestLoop = __$__.Context.SpecifiedContext[nearestLoopLabel];
 
         let idx;
-        for (let i = 0; i < __$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop].length; i++) {
-            if (__$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop][i].getContextSensitiveID() === contextSensitiveIDOfNearestLoop) {
+        for (let i = 0; i < __$__.Context.CallTreeNodesOfEachLoop[nearestLoopLabel].length; i++) {
+            if (__$__.Context.CallTreeNodesOfEachLoop[nearestLoopLabel][i].getContextSensitiveID() === contextSensitiveIDOfNearestLoop) {
                 idx = i;
                 break;
             }
         }
 
         if (idx !== undefined) {
-            let newlyContextNode = __$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop][i + moveTo];
+            let newlyContextNode = __$__.Context.CallTreeNodesOfEachLoop[nearestLoopLabel][idx + moveTo];
             if (newlyContextNode) {
-                __$__.Context.LoopContext_temp[contextSensitiveIDOfNearestLoop] = newlyContextNode.getContextSensitiveID();
+                __$__.Context.SpecifiedContext[nearestLoopLabel] = newlyContextNode.getContextSensitiveID();
                 // __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
                 isChanged = true;
             }

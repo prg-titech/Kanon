@@ -296,7 +296,8 @@ __$__.ASTTransforms.CollectObjects = function() {
                                     b.MemberExpression(
                                         b.Identifier('__temp'),
                                         b.Identifier('__id')
-                                    )
+                                    ),
+                                    true
                                 ),
                                 b.BlockStatement([
                                     b.ExpressionStatement(
@@ -661,10 +662,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *   function(args) {
  *       let __loopLabel = 'loop' + label;
  *       __loopLabels.push(__loopLabel);
- *       if (__$__.Context.LoopContext[__loopLabel] === undefined)
- *           __$__.Context.LoopContext[__loopLabel] = 1;
- *       if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
- *           __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
  *       if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
  *           __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
  *       let __loopCount = ++__$__.Context.__loopCounter[__loopLabel] || (__$__.Context.__loopCounter[__loopLabel] = 1);
@@ -683,10 +680,9 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *               [function name]
  *           )
  *       );
- *       if (__$__.Context.LoopContext_temp[__loopLabel] === undefined)
- *           __$__.Context.LoopContext_temp[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
+ *       if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
+ *           __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
  *
- *       __$__.Context.SensitiveContextForLoop[__loopLabel][__loopCount] = __stackForCallTree.last().getContextSensitiveID();
  *       if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
  *       __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *       __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
@@ -724,10 +720,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         let __loopLabel = 'loop' + label,
  *             __loopCounter = 0;
  *         __loopLabels.push(__loopLabel);
- *         if (__$__.Context.LoopContext[__loopLabel] === undefined)
- *             __$__.Context.LoopContext[__loopLabel] = 1;
- *         if (!__$__.Context.SensitiveContextForLoop[__loopLabel])
- *             __$__.Context.SensitiveContextForLoop[__loopLabel] = {};
  *         if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
  *             __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
  *         __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
@@ -754,9 +746,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *                     )
  *                 );
  *
- *                 if (__$__.Context.LoopContext_temp[__loopLabel] === undefined)
- *                     __$__.Context.LoopContext_temp[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
- *                 __$__.Context.SensitiveContextForLoop[__loopLabel][__loopCount] = __stackForCallTree.last().getContextSensitiveID();
+ *                 if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
+ *                     __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
  *
  *                 if (!__$__.Context.StartEndInLoop[__loopLabel])
  *                     __$__.Context.StartEndInLoop[__loopLabel] = [];
@@ -787,8 +778,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
     let id = 'context';
     const loopLabels = "__loopLabels",
           loopCount = "__loopCount",
-          loopCounter = "__$__.Context.__loopCounter",
-          loopContext = "LoopContext";
+          loopCounter = "__$__.Context.__loopCounter";
     let labelCount = 0;
     return {
         enter(node, path) {
@@ -902,81 +892,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                     b.Identifier('push')
                                 ),
                                 [b.Identifier('__loopLabel')]
-                            )
-                        )
-                    );
-
-                    // if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1;
-                    newBlockStmt.body.push(
-                        b.IfStatement(
-                            b.BinaryExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('LoopContext')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                '===',
-                                b.Identifier('undefined')
-                            ),
-                            b.ExpressionStatement(
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__$__'),
-                                                b.Identifier('Context')
-                                            ),
-                                            b.Identifier('LoopContext')
-                                        ),
-                                        b.Identifier('__loopLabel'),
-                                        true
-                                    ),
-                                    '=',
-                                    b.Literal(1)
-                                )
-                            )
-                        )
-                    );
-
-                    newBlockStmt.body.push(
-                        b.IfStatement(
-                            b.UnaryExpression(
-                                '!',
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('SensitiveContextForLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                true
-                            ),
-                            b.ExpressionStatement(
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__$__'),
-                                                b.Identifier('Context')
-                                            ),
-                                            b.Identifier('SensitiveContextForLoop')
-                                        ),
-                                        b.Identifier('__loopLabel'),
-                                        true
-                                    ),
-                                    '=',
-                                    b.ObjectExpression([])
-                                )
                             )
                         )
                     );
@@ -1179,8 +1094,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 );
 
                 /**
-                 * if (__$__.Context.LoopContext_temp[__loopLabel] === undefined)
-                 *     __$__.Context.LoopContext_temp[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
+                 * if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
+                 *     __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
                  */
                 newBlockStmt.body.push(
                     b.IfStatement(
@@ -1191,7 +1106,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                         b.Identifier('__$__'),
                                         b.Identifier('Context')
                                     ),
-                                    b.Identifier('LoopContext_temp')
+                                    b.Identifier('SpecifiedContext')
                                 ),
                                 b.Identifier('__loopLabel'),
                                 true
@@ -1206,7 +1121,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                         b.Identifier('__$__'),
                                         b.Identifier('Context')
                                     ),
-                                    b.Identifier('LoopContext_temp')
+                                    b.Identifier('SpecifiedContext')
                                 ),
                                 b.Identifier('__loopLabel'),
                                 true
@@ -1229,44 +1144,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     )
                 );
 
-                /**
-                 * __$__.Context.SensitiveContextForLoop[__loopLabel][__loopCount] = __stackForCallTree.last().getContextSensitiveID();
-                 */
-                newBlockStmt.body.push(
-                    b.ExpressionStatement(
-                        b.AssignmentExpression(
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('SensitiveContextForLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                b.Identifier('__loopCount'),
-                                true
-                            ),
-                            '=',
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier('last')
-                                        ),
-                                        []
-                                    ),
-                                    b.Identifier('getContextSensitiveID')
-                                ),
-                                []
-                            )
-                        )
-                    )
-                );
 
                 newBlockStmt.body.push(
                     b.IfStatement(
@@ -1457,43 +1334,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         ], 'let'),
                         b.ExpressionStatement(
                             b.Identifier('__loopLabels.push(__loopLabel)')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('if (__$__.Context.LoopContext[__loopLabel] === undefined) __$__.Context.LoopContext[__loopLabel] = 1')
-                        ),
-                        b.IfStatement(
-                            b.UnaryExpression(
-                                '!',
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('SensitiveContextForLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                true
-                            ),
-                            b.ExpressionStatement(
-                                b.AssignmentExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__$__'),
-                                                b.Identifier('Context')
-                                            ),
-                                            b.Identifier('SensitiveContextForLoop')
-                                        ),
-                                        b.Identifier('__loopLabel'),
-                                        true
-                                    ),
-                                    '=',
-                                    b.ObjectExpression([])
-                                )
-                            )
                         ),
                         /**
                          * if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)

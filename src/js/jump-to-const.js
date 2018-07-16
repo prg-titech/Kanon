@@ -27,9 +27,9 @@ __$__.JumpToConstruction = {
             let nodeData = __$__.JumpToConstruction.GraphData.nodes[__$__.JumpToConstruction.ClickElement.node];
             if (nodeData) {
                 if (nodeData.loopLabel !== 'main') {
-                    __$__.Context.LoopContext_temp[nodeData.loopLabel] = nodeData.contextSensitiveID;
+                    __$__.Context.SpecifiedContext[nodeData.loopLabel] = nodeData.contextSensitiveID;
                     if (__$__.Update.executable) {
-                        __$__.Context.LoopContextWhenExecutable_temp[nodeData.loopLabel] = nodeData.contextSensitiveID;
+                        __$__.Context.SpecifiedContextWhenExecutable[nodeData.loopLabel] = nodeData.contextSensitiveID;
                     }
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
                 }
@@ -48,9 +48,9 @@ __$__.JumpToConstruction = {
                     __$__.JumpToConstruction.ClickElement.edge.label === edgeData.label) {
 
                     if (edgeData.loopLabel !== 'main') {
-                        __$__.Context.LoopContext_temp[edgeData.loopLabel] = edgeData.contextSensitiveID;
+                        __$__.Context.SpecifiedContext[edgeData.loopLabel] = edgeData.contextSensitiveID;
                         if (__$__.Update.executable) {
-                            __$__.Context.LoopContextWhenExecutable_temp[edgeData.loopLabel] = edgeData.contextSensitiveID;
+                            __$__.Context.SpecifiedContextWhenExecutable[edgeData.loopLabel] = edgeData.contextSensitiveID;
                         }
                         __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
                     }
