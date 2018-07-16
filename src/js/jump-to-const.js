@@ -27,7 +27,10 @@ __$__.JumpToConstruction = {
             let nodeData = __$__.JumpToConstruction.GraphData.nodes[__$__.JumpToConstruction.ClickElement.node];
             if (nodeData) {
                 if (nodeData.loopLabel !== 'main') {
-                    __$__.Context.setLoopContext(nodeData.loopLabel, '=', nodeData.count);
+                    __$__.Context.LoopContext_temp[nodeData.loopLabel] = nodeData.contextSensitiveID;
+                    if (__$__.Update.executable) {
+                        __$__.Context.LoopContextWhenExecutable_temp[nodeData.loopLabel] = nodeData.contextSensitiveID;
+                    }
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
                 }
 
@@ -45,7 +48,10 @@ __$__.JumpToConstruction = {
                     __$__.JumpToConstruction.ClickElement.edge.label === edgeData.label) {
 
                     if (edgeData.loopLabel !== 'main') {
-                        __$__.Context.setLoopContext(edgeData.loopLabel, '=', edgeData.count);
+                        __$__.Context.LoopContext_temp[edgeData.loopLabel] = edgeData.contextSensitiveID;
+                        if (__$__.Update.executable) {
+                            __$__.Context.LoopContextWhenExecutable_temp[edgeData.loopLabel] = edgeData.contextSensitiveID;
+                        }
                         __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);
                     }
 
@@ -55,7 +61,10 @@ __$__.JumpToConstruction = {
                     });
                 }
             });
-    
+
+        // if the cursor is changed, the editor selects a range from the previous cursor position to the newly position.
+        // Therefore, if the editor has a selection, all Kanon has to do is remove the selection because the moving cursor invokes __$__.Update.ContextUpdate.
+        // If the editor does not have a selection, Kanon has to execute the function __$__.Update.ContextUpdate.
         if (__$__.editor.getSelection().isEmpty()) {
             __$__.Update.ContextUpdate();
         } else {

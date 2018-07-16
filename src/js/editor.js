@@ -73,8 +73,3 @@ __$__.editor.commands.addCommand({
             __$__.Context.Draw();
     }
 });
-
-// showing context
-__$__.editor.getSession().on('changeScrollLeft', __$__.ShowContext.show);
-__$__.editor.getSession().on('changeScrollTop', __$__.ShowContext.show);
-__$__.editor.getSession().on('changeFold', __$__.ShowContext.show);

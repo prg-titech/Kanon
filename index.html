@@ -61,10 +61,6 @@
 		   onclick="if (__$__.Context.MoveContextOnCursorPosition(1)) __$__.Context.Draw();">
 </div>
 
-<div id='showingContextButton'>
-	<input type="button" value="Showing Context" onclick="__$__.ShowContext.switchOnOff();">
-</div>
-
 <div id='showingContext'>ON</div>
 
 <div id='autoLayoutButton'>
@@ -88,13 +84,10 @@
 
     window.onresize = function() {
         __$__.network.redraw();
-        __$__.ShowContext.show();
     };
 	$("#editor_wrapper").resizable({
 		resize: function (event, ui) {
 			__$__.editor.resize();
-			__$__.ShowContext.updateEditorSize();
-			__$__.ShowContext.show();
 		}
 	});
 	__$__.__networkSelector = $('#resizableNetwork');

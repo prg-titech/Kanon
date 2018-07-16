@@ -17,8 +17,11 @@ __$__.Context = {
     LastCPID: undefined,
     LastInfo: {},
     LastGraph: undefined,
-    LoopContext: {'main': 1},
+    LoopContext: {main: 1},
     LoopContextWhenExecutable: undefined,
+    // {loopLabel: 'context-sensitive id'}
+    LoopContext_temp: {main: 'main'}, // this property represents the user-selected context. So the name of this key should be improved. (e.g., UserSelectedContext)
+    LoopContextWhenExecutable_temp: undefined,
     ParentAndChildrenLoop: {main: {children: []}},
     ParentAndChildrenLoopStack: ['main'],
     ParentAndChildOnCallTree: {main: {children: {}}},
@@ -74,7 +77,7 @@ __$__.Context = {
             contextSensitiveID: contextSensitiveID
         };
 
-        let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe, contextSensitiveID);
+        let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID);
     
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
         __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
@@ -89,6 +92,7 @@ __$__.Context = {
                             id: node.id,
                             loopLabel: newExpInfo.loopLabel,
                             count: newExpInfo.loopCount,
+                            contextSensitiveID: newExpInfo.contextSensitiveID,
                             pos: newExpInfo.pos
                         };
                     } else {
@@ -96,6 +100,7 @@ __$__.Context = {
                             id: node.id,
                             loopLabel: loopLabel,
                             count: count,
+                            contextSensitiveID: contextSensitiveID,
                             pos: __$__.Context.CheckPointTable[checkPointId]
                         };
                     }
@@ -119,6 +124,7 @@ __$__.Context = {
                             label: edge.label,
                             loopLabel: newExpInfo.loopLabel,
                             count: newExpInfo.loopCount,
+                            contextSensitiveID: contextSensitiveID,
                             pos: newExpInfo.pos
                         });
                     } else {
@@ -128,6 +134,7 @@ __$__.Context = {
                             label: edge.label,
                             loopLabel: loopLabel,
                             count: count,
+                            contextSensitiveID: contextSensitiveID,
                             pos: __$__.Context.CheckPointTable[checkPointId]
                         });
                     }
@@ -141,7 +148,7 @@ __$__.Context = {
     },
     
     
-    StoreGraph: function(objects, loopLabel, count, timeCounter, checkPointId, probe, contextSensitiveID) {
+    StoreGraph: function(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID) {
         let graph = (__$__.Context.ChangedGraph)
             ? __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe))
             : __$__.Context.LastGraph;
@@ -167,7 +174,7 @@ __$__.Context = {
         };
 
         if (__$__.Context.Snapshot) {
-            let loopLabel, count, cpID, cpIDs, graph;
+            let loopLabel, cpID, cpIDs, graph;
             let contextSensitiveID;
             let showLightly = false;
             try {
@@ -184,22 +191,20 @@ __$__.Context = {
                 try {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     if (loopLabel) {
-                        count = __$__.Context.LoopContext[loopLabel];
-                        contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][count - 1].getContextSensitiveID();
+                        contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
                     } else if (!__$__.Update.executable &&
                         cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
 
 
                         let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
-                        let tmp_count = __$__.Context.LoopContext[tmp_loopLabel];
-                        let tmp_contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[tmp_loopLabel][tmp_count-1].getContextSensitiveID();
+                        let tmp_contextSensitiveID = __$__.Context.LoopContext_temp[tmp_loopLabel];
 
-                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
+                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel
+                            && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
                             showLightly = true;
                             cpID = __$__.Context.LastCPID;
                             loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
-                            count = __$__.Context.LoopContext[loopLabel];
-                            contextSensitiveID = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][count-1].getContextSensitiveID();
+                            contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
                         }
                     }
 
@@ -211,7 +216,7 @@ __$__.Context = {
 
                 __$__.Context.SnapshotContext.cpID = cpID;
                 __$__.Context.SnapshotContext.loopLabel = loopLabel;
-                __$__.Context.SnapshotContext.count = count;
+                __$__.Context.SnapshotContext.contextSensitiveID = contextSensitiveID;
     
                 if (!graph) graph = {nodes: [], edges: []};
             } catch (e) {
@@ -321,67 +326,6 @@ __$__.Context = {
                     });
                 });
 
-                // // calculate the difference between before graph and after graph
-                // for (let i = 0; i < loopCount.length; i++) {
-                //     let beforeGraph = beforeGraphs[loopCount[i]];
-                //     let afterGraph = afterGraphs[loopCount[i]];
-                //
-                //     // this object checks whether each node is added or removed or not
-                //     // if 'node1' is added, changeNodeId[node1]: true.
-                //     // if 'node2' is removed, changeNodeId[node2] : false.
-                //     // if there is 'node3' in before graph and after graph, changeNodeId[node3]: undefined
-                //     let changeNodeId = {};
-                //
-                //     beforeGraph.nodes.forEach(node => {
-                //         changeNodeId[node.id] = false;
-                //     });
-                //
-                //     afterGraph.nodes.forEach(node => {
-                //         if (changeNodeId[node.id] === false)
-                //             delete changeNodeId[node.id];
-                //         else if (changeNodeId[node.id] === undefined)
-                //             changeNodeId[node.id] = true;
-                //     });
-                //
-                //
-                //     Object.keys(changeNodeId).forEach(id => {
-                //         if (changeNodeId[id])
-                //             addedNodeId[id] = true;
-                //     });
-                //
-                //     // this object checks whether each edge is added or removed or not
-                //     // if 'edge1' is added, changeEdgeData[edge1]: true.
-                //     // if 'edge2' is removed, changeEdgeData[edge2] : false.
-                //     // if there is 'edge3' in before graph and after graph, changeEdgeData[edge3]: undefined
-                //     let changeEdgeData = {};
-                //
-                //     beforeGraph.edges.forEach(edge => {
-                //         if (edge.from.slice(0, 11) === '__Variable-')
-                //             return;
-                //
-                //         let edgeData = [edge.from, edge.to, edge.label].toString();
-                //         changeEdgeData[edgeData] = false;
-                //     });
-                //
-                //     afterGraph.edges.forEach(edge => {
-                //         if (edge.from.slice(0, 11) === '__Variable-')
-                //             return;
-                //
-                //         let edgeData = [edge.from, edge.to, edge.label].toString();
-                //
-                //         if (changeEdgeData[edgeData] === false)
-                //             delete changeEdgeData[edgeData];
-                //         else if (changeEdgeData[edgeData] === undefined)
-                //             changeEdgeData[edgeData] = true;
-                //     });
-                //
-                //     Object.keys(changeEdgeData).forEach(data => {
-                //         if (changeEdgeData[data])
-                //             addedEdgeData.push(data.split(','));
-                //         else
-                //             removedEdgeData.push(data.split(','));
-                //     });
-                // }
             }
     
             let graph = {nodes: [], edges: []};
@@ -527,52 +471,54 @@ __$__.Context = {
      * This function is executed when a context is changed.
      * the argument is loop's label, and the loop's label is 'loopLabel' of the loop whose context is changed.
      *
+     * TODO: refactor depending on the context-sensitive ID
      */
     ChangeInnerAndParentContext: function(loopLabel) {
-        let new_loop_count = __$__.Context.LoopContext[loopLabel];
-        let start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
-        let parentAndChildren = __$__.Context.ParentAndChildrenLoop[loopLabel];
-        let checkLoops = [];
-        let traverse = function(label, parent) {
-            let comp = __$__.Update.ComparePosition;
-            checkLoops.push(label);
-            if (parent) {
-                if (__$__.Context.ParentAndChildrenLoop[label].parent) {
-                    traverse(__$__.Context.ParentAndChildrenLoop[label].parent, true);
-                }
-            } else {
-                __$__.Context.ParentAndChildrenLoop[label].children.forEach(l => {
-                    traverse(l, false);
-                });
-            }
-        };
-        traverse(parentAndChildren.parent, true);
-        parentAndChildren.children.forEach(l => {
-            traverse(l, false);
-        });
-
-        checkLoops.forEach(key => {
-            if (loopLabel === key || key === 'main')
-                return;
-    
-            let current_loop_count = __$__.Context.LoopContext[key];
-            let range_of_key = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
-            if (range_of_key && (range_of_key.start <= start_end.start && start_end.end <= range_of_key.end ||
-                start_end.start <= range_of_key.start && range_of_key.end <= start_end.end))
-                return;
-    
-            let correct_context = __$__.Context.StartEndInLoop[key].map(checked_s_e => {
-                return checked_s_e.start <= start_end.start && start_end.end <= checked_s_e.end ||
-                       start_end.start <= checked_s_e.start && checked_s_e.end <= start_end.end
-            }).indexOf(true);
-    
-            if (correct_context === -1) {
-                __$__.Context.setLoopContext(key, '=', null);
-            } else {
-                __$__.Context.setLoopContext(key, '=', correct_context + 1);
-            }
-    
-        });
+        // let new_contextSensitiveID = __$__.Context.LoopContext_temp[loopLabel];
+        // let new_loop_count = __$__.Context.LoopContext[loopLabel];
+        // let start_end = __$__.Context.StartEndInLoop[loopLabel][new_loop_count-1];
+        // let parentAndChildren = __$__.Context.ParentAndChildrenLoop[loopLabel];
+        // let checkLoops = [];
+        // let traverse = function(label, parent) {
+        //     let comp = __$__.Update.ComparePosition;
+        //     checkLoops.push(label);
+        //     if (parent) {
+        //         if (__$__.Context.ParentAndChildrenLoop[label].parent) {
+        //             traverse(__$__.Context.ParentAndChildrenLoop[label].parent, true);
+        //         }
+        //     } else {
+        //         __$__.Context.ParentAndChildrenLoop[label].children.forEach(l => {
+        //             traverse(l, false);
+        //         });
+        //     }
+        // };
+        // traverse(parentAndChildren.parent, true);
+        // parentAndChildren.children.forEach(l => {
+        //     traverse(l, false);
+        // });
+        //
+        // checkLoops.forEach(key => {
+        //     if (loopLabel === key || key === 'main')
+        //         return;
+        //
+        //     let current_loop_count = __$__.Context.LoopContext[key];
+        //     let range_of_key = __$__.Context.StartEndInLoop[key][current_loop_count - 1];
+        //     if (range_of_key && (range_of_key.start <= start_end.start && start_end.end <= range_of_key.end ||
+        //         start_end.start <= range_of_key.start && range_of_key.end <= start_end.end))
+        //         return;
+        //
+        //     let correct_context = __$__.Context.StartEndInLoop[key].map(checked_s_e => {
+        //         return checked_s_e.start <= start_end.start && start_end.end <= checked_s_e.end ||
+        //                start_end.start <= checked_s_e.start && checked_s_e.end <= start_end.end
+        //     }).indexOf(true);
+        //
+        //     if (correct_context === -1) {
+        //         __$__.Context.setLoopContext(key, '=', null);
+        //     } else {
+        //         __$__.Context.setLoopContext(key, '=', correct_context + 1);
+        //     }
+        //
+        // });
     },
 
 
@@ -585,43 +531,27 @@ __$__.Context = {
         let isChanged = false;
 
         // Find which loop should be changed.
-        let nearestLoopLabelObj = __$__.Context.findNearestLoopLabel();
+        let nearestLoopLabelObj = __$__.Context.findLoopLabelNearestCursorPosition();
         let nearestLoopLabel = nearestLoopLabelObj.loop,
-            nearestFuncLabel = nearestLoopLabelObj.func,
-            nearestLoop = __$__.Context.StartEndInLoop[nearestLoopLabel],
-            nearestFunc = __$__.Context.StartEndInLoop[nearestFuncLabel],
-            nearestLoopContext = __$__.Context.LoopContext[nearestLoopLabel],
-            nearestFuncContext = __$__.Context.LoopContext[nearestFuncLabel];
+            contextSensitiveIDOfNearestLoop = __$__.Context.LoopContext_temp[nearestLoopLabel];
 
-        let moveLoopContext = function() {
-            if (nearestLoop[nearestLoopContext - 1 + moveTo]) {
-                __$__.Context.setLoopContext(nearestLoopLabel, '+=', moveTo);
-                __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
-                isChanged = true;
-            }
-        };
-
-        if (nearestLoop === undefined)
-            return isChanged;
-
-        if (nearestLoopLabel !== 'main') {
-            if (nearestFuncLabel === 'main') {
-                moveLoopContext();
-            } else if (nearestFuncLabel === nearestLoopLabel) {
-                moveLoopContext();
-            } else {
-                if (nearestLoop[nearestLoopContext - 1 + moveTo]) {
-                    let loopStartEndAfterMove = nearestLoop[nearestLoopContext - 1 + moveTo];
-                    let funcStartEndBeforeMove = nearestFunc[nearestFuncContext - 1];
-
-                    // the case that the context of outer function even if the context of this loop is changed
-                    // The context of the nearest loop changes in this case
-                    if (nearestLoopContext !== null && funcStartEndBeforeMove && funcStartEndBeforeMove.start <= loopStartEndAfterMove.start && loopStartEndAfterMove.end <= funcStartEndBeforeMove.end) {
-                        moveLoopContext();
-                    }
-                }
+        let idx;
+        for (let i = 0; i < __$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop].length; i++) {
+            if (__$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop][i].getContextSensitiveID() === contextSensitiveIDOfNearestLoop) {
+                idx = i;
+                break;
             }
         }
+
+        if (idx !== undefined) {
+            let newlyContextNode = __$__.Context.CallTreeNodesOfEachLoop[contextSensitiveIDOfNearestLoop][i + moveTo];
+            if (newlyContextNode) {
+                __$__.Context.LoopContext_temp[contextSensitiveIDOfNearestLoop] = newlyContextNode.getContextSensitiveID();
+                // __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
+                isChanged = true;
+            }
+        }
+
 
         return isChanged;
     },
@@ -631,15 +561,16 @@ __$__.Context = {
         return obj.__id;
     },
 
+    // TODO: remove this function
     setLoopContext: function(label, ope, n) {
-        let prog = '__$__.Context.LoopContext[label] ' + ope + ' ' + n + ';';
+        let prog = `__$__.Context.LoopContext[label] ${ope} ${n};`;
         eval(prog);
         if (__$__.Update.executable)
             eval('__$__.Context.LoopContextWhenExecutable[label]' + ope + ' ' + n + ';');
-        __$__.ShowContext.update(label);
+        // __$__.ShowContext.update(label);
     },
 
-    findNearestLoopLabel: function() {
+    findLoopLabelNearestCursorPosition: function() {
         let cursor = __$__.editor.getCursorPosition();
         cursor.line = cursor.row + 1;
         let compare = __$__.Update.ComparePosition;

@@ -55,6 +55,5 @@ var __$__ = {
             __$__.editor.setFontSize(12);
         else
             __$__.editor.setFontSize(parseInt(font));
-        __$__.ShowContext.show();
     }
 };
