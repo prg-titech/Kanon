@@ -63,11 +63,11 @@ __$__.Update = {
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
-                if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable_temp) {
-                    Object.keys(__$__.Context.LoopContext_temp).forEach(loopLabel => {
-                        __$__.Context.LoopContextWhenExecutable_temp[loopLabel] = __$__.Context.LoopContextWhenExecutable_temp[loopLabel] ||  __$__.Context.LoopContext_temp[loopLabel];
+                if (!__$__.Update.executable && __$__.Context.SpecifiedContextWhenExecutable) {
+                    Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
+                        __$__.Context.SpecifiedContextWhenExecutable[loopLabel] = __$__.Context.SpecifiedContextWhenExecutable[loopLabel] ||  __$__.Context.SpecifiedContext[loopLabel];
                     });
-                    __$__.Context.LoopContext_temp = __$__.Context.LoopContextWhenExecutable_temp;
+                    __$__.Context.SpecifiedContext = __$__.Context.SpecifiedContextWhenExecutable;
                 }
                 __$__.Update.executable = true;
             } catch (e) {
@@ -83,10 +83,8 @@ __$__.Update = {
             // __$__.Update.changeContextBasedOnContextSensitiveID();
 
             if (__$__.Update.executable) {
-                __$__.Context.SensitiveContextForLoopWhenExecutable = Object.assign({}, __$__.Context.SensitiveContextForLoop);
-                __$__.Context.LoopContextWhenExecutable_temp = Object.assign({}, __$__.Context.LoopContext_temp);
+                __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
             }
-            __$__.Context.BeforeSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop;
 
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
@@ -179,11 +177,11 @@ __$__.Update = {
     ContextUpdate: function(e) {
         if (__$__.Update.waitForStabilized === false || e === 'changed') {
             try {
-                Object.keys(__$__.Context.LoopContext_temp).forEach(loopLabel => {
+                Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
                     if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel] === 0) {
-                        delete __$__.Context.LoopContext_temp[loopLabel];
-                    } else if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel].filter(node => node.getContextSensitiveID() === __$__.Context.LoopContext_temp[loopLabel]).length === 0) {
-                        __$__.Context.LoopContext_temp[loopLabel] = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][0].getContextSensitiveID();
+                        delete __$__.Context.SpecifiedContext[loopLabel];
+                    } else if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel].filter(node => node.getContextSensitiveID() === __$__.Context.SpecifiedContext[loopLabel]).length === 0) {
+                        __$__.Context.SpecifiedContext[loopLabel] = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][0].getContextSensitiveID();
                     }
                 });
     
