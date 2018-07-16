@@ -63,11 +63,11 @@ __$__.Update = {
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
-                if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable) {
-                    Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                        __$__.Context.LoopContextWhenExecutable[loopLabel] = __$__.Context.LoopContextWhenExecutable[loopLabel] ||  __$__.Context.LoopContext[loopLabel];
+                if (!__$__.Update.executable && __$__.Context.LoopContextWhenExecutable_temp) {
+                    Object.keys(__$__.Context.LoopContext_temp).forEach(loopLabel => {
+                        __$__.Context.LoopContextWhenExecutable_temp[loopLabel] = __$__.Context.LoopContextWhenExecutable_temp[loopLabel] ||  __$__.Context.LoopContext_temp[loopLabel];
                     });
-                    __$__.Context.LoopContext = __$__.Context.LoopContextWhenExecutable;
+                    __$__.Context.LoopContext_temp = __$__.Context.LoopContextWhenExecutable_temp;
                 }
                 __$__.Update.executable = true;
             } catch (e) {
@@ -80,11 +80,11 @@ __$__.Update = {
                 }
             }
 
-            __$__.Update.changeContextBasedOnContextSensitiveID();
+            // __$__.Update.changeContextBasedOnContextSensitiveID();
 
             if (__$__.Update.executable) {
                 __$__.Context.SensitiveContextForLoopWhenExecutable = Object.assign({}, __$__.Context.SensitiveContextForLoop);
-                __$__.Context.LoopContextWhenExecutable = Object.assign({}, __$__.Context.LoopContext);
+                __$__.Context.LoopContextWhenExecutable_temp = Object.assign({}, __$__.Context.LoopContext_temp);
             }
             __$__.Context.BeforeSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop;
 
@@ -92,29 +92,27 @@ __$__.Update = {
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
 
-            __$__.ShowContext.makeDictionary();
-
             // check the context of all loops whether initial context of each loop is correct.
-            let task = ['main'];
-            while (task.length) {
-                let label = task.shift();
-                let parent_start_end = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
-                let children = Object.keys(__$__.Context.ParentAndChildOnCallTree[label].children);
-                children.forEach(l => {
-                    if (__$__.Context.StartEndInLoop[l] && !__$__.Context.ParentAndChildOnCallTree[l].passed) {
-                        for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
-                            let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
-                            if (childSE && (parent_start_end.start <= childSE.start && childSE.end <= parent_start_end.end)) {
-                                task.push(l);
-                                __$__.Context.LoopContext[l] = cntxt;
-                                __$__.Context.ParentAndChildOnCallTree[l].passed = true;
-                                return;
-                            }
-                        }
-                        __$__.Context.LoopContext[l] = undefined;
-                    }
-                });
-            }
+            // let task = ['main'];
+            // while (task.length) {
+            //     let label = task.shift();
+            //     let parent_start_end = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
+            //     let children = Object.keys(__$__.Context.ParentAndChildOnCallTree[label].children);
+            //     children.forEach(l => {
+            //         if (__$__.Context.StartEndInLoop[l] && !__$__.Context.ParentAndChildOnCallTree[l].passed) {
+            //             for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
+            //                 let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
+            //                 if (childSE && (parent_start_end.start <= childSE.start && childSE.end <= parent_start_end.end)) {
+            //                     task.push(l);
+            //                     __$__.Context.LoopContext[l] = cntxt;
+            //                     __$__.Context.ParentAndChildOnCallTree[l].passed = true;
+            //                     return;
+            //                 }
+            //             }
+            //             __$__.Context.LoopContext[l] = undefined;
+            //         }
+            //     });
+            // }
 
             __$__.CallTreeNetwork.draw();
 
@@ -171,10 +169,6 @@ __$__.Update = {
             }
             __$__.Update.waitForStabilized = true;
         }
-
-        try {
-            __$__.ShowContext.show();
-        } catch (e) {}
     },
     
 
@@ -183,22 +177,14 @@ __$__.Update = {
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
-        if (__$__.Update.waitForStabilized === false
-            // && (!__$__.network._callbacks.stabilized || !__$__.network._callbacks.stabilized.length)
-            // && document.getElementById('console').textContent === ''
-            || e === 'changed') {
+        if (__$__.Update.waitForStabilized === false || e === 'changed') {
             try {
-                // check maximum of Context.LoopContext
-                // if loop doesn't include now context, now context is changed at the max of loop count
-                let labels = [];
-                Object.keys(__$__.Context.__loopCounter).forEach(function(loopLabel) {
-                    if (__$__.Context.LoopContext[loopLabel] > __$__.Context.__loopCounter[loopLabel])
-                        __$__.Context.setLoopContext(loopLabel, '=', __$__.Context.__loopCounter[loopLabel]);
-                    labels.push(loopLabel);
-                });
-                Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-                    if (labels.indexOf(loopLabel) === -1 && loopLabel !== 'main')
-                        delete __$__.Context.LoopContext[loopLabel]
+                Object.keys(__$__.Context.LoopContext_temp).forEach(loopLabel => {
+                    if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel] === 0) {
+                        delete __$__.Context.LoopContext_temp[loopLabel];
+                    } else if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel].filter(node => node.getContextSensitiveID() === __$__.Context.LoopContext_temp[loopLabel]).length === 0) {
+                        __$__.Context.LoopContext_temp[loopLabel] = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][0].getContextSensitiveID();
+                    }
                 });
     
                 __$__.Context.Draw(e);
@@ -208,9 +194,6 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
-            try {
-                __$__.ShowContext.show();
-            } catch (e) {}
             __$__.network.redraw();
         }
     },
@@ -444,28 +427,28 @@ __$__.Update = {
      * if necessary, we change the loop count in order to preserve the mental map.
      */
     changeContextBasedOnContextSensitiveID() {
-        Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-            if (loopLabel !== 'main' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
-                delete __$__.Context.LoopContext[loopLabel];
-            else {
-                let beforeSensitiveContextForLoop =
-                    (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
-                        __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
-                        __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
-
-                if (beforeSensitiveContextForLoop) {
-                    let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
-                    let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
-
-                    if (newSensitiveContextForLoop) {
-                        Object.keys(newSensitiveContextForLoop).forEach(num => {
-                            if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
-                                __$__.Context.LoopContext[loopLabel] = parseInt(num);
-                            }
-                        });
-                    }
-                }
-            }
-        });
+        // Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
+        //     if (loopLabel !== 'main' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
+        //         delete __$__.Context.LoopContext[loopLabel];
+        //     else {
+        //         let beforeSensitiveContextForLoop =
+        //             (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
+        //                 __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
+        //                 __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
+        //
+        //         if (beforeSensitiveContextForLoop) {
+        //             let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
+        //             let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
+        //
+        //             if (newSensitiveContextForLoop) {
+        //                 Object.keys(newSensitiveContextForLoop).forEach(num => {
+        //                     if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
+        //                         __$__.Context.LoopContext[loopLabel] = parseInt(num);
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     }
+        // });
     }
 };
