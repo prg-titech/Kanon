@@ -178,7 +178,7 @@ __$__.Update = {
         if (__$__.Update.waitForStabilized === false || e === 'changed') {
             try {
                 Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
-                    if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel] === 0) {
+                    if (!__$__.Context.CallTreeNodesOfEachLoop[loopLabel]) {
                         delete __$__.Context.SpecifiedContext[loopLabel];
                     } else if (__$__.Context.CallTreeNodesOfEachLoop[loopLabel].filter(node => node.getContextSensitiveID() === __$__.Context.SpecifiedContext[loopLabel]).length === 0) {
                         __$__.Context.SpecifiedContext[loopLabel] = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][0].getContextSensitiveID();
@@ -186,6 +186,7 @@ __$__.Update = {
                 });
     
                 __$__.Context.Draw(e);
+                __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
 
             } catch (e) {
                 if (e === 'Infinite Loop') {
