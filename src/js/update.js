@@ -80,8 +80,6 @@ __$__.Update = {
                 }
             }
 
-            // __$__.Update.changeContextBasedOnContextSensitiveID();
-
             if (__$__.Update.executable) {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
             }
@@ -89,28 +87,6 @@ __$__.Update = {
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
-
-            // check the context of all loops whether initial context of each loop is correct.
-            // let task = ['main'];
-            // while (task.length) {
-            //     let label = task.shift();
-            //     let parent_start_end = __$__.Context.StartEndInLoop[label][__$__.Context.LoopContext[label]-1];
-            //     let children = Object.keys(__$__.Context.ParentAndChildOnCallTree[label].children);
-            //     children.forEach(l => {
-            //         if (__$__.Context.StartEndInLoop[l] && !__$__.Context.ParentAndChildOnCallTree[l].passed) {
-            //             for (let cntxt = __$__.Context.LoopContext[l]; cntxt > 0; cntxt--) {
-            //                 let childSE = __$__.Context.StartEndInLoop[l][cntxt-1];
-            //                 if (childSE && (parent_start_end.start <= childSE.start && childSE.end <= parent_start_end.end)) {
-            //                     task.push(l);
-            //                     __$__.Context.LoopContext[l] = cntxt;
-            //                     __$__.Context.ParentAndChildOnCallTree[l].passed = true;
-            //                     return;
-            //                 }
-            //             }
-            //             __$__.Context.LoopContext[l] = undefined;
-            //         }
-            //     });
-            // }
 
             __$__.CallTreeNetwork.draw();
 
@@ -419,35 +395,5 @@ __$__.Update = {
                 }
             }
         });
-    },
-
-    /**
-     * check preserving user's mental map by using context-sensitive ID.
-     * if necessary, we change the loop count in order to preserve the mental map.
-     */
-    changeContextBasedOnContextSensitiveID() {
-        // Object.keys(__$__.Context.LoopContext).forEach(loopLabel => {
-        //     if (loopLabel !== 'main' && __$__.Context.StartEndInLoop[loopLabel] === undefined)
-        //         delete __$__.Context.LoopContext[loopLabel];
-        //     else {
-        //         let beforeSensitiveContextForLoop =
-        //             (__$__.Update.executable && __$__.Context.SensitiveContextForLoopWhenExecutable) ?
-        //                 __$__.Context.SensitiveContextForLoopWhenExecutable[loopLabel] :
-        //                 __$__.Context.BeforeSensitiveContextForLoop[loopLabel];
-        //
-        //         if (beforeSensitiveContextForLoop) {
-        //             let sensitiveContextLabel = beforeSensitiveContextForLoop[__$__.Context.LoopContext[loopLabel]];
-        //             let newSensitiveContextForLoop = __$__.Context.SensitiveContextForLoop[loopLabel];
-        //
-        //             if (newSensitiveContextForLoop) {
-        //                 Object.keys(newSensitiveContextForLoop).forEach(num => {
-        //                     if (newSensitiveContextForLoop[num] === sensitiveContextLabel) {
-        //                         __$__.Context.LoopContext[loopLabel] = parseInt(num);
-        //                     }
-        //                 });
-        //             }
-        //         }
-        //     }
-        // });
     }
 };
