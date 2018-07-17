@@ -60,8 +60,10 @@ __$__.editor.commands.addCommand({
     bindKey: {win: 'Ctrl-Shift-.', mac: 'Command-Shift-.'},
     exec: function() {
         let isChanged = __$__.Context.MoveContextOnCursorPosition(1);
-        if (isChanged)
+        if (isChanged) {
             __$__.Context.Draw();
+            __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+        }
     }
 });
 __$__.editor.commands.addCommand({
@@ -69,7 +71,9 @@ __$__.editor.commands.addCommand({
     bindKey: {win: 'Ctrl-Shift-,', mac: 'Command-Shift-,'},
     exec: function() {
         let isChanged = __$__.Context.MoveContextOnCursorPosition(-1);
-        if (isChanged)
+        if (isChanged) {
             __$__.Context.Draw();
+            __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+        }
     }
 });
