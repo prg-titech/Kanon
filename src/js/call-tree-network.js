@@ -38,10 +38,14 @@ __$__.CallTreeNetwork.draw = function() {
 
 __$__.CallTreeNetwork.constructData = function(node, network) {
     let contextSensitiveID = node.getContextSensitiveID();
-    network.nodes.push({
+    let data = {
         label: node.getDisplayedLabel(),
         id: contextSensitiveID
-    });
+    };
+    if (node.constructor.name === 'Loop' || node.constructor.name === 'Function') {
+        data.loopLabel = node.label;
+    }
+    network.nodes.push(data);
 
     node.children.forEach(child => {
         let childContextSensitiveID = child.getContextSensitiveID();
@@ -75,4 +79,21 @@ __$__.CallTreeNetwork.coloringCurrentSpecifiedContext = function() {
 };
 
 
+__$__.CallTreeNetwork.click = function(param) {
+    if (param.nodes.length > 0) {
+        let clickedNodeId = param.nodes[0];
+        let nodeData = __$__.CallTreeNetwork.network.body.data.nodes._data[clickedNodeId];
+        if (nodeData.loopLabel) {
+            console.log(clickedNodeId, nodeData);
+            __$__.Context.SpecifiedContext[nodeData.loopLabel] = clickedNodeId;
+
+            __$__.Context.SwitchViewMode(true);
+            __$__.Context.Draw();
+            __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+        }
+    }
+};
+
+
 __$__.CallTreeNetwork.network = new vis.Network(__$__.CallTreeNetwork.container, __$__.CallTreeNetwork.data, __$__.CallTreeNetwork.options);
+__$__.CallTreeNetwork.network.on('doubleClick', __$__.CallTreeNetwork.click);
