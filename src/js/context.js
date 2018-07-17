@@ -555,14 +555,6 @@ __$__.Context = {
         return obj.__id;
     },
 
-    // TODO: remove this function
-    setLoopContext: function(label, ope, n) {
-        let prog = `__$__.Context.LoopContext[label] ${ope} ${n};`;
-        eval(prog);
-        if (__$__.Update.executable)
-            eval('__$__.Context.LoopContextWhenExecutable[label]' + ope + ' ' + n + ';');
-        // __$__.ShowContext.update(label);
-    },
 
     findLoopLabelNearestCursorPosition: function() {
         let cursor = __$__.editor.getCursorPosition();
