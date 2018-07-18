@@ -1,11 +1,13 @@
 
 
-
 __$__.editor.on('click', (e) => {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
 	const range = getWordRangeFromClick(e);
 	const obj = findNodeInAST(ast, range);
+	console.log(escodegen.generate(obj));
 
+	// const snap = __$__.Context.SnapshotContext;
+	// console.log(__$__.Context.StoredGraph[snap.cpID][snap.loopLabel][snap.count])
 
 });
 
@@ -26,8 +28,9 @@ function getWordRangeFromClick(e) {
 	}
 }
 
+
 /**
- * This function finds the node in the ast as well as finding all the function declarations within the ast
+ * This function finds the node in the ast based on cursor position in the editor.
  * @param ast
  * @param range
  * @param info
