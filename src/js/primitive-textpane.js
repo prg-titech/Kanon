@@ -4,12 +4,27 @@ __$__.editor.on('click', (e) => {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
 	const range = getWordRangeFromClick(e);
 	const obj = findNodeInAST(ast, range);
-	console.log(escodegen.generate(obj));
+	console.log(findAncestorsOfNode(ast, obj));
 
 	// const snap = __$__.Context.SnapshotContext;
 	// console.log(__$__.Context.StoredGraph[snap.cpID][snap.loopLabel][snap.count])
 
 });
+
+function findAncestorsOfNode(ast,node){
+	let ancestors = [];
+	ast.body.forEach(statement => {
+		if(statement === node) {
+			return ancestors;
+		} else {
+			ancestors.push({
+				statement: statement,
+				children: (statement.body) ? findAncestorsOfNode(statement.body, node) : null,
+			});
+		}
+	});
+	return
+}
 
 
 /***
