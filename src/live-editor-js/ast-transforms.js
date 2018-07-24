@@ -1097,52 +1097,55 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                  * if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
                  *     __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
                  */
-                newBlockStmt.body.push(
-                    b.IfStatement(
-                        b.BinaryExpression(
-                            b.MemberExpression(
+                if (!checkInfLoop)
+                    newBlockStmt.body.push(
+                        b.IfStatement(
+                            b.BinaryExpression(
                                 b.MemberExpression(
                                     b.MemberExpression(
-                                        b.Identifier('__$__'),
-                                        b.Identifier('Context')
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('SpecifiedContext')
                                     ),
-                                    b.Identifier('SpecifiedContext')
+                                    b.Identifier('__loopLabel'),
+                                    true
                                 ),
-                                b.Identifier('__loopLabel'),
-                                true
+                                '===',
+                                b.Identifier('undefined')
                             ),
-                            '===',
-                            b.Identifier('undefined')
-                        ),
-                        b.AssignmentExpression(
-                            b.MemberExpression(
-                                b.MemberExpression(
+                            b.ExpressionStatement(
+                                b.AssignmentExpression(
                                     b.MemberExpression(
-                                        b.Identifier('__$__'),
-                                        b.Identifier('Context')
+                                        b.MemberExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__$__'),
+                                                b.Identifier('Context')
+                                            ),
+                                            b.Identifier('SpecifiedContext')
+                                        ),
+                                        b.Identifier('__loopLabel'),
+                                        true
                                     ),
-                                    b.Identifier('SpecifiedContext')
-                                ),
-                                b.Identifier('__loopLabel'),
-                                true
-                            ),
-                            '=',
-                            b.CallExpression(
-                                b.MemberExpression(
+                                    '=',
                                     b.CallExpression(
                                         b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier('last')
+                                            b.CallExpression(
+                                                b.MemberExpression(
+                                                    b.Identifier('__stackForCallTree'),
+                                                    b.Identifier('last')
+                                                ),
+                                                []
+                                            ),
+                                            b.Identifier('getContextSensitiveID')
                                         ),
                                         []
-                                    ),
-                                    b.Identifier('getContextSensitiveID')
-                                ),
-                                []
+                                    )
+                                )
                             )
                         )
-                    )
-                );
+                    );
 
 
                 newBlockStmt.body.push(
