@@ -21,6 +21,7 @@ __$__.Context = {
     ParentAndChildrenLoop: {noLoop: {children: []}},
     ParentAndChildrenLoopStack: ['noLoop'],
     ParentAndChildOnCallTree: {noLoop: {children: {}}},
+    PrimitiveValues: {},
     SensitiveContextForLoop: {},
     SensitiveContextForLoopWhenExecutable: undefined,
     BeforeSensitiveContextForLoop: {},
@@ -43,6 +44,7 @@ __$__.Context = {
         __$__.Context.ParentAndChildrenLoop = {noLoop: {children: []}};
         __$__.Context.ParentAndChildrenLoopStack = ['noLoop'];
         __$__.Context.ParentAndChildOnCallTree = {noLoop: {children: {}}};
+        __$__.Context.PrimitiveValues = {};
         __$__.Context.SensitiveContextForLoop = {};
         __$__.Context.StoredGraph = {};
         __$__.Context.StartEndInLoop = {};
@@ -71,6 +73,7 @@ __$__.Context = {
         };
 
         let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, count, timeCounter, checkPointId, probe);
+		__$__.Context.createMapPrimitiveValues(checkPointId, loopLabel, count, probe);
     
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
         __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
@@ -149,8 +152,7 @@ __$__.Context = {
             __$__.Context.StoredGraph[checkPointId][loopLabel] = {};
     
         __$__.Context.StoredGraph[checkPointId][loopLabel][count] = graph;
-    
-    
+
         return graph;
     },
     
@@ -606,5 +608,23 @@ __$__.Context = {
         });
 
         return nearestLoopLabels;
+    },
+
+    createMapPrimitiveValues: function(checkPointId, loopLabel, count, probe){
+        if(!__$__.Context.PrimitiveValues[checkPointId])
+            __$__.Context.PrimitiveValues[checkPointId] = {};
+
+        if(!__$__.Context.PrimitiveValues[checkPointId][loopLabel])
+            __$__.Context.PrimitiveValues[checkPointId][loopLabel] = {};
+
+        const varToVal = new Map();
+
+        for(let key in probe){
+            if(probe.hasOwnProperty(key) && typeof probe[key] !== 'object'){
+                varToVal.set(key, probe[key]);
+            }
+        }
+
+        __$__.Context.PrimitiveValues[checkPointId][loopLabel][count] = varToVal;
     }
 };
