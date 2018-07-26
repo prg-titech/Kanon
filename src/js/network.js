@@ -12,7 +12,7 @@ __$__.options = {
         //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
         //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
         // }
-        color: 'skyblue'
+        color: 'skyblue',
     },
     edges: {
         arrows: 'to',

@@ -1,25 +1,41 @@
-
-
 __$__.editor.on('click', (e) => {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
 	const range = getWordRangeFromClick(e);
 	const obj = findNodeInAST(ast, range);
-	findPrimitiveValue(obj);
-
+	console.log(findPrimitiveValues(obj));
 });
 
 
-function findPrimitiveValue(obj){
-	let value;
-	const identifier = obj.expression.argument.name;
+function findPrimitiveValues(obj) {
+	const value = new Map();
+	const identifiers = findVariablesInStatement(obj);
 	const currentContext = __$__.Context.SnapshotContext;
 	const varList = __$__.Context.PrimitiveValues[currentContext.cpID][currentContext.loopLabel][currentContext.count];
-	for(let key of varList.keys()){
-		if(key === identifier){
-			value = varList.get(key);
-		}
+	for (let key of varList.keys()) {
+		if (identifiers.includes(key)) value.set(key, varList.get(key));
 	}
-	console.log(varList);
+	return value;
+}
+
+
+function findVariablesInStatement(node) {
+	switch (node.type) {
+		case "ExpressionStatement":
+			const exp = node.expression;
+			if (exp.arguments) {
+				return exp.arguments.map(x => x.name);
+			} else if (exp.argument) {
+				return exp.argument.name;
+			}
+			break;
+		case "VariableDeclaration":
+			const dec = node.declarations;
+			return dec.map(x => x.id.name);
+			break;
+		default:
+			return;
+			break;
+	}
 }
 
 
@@ -50,11 +66,11 @@ function getWordRangeFromClick(e) {
 function findNodeInAST(ast, range, info = {sumDiff: Number.MAX_SAFE_INTEGER, node: null,}) {
 	ast.body.forEach(statement => {
 		const temp = calcRangeSumDiff(range, statement.loc);
-		if((temp.topline === 0 && temp.bottomline === 0) || temp < info.sumDiff){
+		if ((temp.topline === 0 && temp.bottomline === 0) || temp < info.sumDiff) {
 			info.sumDiff = temp.sum;
 			info.node = statement;
 		}
-		if(statement.body){
+		if (statement.body) {
 			findNodeInAST(statement.body, range, info);
 		}
 	});
@@ -64,7 +80,7 @@ function findNodeInAST(ast, range, info = {sumDiff: Number.MAX_SAFE_INTEGER, nod
 function calcRangeSumDiff(localRange, astRange) {
 	const square = {
 		topline: localRange.start.row - astRange.start.line,
-	    bottomline: localRange.end.row - astRange.end.line,
+		bottomline: localRange.end.row - astRange.end.line,
 		leftCol: localRange.start.column - astRange.start.column,
 		rightCol: localRange.end.column - astRange.end.column,
 	};

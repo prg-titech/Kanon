@@ -13,6 +13,7 @@ document.write('<script type="text/javascript" src="src/js/jump-to-const.js"></s
 document.write('<script type="text/javascript" src="src/js/layout.js"></script>');
 document.write('<script type="text/javascript" src="src/js/manipulate.js"></script>');
 document.write('<script type="text/javascript" src="src/js/probe.js"></script>');
+// document.write('<script type="text/javascript" src="src/js/primitive-textpane.js"></script>');
 document.write('<script type="text/javascript" src="src/js/readFile.js"></script>');
 document.write('<script type="text/javascript" src="src/js/saveFile.js"></script>');
 document.write('<script type="text/javascript" src="src/js/show-context.js"></script>');
