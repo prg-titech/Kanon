@@ -13,6 +13,7 @@ __$__.options = {
         //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
         // }
         color: 'skyblue',
+        title: __$__.PrimitiveValues,
     },
     edges: {
         arrows: 'to',

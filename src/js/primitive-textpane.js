@@ -1,9 +1,29 @@
+__$__.PrimitiveValues = "";
+
+
 __$__.editor.on('click', (e) => {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
 	const range = getWordRangeFromClick(e);
 	const obj = findNodeInAST(ast, range);
-	console.log(findPrimitiveValues(obj));
+	const primitiveMap = findPrimitiveValues(obj);
+	__$__.PrimitiveValues = mapToString(primitiveMap);
+	__$__.nodes.update({title: __$__.PrimitiveValues})
 });
+
+function mapToString(map){
+	let str = "";
+	let bool = true;
+	while(bool){
+		const item = map.keys().next();
+		bool = item.done;
+		if(bool){
+			str += item.value + ": " + map.get(item.value);
+		} else {
+			str += item.value + ": " + map.get(item.value) + "\n";
+		}
+	}
+	return str;
+}
 
 
 function findPrimitiveValues(obj) {
