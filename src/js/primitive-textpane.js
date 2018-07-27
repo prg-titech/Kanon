@@ -13,7 +13,7 @@ __$__.editor.on('click', (e) => {
 function mapToString(map){
 	let str = "";
 	let bool = true;
-	while(bool){
+	while(bool && map.size > 0){
 		const item = map.keys().next();
 		bool = item.done;
 		if(bool){
