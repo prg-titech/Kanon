@@ -105,6 +105,6 @@ __$__.CallTree.Instance = class Instance extends __$__.CallTree.Node {
     }
 
     getDisplayedLabel() {
-        return 'new ' + this.callee;
+        return 'new\n' + this.callee;
     }
 };
