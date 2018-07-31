@@ -160,9 +160,9 @@ __$__.Update = {
                         __$__.Context.SpecifiedContext[loopLabel] = __$__.Context.CallTreeNodesOfEachLoop[loopLabel][0].getContextSensitiveID();
                     }
                 });
-    
+
                 __$__.Context.Draw(e);
-                __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+                __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
 
             } catch (e) {
                 if (e === 'Infinite Loop') {

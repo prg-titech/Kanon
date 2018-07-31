@@ -17,6 +17,7 @@ __$__.CallTree.Node = class Node {
         this.label = label;
         this.callPath = callPath.concat(this);
         this.children = [];
+        this.shape = 'box';
         if (callPath.length >= 1) {
             let parent = callPath[callPath.length - 1];
             parent.children.push(this);
@@ -51,7 +52,6 @@ __$__.CallTree.Node = class Node {
 __$__.CallTree.Main = class Main extends __$__.CallTree.Node {
     constructor (label, callPath) {
         super(label, callPath);
-        this.shape = 'box';
     }
 };
 
@@ -59,7 +59,6 @@ __$__.CallTree.Main = class Main extends __$__.CallTree.Node {
 __$__.CallTree.FunctionCall = class FunctionCall extends __$__.CallTree.Node {
     constructor (label, callPath) {
         super(label, callPath);
-        this.shape = 'box';
     }
 };
 
@@ -69,11 +68,15 @@ __$__.CallTree.Function = class Function extends __$__.CallTree.Node {
         super(label, callPath);
         this.simplifiedLabel = simplifiedLabel;
         this.functionName = (functionName) ? functionName : 'anonymous';
-        this.shape = 'ellipse';
     }
 
     getDisplayedLabel() {
-        return this.functionName;
+        let parent = this.callPath[this.callPath.length - 2];
+        if (parent && parent.constructor.name === 'Instance') {
+            return parent.getDisplayedLabel();
+        } else {
+            return this.functionName;
+        }
     }
 };
 
@@ -83,7 +86,6 @@ __$__.CallTree.Loop = class Loop extends __$__.CallTree.Node {
         super(label, callPath);
         this.simplifiedLabel = simplifiedLabel;
         this.count = count;
-        this.shape = 'ellipse';
     }
 
     getLabelForContextSensitiveID() {
@@ -100,7 +102,6 @@ __$__.CallTree.Instance = class Instance extends __$__.CallTree.Node {
     constructor (label, callPath, callee) {
         super(label, callPath);
         this.callee = callee;
-        this.shape = 'box';
     }
 
     getDisplayedLabel() {
