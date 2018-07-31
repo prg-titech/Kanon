@@ -1,28 +1,58 @@
 __$__.PrimitiveValues = "";
 
 
-__$__.editor.on('click', (e) => {
+function primitiveTextPane() {
 	const ast = esprima.parse(__$__.editor.getValue(), {loc: true});
-	const range = getWordRangeFromClick(e);
+	const range = getWordRangeFromClick();
 	const obj = findNodeInAST(ast, range);
-	const primitiveMap = findPrimitiveValues(obj);
-	__$__.PrimitiveValues = mapToString(primitiveMap);
-	__$__.nodes.update({title: __$__.PrimitiveValues})
-});
+	__$__.PrimitiveValues = findPrimitiveValues(obj);
+	const primitiveString = mapToString(__$__.PrimitiveValues);
+	const toNode = findGreenArrow();
+	addPrimitiveToGraph(primitiveString, toNode);
 
-function mapToString(map){
+}
+
+__$__.PrimitiveTextPane = primitiveTextPane;
+
+function addPrimitiveToGraph(primitive, toNode) {
+	// get last id
+	const ids = __$__.nodes.getIds();
+	const lastId = (toNode) ? toNode : ids[ids.length - 1];
+	const nodeId = "primitive-val";
+
+	__$__.nodes.add({
+		id: nodeId,
+		label: primitive,
+		shape: "box",
+	});
+	__$__.edges.add({
+		from: lastId,
+		to: nodeId,
+		arrows: {
+			to: false,
+		},
+	})
+}
+
+function mapToString(map) {
 	let str = "";
-	let bool = true;
-	while(bool && map.size > 0){
-		const item = map.keys().next();
-		bool = item.done;
-		if(bool){
-			str += item.value + ": " + map.get(item.value);
+	for(let key of map.keys()){
+		if(typeof map.get(key) === "object"){
+			str += key + " = " + "Object" + "\n";
 		} else {
-			str += item.value + ": " + map.get(item.value) + "\n";
+			str += key + " = " + map.get(key) + "\n";
 		}
 	}
 	return str;
+}
+
+function findGreenArrow(){
+	const currentContext = __$__.Context.SnapshotContext;
+	const graph = __$__.Context.StoredGraph[currentContext.cpID][currentContext.loopLabel][currentContext.count];
+	// seagreen indicates current important node
+	const edge = graph.edges.find(x => x.color === "seagreen");
+	const node = (edge) ? graph.nodes.find(x => x.id === edge.to) : undefined;
+	return (node) ? node.id : undefined;
 }
 
 
@@ -43,6 +73,7 @@ function findVariablesInStatement(node) {
 		case "ExpressionStatement":
 			const exp = node.expression;
 			if (exp.arguments) {
+				if (exp.callee) return exp.arguments.map(x => x.name).concat(exp.callee.object.name);
 				return exp.arguments.map(x => x.name);
 			} else if (exp.argument) {
 				return exp.argument.name;
@@ -61,10 +92,9 @@ function findVariablesInStatement(node) {
 
 /***
  * Returns the range of the word/identifier that has been clicked on.
- * @param e click event
  */
-function getWordRangeFromClick(e) {
-	const pos = e.getDocumentPosition();
+function getWordRangeFromClick(event) {
+	const pos = __$__.editor.getCursorPosition();
 	let start = __$__.editor.getSelection().getWordRange(pos).start;
 	let end = __$__.editor.getSelection().getWordRange(pos).end;
 	start.row += 1;

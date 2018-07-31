@@ -120,6 +120,7 @@ __$__.Update = {
                 return;
             }
 
+            // TODO Make else statement to avoid warnings
 
             __$__.options.nodes.hidden = true;
             __$__.options.edges.hidden = true;

@@ -2,6 +2,7 @@ __$__.langTools = ace.require('ace/ext/language_tools');
 __$__.Range = ace.require('ace/range').Range;
 __$__.editor = ace.edit("editor");
 __$__.editor.setOption('enableBasicAutocompletion', true);
+__$__.editor.container = document.getElementById("editor");
 __$__.startAutocomplete = __$__.editor.keyBinding.$handlers[0].commands.startAutocomplete.exec;
 
 if (window.localStorage["Kanon-Code"] && window.localStorage["Kanon-Code"].indexOf('__$__') === -1)
@@ -39,7 +40,7 @@ __$__.editor.executeTask = () => {
         }
         __$__.Update.PositionUpdate(arg);
     } else if (__$__.editor.task.ContextUpdate.length > 0) {
-        __$__.Update.onlyMoveCursor = true;
+        __$__.Update. onlyMoveCursor = true;
         __$__.editor.task.ContextUpdate = [];
         __$__.Update.ContextUpdate();
     }
