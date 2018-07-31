@@ -47,7 +47,7 @@ __$__.CallTreeNetwork.options = {
             levelSeparation: 70
         }
     },
-    interaction: {dragNodes: false},
+    // interaction: {dragNodes: false},
     physics: {
         enabled: false
     }
@@ -69,7 +69,7 @@ __$__.CallTreeNetwork.draw = function() {
         edges: new vis.DataSet(data.edges)
     };
     __$__.CallTreeNetwork.network.setData(__$__.CallTreeNetwork.data);
-    __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+    __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
 };
 
 
@@ -94,53 +94,78 @@ __$__.CallTreeNetwork.constructData = function(node, network, ancestors = []) {
     __$__.CallTreeNetwork.descendantsIDs.edges[contextSensitiveID] = [];
     ancestors.push(contextSensitiveID);
 
-    node.children.forEach(child => {
+    let children = [].concat(node.children);
+    while (children.length) {
+        let child = children.shift();
         if (child.constructor.name === 'FunctionCall') {
-            child.children.forEach(c => {
-                let childContextSensitiveID = c.getContextSensitiveID();
-                let edgeID = contextSensitiveID + '_' + childContextSensitiveID;
-                if (__$__.CallTreeNetwork.hiddenIDs.edges[edgeID] === undefined)
-                    __$__.CallTreeNetwork.hiddenIDs.edges[edgeID] = __$__.CallTreeNetwork.hiddenIDs.nodes[contextSensitiveID];
-                let edgeData = {
-                    id: edgeID,
-                    from: contextSensitiveID,
-                    to: childContextSensitiveID,
-                    label: child.getDisplayedLabel(),
-                    hidden: __$__.CallTreeNetwork.hiddenIDs.edges[edgeID]
-                };
-                network.edges.push(edgeData);
-                ancestors.forEach(ancestorID => __$__.CallTreeNetwork.descendantsIDs.edges[ancestorID].push(edgeID));
-                __$__.CallTreeNetwork.constructData(c, network, ancestors);
-            });
-        } else {
-            let childContextSensitiveID = child.getContextSensitiveID();
-            let edgeID = contextSensitiveID + '_' + childContextSensitiveID;
-            if (__$__.CallTreeNetwork.hiddenIDs.edges[edgeID] === undefined)
-                __$__.CallTreeNetwork.hiddenIDs.edges[edgeID] = __$__.CallTreeNetwork.hiddenIDs.nodes[contextSensitiveID];
-            let edgeData = {
-                id: edgeID,
-                from: contextSensitiveID,
-                to: childContextSensitiveID,
-                hidden: __$__.CallTreeNetwork.hiddenIDs.edges[edgeID]
-            };
-            network.edges.push(edgeData);
-            ancestors.forEach(ancestorID => __$__.CallTreeNetwork.descendantsIDs.edges[ancestorID].push(edgeID));
-            __$__.CallTreeNetwork.constructData(child, network, ancestors);
+            children = child.children.concat(children);
+            continue;
+        } else if (child.constructor.name === 'Instance') {
+            children = child.children.concat(children);
+            continue;
         }
-    });
+
+        let childContextSensitiveID = child.getContextSensitiveID();
+        let edgeID = contextSensitiveID + '_' + childContextSensitiveID;
+        if (__$__.CallTreeNetwork.hiddenIDs.edges[edgeID] === undefined)
+            __$__.CallTreeNetwork.hiddenIDs.edges[edgeID] = __$__.CallTreeNetwork.hiddenIDs.nodes[contextSensitiveID];
+        let edgeData = {
+            id: edgeID,
+            from: contextSensitiveID,
+            to: childContextSensitiveID,
+            hidden: __$__.CallTreeNetwork.hiddenIDs.edges[edgeID]
+        };
+        network.edges.push(edgeData);
+        ancestors.forEach(ancestorID => __$__.CallTreeNetwork.descendantsIDs.edges[ancestorID].push(edgeID));
+        __$__.CallTreeNetwork.constructData(child, network, ancestors);
+    }
+    // node.children.forEach(child => {
+    //     if (child.constructor.name === 'FunctionCall') {
+    //         child.children.forEach(c => {
+    //             let childContextSensitiveID = c.getContextSensitiveID();
+    //             let edgeID = contextSensitiveID + '_' + childContextSensitiveID;
+    //             if (__$__.CallTreeNetwork.hiddenIDs.edges[edgeID] === undefined)
+    //                 __$__.CallTreeNetwork.hiddenIDs.edges[edgeID] = __$__.CallTreeNetwork.hiddenIDs.nodes[contextSensitiveID];
+    //             let edgeData = {
+    //                 id: edgeID,
+    //                 from: contextSensitiveID,
+    //                 to: childContextSensitiveID,
+    //                 hidden: __$__.CallTreeNetwork.hiddenIDs.edges[edgeID]
+    //             };
+    //             network.edges.push(edgeData);
+    //             ancestors.forEach(ancestorID => __$__.CallTreeNetwork.descendantsIDs.edges[ancestorID].push(edgeID));
+    //             __$__.CallTreeNetwork.constructData(c, network, ancestors);
+    //         });
+    //     } else {
+    //         let childContextSensitiveID = child.getContextSensitiveID();
+    //         let edgeID = contextSensitiveID + '_' + childContextSensitiveID;
+    //         if (__$__.CallTreeNetwork.hiddenIDs.edges[edgeID] === undefined)
+    //             __$__.CallTreeNetwork.hiddenIDs.edges[edgeID] = __$__.CallTreeNetwork.hiddenIDs.nodes[contextSensitiveID];
+    //         let edgeData = {
+    //             id: edgeID,
+    //             from: contextSensitiveID,
+    //             to: childContextSensitiveID,
+    //             hidden: __$__.CallTreeNetwork.hiddenIDs.edges[edgeID]
+    //         };
+    //         network.edges.push(edgeData);
+    //         ancestors.forEach(ancestorID => __$__.CallTreeNetwork.descendantsIDs.edges[ancestorID].push(edgeID));
+    //         __$__.CallTreeNetwork.constructData(child, network, ancestors);
+    //     }
+    // });
 
     ancestors.pop();
 };
 
 
-__$__.CallTreeNetwork.coloringCurrentSpecifiedContext = function() {
+__$__.CallTreeNetwork.highlightCurrentSpecifiedContext = function() {
     let shouldHighlight_map = {};
     Object.entries(__$__.Context.SpecifiedContext).forEach(entry => {
         shouldHighlight_map[entry[1]] = entry[0];
     });
+    let updateNodeItems = [];
     Object.keys(__$__.CallTreeNetwork.data.nodes._data).forEach(nodeId => {
         if (shouldHighlight_map[nodeId]) {
-            __$__.CallTreeNetwork.data.nodes.update({
+            updateNodeItems.push({
                 id: nodeId,
                 color: {
                     border: 'black',
@@ -150,7 +175,7 @@ __$__.CallTreeNetwork.coloringCurrentSpecifiedContext = function() {
                 }
             });
         } else {
-            __$__.CallTreeNetwork.data.nodes.update({
+            updateNodeItems.push({
                 id: nodeId,
                 color: {
                     border: 'skyblue',
@@ -161,6 +186,7 @@ __$__.CallTreeNetwork.coloringCurrentSpecifiedContext = function() {
             });
         }
     });
+    __$__.CallTreeNetwork.data.nodes.update(updateNodeItems);
 };
 
 
@@ -175,7 +201,7 @@ __$__.CallTreeNetwork.selectClickedContext = function(param) {
 
             __$__.Context.SwitchViewMode(true);
             __$__.Context.Draw();
-            __$__.CallTreeNetwork.coloringCurrentSpecifiedContext();
+            __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
         }
     }
 };
