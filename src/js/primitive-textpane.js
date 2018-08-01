@@ -36,8 +36,8 @@ function addPrimitiveToGraph(primitive, toNode) {
 
 function mapToString(map) {
 	let str = "";
-	for(let key of map.keys()){
-		if(typeof map.get(key) === "object"){
+	for (let key of map.keys()) {
+		if (typeof map.get(key) === "object") {
 			str += key + " = " + "Object" + "\n";
 		} else {
 			str += key + " = " + map.get(key) + "\n";
@@ -46,7 +46,7 @@ function mapToString(map) {
 	return str;
 }
 
-function findGreenArrow(){
+function findGreenArrow() {
 	const currentContext = __$__.Context.SnapshotContext;
 	const graph = __$__.Context.StoredGraph[currentContext.cpID][currentContext.loopLabel][currentContext.count];
 	// seagreen indicates current important node
@@ -59,36 +59,62 @@ function findGreenArrow(){
 function findPrimitiveValues(obj) {
 	const value = new Map();
 	const identifiers = findVariablesInStatement(obj);
+	console.log(identifiers);
 	const currentContext = __$__.Context.SnapshotContext;
 	const varList = __$__.Context.PrimitiveValues[currentContext.cpID][currentContext.loopLabel][currentContext.count];
 	for (let key of varList.keys()) {
 		if (identifiers.includes(key)) value.set(key, varList.get(key));
 	}
+	console.log(varList);
 	return value;
 }
 
 
 function findVariablesInStatement(node) {
 	switch (node.type) {
+		case "MemberExpression":
+			return findVariablesInStatement(node.object);
+			break;
+		case "Literal":
+			return node.value;
+			break;
+		case "Identifier":
+			return node.name;
+			break;
+		case "UpdateExpression":
+			if (node.argument) return findVariablesInStatement(node.argument);
+			break;
+		case "CallExpression": {
+			let vars = [];
+			if (node.arguments) node.arguments.forEach(x => vars.push(findVariablesInStatement(x)));
+			if (node.callee) vars.push(findVariablesInStatement(node.callee));
+			return vars;
+		}
+			break;
 		case "ExpressionStatement":
-			const exp = node.expression;
-			if (exp.arguments) {
-				if (exp.callee) return exp.arguments.map(x => x.name).concat(exp.callee.object.name);
-				return exp.arguments.map(x => x.name);
-			} else if (exp.argument) {
-				return exp.argument.name;
-			}
+			if(node.expression) return findVariablesInStatement(node.expression);
 			break;
 		case "VariableDeclaration":
-			const dec = node.declarations;
-			return dec.map(x => x.id.name);
+			if(node.declarations) {
+				let vars = [];
+				node.declarations.forEach(x => vars.push(findVariablesInStatement(x)));
+				vars = [].concat(...vars);
+				return vars;
+			}
 			break;
-		default:
-			return;
+		case "VariableDeclarator": {
+			let vars;
+			if(node.id) vars = [(findVariablesInStatement(node.id))];
+			if(node.init && vars) {
+				vars = vars.concat(findVariablesInStatement(node.init));
+			} else if(node.init) {
+				vars = findVariablesInStatement(node.init);
+			}
+			return vars;
+		}
 			break;
 	}
 }
-
 
 /***
  * Returns the range of the word/identifier that has been clicked on.
