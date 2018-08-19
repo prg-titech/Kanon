@@ -7,6 +7,7 @@
 	<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
 	<script type="text/javascript" src="node_modules/ace-builds/src/ace.js"></script>
 	<script type="text/javascript" src="node_modules/ace-builds/src/ext-language_tools.js"></script>
+	<script type="text/javascript" src="node_modules/d3/dist/d3.js"></script>
 	<script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>
 	<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>
@@ -14,6 +15,7 @@
 	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
 	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
 	<link rel="stylesheet" type="text/css" href="src/css/style.css">
+	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
 </head>
 <body>
 
@@ -57,7 +59,7 @@
 		   onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 </div>
 
-<div id="callTreeDiagram" oncontextmenu="return false;">
+<div id="callTreeDiagram">
     <div id="callTree"></div>
 </div>
 
@@ -98,7 +100,8 @@
 <div id='console'></div>
 
 <script type="text/javascript" src="src/js/network.js"></script>
-<script type="text/javascript" src="src/js/call-tree-network.js"></script>
+<!--<script type="text/javascript" src="src/js/call-tree-network.js"></script>-->
+<script type="text/javascript" src="src/js/call-tree-network-d3.js"></script>
 <script>
     __$__.StorePositions.registerPositions();
     __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
