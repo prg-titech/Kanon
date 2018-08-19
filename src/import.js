@@ -2,6 +2,7 @@ document.write('<script type="text/javascript" src="src/js/setup.js"></script>')
 document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ace.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ext-language_tools.js"></script>');
+document.write('<script type="text/javascript" src="node_modules/d3/dist/d3.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
