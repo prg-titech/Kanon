@@ -18,6 +18,7 @@ __$__.CallTreeNetwork = {
     },
 
     root: undefined,
+    circle: undefined,
 
     switchEnabled() {
         this.enable = !this.enable;
@@ -40,22 +41,33 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.traverseCallTree(root);
         tree(root);
 
-        var g = __$__.CallTreeNetwork.svg.select('g');
-        var node = g.selectAll('.node')
+        let g = __$__.CallTreeNetwork.svg.select('g');
+        let node = g.selectAll('.node')
             .data(root.descendants(), d => d.data.contextSensitiveID);
 
-        var nodeEnter = node
+        let cc = __$__.CallTreeNetwork.clickCancel();
+        let nodeEnter = node
             .enter()
             .append('g')
             .attr('class', 'node')
             .attr('transform', d => 'translate(' + source.y0 + ',' + source.x0 + ')')
-            .on('click', d => {
-                __$__.CallTreeNetwork.toggle(d);
-                __$__.CallTreeNetwork.update(tree, __$__.CallTreeNetwork.root, d);
-            })
-            .on('dblclick', d => {
-                console.log(d);
-            });
+            .call(cc);
+
+        cc.on('click', d => {
+            let loopLabel = d.data.loopLabel;
+            __$__.Context.SpecifiedContext[loopLabel] = d.data.contextSensitiveID;
+            if (__$__.Update.executable)
+                __$__.Context.SpecifiedContextWhenExecutable[loopLabel] = d.data.contextSensitiveID;
+
+            __$__.Context.SwitchViewMode(true);
+            __$__.Context.Draw();
+            __$__.CallTreeNetwork.updateHighlightCircles();
+        });
+        cc.on('dblclick', d => {
+            __$__.CallTreeNetwork.toggle(d);
+            __$__.CallTreeNetwork.update(tree, __$__.CallTreeNetwork.root, d);
+        });
+
 
         nodeEnter.append('circle')
             .attr('r', 5)
@@ -69,21 +81,23 @@ __$__.CallTreeNetwork = {
             .text(d => d.data.name)
             .style("fill-opacity", 1e-6);
 
-        var nodeUpdate = nodeEnter.merge(node);
-        var duration = 500;
+        let nodeUpdate = nodeEnter.merge(node);
+        let duration = 500;
 
         nodeUpdate.transition()
             .duration(duration)
             .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
-        nodeUpdate.select("circle")
+        __$__.CallTreeNetwork.circle = nodeUpdate.select("circle")
             .attr("r", 8)
             .style("fill", d => d._children ? "lightsteelblue" : "#fff");
+
+        __$__.CallTreeNetwork.updateHighlightCircles();
 
         nodeUpdate.select("text")
             .style("fill-opacity", 1);
 
-        var nodeExit = node
+        let nodeExit = node
             .exit()
             .transition()
             .duration(duration)
@@ -96,16 +110,16 @@ __$__.CallTreeNetwork = {
         nodeExit.select("text")
             .style("fill-opacity", 1e-6);
 
-        var link = g.selectAll(".link")
+        let link = g.selectAll(".link")
             .data(root.links(), d => d.target.data.contextSensitiveID);
 
-        var linkEnter = link.enter().insert('path', "g")
+        let linkEnter = link.enter().insert('path', "g")
             .attr('class', 'link')
             .attr('d', __$__.CallTreeNetwork.d3.linkHorizontal()
                 .x(d => source.y0)
                 .y(d => source.x0));
 
-        var linkUpdate = linkEnter.merge(link);
+        let linkUpdate = linkEnter.merge(link);
         linkUpdate.transition()
             .duration(duration)
             .attr('d', __$__.CallTreeNetwork.d3.linkHorizontal()
@@ -129,9 +143,9 @@ __$__.CallTreeNetwork = {
     draw: (() => {
         let firstTime = true;
         return function draw() {
-            let data_temp = {};
-            __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data_temp);
-            let root = __$__.CallTreeNetwork.d3.hierarchy(data_temp);
+            let data = {};
+            __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
+            let root = __$__.CallTreeNetwork.d3.hierarchy(data);
             root.x0 = __$__.CallTreeNetwork.windowSize.height / 2;
             root.y0 = 0;
             __$__.CallTreeNetwork.root = root;
@@ -151,6 +165,7 @@ __$__.CallTreeNetwork = {
     constructData(node, data) {
         data.name = node.getDisplayedLabel();
         data.contextSensitiveID = node.getContextSensitiveID();
+        data.loopLabel = node.label;
         if (node.children.length > 0) data.children = [];
         let children = [].concat(node.children);
         while (children.length > 0) {
@@ -167,16 +182,13 @@ __$__.CallTreeNetwork = {
 
     traverseCallTree(node) {
         let contextSensitiveID = node.data.contextSensitiveID;
-        if (__$__.CallTreeNetwork.displayChildren[contextSensitiveID] === undefined) {
-            __$__.CallTreeNetwork.displayChildren[contextSensitiveID] = true;
-            let children = node.children;
-            if (children) {
-                children.forEach(childNode => {
-                    __$__.CallTreeNetwork.traverseCallTree(childNode);
-                });
+        if (__$__.CallTreeNetwork.displayChildren[contextSensitiveID] === false) {
+            if (node.children) {
+                node._children = node.children;
+                node.children = null;
             }
-        } else if (__$__.CallTreeNetwork.displayChildren[contextSensitiveID] === true) {
-            if (node._children) {
+        } else {
+            if (__$__.CallTreeNetwork.displayChildren[contextSensitiveID] === true && node._children) {
                 node.children = node._children;
                 node._children = null;
             }
@@ -186,12 +198,86 @@ __$__.CallTreeNetwork = {
                     __$__.CallTreeNetwork.traverseCallTree(childNode);
                 });
             }
-        } else {
-            if (node.children) {
-                node._children = node.children;
-                node.children = null;
-            }
         }
+    },
+
+    clickCancel() {
+        // we want to a distinguish single/double click
+        // details http://bl.ocks.org/couchand/6394506
+        let dispatcher = d3.dispatch('click', 'dblclick');
+        function cc(selection) {
+            let down, tolerance = 5, last, wait = null, args;
+            // euclidean distance
+            function dist(a, b) {
+                return Math.sqrt(Math.pow(a[0] - b[0], 2), Math.pow(a[1] - b[1], 2));
+            }
+            selection.on('mousedown', function() {
+                down = d3.mouse(document.body);
+                last = +new Date();
+                args = arguments;
+            });
+            selection.on('mouseup', function() {
+                if (dist(down, d3.mouse(document.body)) > tolerance) {
+                    return;
+                } else {
+                    if (wait) {
+                        window.clearTimeout(wait);
+                        wait = null;
+                        dispatcher.apply("dblclick", this, args);
+                    } else {
+                        wait = window.setTimeout((function() {
+                            return function() {
+                                dispatcher.apply("click", this, args);
+                                wait = null;
+                            };
+                        })(), 300);
+                    }
+                }
+            });
+        }
+        // Copies a variable number of methods from source to target.
+        let d3rebind = function(target, source) {
+            let i = 1, n = arguments.length, method;
+            while (++i < n) target[method = arguments[i]] = d3_rebind(target, source, source[method]);
+            return target;
+        };
+
+        // Method is assumed to be a standard D3 getter-setter:
+        // If passed with no arguments, gets the value.
+        // If passed with arguments, sets the value and returns the target.
+        function d3_rebind(target, source, method) {
+            return function() {
+                let value = method.apply(source, arguments);
+                return value === source ? target : value;
+            };
+        }
+        return d3rebind(cc, dispatcher, 'on');
+    },
+
+    updateHighlightCircles() {
+        let nodeUpdate = __$__.CallTreeNetwork.circle;
+        let selectedContext = {};
+        Object.values(__$__.Context.SpecifiedContext).forEach(contextSensitiveID => {
+            selectedContext[contextSensitiveID] = true;
+        });
+
+        nodeUpdate
+            .style('stroke', d => {
+                let contextSensitiveID = d.data.contextSensitiveID;
+                if (selectedContext[contextSensitiveID]) {
+                    return 'black';
+                } else {
+                    return 'gray';
+                }
+            })
+            .style('stroke-width', d => {
+                let contextSensitiveID = d.data.contextSensitiveID;
+                if (selectedContext[contextSensitiveID]) {
+                    return 3;
+                } else {
+                    return 1;
+                }
+            });
     }
 };
 
