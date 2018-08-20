@@ -162,7 +162,7 @@ __$__.Update = {
                 });
 
                 __$__.Context.Draw(e);
-                __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
+                __$__.CallTreeNetwork.updateHighlightCircles();
 
             } catch (e) {
                 if (e === 'Infinite Loop') {

@@ -869,6 +869,12 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
 
                 let newBlockStmt = b.BlockStatement([]);
                 if (isFunction) {
+                    finallyBody.push(
+						b.ExpressionStatement(
+							b.Identifier('__loopLabels.pop()')
+						)
+					);
+
                     newBlockStmt.body.push(
                         b.VariableDeclaration([
                             b.VariableDeclarator(
@@ -1399,7 +1405,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
 /**
  * insert check point before and after each statement (VariableDeclaration is exception).
  *
- * if statement type is 'return', 'break', 'continue', 
+ * if statement type is 'return', 'break', 'continue'
  *   Statement -> {checkPoint; Statement} ... (1)
  *
  * otherwise
@@ -1583,7 +1589,7 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                         b.Literal(true)
                     )
                 );
-                
+
 
                 /**
                  * // before
