@@ -254,6 +254,11 @@ __$__.CallTreeNetwork = {
         return d3rebind(cc, dispatcher, 'on');
     },
 
+    /**
+     * this function is defined by referencing to the following web site.
+     * accessed August 2018
+     * - http://bl.ocks.org/ropeladder/83915942ac42f17c087a82001418f2ee
+     */
     updateHighlightCircles() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         let selectedContext = {};
