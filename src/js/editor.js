@@ -62,7 +62,7 @@ __$__.editor.commands.addCommand({
         let isChanged = __$__.Context.MoveContextOnCursorPosition(1);
         if (isChanged) {
             __$__.Context.Draw();
-            __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
+            __$__.CallTreeNetwork.updateHighlightCircles();
         }
     }
 });
@@ -73,7 +73,7 @@ __$__.editor.commands.addCommand({
         let isChanged = __$__.Context.MoveContextOnCursorPosition(-1);
         if (isChanged) {
             __$__.Context.Draw();
-            __$__.CallTreeNetwork.highlightCurrentSpecifiedContext();
+            __$__.CallTreeNetwork.updateHighlightCircles();
         }
     }
 });
