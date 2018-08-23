@@ -2,14 +2,9 @@ __$__.CallTreeNetwork = {
     d3: d3,
 
     windowSize: {
-        width: 600,
-        height: 600
+        width: undefined,
+        height: undefined
     },
-
-    svg: d3.select('#callTree')
-        .append('svg')
-        .attr('width', 600)
-        .attr('height', 600),
 
     enable: true,
 
@@ -17,7 +12,9 @@ __$__.CallTreeNetwork = {
         'main': true
     },
 
+    tree: undefined,
     root: undefined,
+    data: undefined,
     circle: undefined,
 
     switchEnabled() {
@@ -37,9 +34,10 @@ __$__.CallTreeNetwork = {
         }
     },
 
-    update(tree, root, source) {
+    update(source, duration = 500) {
+        let root = __$__.CallTreeNetwork.root;
         __$__.CallTreeNetwork.traverseCallTree(root);
-        tree(root);
+        __$__.CallTreeNetwork.tree(root);
 
         let g = __$__.CallTreeNetwork.svg.select('g');
         let node = g.selectAll('.node')
@@ -56,7 +54,7 @@ __$__.CallTreeNetwork = {
         cc.on('click', d => {
             let loopLabel = d.data.loopLabel;
             __$__.Context.SpecifiedContext[loopLabel] = d.data.contextSensitiveID;
-            if (__$__.Update.executable)
+            if (!__$__.Error.hasError)
                 __$__.Context.SpecifiedContextWhenExecutable[loopLabel] = d.data.contextSensitiveID;
 
             __$__.Context.SwitchViewMode(true);
@@ -65,7 +63,7 @@ __$__.CallTreeNetwork = {
         });
         cc.on('dblclick', d => {
             __$__.CallTreeNetwork.toggle(d);
-            __$__.CallTreeNetwork.update(tree, __$__.CallTreeNetwork.root, d);
+            __$__.CallTreeNetwork.update(d);
         });
 
 
@@ -82,7 +80,6 @@ __$__.CallTreeNetwork = {
             .style("fill-opacity", 1e-6);
 
         let nodeUpdate = nodeEnter.merge(node);
-        let duration = 500;
 
         nodeUpdate.transition()
             .duration(duration)
@@ -140,25 +137,54 @@ __$__.CallTreeNetwork = {
         });
     },
 
+    initialize() {
+        let height = __$__.CallTreeNetwork.windowSize.height = $('#callTree').height();
+        let width = __$__.CallTreeNetwork.windowSize.width = $('#callTree').width();
+        __$__.CallTreeNetwork.svg = d3.select('#callTree')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        __$__.CallTreeNetwork.g = __$__.CallTreeNetwork.svg.append('g')
+            .attr("transform", 'translate(50, 0)');
+    },
+
+    resize() {
+        let height = __$__.CallTreeNetwork.windowSize.height = $('#callTree').height(),
+            width = __$__.CallTreeNetwork.windowSize.width = $('#callTree').width(),
+            root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(__$__.CallTreeNetwork.data);
+
+        root.x0 = height / 2;
+        root.y0 = 0;
+
+        __$__.CallTreeNetwork.svg
+            .attr('width', width)
+            .attr('height', height);
+
+        __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
+            .size([height, width - 100]);
+
+        __$__.CallTreeNetwork.update(root, 0);
+    },
+
     draw: (() => {
         let firstTime = true;
         return function draw() {
-            let data = {};
+            if (firstTime) __$__.CallTreeNetwork.initialize();
+
+            let data = __$__.CallTreeNetwork.data = {};
             __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
-            let root = __$__.CallTreeNetwork.d3.hierarchy(data);
+
+            let root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(data);
+
             root.x0 = __$__.CallTreeNetwork.windowSize.height / 2;
             root.y0 = 0;
-            __$__.CallTreeNetwork.root = root;
-            let tree = __$__.CallTreeNetwork.d3.tree()
+
+            __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
                 .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 100]);
 
-            if (firstTime) {
-                __$__.CallTreeNetwork.g = __$__.CallTreeNetwork.svg.append('g')
-                    .attr("transform", 'translate(50, 0)');
-                firstTime = false;
-            }
-
-            __$__.CallTreeNetwork.update(tree, root, root);
+            __$__.CallTreeNetwork.update(root);
+            firstTime = false;
         }
     })(),
 

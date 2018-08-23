@@ -1,0 +1,32 @@
+#split-pane-frame {
+    height: calc(100% - 80px);
+}
+
+#left-component {
+    width: 50%;
+    min-width: 10em;
+}
+
+#vertical-divider {
+    left: 50%;
+    width: 5px;
+}
+
+#right-component {
+    left: 50%;
+    margin-left: 5px;
+}
+
+#top-component {
+    bottom: 50%;
+    margin-bottom: 5px;
+}
+
+#horizontal-divider {
+    bottom: 50%;
+    height: 5px;
+}
+
+#bottom-component {
+    height: 50%;
+}

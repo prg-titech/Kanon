@@ -444,11 +444,9 @@ __$__.Layout = {
         if (__$__.Layout.enabled) {
             __$__.Layout.enabled = false;
             __$__.Update.updateValueOfArray = false;
-            document.getElementById('autoLayout').textContent = 'OFF';
         } else {
             __$__.Layout.enabled = true;
             __$__.Update.updateValueOfArray = true;
-            document.getElementById('autoLayout').textContent = 'ON';
         }
         __$__.Update.updateArrayValuePosition();
         __$__.Update.ContextUpdate();

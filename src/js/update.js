@@ -3,8 +3,7 @@ __$__.Update = {
     waitForStabilized: false,
     updateValueOfArray: true,
     onlyMoveCursor: false,
-    executable: true,
-    
+
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
         window.localStorage["Kanon-Code"] = __$__.editor.getValue();
@@ -27,6 +26,7 @@ __$__.Update = {
             try {
                 __transformed_code__ = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
             } catch (e) {
+                console.log(e.message);
                 document.getElementById('console').textContent = 'Error?';
                 if (e.message.slice(0, 5) === 'Line ')
                     document.getElementById('console').textContent += ': ' + e.message;
@@ -63,15 +63,15 @@ __$__.Update = {
             try {
                 (() => {eval(__$__.Update.CodeWithCP)})();
                 __$__.Context.InfLoop = '';
-                if (!__$__.Update.executable && __$__.Context.SpecifiedContextWhenExecutable) {
+                if (__$__.Error.hasError && __$__.Context.SpecifiedContextWhenExecutable) {
                     Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
                         __$__.Context.SpecifiedContextWhenExecutable[loopLabel] = __$__.Context.SpecifiedContextWhenExecutable[loopLabel] ||  __$__.Context.SpecifiedContext[loopLabel];
                     });
                     __$__.Context.SpecifiedContext = __$__.Context.SpecifiedContextWhenExecutable;
                 }
-                __$__.Update.executable = true;
+                __$__.Error.hasError = false;
             } catch (e) {
-                __$__.Update.executable = false;
+                __$__.Error.hasError = true;
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
@@ -80,7 +80,7 @@ __$__.Update = {
                 }
             }
 
-            if (__$__.Update.executable) {
+            if (!__$__.Error.hasError) {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
             }
 

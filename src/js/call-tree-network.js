@@ -102,7 +102,7 @@ __$__.CallTreeNetwork = {
             let nodeData = __$__.CallTreeNetwork.data.nodes.get(clickedNodeId);
             if (nodeData.loopLabel) {
                 __$__.Context.SpecifiedContext[nodeData.loopLabel] = clickedNodeId;
-                if (__$__.Update.executable)
+                if (!__$__.Error.hasError)
                     __$__.Context.SpecifiedContextWhenExecutable[nodeData.loopLabel] = clickedNodeId;
 
                 __$__.Context.SwitchViewMode(true);

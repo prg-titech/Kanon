@@ -1,22 +1,3 @@
-#editor_wrapper {
-    position: relative;
-    width: 450px;
-    height: 600px;
-    float: left;
-    margin-top: 15px;
-    margin-right: 15px;
-    border: 1px solid lightgray;
-}
-
-#callTreeDiagram {
-    position: relative;
-    margin-top: 15px;
-    width: 600px;
-    height: 600px;
-    border: 1px solid lightgray;
-    float: left;
-}
-
 #callTree {
     position: absolute;
     top: 0;
@@ -25,54 +6,12 @@
     bottom: 0;
 }
 
-
 #editor {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 0;
-}
-
-#show_context {
-    z-index: 1;
-}
-
-#show_context > div {
-    background-color: rgba(0, 0, 0, 0.3);
-    color: rgba(255, 255, 255, 1);
-    position: absolute;
-    font-size: 70%;
-    padding-left: 5px;
-    padding-right: 5px;
-    z-index: 2;
-}
-
-#resizableNetwork {
-    position: relative;
-    margin-top: 15px;
-    width: 600px;
-    height: 600px;
-    border: 1px solid lightgray;
-    float: left;
-}
-
-#readInput {
-    position: absolute;
-    left: 700px;
-    top: 625px;
-    margin-left: -80px;
-    margin-top: 10px;
-    border: 1px;
-}
-
-#saveButton {
-    position: absolute;
-    left: 950px;
-    top: 624px;
-    margin-left: -80px;
-    margin-top: 10px;
 }
 
 #mynetwork {
@@ -83,54 +22,72 @@
     bottom: 0;
 }
 
-#viewmodebutton {
-    float: left;
-    clear: left;
-    margin-left: 10px;
-    margin-top: 10px;
+#menu-bar {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    width: 100%;
+    height: 40px;
 }
 
-#viewmode {
+#viewMode {
+    display: flex;
+    align-items: center;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#pullDownViewMode {
     float: left;
-    margin: 10px;
+    display: flex;
+    align-items: center;
 }
 
 #fontSizeForm {
     float: left;
-    margin: 10px;
-}
-
-#resetButton {
-    position: absolute;
-    left: 600px;
-    top: 600px;
-    margin-left: -80px;
-    margin-top: 10px;
-}
-
-#BackButton {
-    float: left;
-    clear: left;
-    margin-left: 10px;
-}
-
-#ForwardButton {
-    float: left;
-    margin-left: 10px;
-}
-
-#autoLayoutButton {
-    float: left;
-    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    border-left: solid darkgray;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 #autoLayout {
     float: left;
-    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    border-left: solid darkgray;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#fileOperation {
+    display: flex;
+    align-items: center;
+    border-left: solid darkgray;
+    padding: 15px 5px 15px 5px;
+}
+
+#readInput {
+    float: left;
+    display: flex;
+    align-items: center;
+}
+
+#saveButton {
+    float: left;
+    display: flex;
+    align-items: center;
+}
+
+#redrawButton {
+    margin-left: auto;
+    margin-right: 10px;
+    align-items: center;
+    text-align: right;
 }
 
 #console {
-    float: left;
-    clear: left;
+    margin-left: 10px;
 }
 

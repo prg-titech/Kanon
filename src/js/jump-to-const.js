@@ -28,7 +28,7 @@ __$__.JumpToConstruction = {
             if (nodeData) {
                 if (nodeData.loopLabel !== 'main') {
                     __$__.Context.SpecifiedContext[nodeData.loopLabel] = nodeData.contextSensitiveID;
-                    if (__$__.Update.executable) {
+                    if (!__$__.Error.hasError) {
                         __$__.Context.SpecifiedContextWhenExecutable[nodeData.loopLabel] = nodeData.contextSensitiveID;
                     }
                     __$__.Context.ChangeInnerAndParentContext(nodeData.loopLabel);
@@ -49,7 +49,7 @@ __$__.JumpToConstruction = {
 
                     if (edgeData.loopLabel !== 'main') {
                         __$__.Context.SpecifiedContext[edgeData.loopLabel] = edgeData.contextSensitiveID;
-                        if (__$__.Update.executable) {
+                        if (!__$__.Error.hasError) {
                             __$__.Context.SpecifiedContextWhenExecutable[edgeData.loopLabel] = edgeData.contextSensitiveID;
                         }
                         __$__.Context.ChangeInnerAndParentContext(edgeData.loopLabel);

@@ -6,10 +6,12 @@ document.write('<script type="text/javascript" src="node_modules/d3/dist/d3.js">
 document.write('<script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
+document.write('<script type="text/javascript" src="node_modules/split-pane/split-pane.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-conversion.js"></script>');
+document.write('<script type="text/javascript" src="src/js/error.js"></script>');
 document.write('<script type="text/javascript" src="src/js/context.js"></script>');
 document.write('<script type="text/javascript" src="src/js/jump-to-const.js"></script>');
 document.write('<script type="text/javascript" src="src/js/layout.js"></script>');

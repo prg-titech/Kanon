@@ -186,7 +186,7 @@ __$__.Context = {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     if (loopLabel) {
                         contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
-                    } else if (!__$__.Update.executable &&
+                    } else if (__$__.Error.hasError &&
                         cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
 
 
@@ -448,12 +448,12 @@ __$__.Context = {
     
     SwitchViewMode: function(isSnapshot) {
         __$__.Context.Snapshot = isSnapshot;
-        let elem = document.getElementById('viewmode');
-    
-        elem.textContent = (isSnapshot) ? 'View Mode: Snapshot' : 'View Mode: Summarized';
+
         if (isSnapshot) {
             __$__.Context.SnapshotContext = {};
         }
+        document.getElementById('pullDownViewMode').value =
+            (isSnapshot) ? 'Snapshot' : 'Summarized';
         __$__.options.manipulation.enabled = isSnapshot;
         __$__.network.setOptions(__$__.options);
     },
