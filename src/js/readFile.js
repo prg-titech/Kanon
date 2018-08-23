@@ -1,6 +1,6 @@
 __$__.readFile = function () {
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		document.getElementById('readFile').addEventListener('change', __$__.readSingleFile, false);
+		document.getElementById('readInput').addEventListener('change', __$__.readSingleFile, false);
 	} else {
 		console.error("The File APIs are not fully supported in this browser.")
 	}
