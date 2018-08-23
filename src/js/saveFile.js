@@ -12,7 +12,7 @@ __$__.saveFile = function () {
 		document.body.removeChild(element);
 	}
 	const content = __$__.editor.getValue();
-	const fileExists = document.getElementById("readFile").value.replace(/^.*[\\\/]/, '');
+	const fileExists = document.getElementById("readInput").value.replace(/^.*[\\\/]/, '');
 	const filename = fileExists ? fileExists : "saveFile.js";
 	download(filename, content);
 };
