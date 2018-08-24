@@ -52,6 +52,10 @@
     padding-right: 5px;
 }
 
+#fontSize {
+    width: 30px;
+}
+
 #autoLayout {
     float: left;
     display: flex;
