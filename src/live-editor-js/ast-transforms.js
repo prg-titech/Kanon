@@ -1599,8 +1599,8 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                  * {
                  *     checkpoint;
                  *     let __temp = ret;
-                 *     return __temp;
                  *     checkpoint;
+                 *     return __temp;
                  * }
                  */
                 if (node.type === 'ReturnStatement') {
@@ -1614,10 +1614,10 @@ __$__.ASTTransforms.InsertCheckPoint = function() {
                                 node.argument
                             )
                         ], 'let'),
+                        checkPoint(end, variables),
                         b.ReturnStatement(
                             b.Identifier('__temp')
-                        ),
-                        checkPoint(end, variables)
+                        )
                     ]);
 
                 /**

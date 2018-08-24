@@ -16,6 +16,7 @@ __$__.CallTreeNetwork = {
     root: undefined,
     data: undefined,
     circle: undefined,
+    firstDraw: true,
 
     switchEnabled() {
         this.enable = !this.enable;
@@ -81,9 +82,15 @@ __$__.CallTreeNetwork = {
 
         let nodeUpdate = nodeEnter.merge(node);
 
-        nodeUpdate.transition()
-            .duration(duration)
-            .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
+        if (__$__.CallTreeNetwork.firstDraw)
+            nodeUpdate.transition()
+                .duration(duration)
+                .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
+                .on('end', () => {__$__.CallTreeNetwork.firstDraw = false;});
+        else
+            nodeUpdate.transition()
+                .duration(duration)
+                .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
         __$__.CallTreeNetwork.circle = nodeUpdate.select("circle")
             .attr("r", 8)
@@ -167,26 +174,22 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.update(root, 0);
     },
 
-    draw: (() => {
-        let firstTime = true;
-        return function draw() {
-            if (firstTime) __$__.CallTreeNetwork.initialize();
+    draw() {
+        if (__$__.CallTreeNetwork.firstDraw) __$__.CallTreeNetwork.initialize();
 
-            let data = __$__.CallTreeNetwork.data = {};
-            __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
+        let data = __$__.CallTreeNetwork.data = {};
+        __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
 
-            let root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(data);
+        let root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(data);
 
-            root.x0 = __$__.CallTreeNetwork.windowSize.height / 2;
-            root.y0 = 0;
+        root.x0 = __$__.CallTreeNetwork.windowSize.height / 2;
+        root.y0 = 0;
 
-            __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
-                .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 100]);
+        __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
+            .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 100]);
 
-            __$__.CallTreeNetwork.update(root);
-            firstTime = false;
-        }
-    })(),
+        __$__.CallTreeNetwork.update(root);
+    },
 
     constructData(node, data) {
         data.name = node.getDisplayedLabel();

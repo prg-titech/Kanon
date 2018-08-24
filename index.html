@@ -53,10 +53,10 @@
 		<input id="redrawButton" type="button" value="redraw"
 			   onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 	</div>
-	<div class="pretty-split-pane-frame" id="split-pane-frame"><!-- This div is added for styling purposes only. It's not part of the split-pane plugin. -->
+	<div class="pretty-split-pane-frame" id="split-pane-frame">
 		<div class="split-pane fixed-left" id="split-pane">
 			<div class="split-pane-component" id="left-component">
-				<div class="pretty-split-pane-component-inner"><!-- This div is added for styling purposes only. It's not part of the split-pane plugin. -->
+				<div class="pretty-split-pane-component-inner">
 					<div id="editor">
 						<script type="text/javascript" src="src/js/editor.js"></script>
 					</div>
@@ -66,13 +66,13 @@
 			<div class="split-pane-component" id="right-component">
 				<div class="split-pane horizontal-percent">
 					<div class="split-pane-component" id="top-component">
-						<div class="pretty-split-pane-component-inner"><!-- This div is added for styling purposes only. It's not part of the split-pane plugin. -->
+						<div class="pretty-split-pane-component-inner">
 							<div id="mynetwork"></div>
 						</div>
 					</div>
 					<div class="split-pane-divider" id="horizontal-divider"></div>
 					<div class="split-pane-component" id="bottom-component">
-						<div class="pretty-split-pane-component-inner"><!-- This div is added for styling purposes only. It's not part of the split-pane plugin. -->
+						<div class="pretty-split-pane-component-inner">
 							<div id="callTree"></div>
 						</div>
 					</div>
@@ -91,9 +91,22 @@
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
 
-        window.onresize = function(e) {
-            __$__.network.redraw();
-        };
+//        window.onresize = function(e) {
+//            console.log('hoge');
+//            __$__.network.redraw();
+//            __$__.CallTreeNetwork.resize();
+//        };
+//        $(window).resize(function() {
+//            console.log('hoge');
+//            __$__.network.redraw();
+//            __$__.CallTreeNetwork.resize();
+//		});
+        $(window).on('resize' ,function() {
+            if (!__$__.CallTreeNetwork.firstDraw) {
+                __$__.network.redraw();
+                __$__.CallTreeNetwork.resize();
+            }
+        });
         document.getElementById('pullDownViewMode').onchange = function() {
             let selectedValue = document.getElementById('pullDownViewMode').value;
 			__$__.Context.SwitchViewMode(selectedValue === 'Snapshot');

@@ -149,7 +149,6 @@ __$__.Manipulate = {
             node2Edges[endNodeId].forEach(edgeId => {
                 rec(edgeId, {label: [], passedEdgeIds: {}});
             });
-        console.log(table);
         return table;
     },
 
@@ -202,7 +201,6 @@ __$__.Manipulate = {
      * @param candidates
      */
     startAutoCompletion(candidates) {
-        console.log(candidates);
         if (candidates.length === 0) {
             let staticWordCompleter = {
                 getCompletions: function(editor, session, pos, prefix, callback) {
