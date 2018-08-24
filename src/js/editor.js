@@ -10,7 +10,7 @@ else
     __$__.editor.setValue('');
 
 __$__.editor.getSession().setMode('ace/mode/javascript');
-__$__.editor.getSession().setUseWorker(false);
+// __$__.editor.getSession().setUseWorker(false);
 
 __$__.editor.task = {PositionUpdate: [], ContextUpdate: []};
 __$__.editor.executeTask = () => {
