@@ -18,6 +18,7 @@
 				min-height: 100%;
 				margin: 0;
 				padding: 0;
+                overflow: hidden;
 			}
 		</style>
 		<link rel="stylesheet" type="text/css" href="src/css/split-pane.css">
@@ -91,16 +92,6 @@
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
 
-//        window.onresize = function(e) {
-//            console.log('hoge');
-//            __$__.network.redraw();
-//            __$__.CallTreeNetwork.resize();
-//        };
-//        $(window).resize(function() {
-//            console.log('hoge');
-//            __$__.network.redraw();
-//            __$__.CallTreeNetwork.resize();
-//		});
         $(window).on('resize' ,function() {
             if (!__$__.CallTreeNetwork.firstDraw) {
                 __$__.network.redraw();
