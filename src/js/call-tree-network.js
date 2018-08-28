@@ -86,7 +86,9 @@ __$__.CallTreeNetwork = {
             nodeUpdate.transition()
                 .duration(duration)
                 .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
-                .on('end', () => {__$__.CallTreeNetwork.firstDraw = false;});
+                .on('end', () => {
+                    __$__.CallTreeNetwork.firstDraw = false;
+                });
         else
             nodeUpdate.transition()
                 .duration(duration)
@@ -99,6 +101,11 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.updateHighlightCircles();
 
         nodeUpdate.select("text")
+            .attr('x', d => {
+                console.log(d.data.name);
+                return d.children || d._children ? -13 : 13;
+            })
+            .attr("text-anchor", d => d.children || d._children ? "end" : "start")
             .style("fill-opacity", 1);
 
         let nodeExit = node
