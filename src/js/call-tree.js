@@ -2,6 +2,10 @@ __$__.CallTree = {};
 
 __$__.CallTree.Initialize = function() {
     __$__.CallTree.rootNode = new __$__.CallTree.Main('main', []);
+    __$__.CallTree.classOfMethod = {
+        constructor: [],
+        'anon.': []
+    };
 };
 
 
@@ -64,16 +68,19 @@ __$__.CallTree.FunctionCall = class FunctionCall extends __$__.CallTree.Node {
 
 
 __$__.CallTree.Function = class Function extends __$__.CallTree.Node {
-    constructor (label, callPath, simplifiedLabel, functionName) {
+    constructor (label, callPath, simplifiedLabel, functionName, className = nul) {
         super(label, callPath);
         this.simplifiedLabel = simplifiedLabel;
-        this.functionName = (functionName) ? functionName : 'anonymous';
+        this.functionName = (functionName) ? functionName : 'anon.';
+        this.className = className;
     }
 
     getDisplayedLabel() {
         let parent = this.callPath[this.callPath.length - 2];
         if (parent && parent.constructor.name === 'Instance') {
             return parent.getDisplayedLabel();
+        } else if (this.className && __$__.CallTree.classOfMethod[this.functionName].length > 1) {
+            return this.className + '.' + this.functionName;
         } else {
             return this.functionName;
         }

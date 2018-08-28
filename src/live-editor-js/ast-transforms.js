@@ -677,7 +677,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *               __loopLabel,
  *               __stackForCallTree,
  *               [simplifiedLabel],
- *               [function name]
+ *               [function name],
+ *               [className]
  *           )
  *       );
  *       if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
@@ -742,7 +743,8 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *                         __loopLabel,
  *                         __stackForCallTree,
  *                        [simplifiedLabel],
- *                         __loopCounter
+ *                         __loopCounter,
+ *                         null
  *                     )
  *                 );
  *
@@ -1042,7 +1044,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                  *         __loopLabel,
                  *         __stackForCallTree,
                  *         [simplifiedLabel],
-                 *         [function name]
+                 *         [function name],
+                 *         [className]
                  *     )
                  * );
                  * or
@@ -1051,21 +1054,30 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                  *         __loopLabel,
                  *         __stackForCallTree,
                  *         [simplifiedLabel],
-                 *         __loopCounter
+                 *         __loopCounter,
+                 *         null
                  *     )
                  * );
                  */
-                let arg3;
+                let arg4, arg5;
                 if (isFunction) {
                     if (node.id && node.id.name) {
-                        arg3 = b.Literal(node.id.name);
+                        arg4 = b.Literal(node.id.name);
                     } else if (parent.type === 'MethodDefinition' && parent.key && parent.key.name) {
-                        arg3 = b.Literal(parent.key.name);
+                        arg4 = b.Literal(parent.key.name);
+                        let classBody = path[path.length - 3]; // ClassBody
+                        let classDeclaration = path[path.length - 4]; // ClassDeclaration
+                        if (classBody && classBody.type === 'ClassBody' && classDeclaration && classDeclaration.type === 'ClassDeclaration') {
+                            if (!__$__.CallTree.classOfMethod[parent.key.name])
+                                __$__.CallTree.classOfMethod[parent.key.name] = [];
+                            __$__.CallTree.classOfMethod[parent.key.name].push(classDeclaration.id.name);
+                            arg5 = b.Literal(classDeclaration.id.name);
+                        }
                     } else {
-                        arg3 = b.Literal(null);
+                        arg4 = b.Literal(null);
                     }
                 } else {
-                    arg3 = b.Identifier('__loopCounter');
+                    arg4 = b.Identifier('__loopCounter');
                 }
                 newBlockStmt.body.push(
                     b.ExpressionStatement(
@@ -1086,7 +1098,8 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                     b.Identifier('__loopLabel'),
                                     b.Identifier('__stackForCallTree'),
                                     b.Literal(label.replace(node.type, __$__.ASTTransforms.Loop[node.type])),
-                                    arg3
+                                    arg4,
+                                    arg5 || b.Literal(null)
                                 ]
                             )]
                         )

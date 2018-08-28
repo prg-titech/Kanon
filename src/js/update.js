@@ -26,7 +26,6 @@ __$__.Update = {
             try {
                 __transformed_code__ = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
             } catch (e) {
-                console.log(e.message);
                 document.getElementById('console').textContent = 'Error?';
                 if (e.message.slice(0, 5) === 'Line ')
                     document.getElementById('console').textContent += ': ' + e.message;
