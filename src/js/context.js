@@ -14,22 +14,14 @@ __$__.Context = {
         Obj: {},
         New: {}
     },
-    LastCPID: undefined,
     LastInfo: {},
     LastGraph: undefined,
-    // {loopLabel: 'context-sensitive id'}
     SpecifiedContext: {main: 'main'}, // this property represents the user-selected context. So the name of this key should be improved. (e.g., UserSelectedContext)
     SpecifiedContextWhenExecutable: undefined,
-    ParentAndChildrenLoop: {main: {children: []}},
-    ParentAndChildrenLoopStack: ['main'],
-    ParentAndChildOnCallTree: {main: {children: {}}},
     Snapshot: true,
     SnapshotContext: {},
-    StackToCheckLoop: ['main'],
     StoredGraph: {},
-    StartEndInLoop: {},
     TableTimeCounter: [],
-    __loopCounter: {},
 
     Initialize: () => {
         __$__.Context.ArrayLabels = [];
@@ -38,16 +30,9 @@ __$__.Context = {
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
         __$__.Context.CallTreeNodesOfEachLoop = {main: [__$__.CallTree.rootNode]};
-        __$__.Context.LastCPID = undefined;
         __$__.Context.LastInfo = {};
-        __$__.Context.ParentAndChildrenLoop = {main: {children: []}};
-        __$__.Context.ParentAndChildrenLoopStack = ['main'];
-        __$__.Context.ParentAndChildOnCallTree = {main: {children: {}}};
         __$__.Context.StoredGraph = {};
-        __$__.Context.StartEndInLoop = {};
-        __$__.Context.StackToCheckLoop = ['main'];
         __$__.Context.TableTimeCounter = [];
-        __$__.Context.__loopCounter = {};
     },
 
     /**
@@ -63,7 +48,6 @@ __$__.Context = {
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
     CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo, contextSensitiveID) {
-        __$__.Context.LastCPID = checkPointId;
         __$__.Context.LastInfo = {
             CPID: checkPointId,
             loopLabel: loopLabel,
@@ -196,7 +180,7 @@ __$__.Context = {
                         if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel
                             && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
                             showLightly = true;
-                            cpID = __$__.Context.LastCPID;
+                            cpID = __$__.Context.LastInfo.CPID;
                             loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                             contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
                         }

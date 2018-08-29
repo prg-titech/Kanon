@@ -102,7 +102,6 @@ __$__.CallTreeNetwork = {
 
         nodeUpdate.select("text")
             .attr('x', d => {
-                console.log(d.data.name);
                 return d.children || d._children ? -13 : 13;
             })
             .attr("text-anchor", d => d.children || d._children ? "end" : "start")
@@ -163,7 +162,7 @@ __$__.CallTreeNetwork = {
             .attr("transform", 'translate(50, 0)');
     },
 
-    resize() {
+    redraw() {
         let height = __$__.CallTreeNetwork.windowSize.height = $('#callTree').height(),
             width = __$__.CallTreeNetwork.windowSize.width = $('#callTree').width(),
             root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(__$__.CallTreeNetwork.data);

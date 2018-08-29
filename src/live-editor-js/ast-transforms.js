@@ -526,6 +526,7 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *
  * let __loopLabels = ['main'],
  *     __loopCount = 1,
+ *     __loopCounterObject = {},
  *     __time_counter = 0,
  *     __time_counter_stack = [],
  *     __call_count = {},
@@ -533,7 +534,6 @@ __$__.ASTTransforms.CallExpressionToFunction = function() {
  *     __newExpInfo = [],
  *     __stackForCallTree = [__$__.CallTree.rootNode];
  * __objs = [];
- * __$__.Context.StartEndInLoop['main'] = [{start: 0}];
  *
  * ...
  *
@@ -543,13 +543,6 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
     return {
         leave(node, path) {
             if (node.type === 'Program') {
-                // __$__.Context.StartEndInLoop['main'] = [{start: 0}];
-                node.body.unshift(
-                    b.ExpressionStatement(
-                        b.Identifier('__$__.Context.StartEndInLoop["main"] = [{start: 0}]')
-                    )
-                );
-
                 node.body.unshift(
                     b.ExpressionStatement(
                         b.AssignmentExpression(
@@ -570,6 +563,10 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
                         b.VariableDeclarator(
                             b.Identifier('__loopCount'),
                             b.Literal(1)
+                        ),
+                        b.VariableDeclarator(
+                            b.Identifier('__loopCounterObject'),
+                            b.ObjectExpression([])
                         ),
                         b.VariableDeclarator(
                             b.Identifier('__time_counter'),
@@ -615,7 +612,6 @@ __$__.ASTTransforms.AddSomeCodeInHead = function() {
  * try {
  *     body; (program)
  * } finally {
- *     __$__.Context.StartEndInLoop['main'][0].end = __time_counter - 1;
  * }
  */
 __$__.ASTTransforms.BlockedProgram = function() {
@@ -628,9 +624,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
                         b.BlockStatement(node.body),
                         undefined,
                         b.BlockStatement([
-                            b.ExpressionStatement(
-                                b.Identifier("__$__.Context.StartEndInLoop['main'][0].end = __time_counter - 1")
-                            )
                         ])
                     )
                 ];
@@ -664,7 +657,7 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *       __loopLabels.push(__loopLabel);
  *       if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
  *           __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
- *       let __loopCount = ++__$__.Context.__loopCounter[__loopLabel] || (__$__.Context.__loopCounter[__loopLabel] = 1);
+ *       let __loopCount = ++__loopCounterObject[__loopLabel] || (__loopCounterObject[__loopLabel] = 1);
  *       if (__loopCount > 100) {
  *           __$__.Context.InfLoop = __loopLabel;
  *           throw 'Infinite Loop';
@@ -684,8 +677,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *       if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
  *           __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
  *
- *       if (!__$__.Context.StartEndInLoop[__loopLabel]) __$__.Context.StartEndInLoop[__loopLabel] = [];
- *       __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *       __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
  *
  *       // if this function is called as a constructor, assign a unique object ID to this.
@@ -693,9 +684,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *           Object.setProperty(this, '__id', __newObjectIds.pop());
  *           __objs.push(this);
  *       }
- *       __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
- *       __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
- *       __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
  *
  *       try {
  *           ... (body)
@@ -723,14 +711,11 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *         __loopLabels.push(__loopLabel);
  *         if (__$__.Context.CallTreeNodesOfEachLoop[__loopLabel] === undefined)
  *             __$__.Context.CallTreeNodesOfEachLoop[__loopLabel] = [];
- *         __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
- *         __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
- *         __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
  *
  *         try {
  *             while (condition) {
  *                 __loopCounter++;
- *                 let __loopCount = ++__loopCounter[__loopLabel] || (__loopCounter[__loopLabel] = 1);
+ *                 let __loopCount = ++__loopCounterObject[__loopLabel] || (__loopCounterObject[__loopLabel] = 1);
  *                 if (__loopCount > 100){
  *                     __$__.Context.InfLoop = __loopLabel;
  *                     throw 'Infinite Loop';
@@ -751,9 +736,6 @@ __$__.ASTTransforms.BlockedProgram = function() {
  *                 if (__$__.Context.SpecifiedContext[__loopLabel] === undefined)
  *                     __$__.Context.SpecifiedContext[__loopLabel] = __stackForCallTree.last().getContextSensitiveID();
  *
- *                 if (!__$__.Context.StartEndInLoop[__loopLabel])
- *                     __$__.Context.StartEndInLoop[__loopLabel] = [];
- *                 __$__.Context.StartEndInLoop[__loopLabel].push(__startEndObject__);
  *                 __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
  *
  *                 // there is following IfStatement in the case only of functions
@@ -780,7 +762,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
     let id = 'context';
     const loopLabels = "__loopLabels",
           loopCount = "__loopCount",
-          loopCounter = "__$__.Context.__loopCounter";
+          loopCounter = "__loopCounterObject";
     let labelCount = 0;
     return {
         enter(node, path) {
@@ -830,10 +812,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         node.body = b.BlockStatement([node.body]);
                 }
 
-                __$__.Context.ParentAndChildrenLoop[label] = {parent: __$__.Context.ParentAndChildrenLoopStack.last(), children: []};
-                __$__.Context.ParentAndChildrenLoop[__$__.Context.ParentAndChildrenLoopStack.last()].children.push(label);
-                __$__.Context.ParentAndChildrenLoopStack.push(label);
-
                 return [id, {label: label, checkInfLoop: checkInfLoop}];
             }
         },
@@ -845,9 +823,7 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     checkInfLoop = data.checkInfLoop,
                     isFunction = __$__.ASTTransforms.funcTypes[node.type];
 
-                __$__.Context.ParentAndChildrenLoopStack.pop();
-
-                // if (node.type is 'functiondeclaration' or 'functionexpression'or ...,
+                // if (node.type is 'FunctionDeclaration' or 'FunctionExpression' or ...,
                 // then, node.params is the parameters of the function
 
 
@@ -1161,64 +1137,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     );
 
 
-                newBlockStmt.body.push(
-                    b.IfStatement(
-                        b.UnaryExpression(
-                            '!',
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__$__'),
-                                        b.Identifier('Context')
-                                    ),
-                                    b.Identifier('StartEndInLoop')
-                                ),
-                                b.Identifier('__loopLabel'),
-                                true
-                            ),
-                            true
-                        ),
-                        b.ExpressionStatement(
-                            b.AssignmentExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('StartEndInLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                '=',
-                                b.ArrayExpression([])
-                            )
-                        )
-                    )
-                );
-
-                newBlockStmt.body.push(
-                    b.ExpressionStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.MemberExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__$__'),
-                                            b.Identifier('Context')
-                                        ),
-                                        b.Identifier('StartEndInLoop')
-                                    ),
-                                    b.Identifier('__loopLabel'),
-                                    true
-                                ),
-                                b.Identifier('push')
-                            ),
-                            [b.Identifier('__startEndObject__')]
-                        )
-                    )
-                );
 
                 /**
                  * __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
@@ -1292,27 +1210,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                     )
                 );
 
-
-                if (isFunction) {
-                    // __$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true;
-                    // __$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}};
-                    // __$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;
-                    newBlockStmt.body.push(
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true')
-                        )
-                    );
-                    newBlockStmt.body.push(
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}}')
-                        )
-                    );
-                    newBlockStmt.body.push(
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;')
-                        )
-                    );
-                }
 
                 newBlockStmt.body.push(
                     b.TryStatement(
@@ -1388,15 +1285,6 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                                     b.ArrayExpression([])
                                 )
                             )
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabels[__loopLabels.length-2]].children[__loopLabel] = true')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel] = __$__.Context.ParentAndChildOnCallTree[__loopLabel] || {parent: {}, children: {}}')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__$__.Context.ParentAndChildOnCallTree[__loopLabel].parent[__loopLabels[__loopLabels.length-2]] = true;')
                         ),
                         b.TryStatement(
                             b.BlockStatement([stmt]),

@@ -95,7 +95,7 @@
         $(window).on('resize' ,function() {
             if (!__$__.CallTreeNetwork.firstDraw) {
                 __$__.network.redraw();
-                __$__.CallTreeNetwork.resize();
+                __$__.CallTreeNetwork.redraw();
             }
         });
         document.getElementById('pullDownViewMode').onchange = function() {
@@ -115,7 +115,7 @@
 				.mousemove(function () {
 				    if (isDragging) {
                         __$__.network.redraw();
-                        __$__.CallTreeNetwork.resize();
+                        __$__.CallTreeNetwork.redraw();
 					}
 				})
 				.mouseup(() => {
