@@ -14,7 +14,7 @@ __$__.Update = {
             });
         }
         __$__.Context.Initialize();
-        __$__.CallTree.Initialize();
+        __$__.CallTree.Initialize(true);
         __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
     

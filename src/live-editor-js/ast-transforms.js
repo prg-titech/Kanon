@@ -803,6 +803,11 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                 }
 
                 if (node.body.type !== "BlockStatement") {
+                    if (checkInfLoop)
+                        __$__.CallTree.positionToStartLoopBody[label] = {
+                            line: node.body.loc.start.line,
+                            column: node.body.loc.start.column
+                        };
                     if (node.type === 'ArrowFunctionExpression') {
                         let retStmt = b.ReturnStatement(node.body);
                         retStmt.loc = node.body.loc;
@@ -810,6 +815,11 @@ __$__.ASTTransforms.Context = function (checkInfLoop) {
                         node.expression = false;
                     } else
                         node.body = b.BlockStatement([node.body]);
+                } else if (checkInfLoop) {
+                    __$__.CallTree.positionToStartLoopBody[label] = {
+                        line: node.body.loc.start.line,
+                        column: node.body.loc.start.column+1
+                    };
                 }
 
                 return [id, {label: label, checkInfLoop: checkInfLoop}];
