@@ -67,6 +67,7 @@ __$__.CallTreeNetwork = {
                 row: posStart.line - 1,
                 column: posStart.column
             });
+            __$__.editor.getSelection().clearSelection();
 
             __$__.Context.SwitchViewMode(true);
             __$__.Context.Draw();
