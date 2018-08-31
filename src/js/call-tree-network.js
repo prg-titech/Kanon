@@ -79,7 +79,7 @@ __$__.CallTreeNetwork = {
             .attr('r', 5)
             .style('fill', d => d._children ? 'lightsteelblue' : '#fff');
 
-        nodeEnter.append('text')
+        __$__.CallTreeNetwork.text = nodeEnter.append('text')
             .attr('x', d => d.children || d._children ? -13 : 13)
             .attr('dy', '3')
             .attr("font-size", "75%")
@@ -112,6 +112,7 @@ __$__.CallTreeNetwork = {
                 return d.children || d._children ? -13 : 13;
             })
             .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+            .text(d => d.data.name)
             .style("fill-opacity", 1);
 
         let nodeExit = node
@@ -182,7 +183,7 @@ __$__.CallTreeNetwork = {
             .attr('height', height);
 
         __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
-            .size([height, width - 100]);
+            .size([height, width - 150]);
 
         __$__.CallTreeNetwork.update(root, 0);
     },
@@ -199,7 +200,7 @@ __$__.CallTreeNetwork = {
         root.y0 = 0;
 
         __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
-            .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 100]);
+            .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 150]);
 
         __$__.CallTreeNetwork.update(root);
     },
@@ -243,6 +244,11 @@ __$__.CallTreeNetwork = {
         }
     },
 
+    /**
+     * this function is defined by referencing to the following web site.
+     * accessed August 2018
+     * - http://bl.ocks.org/ropeladder/83915942ac42f17c087a82001418f2ee
+     */
     clickCancel() {
         // we want to a distinguish single/double click
         // details http://bl.ocks.org/couchand/6394506
@@ -296,11 +302,6 @@ __$__.CallTreeNetwork = {
         return d3rebind(cc, dispatcher, 'on');
     },
 
-    /**
-     * this function is defined by referencing to the following web site.
-     * accessed August 2018
-     * - http://bl.ocks.org/ropeladder/83915942ac42f17c087a82001418f2ee
-     */
     updateHighlightCircles() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         let selectedContext = {};
