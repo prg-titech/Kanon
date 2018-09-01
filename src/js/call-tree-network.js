@@ -53,10 +53,6 @@ __$__.CallTreeNetwork = {
             .call(cc);
 
         cc.on('click', d => {
-            __$__.CallTreeNetwork.toggle(d);
-            __$__.CallTreeNetwork.update(d);
-        });
-        cc.on('dblclick', d => {
             let loopLabel = d.data.loopLabel;
             __$__.Context.SpecifiedContext[loopLabel] = d.data.contextSensitiveID;
             if (!__$__.Error.hasError)
@@ -72,6 +68,10 @@ __$__.CallTreeNetwork = {
             __$__.Context.SwitchViewMode(true);
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+        });
+        cc.on('dblclick', d => {
+            __$__.CallTreeNetwork.toggle(d);
+            __$__.CallTreeNetwork.update(d);
         });
 
 
