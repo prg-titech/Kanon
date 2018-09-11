@@ -13,18 +13,14 @@ __$__.Update = {
                 __$__.Update.UpdateLabelPositions(act);
             });
         }
+        __$__.CallTree.Initialize();
         __$__.Context.Initialize();
-        __$__.CallTree.Initialize(true);
         __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
     
         try {
-            let __objs = [];
-            let __transformed_code__;
-
-            // fist code conversion
             try {
-                __transformed_code__ = __$__.CodeConversion.TransformCode(__$__.editor.getValue(), true);
+                __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
             } catch (e) {
                 document.getElementById('console').textContent = 'Error?';
                 if (e.message.slice(0, 5) === 'Line ')
@@ -32,30 +28,8 @@ __$__.Update = {
                 throw e;
             }
 
-            // first execution of the converted program
-            // here, we check whether the program includes infinite loops.
-            try {
-                (() => {eval(__transformed_code__)})();
-                document.getElementById('console').textContent = '';
-                __$__.Context.InfLoop = '';
-            } catch (e) {
-                if (e === 'Infinite Loop') {
-                    document.getElementById('console').textContent = 'infinite loop?';
-                } else {
-                    __$__.Context.InfLoop = '';
-                    document.getElementById('console').textContent = 'Error?: ' + e.message;
-                    // throw e;
-                }
-            }
-            __$__.Context.Initialize();
-            __$__.CallTree.Initialize();
-            __$__.JumpToConstruction.resetGraphData();
-
-            // second code conversion
-            __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
-
-            __objs = [];
-            // second execution of the converted program
+            let __objs = [];
+            // execution of the converted program
             // here, we collect constructed objects in the program
             // and duplicate object structure graphs at each checkpoint
             // inserted before and after all statements.
@@ -69,6 +43,8 @@ __$__.Update = {
                     __$__.Context.SpecifiedContext = __$__.Context.SpecifiedContextWhenExecutable;
                 }
                 __$__.Error.hasError = false;
+                document.getElementById('console').textContent = '';
+                 __$__.Context.InfLoop = '';
             } catch (e) {
                 __$__.Error.hasError = true;
                 if (e === 'Infinite Loop') {

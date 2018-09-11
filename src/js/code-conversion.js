@@ -11,48 +11,41 @@ __$__.CodeConversion = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    TransformCode: function(code, checkInfLoop = false) {
+    TransformCode: function(code) {
         let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];
     
     
-        if (checkInfLoop) {
-            visitors.push(tf.Context(true));
-            visitors.push(tf.AddSomeCodeInHead());
-            __$__.walkAST(ast, null, visitors);
+        __$__.ASTTransforms.pairCPID = {};
+        visitors.push(tf.InsertCheckPoint());
+        visitors.push(tf.Labeling());
 
-        } else {
-            __$__.ASTTransforms.pairCPID = {};
-            visitors.push(tf.InsertCheckPoint());
-            __$__.walkAST(ast, null, visitors);
-    
-            visitors = [];
-    
-            visitors.push(tf.BlockedProgram());
-            visitors.push(tf.AddSomeCodeInHead());
-            visitors.push(tf.Context());
-            visitors.push(tf.CallExpressionToFunction());
-            visitors.push(tf.CollectObjects());
-    
-    
-            Object.keys(__$__.Context.LabelPos).forEach(kind => {
-                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    __$__.Context.LabelPos[kind][label].useLabel = false;
-                });
+        Object.keys(__$__.Context.LabelPos).forEach(kind => {
+            Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                __$__.Context.LabelPos[kind][label].useLabel = false;
             });
-    
-    
-            __$__.walkAST(ast, null, visitors);
-    
-    
-            Object.keys(__$__.Context.LabelPos).forEach(kind => {
-                Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    if (!__$__.Context.LabelPos[kind][label].useLabel)
-                        delete __$__.Context.LabelPos[kind][label];
-                });
+        });
+
+        __$__.walkAST(ast, null, visitors);
+
+        Object.keys(__$__.Context.LabelPos).forEach(kind => {
+            Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
+                if (!__$__.Context.LabelPos[kind][label].useLabel)
+                    delete __$__.Context.LabelPos[kind][label];
             });
-        }
+        });
+
+        visitors = [];
+    
+        visitors.push(tf.BlockedProgram());
+        visitors.push(tf.AddSomeCodeInHead());
+        visitors.push(tf.Context());
+        visitors.push(tf.CallExpressionToFunction());
+        visitors.push(tf.CollectObjects());
+    
+    
+        __$__.walkAST(ast, null, visitors);
     
         return escodegen.generate(ast);
     }

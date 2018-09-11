@@ -19,7 +19,6 @@ __$__.walkAST = function(node, path, visitors) {
     let enterData = {};
     visitors.forEach(visitor => {
         if (visitor.enter) {
-            // enterData.push(visitor.enter(node, path));
             var temp = visitor.enter(node, path);
             if (temp) enterData[temp[0]] = temp[1];
         }

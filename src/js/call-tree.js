@@ -1,13 +1,12 @@
 __$__.CallTree = {};
 
-__$__.CallTree.Initialize = function(firstInitialization = false) {
+__$__.CallTree.Initialize = function() {
     __$__.CallTree.rootNode = new __$__.CallTree.Main('main', []);
     __$__.CallTree.classOfMethod = {
         constructor: [],
         'anon.': []
     };
-    if (firstInitialization)
-        __$__.CallTree.positionToStartLoopBody = {};
+    __$__.CallTree.positionToStartLoopBody = {};
 };
 
 
