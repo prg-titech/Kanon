@@ -18,8 +18,8 @@ __$__.CodeConversion = {
     
     
         __$__.ASTTransforms.pairCPID = {};
-        visitors.push(tf.InsertCheckPoint());
         visitors.push(tf.Labeling());
+        visitors.push(tf.InsertCheckPoint());
 
         Object.keys(__$__.Context.LabelPos).forEach(kind => {
             Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
