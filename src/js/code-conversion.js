@@ -18,8 +18,8 @@ __$__.CodeConversion = {
     
     
         __$__.ASTTransforms.pairCPID = {};
-        visitors.push(tf.InsertCheckPoint());
         visitors.push(tf.Labeling());
+        visitors.push(tf.InsertCheckPoint());
 
         Object.keys(__$__.Context.LabelPos).forEach(kind => {
             Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
@@ -27,7 +27,11 @@ __$__.CodeConversion = {
             });
         });
 
+        __$__.UpdateLabelPos.unlabeledNodes = [];
+
         __$__.walkAST(ast, null, visitors);
+
+        __$__.UpdateLabelPos.labelingUnlabeledNodes();
 
         Object.keys(__$__.Context.LabelPos).forEach(kind => {
             Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {

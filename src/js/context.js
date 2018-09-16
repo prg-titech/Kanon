@@ -458,7 +458,7 @@ __$__.Context = {
         // let parentAndChildren = __$__.Context.ParentAndChildrenLoop[loopLabel];
         // let checkLoops = [];
         // let traverse = function(label, parent) {
-        //     let comp = __$__.Update.ComparePosition;
+        //     let comp = __$__.UpdateLabelPos.ComparePosition;
         //     checkLoops.push(label);
         //     if (parent) {
         //         if (__$__.Context.ParentAndChildrenLoop[label].parent) {
@@ -543,7 +543,7 @@ __$__.Context = {
     findLoopLabelNearestCursorPosition: function() {
         let cursor = __$__.editor.getCursorPosition();
         cursor.line = cursor.row + 1;
-        let compare = __$__.Update.ComparePosition;
+        let compare = __$__.UpdateLabelPos.ComparePosition;
         let nearestLoopLabels = {loop: 'main', func: 'main'};
 
         Object.keys(__$__.Context.LabelPos.Loop).forEach(loopLabel => {

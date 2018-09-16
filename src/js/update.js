@@ -7,17 +7,19 @@ __$__.Update = {
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
         window.localStorage["Kanon-Code"] = __$__.editor.getValue();
-    
+
+        __$__.CallTree.Initialize();
+        __$__.Context.Initialize();
+        __$__.UpdateLabelPos.Initialize();
+        __$__.JumpToConstruction.resetGraphData();
+        __$__.editor.task.ContextUpdate = [];
+
         if (__arg__) {
             __arg__.forEach(act => {
                 __$__.Update.UpdateLabelPositions(act);
             });
         }
-        __$__.CallTree.Initialize();
-        __$__.Context.Initialize();
-        __$__.JumpToConstruction.resetGraphData();
-        __$__.editor.task.ContextUpdate = [];
-    
+
         try {
             try {
                 __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
@@ -212,10 +214,10 @@ __$__.Update = {
     UpdateLabelPositions: function(e) {
         let start = {line: e.start.row + 1, column: e.start.column};
         let end = {line: e.end.row + 1, column: e.end.column};
-        let compare = __$__.Update.ComparePosition;
+        let compare = __$__.UpdateLabelPos.ComparePosition;
     
         if (e.action === 'insert') {
-            let modify_by_insert = function(pos) {
+            let modify_by_insert = function(pos, kind, label) {
                 // if inserted code is the upper part of the loop
                 if (compare(start, '<=', pos.start)) {
                     if (pos.start.line === start.line) {
@@ -240,60 +242,77 @@ __$__.Update = {
                         }
                         pos.end.column += e.lines.last().length;
                     }
-
                     pos.end.line += e.lines.length - 1;
-                } else if (compare(start, '==', pos.end) && !pos.closed) {
-                    let space = e.lines[0].indexOf(' ');
-                    pos.end.column += (space !== -1 ? space : e.lines[0].length);
                 }
+                // register position of this node to the table for when editing the boundary.
+                __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
+                    pairPos: {line: pos.end.line, column: pos.end.column},
+                    kind: kind
+                };
+                __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
+                    pairPos: {line: pos.start.line, column: pos.start.column},
+                    kind: kind
+                };
             };
 
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    modify_by_insert(__$__.Context.LabelPos[kind][label]);
+                    modify_by_insert(__$__.Context.LabelPos[kind][label], kind, label);
                 });
             });
         } else { // e.action == 'remove'
-            let modify_by_remove = function(pos) {
-                // if removed code is the upper part of the loop
-                if (compare(end, '<=', pos.start)) {
-                    if (pos.start.line === end.line) {
-                        if (e.lines.length > 1) {
-                            pos.start.column += start.column;
+            let modify_by_remove = function(pos, kind, label) {
+                if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) {
+                    // if removed code is the outer part of the loop
+                    delete __$__.Context.LabelPos[kind][label];
+                } else {
+                    // if removed code is the upper part of the loop
+                    if (compare(end, '<=', pos.start)) {
+                        if (pos.start.line === end.line) {
+                            if (e.lines.length > 1) {
+                                pos.start.column += start.column;
+                            }
+                            pos.start.column -= e.lines.last().length;
                         }
-                        pos.start.column -= e.lines.last().length;
-                    }
-                    if (pos.end.line === end.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column += start.column;
+                        if (pos.end.line === end.line) {
+                            if (e.lines.length > 1) {
+                                pos.end.column += start.column;
+                            }
+                            pos.end.column -= e.lines.last().length;
                         }
-                        pos.end.column -= e.lines.last().length;
-                    }
 
-                    pos.start.line -= e.lines.length - 1;
-                    pos.end.line   -= e.lines.length - 1;
-                } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                    if (pos.end.line === end.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column += start.column;
+                        pos.start.line -= e.lines.length - 1;
+                        pos.end.line   -= e.lines.length - 1;
+                    } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
+                        if (pos.end.line === end.line) {
+                            if (e.lines.length > 1) {
+                                pos.end.column += start.column;
+                            }
+                            pos.end.column -= e.lines.last().length;
                         }
-                        pos.end.column -= e.lines.last().length;
-                    }
 
-                    pos.end.line   -= e.lines.length - 1;
-                } else if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) { // if removed code is the outer part of the loop
-                    return true;
-                } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
-                    pos.end.column = start.column;
-                    pos.end.line -= e.lines.length - 1;
+                        pos.end.line   -= e.lines.length - 1;
+                    } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
+                        pos.end.column = start.column;
+                        pos.end.line -= e.lines.length - 1;
+                    }
+                    // register position of this node to the table for when editing the boundary.
+                    __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
+                        pairPos: {line: pos.end.line, column: pos.end.column},
+                        kind: kind
+                    };
+                    __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
+                        pairPos: {line: pos.start.line, column: pos.start.column},
+                        kind: kind
+                    };
                 }
             };
 
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    let dlt = modify_by_remove(__$__.Context.LabelPos[kind][label]);
+                    let dlt = modify_by_remove(__$__.Context.LabelPos[kind][label], kind, label);
                     if (dlt)
                         delete __$__.Context.LabelPos[kind][label];
                 });
@@ -301,32 +320,6 @@ __$__.Update = {
         }
     },
 
-
-    /**
-     * @param {Object} p1: {line, column}
-     * @param {string} operator: '==', '<', '>', '<=', '>='
-     * @param {Object} p2: {line, column}
-     * @return {boolean}
-     */
-    ComparePosition: function(p1, operator, p2) {
-        let ret = false;
-    
-    
-        if (operator === '==' || operator === '<=' || operator === '>=') {
-            ret = ret || (p1.line === p2.line && p1.column === p2.column);
-        }
-    
-        if (operator === '<' || operator === '<=') {
-            ret = ret || (p1.line === p2.line && p1.column < p2.column || p1.line < p2.line);
-        }
-    
-        if (operator === '>' || operator === '>=') {
-            ret = ret || (p1.line === p2.line && p1.column > p2.column || p1.line > p2.line);
-        }
-    
-    
-        return ret;
-    },
 
     updateArrayPosition: params => {
         if (params.nodes.length > 0) {

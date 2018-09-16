@@ -56,12 +56,18 @@ __$__.walkAST = function(node, path, visitors) {
                         step = replacement.length;
                     }
                 } else {
-                    Object.keys(node).forEach(key => {
-                        delete node[key];
-                    });
-                    Object.keys(replacement).forEach(key => {
-                        node[key] = replacement[key];
-                    });
+                    let parent = path[path.length - 2];
+                    if (parent) {
+                        let prop = Object.keys(parent).filter(p => parent[p] === node)[0];
+                        parent[prop] = Object.assign({}, replacement);
+                    } else {
+                        Object.keys(node).forEach(key => {
+                            delete node[key];
+                        });
+                        Object.keys(replacement).forEach(key => {
+                            node[key] = replacement[key];
+                        });
+                    }
                 }
             }
         }
