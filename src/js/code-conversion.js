@@ -27,7 +27,11 @@ __$__.CodeConversion = {
             });
         });
 
+        __$__.UpdateLabelPos.unlabeledNodes = [];
+
         __$__.walkAST(ast, null, visitors);
+
+        __$__.UpdateLabelPos.labelingUnlabeledNodes();
 
         Object.keys(__$__.Context.LabelPos).forEach(kind => {
             Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {

@@ -1460,7 +1460,7 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return b.BlockStatement([
                             checkPoint(start, variables),
-                            Object.assign({}, node),
+                            node,
                             checkPoint(end, variables)
                         ]);
 
@@ -1481,7 +1481,7 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return b.BlockStatement([
                             checkPoint(start, data),
-                            Object.assign({}, node),
+                            node,
                             checkPoint(end, variables)
                         ]);
                     } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)
@@ -1490,7 +1490,7 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return [
                             checkPoint(start, data),
-                            Object.assign({}, node),
+                            node,
                             changedGraphStmt(),
                             checkPoint(end, variables)
                         ];
@@ -1533,7 +1533,7 @@ __$__.ASTTransforms = {
                                     return [
                                         changedGraphStmt(),
                                         checkPoint(start, variables),
-                                        Object.assign({}, node),
+                                        node,
                                         changedGraphStmt(),
                                         checkPoint(end, variables)
                                     ];
@@ -1542,7 +1542,7 @@ __$__.ASTTransforms = {
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                     return [
                                         checkPoint(start, variables),
-                                        Object.assign({}, node),
+                                        node,
                                         changedGraphStmt(),
                                         checkPoint(end, variables)
                                     ];
@@ -1555,7 +1555,7 @@ __$__.ASTTransforms = {
                                 return b.BlockStatement([
                                     changedGraphStmt(),
                                     checkPoint(start, variables),
-                                    Object.assign({}, node),
+                                    node,
                                     changedGraphStmt(),
                                     checkPoint(end, variables)
                                 ]);
@@ -1564,7 +1564,7 @@ __$__.ASTTransforms = {
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return b.BlockStatement([
                                     checkPoint(start, variables),
-                                    Object.assign({}, node),
+                                    node,
                                     changedGraphStmt(),
                                     checkPoint(end, variables)
                                 ]);
@@ -1584,7 +1584,9 @@ __$__.ASTTransforms = {
         return {
             enter(node, path) {
                 if (node.loc && __$__.ASTTransforms.Labeled[node.type]) {
-                    const c = {};
+                    const c = {
+                        parent: path[path.length - 2]
+                    };
                     switch (node.type) {
                         case 'CallExpression':
                             c.LabelPos = __$__.Context.LabelPos.Call;
@@ -1614,37 +1616,35 @@ __$__.ASTTransforms = {
                     }
 
 
-                    // In this part, register the position of this NewExpression.
-                    // If already registered, use the Label
                     let label;
-                    Object.keys(c.LabelPos).forEach(labelName => {
-                        let pos = c.LabelPos[labelName];
-                        if (pos.start.line === node.loc.start.line &&
-                            pos.start.column === node.loc.start.column &&
-                            pos.end.line === node.loc.end.line &&
-                            pos.end.column === node.loc.end.column) {
-                            label = labelName;
+                    let startObj = __$__.UpdateLabelPos.table.get(node.loc.start.line, node.loc.start.column);
+                    let endObj = __$__.UpdateLabelPos.table.get(node.loc.end.line, node.loc.end.column);
+                    Object.keys(startObj).forEach(lbl => {
+                        if (endObj[lbl]) {
+                            label = lbl;
+                            let pos = c.LabelPos[label];
                             pos.useLabel = true;
                             pos.closed = !c.isLoop || node.body.type === 'BlockStatement';
+                            __$__.UpdateLabelPos.table.delete(node.loc.start.line, node.loc.start.column, label);
+                            __$__.UpdateLabelPos.table.delete(node.loc.end.line, node.loc.end.column, label);
                         }
                     });
-                    // the case of not registered yet.
+
                     if (!label) {
-                        let i = 1;
-                        let loopLabel;
-                        while (!label) {
-                            loopLabel = c.label_header + i;
-                            if (!c.LabelPos[loopLabel])
-                                label = loopLabel;
-                            i++;
+                        if (Object.keys(startObj).length > 0 || Object.keys(endObj).length > 0){
+                            // the case that either start position or end position matches the registered position.
+                            __$__.UpdateLabelPos.unlabeledNodes.push({
+                                node: node,
+                                startObj: startObj,
+                                endObj: endObj,
+                                c: c
+                            });
+                        } else {
+                            // the case that no position matches the registered positions.
+                            label = __$__.UpdateLabelPos.assignLabel(node, c);
                         }
-                        label = loopLabel;
-                        if (c.isLoop && path[path.length - 2] === 'LabeledStatement')
-                            label += '-' + path[path.length - 2].label.name;
-                        c.LabelPos[label] = node.loc;
-                        c.LabelPos[label].useLabel = true;
-                        c.LabelPos[label].closed = !c.isLoop || node.body.type === 'BlockStatement';
                     }
+
 
                     if (c.isLoop) {
                         if (node.body.type !== "BlockStatement") {

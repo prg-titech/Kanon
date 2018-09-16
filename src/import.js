@@ -24,6 +24,7 @@ document.write('<script type="text/javascript" src="src/js/store-positions.js"><
 document.write('<script type="text/javascript" src="src/js/toVisjs.js"></script>');
 document.write('<script type="text/javascript" src="src/js/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/update.js"></script>');
+document.write('<script type="text/javascript" src="src/js/updateLabelPos.js"></script>');
 document.write('<script type="text/javascript" src="src/live-editor-js/ast-builder.js"></script>');
 document.write('<script type="text/javascript" src="src/live-editor-js/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/live-editor-js/ast-walker.js"></script>');
