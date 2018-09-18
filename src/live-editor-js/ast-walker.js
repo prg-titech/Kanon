@@ -59,7 +59,12 @@ __$__.walkAST = function(node, path, visitors) {
                     let parent = path[path.length - 2];
                     if (parent) {
                         let prop = Object.keys(parent).filter(p => parent[p] === node)[0];
-                        parent[prop] = Object.assign({}, replacement);
+                        if (prop === undefined && parent.body instanceof Array) {
+                            prop = parent.body.indexOf(node);
+                            parent.body[prop] = Object.assign({}, replacement);
+                        } else if (prop !== undefined) {
+                            parent[prop] = Object.assign({}, replacement);
+                        }
                     } else {
                         Object.keys(node).forEach(key => {
                             delete node[key];
