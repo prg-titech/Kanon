@@ -7,7 +7,7 @@
     "create": "node_modules/.bin/electron-packager . --platform=darwin --overwrite",
     "app": "electron .",
     "open": "open Kanon-darwin-x64/Kanon.app",
-    "test": "mocha tests/**/*.js",
+    "test": "jasmine",
     "start": "grunt serve",
     "preinstall": "git submodule update --init --recursive"
   },
@@ -27,6 +27,7 @@
     "electron": "1.8.8",
     "electron-packager": "8.7.0",
     "esprima": "3.1.3",
+    "jasmine": "^3.2.0",
     "jquery": "3.2.1",
     "jquery-ui-dist": "1.12.1",
     "split-pane": "0.5.1",
