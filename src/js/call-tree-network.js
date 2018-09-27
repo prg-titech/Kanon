@@ -16,7 +16,8 @@ __$__.CallTreeNetwork = {
     root: undefined,
     data: undefined,
     circle: undefined,
-    firstDraw: true,
+    whileDrawing: undefined,
+    nextDrawingSource: undefined,
 
     switchEnabled() {
         this.enable = !this.enable;
@@ -54,6 +55,8 @@ __$__.CallTreeNetwork = {
 
         cc.on('click', d => {
             let loopLabel = d.data.loopLabel;
+            if (loopLabel === 'main')
+                return;
             __$__.Context.SpecifiedContext[loopLabel] = d.data.contextSensitiveID;
             if (!__$__.Error.hasError)
                 __$__.Context.SpecifiedContextWhenExecutable[loopLabel] = d.data.contextSensitiveID;
@@ -70,8 +73,10 @@ __$__.CallTreeNetwork = {
             __$__.CallTreeNetwork.updateHighlightCircles();
         });
         cc.on('dblclick', d => {
-            __$__.CallTreeNetwork.toggle(d);
-            __$__.CallTreeNetwork.update(d);
+            if (__$__.CallTreeNetwork.whileDrawing === false) {
+                __$__.CallTreeNetwork.toggle(d);
+                __$__.CallTreeNetwork.update(d);
+            }
         });
 
 
@@ -89,17 +94,19 @@ __$__.CallTreeNetwork = {
 
         let nodeUpdate = nodeEnter.merge(node);
 
-        if (__$__.CallTreeNetwork.firstDraw)
-            nodeUpdate.transition()
-                .duration(duration)
-                .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
-                .on('end', () => {
-                    __$__.CallTreeNetwork.firstDraw = false;
-                });
-        else
-            nodeUpdate.transition()
-                .duration(duration)
-                .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
+        __$__.CallTreeNetwork.whileDrawing = true;
+        nodeUpdate.transition()
+            .duration(duration)
+            .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
+            .on('end', () => {
+                __$__.CallTreeNetwork.whileDrawing = false;
+                setTimeout(() => {
+                    if (__$__.CallTreeNetwork.nextDrawingSource) {
+                        __$__.CallTreeNetwork.update(__$__.CallTreeNetwork.nextDrawingSource);
+                        __$__.CallTreeNetwork.nextDrawingSource = undefined;
+                    }
+                }, 0);
+            });
 
         __$__.CallTreeNetwork.circle = nodeUpdate.select("circle")
             .attr("r", 8)
@@ -189,7 +196,7 @@ __$__.CallTreeNetwork = {
     },
 
     draw() {
-        if (__$__.CallTreeNetwork.firstDraw) __$__.CallTreeNetwork.initialize();
+        if (__$__.CallTreeNetwork.whileDrawing === undefined) __$__.CallTreeNetwork.initialize();
 
         let data = __$__.CallTreeNetwork.data = {};
         __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
@@ -202,7 +209,12 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
             .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 150]);
 
-        __$__.CallTreeNetwork.update(root);
+
+        if (__$__.CallTreeNetwork.whileDrawing) {
+            __$__.CallTreeNetwork.nextDrawingSource = root;
+        } else {
+            __$__.CallTreeNetwork.update(root);
+        }
     },
 
     constructData(node, data) {

@@ -93,7 +93,7 @@
         __$__.Update.PositionUpdate();
 
         $(window).on('resize' ,function() {
-            if (!__$__.CallTreeNetwork.firstDraw) {
+            if (__$__.CallTreeNetwork.whileDrawing !== true) {
                 __$__.network.redraw();
                 __$__.CallTreeNetwork.redraw();
             }
