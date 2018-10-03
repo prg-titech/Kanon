@@ -186,7 +186,7 @@ __$__.ASTTransforms = {
      * func(arg1, arg2, ...)
      *
      * after:
-     * (() => {
+     * ((__callee) => {
      *     if (__call_count['unique Label']) __call_count['unique Label']++;
      *     else __call_count['unique Label'] = 1;
      *
@@ -198,11 +198,41 @@ __$__.ASTTransforms = {
      *         )
      *     );
      *     __newExpInfo.push(false);
-     *     var __temp = func(arg1, arg2, ...);
+     *     checkpoint;
+     *     var __temp = __callee(arg1, arg2, ...);
+     *     changed;
+     *     checkpoint;
      *     __newExpInfo.pop();
      *     __stackForCallTree.pop();
      *     return __temp;
-     * })()
+     * }).call(this, func)
+     *
+     * exceptional case in which the callee node is 'MemberExpression'
+     *
+     * before:
+     * obj.prop(arg1, arg2, ...)
+     *
+     * after:
+     * ((__obj) => {
+     *     if (__call_count['unique Label']) __call_count['unique Label']++;
+     *     else __call_count['unique Label'] = 1;
+     *
+     *     __stackForCallTree.push(
+     *         new __$__.CallTree.FunctionCall(
+     *             'unique Label',
+     *             __stackForCallTree,
+     *             __call_count['unique Label']
+     *         )
+     *     );
+     *     __newExpInfo.push(false);
+     *     checkpoint;
+     *     var __temp = __obj.prop(arg1, arg2, ...);
+     *     changed;
+     *     checkpoint;
+     *     __newExpInfo.pop();
+     *     __stackForCallTree.pop();
+     *     return __temp;
+     * })(obj)
      */
     CallExpressionToFunction() {
         let b = __$__.ASTBuilder;
@@ -211,117 +241,142 @@ __$__.ASTTransforms = {
                 if (node.type === "CallExpression" && node.loc) {
                     const counterName = "__call_count";
                     let label = node.label;
+                    let info = {};
+                    if (node.callee.type === 'MemberExpression') {
+                        info.argName = '__obj';
+                        info.arg = [node.callee.object];
+                        info.callee = b.MemberExpression(
+                            b.Identifier('__obj'),
+                            node.callee.property
+                        );
+                    } else {
+                        info.argName = '__callee';
+                        info.arg = [node.callee];
+                        info.callee = b.Identifier('__callee')
+                    }
+                    info.arg.unshift(b.Identifier('this'));
+                    info.vars = __$__.ASTTransforms.varEnv.Variables();
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                    __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
 
                     return b.CallExpression(
-                        b.ArrowFunctionExpression(
-                            [],
-                            b.BlockStatement([
-                                b.IfStatement(
-                                    b.MemberExpression(
-                                        b.Identifier(counterName),
-                                        b.Literal(label),
-                                        true
-                                    ),
-                                    b.ExpressionStatement(
-                                        b.UpdateExpression(
-                                            b.MemberExpression(
-                                                b.Identifier(counterName),
-                                                b.Literal(label),
-                                                true
-                                            ),
-                                            "++",
-                                            false
-                                        )
-                                    ),
-                                    b.ExpressionStatement(
-                                        b.AssignmentExpression(
-                                            b.MemberExpression(
-                                                b.Identifier(counterName),
-                                                b.Literal(label),
-                                                true
-                                            ),
-                                            "=",
-                                            b.Literal(1)
-                                        )
-                                    )
-                                ),
-                                /**
-                                 * __stackForCallTree.push(
-                                 *     new __$__.CallTree.FunctionCall(
-                                 *         'unique Label',
-                                 *         __stackForCallTree,
-                                 *         __call_count['unique Label']
-                                 *     )
-                                 * );
-                                 */
-                                b.ExpressionStatement(
-                                    b.CallExpression(
+                        b.MemberExpression(
+                            b.FunctionExpression(
+                                [
+                                    b.Identifier(info.argName)
+                                ],
+                                b.BlockStatement([
+                                    b.IfStatement(
                                         b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier('push')
+                                            b.Identifier(counterName),
+                                            b.Literal(label),
+                                            true
                                         ),
-                                        [b.NewExpression(
-                                            b.MemberExpression(
+                                        b.ExpressionStatement(
+                                            b.UpdateExpression(
                                                 b.MemberExpression(
-                                                    b.Identifier('__$__'),
-                                                    b.Identifier('CallTree')
-                                                ),
-                                                b.Identifier('FunctionCall')
-                                            ),
-                                            [
-                                                b.Literal(label),
-                                                b.Identifier('__stackForCallTree'),
-                                                b.MemberExpression(
-                                                    b.Identifier('__call_count'),
+                                                    b.Identifier(counterName),
                                                     b.Literal(label),
                                                     true
-                                                )
-                                            ]
-                                        )]
-                                    )
-                                ),
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newExpInfo'),
-                                            b.Identifier("push")
-                                        ),
-                                        [b.Literal(false)]
-                                    )
-                                ),
-                                b.VariableDeclaration([
-                                        b.VariableDeclarator(
-                                            b.Identifier('__temp'),
-                                            b.CallExpression(
-                                                node.callee,
-                                                node.arguments
+                                                ),
+                                                "++",
+                                                false
                                             )
-                                        )],
-                                    'var'
-                                ),
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newExpInfo'),
-                                            b.Identifier("pop")
-                                        ), []
+                                        ),
+                                        b.ExpressionStatement(
+                                            b.AssignmentExpression(
+                                                b.MemberExpression(
+                                                    b.Identifier(counterName),
+                                                    b.Literal(label),
+                                                    true
+                                                ),
+                                                "=",
+                                                b.Literal(1)
+                                            )
+                                        )
+                                    ),
+                                    /**
+                                     * __stackForCallTree.push(
+                                     *     new __$__.CallTree.FunctionCall(
+                                     *         'unique Label',
+                                     *         __stackForCallTree,
+                                     *         __call_count['unique Label']
+                                     *     )
+                                     * );
+                                     */
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__stackForCallTree'),
+                                                b.Identifier('push')
+                                            ),
+                                            [b.NewExpression(
+                                                b.MemberExpression(
+                                                    b.MemberExpression(
+                                                        b.Identifier('__$__'),
+                                                        b.Identifier('CallTree')
+                                                    ),
+                                                    b.Identifier('FunctionCall')
+                                                ),
+                                                [
+                                                    b.Literal(label),
+                                                    b.Identifier('__stackForCallTree'),
+                                                    b.MemberExpression(
+                                                        b.Identifier('__call_count'),
+                                                        b.Literal(label),
+                                                        true
+                                                    )
+                                                ]
+                                            )]
+                                        )
+                                    ),
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__newExpInfo'),
+                                                b.Identifier("push")
+                                            ),
+                                            [b.Literal(false)]
+                                        )
+                                    ),
+                                    __$__.ASTTransforms.makeCheckpoint(node.loc.start, info.vars),
+                                    b.VariableDeclaration([
+                                            b.VariableDeclarator(
+                                                b.Identifier('__temp'),
+                                                b.CallExpression(
+                                                    info.callee,
+                                                    node.arguments
+                                                )
+                                            )],
+                                        'var'
+                                    ),
+                                    __$__.ASTTransforms.changedGraphStmt(),
+                                    __$__.ASTTransforms.makeCheckpoint(node.loc.end, info.vars),
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__newExpInfo'),
+                                                b.Identifier("pop")
+                                            ), []
+                                        )
+                                    ),
+                                    // __stackForCallTree.pop();
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.Identifier('__stackForCallTree'),
+                                                b.Identifier("pop")
+                                            ), []
+                                        )
+                                    ),
+                                    b.ReturnStatement(
+                                        b.Identifier('__temp')
                                     )
-                                ),
-                                // __stackForCallTree.pop();
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier("pop")
-                                        ), []
-                                    )
-                                ),
-                                b.ReturnStatement(
-                                    b.Identifier('__temp')
-                                )
-                            ])
+                                ])
+                            ),
+                            b.Identifier('call')
                         ),
-                        []
+                        info.arg
                     );
                 }
             }
@@ -1261,36 +1316,35 @@ __$__.ASTTransforms = {
         let b = __$__.ASTBuilder;
         let id = 'InsertCheckPoint';
         __$__.ASTTransforms.checkPoint_idCounter = 1;
-        let env = new __$__.Probe.StackEnv();
 
         return {
             enter(node, path) {
                 if (__$__.ASTTransforms.funcTypes[node.type]) {
-                    env.push(new __$__.Probe.FunctionFlame());
+                    __$__.ASTTransforms.varEnv.push(new __$__.Probe.FunctionFlame());
 
                     if (!node.expression) {
                         node.body.body.forEach(s => {
                             if (s.type === 'VariableDeclaration' && s.kind === 'var') {
                                 s.declarations.forEach(declarator => {
-                                    env.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
+                                    __$__.ASTTransforms.varEnv.addVariable(declarator.id.name.slice(1, declarator.id.name.length), s.kind, false);
                                 });
                             }
                         });
                     }
 
                     node.params.forEach(param => {
-                        if(param instanceof Object)  env.addVariable(param.name, "var", true)
+                        if(param instanceof Object) __$__.ASTTransforms.varEnv.addVariable(param.name, "var", true)
                     });
                 }
 
 
                 if (node.type === 'BlockStatement') {
-                    env.push(new __$__.Probe.BlockFlame());
+                    __$__.ASTTransforms.varEnv.push(new __$__.Probe.BlockFlame());
 
                     node.body.forEach(s => {
                         if (s.type === 'VariableDeclaration' && s.kind !== 'var') {
                             s.declarations.forEach(declarator => {
-                                env.addVariable(declarator.id.name, s.kind, false);
+                                __$__.ASTTransforms.varEnv.addVariable(declarator.id.name, s.kind, false);
                             });
                         }
                     });
@@ -1308,110 +1362,28 @@ __$__.ASTTransforms = {
 
 
                 if (node.type === 'ForStatement' || node.type === 'ForInStatement') {
-                    env.push(new __$__.Probe.BlockFlame());
+                    __$__.ASTTransforms.varEnv.push(new __$__.Probe.BlockFlame());
                 }
-                return [id, env.Variables()];
+                return [id, __$__.ASTTransforms.varEnv.Variables()];
             },
             leave(node, path, enterData) {
                 let data = enterData[id];
 
                 if (node.type === 'VariableDeclarator') {
                     let parent = path[path.length - 2];
-                    env.addVariable(node.id.name, parent.kind, true);
+                    __$__.ASTTransforms.varEnv.addVariable(node.id.name, parent.kind, true);
                 }
 
                 if (__$__.ASTTransforms.varScopes[node.type]) {
-                    env.pop();
+                    __$__.ASTTransforms.varEnv.pop();
                 }
 
                 if (node.loc && __$__.ASTTransforms.stmtTypes[node.type] || node.type === 'VariableDeclarator') {
                     let start = node.loc.start;
                     let end = node.loc.end;
                     let parent = path[path.length - 2];
-                    let variables = env.Variables();
+                    let variables = __$__.ASTTransforms.varEnv.Variables();
 
-
-                    let checkPoint = function(loc, variables, temp_var) {
-                        __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
-                        return b.ExpressionStatement(
-                            b.CallExpression(
-                                b.Identifier('__$__.Context.CheckPoint'),
-                                [
-                                    b.Identifier('__objs'),
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__loopLabels'),
-                                            b.Identifier('last')
-                                        ),
-                                        []
-                                    ),
-                                    b.Identifier('__loopCount'),
-                                    b.Identifier('__time_counter++'),
-                                    b.Identifier(__$__.ASTTransforms.checkPoint_idCounter++),
-                                    b.ObjectExpression(
-                                        variables.map(function(val) {
-                                            let new_val = (val === temp_var) ? '__temp_' + val : val;
-                                            return b.Property(
-                                                b.Identifier(val),
-                                                b.ConditionalExpression(
-                                                    b.BinaryExpression(
-                                                        b.UnaryExpression(
-                                                            'typeof',
-                                                            b.Identifier(new_val),
-                                                            true
-                                                        ),
-                                                        '!==',
-                                                        b.Literal('string')
-                                                    ),
-                                                    b.Identifier(new_val),
-                                                    b.Identifier("undefined")
-                                                )
-                                            );
-                                        }).concat([
-                                            b.Property(
-                                                b.Identifier('this'),
-                                                b.Identifier('this')
-                                            )
-                                        ])
-                                    ),
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newExpInfo'),
-                                            b.Identifier('last')
-                                        ), []
-                                    ),
-                                    // __stackForCallTree.last().getContextSensitiveID();
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__stackForCallTree'),
-                                                    b.Identifier('last')
-                                                ),
-                                                []
-                                            ),
-                                            b.Identifier('getContextSensitiveID')
-                                        ),
-                                        []
-                                    )
-                                ]
-                            )
-                        )
-                    };
-
-                    let changedGraphStmt = () => b.ExpressionStatement(
-                        b.AssignmentExpression(
-                            b.MemberExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__$__'),
-                                    b.Identifier('Context')
-                                ),
-                                b.Identifier('ChangedGraph')
-                            ),
-                            '=',
-                            b.Literal(true)
-                        )
-                    );
 
 
                     /**
@@ -1430,14 +1402,14 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return b.BlockStatement([
-                            checkPoint(start, variables),
+                            __$__.ASTTransforms.makeCheckpoint(start, variables),
                             b.VariableDeclaration([
                                 b.VariableDeclarator(
                                     b.Identifier('__temp'),
                                     node.argument
                                 )
                             ], 'let'),
-                            checkPoint(end, variables),
+                            __$__.ASTTransforms.makeCheckpoint(end, variables),
                             b.ReturnStatement(
                                 b.Identifier('__temp')
                             )
@@ -1459,9 +1431,9 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return b.BlockStatement([
-                            checkPoint(start, variables),
+                            __$__.ASTTransforms.makeCheckpoint(start, variables),
                             node,
-                            checkPoint(end, variables)
+                            __$__.ASTTransforms.makeCheckpoint(end, variables)
                         ]);
 
                     }
@@ -1480,22 +1452,22 @@ __$__.ASTTransforms = {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return b.BlockStatement([
-                            checkPoint(start, data),
+                            __$__.ASTTransforms.makeCheckpoint(start, data),
                             node,
-                            checkPoint(end, variables)
+                            __$__.ASTTransforms.makeCheckpoint(end, variables)
                         ]);
                     } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)
                         || node.type === 'ClassDeclaration') {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return [
-                            checkPoint(start, data),
+                            __$__.ASTTransforms.makeCheckpoint(start, data),
                             node,
-                            changedGraphStmt(),
-                            checkPoint(end, variables)
+                            __$__.ASTTransforms.changedGraphStmt(),
+                            __$__.ASTTransforms.makeCheckpoint(end, variables)
                         ];
                     } else if (node.type === 'VariableDeclarator') {
-                        if (node.init) {
+                        if (node.init && node.init.loc) {
                             __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                             __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                             let expression = Object.assign({}, node.init);
@@ -1505,15 +1477,15 @@ __$__.ASTTransforms = {
                                 b.ArrowFunctionExpression(
                                     [],
                                     b.BlockStatement([
-                                        checkPoint(node.init.loc.start, data),
+                                        __$__.ASTTransforms.makeCheckpoint(node.init.loc.start, data),
                                         b.VariableDeclaration([
                                             b.VariableDeclarator(
                                                 b.Identifier('__temp_' + name),
                                                 expression
                                             )
                                         ], 'var'),
-                                        changedGraphStmt(),
-                                        checkPoint(node.init.loc.end, variables, name),
+                                        __$__.ASTTransforms.changedGraphStmt(),
+                                        __$__.ASTTransforms.makeCheckpoint(node.init.loc.end, variables, name),
                                         b.ReturnStatement(
                                             b.Identifier('__temp_' + name)
                                         )
@@ -1531,20 +1503,20 @@ __$__.ASTTransforms = {
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                     return [
-                                        changedGraphStmt(),
-                                        checkPoint(start, variables),
+                                        __$__.ASTTransforms.changedGraphStmt(),
+                                        __$__.ASTTransforms.makeCheckpoint(start, variables),
                                         node,
-                                        changedGraphStmt(),
-                                        checkPoint(end, variables)
+                                        __$__.ASTTransforms.changedGraphStmt(),
+                                        __$__.ASTTransforms.makeCheckpoint(end, variables)
                                     ];
                                 } else {
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                     return [
-                                        checkPoint(start, variables),
+                                        __$__.ASTTransforms.makeCheckpoint(start, variables),
                                         node,
-                                        changedGraphStmt(),
-                                        checkPoint(end, variables)
+                                        __$__.ASTTransforms.changedGraphStmt(),
+                                        __$__.ASTTransforms.makeCheckpoint(end, variables)
                                     ];
                                 }
                             }
@@ -1553,20 +1525,20 @@ __$__.ASTTransforms = {
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return b.BlockStatement([
-                                    changedGraphStmt(),
-                                    checkPoint(start, variables),
+                                    __$__.ASTTransforms.changedGraphStmt(),
+                                    __$__.ASTTransforms.makeCheckpoint(start, variables),
                                     node,
-                                    changedGraphStmt(),
-                                    checkPoint(end, variables)
+                                    __$__.ASTTransforms.changedGraphStmt(),
+                                    __$__.ASTTransforms.makeCheckpoint(end, variables)
                                 ]);
                             } else {
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return b.BlockStatement([
-                                    checkPoint(start, variables),
+                                    __$__.ASTTransforms.makeCheckpoint(start, variables),
                                     node,
-                                    changedGraphStmt(),
-                                    checkPoint(end, variables)
+                                    __$__.ASTTransforms.changedGraphStmt(),
+                                    __$__.ASTTransforms.makeCheckpoint(end, variables)
                                 ]);
                             }
                         }
@@ -1664,5 +1636,91 @@ __$__.ASTTransforms = {
                 }
             }
         }
+    },
+
+    makeCheckpoint(loc, variables, temp_var) {
+        let b = __$__.ASTBuilder;
+        __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
+        return b.ExpressionStatement(
+            b.CallExpression(
+                b.Identifier('__$__.Context.CheckPoint'),
+                [
+                    b.Identifier('__objs'),
+                    b.CallExpression(
+                        b.MemberExpression(
+                            b.Identifier('__loopLabels'),
+                            b.Identifier('last')
+                        ),
+                        []
+                    ),
+                    b.Identifier('__loopCount'),
+                    b.Identifier('__time_counter++'),
+                    b.Identifier(__$__.ASTTransforms.checkPoint_idCounter++),
+                    b.ObjectExpression(
+                        variables.map(function(val) {
+                            let new_val = (val === temp_var) ? '__temp_' + val : val;
+                            return b.Property(
+                                b.Identifier(val),
+                                b.ConditionalExpression(
+                                    b.BinaryExpression(
+                                        b.UnaryExpression(
+                                            'typeof',
+                                            b.Identifier(new_val),
+                                            true
+                                        ),
+                                        '!==',
+                                        b.Literal('string')
+                                    ),
+                                    b.Identifier(new_val),
+                                    b.Identifier("undefined")
+                                )
+                            );
+                        }).concat([
+                            b.Property(
+                                b.Identifier('this'),
+                                b.Identifier('this')
+                            )
+                        ])
+                    ),
+                    b.CallExpression(
+                        b.MemberExpression(
+                            b.Identifier('__newExpInfo'),
+                            b.Identifier('last')
+                        ), []
+                    ),
+                    // __stackForCallTree.last().getContextSensitiveID();
+                    b.CallExpression(
+                        b.MemberExpression(
+                            b.CallExpression(
+                                b.MemberExpression(
+                                    b.Identifier('__stackForCallTree'),
+                                    b.Identifier('last')
+                                ),
+                                []
+                            ),
+                            b.Identifier('getContextSensitiveID')
+                        ),
+                        []
+                    )
+                ]
+            )
+        )
+    },
+
+    changedGraphStmt() {
+        let b = __$__.ASTBuilder;
+        return b.ExpressionStatement(
+            b.AssignmentExpression(
+                b.MemberExpression(
+                    b.MemberExpression(
+                        b.Identifier('__$__'),
+                        b.Identifier('Context')
+                    ),
+                    b.Identifier('ChangedGraph')
+                ),
+                '=',
+                b.Literal(true)
+            )
+        )
     }
 };

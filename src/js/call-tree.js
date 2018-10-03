@@ -65,6 +65,10 @@ __$__.CallTree.FunctionCall = class FunctionCall extends __$__.CallTree.Node {
     constructor (label, callPath) {
         super(label, callPath);
     }
+
+    getContextSensitiveID() {
+        return this.callPath[this.callPath.length - 2].getContextSensitiveID();
+    }
 };
 
 

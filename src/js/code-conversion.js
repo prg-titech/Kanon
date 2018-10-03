@@ -18,8 +18,8 @@ __$__.CodeConversion = {
     
     
         __$__.ASTTransforms.pairCPID = {};
+        __$__.ASTTransforms.varEnv = new __$__.Probe.StackEnv();
         visitors.push(tf.Labeling());
-        visitors.push(tf.InsertCheckPoint());
 
         Object.keys(__$__.Context.LabelPos).forEach(kind => {
             Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
@@ -41,13 +41,15 @@ __$__.CodeConversion = {
         });
 
         visitors = [];
-    
+
+        visitors.push(tf.InsertCheckPoint());
+        visitors.push(tf.CallExpressionToFunction());
         visitors.push(tf.BlockedProgram());
         visitors.push(tf.AddSomeCodeInHead());
         visitors.push(tf.Context());
-        visitors.push(tf.CallExpressionToFunction());
+        // visitors.push(tf.CallExpressionToFunction());
         visitors.push(tf.CollectObjects());
-    
+
     
         __$__.walkAST(ast, null, visitors);
     

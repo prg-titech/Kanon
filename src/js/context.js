@@ -147,8 +147,8 @@ __$__.Context = {
         let cursor_position = __$__.editor.getCursorPosition();
         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
         let checkPointId = __$__.Context.CheckPointAroundCursor = {
-            beforeId: checkPointIds.beforeIds.last(),
-            afterId: checkPointIds.afterIds.last()
+            beforeId: checkPointIds.beforeIds[0],
+            afterId: checkPointIds.afterIds[0]
         };
 
         if (__$__.Context.Snapshot) {

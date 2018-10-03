@@ -24,7 +24,7 @@ __$__.Update = {
             try {
                 __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
             } catch (e) {
-                document.getElementById('console').textContent = 'Error?';
+                document.getElementById('console').textContent = 'Syntax Error';
                 if (e.message.slice(0, 5) === 'Line ')
                     document.getElementById('console').textContent += ': ' + e.message;
                 throw e;
@@ -53,7 +53,11 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 } else {
                     __$__.Context.InfLoop = '';
-                    document.getElementById('console').textContent = 'Error?: ' + e.message;
+                    try {
+                        eval(__$__.editor.getValue());
+                    } catch (e) {
+                        document.getElementById('console').textContent = 'Runtime Error: ' + e.message;
+                    }
                 }
             }
 
