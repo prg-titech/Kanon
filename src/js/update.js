@@ -6,7 +6,10 @@ __$__.Update = {
 
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
-        window.localStorage["Kanon-Code"] = __$__.editor.getValue();
+        try {
+            window.localStorage.setItem('Kanon-Code', __$__.editor.getValue());
+        } catch (e) {
+        }
 
         __$__.CallTree.Initialize();
         __$__.Context.Initialize();

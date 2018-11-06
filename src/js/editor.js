@@ -4,10 +4,15 @@ __$__.editor = ace.edit("editor");
 __$__.editor.setOption('enableBasicAutocompletion', true);
 __$__.startAutocomplete = __$__.editor.keyBinding.$handlers[0].commands.startAutocomplete.exec;
 
-if (window.localStorage["Kanon-Code"] && window.localStorage["Kanon-Code"].indexOf('__$__') === -1)
-    __$__.editor.setValue(window.localStorage["Kanon-Code"]);
-else
+try {
+    let code = window.localStorage.getItem('Kanon-Code');
+    if (code && code.indexOf('__$__') === -1)
+        __$__.editor.setValue(code);
+    else
+        __$__.editor.setValue('');
+} catch (e) {
     __$__.editor.setValue('');
+}
 
 __$__.editor.getSession().setMode('ace/mode/javascript');
 // __$__.editor.getSession().setUseWorker(false);

@@ -1522,6 +1522,9 @@ __$__.ASTTransforms = {
                             }
 
                             if (node.type === 'BlockStatement') {
+                                start.column += 1;
+                                end.column -= 1;
+
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return b.BlockStatement([
