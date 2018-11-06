@@ -567,13 +567,3 @@ __$__.Context = {
         return nearestLoopLabels;
     }
 };
-
-
-__$__.Context.getObjectID = function(obj) {
-    let index = Object.values(__$__.Context.Objects).indexOf(obj);
-    if (index === -1) {
-        return undefined;
-    } else {
-        return Object.keys(__$__.Context.Objects)[index];
-    }
-};
