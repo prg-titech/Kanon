@@ -5,10 +5,13 @@
 
     	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
     	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<link rel="stylesheet" href="external/prototype_window/themes/default.css"/>
+		<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css"/>
     	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css"/>
     	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css"/>
     	<link rel="stylesheet" type="text/css" href="src/css/style.css">
     	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
+		<link rel="stylesheet" type="text/css" href="src/css/tooltip.css">
 
 		<script type="text/javascript" src="src/import.js"></script>
 
@@ -86,13 +89,14 @@
 	<script type="text/javascript" src="src/js/network.js"></script>
 	<script type="text/javascript" src="src/js/call-tree-network.js"></script>
 	<script>
+		jQuery.noConflict();
         __$__.StorePositions.registerPositions();
         __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
 
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
 
-        $(window).on('resize' ,function() {
+        jQuery(window).on('resize' ,function() {
             if (__$__.CallTreeNetwork.whileDrawing !== true) {
                 __$__.network.redraw();
                 __$__.CallTreeNetwork.redraw();
@@ -108,7 +112,7 @@
 		};
 		(() => {
 		    var isDragging = false;
-            $('div.split-pane')
+            jQuery('div.split-pane')
 				.mousedown(function () {
                     isDragging = true;
                 })
@@ -122,6 +126,24 @@
 				    isDragging = false;
 				});
         })();
+
+        // initialize div for popup
+        __$__.Testize.divPopup = document.getElementById('tooltip_0');
+        __$__.Testize.divPopup = document.createElement('div');
+        __$__.Testize.divPopup.setAttribute('id', 'tooltip_0');
+        __$__.Testize.divPopup.setAttribute('class', 'seecoderun_tooltip'); // and make sure myclass has some styles in css
+        __$__.Testize.divPopup.onclick = function(e) {
+            console.log(e, __$__.Testize.enable);
+        };
+        __$__.Testize.divPopup.onmouseover = function(e) {
+            __$__.Testize.divPopup.style.cursor = 'pointer';
+        };
+        __$__.Testize.divPopup.onmouseout = function(e) {
+            __$__.Testize.divPopup.style.cursor = 'default';
+        };
+        document.body.appendChild(__$__.Testize.divPopup);
+        __$__.Testize.divPopup.style.display = "none";
+        __$__.Testize.divPopup.innerText = "";
 	</script>
 </body>
 </html>

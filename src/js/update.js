@@ -14,6 +14,7 @@ __$__.Update = {
         __$__.CallTree.Initialize();
         __$__.Context.Initialize();
         __$__.UpdateLabelPos.Initialize();
+        __$__.Testize.initialize();
         __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
 
@@ -147,6 +148,11 @@ __$__.Update = {
 
                 __$__.Context.Draw(e);
                 __$__.CallTreeNetwork.updateHighlightCircles();
+                if (__$__.Testize.cursorIsInFunctionCall()) {
+                    __$__.Testize.enableButton();
+                } else {
+                    __$__.Testize.disableButton();
+                }
 
             } catch (e) {
                 if (e === 'Infinite Loop') {
