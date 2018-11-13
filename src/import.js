@@ -8,6 +8,8 @@ document.write('<script type="text/javascript" src="node_modules/jquery/dist/jqu
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/split-pane/split-pane.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
+document.write('<script type="text/javascript" src="external/prototype_window/javascripts/prototype.js"></script>');
+document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-conversion.js"></script>');
@@ -21,6 +23,7 @@ document.write('<script type="text/javascript" src="src/js/readFile.js"></script
 document.write('<script type="text/javascript" src="src/js/saveFile.js"></script>');
 document.write('<script type="text/javascript" src="src/js/show-context.js"></script>');
 document.write('<script type="text/javascript" src="src/js/store-positions.js"></script>');
+document.write('<script type="text/javascript" src="src/js/testize.js"></script>');
 document.write('<script type="text/javascript" src="src/js/toVisjs.js"></script>');
 document.write('<script type="text/javascript" src="src/js/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/update.js"></script>');

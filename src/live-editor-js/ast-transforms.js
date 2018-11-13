@@ -241,6 +241,7 @@ __$__.ASTTransforms = {
                 if (node.type === "CallExpression" && node.loc) {
                     const counterName = "__call_count";
                     let label = node.label;
+
                     let info = {};
                     if (node.callee.type === 'MemberExpression') {
                         info.argName = '__obj';
@@ -256,6 +257,7 @@ __$__.ASTTransforms = {
                     }
                     info.arg.unshift(b.Identifier('this'));
                     info.vars = __$__.ASTTransforms.varEnv.Variables();
+
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
 
@@ -1636,6 +1638,9 @@ __$__.ASTTransforms = {
                     }
 
                     node.label = label;
+                    if (node.type === 'CallExpression' && label) {
+                        __$__.Testize.registerParenthesisPos(node);
+                    }
                 }
             }
         }

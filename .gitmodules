@@ -1,3 +1,6 @@
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/estools/escodegen.git
+[submodule "external/prototype_window"]
+	path = external/prototype_window
+	url = https://github.com/sgruhier/prototype_window.git

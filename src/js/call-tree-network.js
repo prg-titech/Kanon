@@ -166,8 +166,8 @@ __$__.CallTreeNetwork = {
     },
 
     initialize() {
-        let height = __$__.CallTreeNetwork.windowSize.height = $('#callTree').height();
-        let width = __$__.CallTreeNetwork.windowSize.width = $('#callTree').width();
+        let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height();
+        let width = __$__.CallTreeNetwork.windowSize.width = jQuery('#callTree').width();
         __$__.CallTreeNetwork.svg = d3.select('#callTree')
             .append('svg')
             .attr('width', width)
@@ -178,8 +178,8 @@ __$__.CallTreeNetwork = {
     },
 
     redraw() {
-        let height = __$__.CallTreeNetwork.windowSize.height = $('#callTree').height(),
-            width = __$__.CallTreeNetwork.windowSize.width = $('#callTree').width(),
+        let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height(),
+            width = __$__.CallTreeNetwork.windowSize.width = jQuery('#callTree').width(),
             root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(__$__.CallTreeNetwork.data);
 
         root.x0 = height / 2;

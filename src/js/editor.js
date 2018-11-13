@@ -54,6 +54,10 @@ __$__.editor.on('change', (e) => {
     __$__.editor.task.PositionUpdate.push(e);
     setTimeout(__$__.editor.executeTask, 0);
 });
+
+// adding a tooltip
+__$__.editor.on('mousemove', __$__.Testize.mousemove);
+
 __$__.editor.getSelection().on('changeCursor', (e) => {
     __$__.editor.task.ContextUpdate.push(e);
     setTimeout(__$__.editor.executeTask, 0);
@@ -82,3 +86,4 @@ __$__.editor.commands.addCommand({
         }
     }
 });
+
