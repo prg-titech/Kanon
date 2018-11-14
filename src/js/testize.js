@@ -1,14 +1,40 @@
 __$__.Testize = {
     callParenthesisPos: {},
-    displayedPopupCallLabel: undefined,
-    popupInfo: {
-        callLabel: undefined,
-    },
+    focusingCallLabel: undefined,
     enable: false,
+
 
     initialize() {
         __$__.Testize.callParenthesisPos = {};
     },
+
+
+    createWindow(width, height, title) {
+        __$__.win = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 100, title: title});
+        __$__.win.getContent().update('<div id="window-for-manipulation"></div>');
+        // document.getElementById('window-for-manipulation').style['background-color'] = 'blue';
+        let windowSelection = __$__.d3.select('#window-for-manipulation');
+
+        windowSelection.append('div')
+            .attr('id', 'window-header')
+            .append('text')
+            .attr('id', 'acceptButton')
+            .text('accept')
+            .on('click', function (e) {
+                // this function is invoked when this button is clicked.
+                console.log(e, this);
+            })
+            .on('mouseover', function (e) {
+                this.style.cursor = 'pointer';
+            })
+            .on('mouseout', function (e) {
+                this.style.cursor = 'default';
+            });
+
+        windowSelection.append('div')
+            .attr('id', 'window-body');
+    },
+
 
     cursorIsInFunctionCall() {
         let compare = __$__.UpdateLabelPos.ComparePosition;
@@ -53,13 +79,13 @@ __$__.Testize = {
             }, undefined);
 
             // if the popup is already displayed.
-            if (__$__.Testize.displayedPopupCallLabel) {
+            if (__$__.Testize.focusingCallLabel) {
                 // check whether Kanon should remove the popup
                 let div = __$__.Testize.divPopup;
                 let divRect = div.getBoundingClientRect();
                 let pixelPosition = __$__.editor.renderer.textToScreenCoordinates({
-                    row: __$__.Testize.callParenthesisPos[__$__.Testize.displayedPopupCallLabel].start.line - 1,
-                    column: __$__.Testize.callParenthesisPos[__$__.Testize.displayedPopupCallLabel].start.column
+                    row: __$__.Testize.callParenthesisPos[__$__.Testize.focusingCallLabel].start.line - 1,
+                    column: __$__.Testize.callParenthesisPos[__$__.Testize.focusingCallLabel].start.column
                 });
                 let lineHeight = __$__.editor.renderer.lineHeight;
 
@@ -72,11 +98,9 @@ __$__.Testize = {
                         __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates({
                             row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                             column: __$__.Testize.callParenthesisPos[label].start.column
-                        }), 'set test');
-                        __$__.Testize.displayedPopupCallLabel = label;
+                        }), 'set test', label);
                     } else {
                         __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates(position));
-                        __$__.Testize.displayedPopupCallLabel = undefined;
                     }
                 }
             } else { // any popups aren't displayed
@@ -85,15 +109,25 @@ __$__.Testize = {
                     __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates({
                         row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                         column: __$__.Testize.callParenthesisPos[label].start.column
-                    }), 'set test');
-                    __$__.Testize.displayedPopupCallLabel = label;
+                    }), 'set test', label);
                 } else {
                     __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates(position));
-                    __$__.Testize.displayedPopupCallLabel = undefined;
                 }
             }
         }
     },
+
+
+    openWin() {
+        let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
+        if (!__$__.win) {
+            __$__.Testize.createWindow(split_pane_size.width/2, split_pane_size.height/2, '');
+        } else {
+            __$__.win.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
+        }
+        __$__.win.show();
+    },
+
 
     /**
      * @param node
@@ -125,7 +159,7 @@ __$__.Testize = {
     },
 
 
-    updateTooltip(position, text) {
+    updateTooltip(position, text, callLabel) {
         let div = document.getElementById('tooltip_0');
 
         if (text) {
@@ -138,5 +172,6 @@ __$__.Testize = {
             div.style.display = "none";
             div.innerText = "";
         }
+        __$__.Testize.focusingCallLabel = callLabel;
     }
 };
