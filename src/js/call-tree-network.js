@@ -1,6 +1,4 @@
 __$__.CallTreeNetwork = {
-    d3: d3,
-
     windowSize: {
         width: undefined,
         height: undefined
@@ -140,21 +138,21 @@ __$__.CallTreeNetwork = {
 
         let linkEnter = link.enter().insert('path', "g")
             .attr('class', 'link')
-            .attr('d', __$__.CallTreeNetwork.d3.linkHorizontal()
+            .attr('d', __$__.d3.linkHorizontal()
                 .x(d => source.y0)
                 .y(d => source.x0));
 
         let linkUpdate = linkEnter.merge(link);
         linkUpdate.transition()
             .duration(duration)
-            .attr('d', __$__.CallTreeNetwork.d3.linkHorizontal()
+            .attr('d', __$__.d3.linkHorizontal()
                 .x(d => d.y)
                 .y(d => d.x));
 
         link.exit()
             .transition()
             .duration(duration)
-            .attr("d", __$__.CallTreeNetwork.d3.linkHorizontal()
+            .attr("d", __$__.d3.linkHorizontal()
                 .x(d => source.y)
                 .y(d => source.x))
             .remove();
@@ -168,7 +166,7 @@ __$__.CallTreeNetwork = {
     initialize() {
         let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height();
         let width = __$__.CallTreeNetwork.windowSize.width = jQuery('#callTree').width();
-        __$__.CallTreeNetwork.svg = d3.select('#callTree')
+        __$__.CallTreeNetwork.svg = __$__.d3.select('#callTree')
             .append('svg')
             .attr('width', width)
             .attr('height', height);
@@ -180,7 +178,7 @@ __$__.CallTreeNetwork = {
     redraw() {
         let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height(),
             width = __$__.CallTreeNetwork.windowSize.width = jQuery('#callTree').width(),
-            root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(__$__.CallTreeNetwork.data);
+            root = __$__.CallTreeNetwork.root = __$__.d3.hierarchy(__$__.CallTreeNetwork.data);
 
         root.x0 = height / 2;
         root.y0 = 0;
@@ -189,7 +187,7 @@ __$__.CallTreeNetwork = {
             .attr('width', width)
             .attr('height', height);
 
-        __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
+        __$__.CallTreeNetwork.tree = __$__.d3.tree()
             .size([height, width - 150]);
 
         __$__.CallTreeNetwork.update(root, 0);
@@ -201,12 +199,12 @@ __$__.CallTreeNetwork = {
         let data = __$__.CallTreeNetwork.data = {};
         __$__.CallTreeNetwork.constructData(__$__.CallTree.rootNode, data);
 
-        let root = __$__.CallTreeNetwork.root = __$__.CallTreeNetwork.d3.hierarchy(data);
+        let root = __$__.CallTreeNetwork.root = __$__.d3.hierarchy(data);
 
         root.x0 = __$__.CallTreeNetwork.windowSize.height / 2;
         root.y0 = 0;
 
-        __$__.CallTreeNetwork.tree = __$__.CallTreeNetwork.d3.tree()
+        __$__.CallTreeNetwork.tree = __$__.d3.tree()
             .size([__$__.CallTreeNetwork.windowSize.height, __$__.CallTreeNetwork.windowSize.width - 150]);
 
 
@@ -264,7 +262,7 @@ __$__.CallTreeNetwork = {
     clickCancel() {
         // we want to a distinguish single/double click
         // details http://bl.ocks.org/couchand/6394506
-        let dispatcher = d3.dispatch('click', 'dblclick');
+        let dispatcher = __$__.d3.dispatch('click', 'dblclick');
         function cc(selection) {
             let down, tolerance = 5, last, wait = null, args;
             // euclidean distance
@@ -272,12 +270,12 @@ __$__.CallTreeNetwork = {
                 return Math.sqrt(Math.pow(a[0] - b[0], 2), Math.pow(a[1] - b[1], 2));
             }
             selection.on('mousedown', function() {
-                down = d3.mouse(document.body);
+                down = __$__.d3.mouse(document.body);
                 last = +new Date();
                 args = arguments;
             });
             selection.on('mouseup', function() {
-                if (dist(down, d3.mouse(document.body)) > tolerance) {
+                if (dist(down, __$__.d3.mouse(document.body)) > tolerance) {
                     return;
                 } else {
                     if (wait) {

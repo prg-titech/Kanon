@@ -27,3 +27,39 @@
     letter-spacing: normal;
     text-align: center;
 }
+
+#window-for-manipulation {
+    width: 100%;
+    height: 100%;
+}
+
+#window-header {
+    width: 100%;
+    height: 30px;
+    background-color: lightblue;
+    position: relative;
+}
+
+#acceptButton {
+    color: #6091d3;
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    -webkit-transform: translate(0, -50%);
+    -moz-transform: translate(0, -50%);
+    -ms-transform: translate(0, -50%);
+    -o-transform: translate(0, -50%);
+    transform: translate(0, -50%);
+    background: #FFF;
+    border: solid 3px #6091d3;
+    border-radius: 5px;
+    padding: 2px 2px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+#window-body {
+    width: 100%;
+    height: calc(100% - 30px);
+    background-color: red;
+}

@@ -30,6 +30,7 @@
             jQuery(function() {
                 jQuery('div.split-pane').splitPane();
             });
+            __$__.d3 = d3;
     	</script>
     </head>
 <body>
@@ -133,7 +134,11 @@
         __$__.Testize.divPopup.setAttribute('id', 'tooltip_0');
         __$__.Testize.divPopup.setAttribute('class', 'seecoderun_tooltip'); // and make sure myclass has some styles in css
         __$__.Testize.divPopup.onclick = function(e) {
-            console.log(e, __$__.Testize.enable);
+            __$__.Testize.selectedCallInfo = {
+                callLabel: __$__.Testize.focusingCallLabel
+            };
+            __$__.Testize.openWin();
+            __$__.Testize.updateTooltip();
         };
         __$__.Testize.divPopup.onmouseover = function(e) {
             __$__.Testize.divPopup.style.cursor = 'pointer';
