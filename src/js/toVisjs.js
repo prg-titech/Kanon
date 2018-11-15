@@ -44,7 +44,7 @@ __$__.ToVisjs = {
                         id: arrLabel + '@block' + j + '@',
                         physics: false,
                         shape: 'square',
-                        size: __$__.arraySize
+                        size: __$__.ObjectGraphNetwork.arraySize
                     };
                     arrayLabels.push(node.id);
 

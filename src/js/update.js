@@ -82,26 +82,26 @@ __$__.Update = {
             }
 
 
-            __$__.options.nodes.hidden = true;
-            __$__.options.edges.hidden = true;
+            __$__.ObjectGraphNetwork.options.nodes.hidden = true;
+            __$__.ObjectGraphNetwork.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
-            __$__.network.setOptions(__$__.options);
-            __$__.nodes = new vis.DataSet(graph.nodes);
-            __$__.edges = new vis.DataSet(graph.edges);
-            __$__.network.setData({
-                nodes: __$__.nodes,
-                edges: __$__.edges
+            __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+            __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
+            __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
+            __$__.ObjectGraphNetwork.network.setData({
+                nodes: __$__.ObjectGraphNetwork.nodes,
+                edges: __$__.ObjectGraphNetwork.edges
             });
             __$__.StorePositions.registerPositions(true);
-            __$__.StorePositions.oldNetwork.edges = __$__.network.body.data.edges._data;
+            __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
     
             let stabilized = params => {
-                __$__.options.nodes.hidden = false;
-                __$__.options.edges.hidden = false;
-                __$__.network.setOptions(__$__.options);
-                __$__.nodes.forEach(node => {
+                __$__.ObjectGraphNetwork.options.nodes.hidden = false;
+                __$__.ObjectGraphNetwork.options.edges.hidden = false;
+                __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+                __$__.ObjectGraphNetwork.nodes.forEach(node => {
                     if (node.id.slice(0, 11) !== '__Variable-')
-                        __$__.nodes.update({id: node.id, fixed: true});
+                        __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
                 });
     
                 if (__$__.Update.updateValueOfArray)
@@ -118,7 +118,7 @@ __$__.Update = {
 
             __$__.Update.waitForStabilized = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
-                __$__.network.once('stabilized', stabilized);
+                __$__.ObjectGraphNetwork.network.once('stabilized', stabilized);
             else
                 stabilized();
     
@@ -159,7 +159,7 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
-            __$__.network.redraw();
+            __$__.ObjectGraphNetwork.network.redraw();
         }
     },
 
@@ -186,9 +186,9 @@ __$__.Update = {
                 return [edge.from, edge.to, edge.label];
         });
         let networkNodes = [];
-        // let temp = (snapshot) ? __$__.nodes._data : __$__.Context.LastGraph.nodes;
-        let temp = (snapshot) ? __$__.nodes._data : __$__.StorePositions.oldNetwork._nodesData;
-        // let temp = __$__.nodes._data;
+        // let temp = (snapshot) ? __$__.ObjectGraphNetwork.nodes._data : __$__.Context.LastGraph.nodes;
+        let temp = (snapshot) ? __$__.ObjectGraphNetwork.nodes._data : __$__.StorePositions.oldNetwork._nodesData;
+        // let temp = __$__.ObjectGraphNetwork.nodes._data;
 
         Object.keys(temp).forEach(key => {
             if (snapshot)
@@ -199,9 +199,9 @@ __$__.Update = {
 
 
         let networkEdges = [];
-        // temp = (snapshot) ? __$__.edges._data : __$__.Context.LastGraph.edges;
-        temp = (snapshot) ? __$__.edges._data : __$__.StorePositions.oldNetwork._edgesData;
-        // temp = __$__.edges._data;
+        // temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.Context.LastGraph.edges;
+        temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.StorePositions.oldNetwork._edgesData;
+        // temp = __$__.ObjectGraphNetwork.edges._data;
 
         Object.keys(temp).forEach(function(key){
             if (snapshot)
@@ -349,13 +349,13 @@ __$__.Update = {
             });
 
             if (isBlock) {
-                let arrayLabels = Object.keys(__$__.network.body.data.nodes._data).filter(label => {
+                let arrayLabels = Object.keys(__$__.ObjectGraphNetwork.network.body.data.nodes._data).filter(label => {
                     return label.indexOf(arr_label + '@block') >= 0;
                 });
                 let idx0 = arrayLabels.indexOf(id);
-                let pos = __$__.network.getPositions(id)[id];
+                let pos = __$__.ObjectGraphNetwork.network.getPositions(id)[id];
                 for (let i = 0; i < arrayLabels.length; i++) {
-                    __$__.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.arraySize * 2, pos.y);
+                    __$__.ObjectGraphNetwork.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.ObjectGraphNetwork.arraySize * 2, pos.y);
                 }
 
                 if (__$__.Update.updateValueOfArray)
@@ -364,15 +364,15 @@ __$__.Update = {
         }
     },
 
-    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block') >= 0;})) => {
-        Object.values(__$__.edges._data).forEach(edge => {
+    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.ObjectGraphNetwork.nodes._data).filter(label => {return label.indexOf('@block') >= 0;})) => {
+        Object.values(__$__.ObjectGraphNetwork.edges._data).forEach(edge => {
             let index = arrayBlocks.indexOf(edge.from);
 
             if (index >= 0) {
-                if (__$__.nodes._data[edge.to].color && __$__.nodes._data[edge.to].color === 'white') {
-                    let pos = __$__.network.getPositions(edge.from)[edge.from];
-                    __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
-                    __$__.nodes.update({id: edge.to, fixed: true});
+                if (__$__.ObjectGraphNetwork.nodes._data[edge.to].color && __$__.ObjectGraphNetwork.nodes._data[edge.to].color === 'white') {
+                    let pos = __$__.ObjectGraphNetwork.network.getPositions(edge.from)[edge.from];
+                    __$__.ObjectGraphNetwork.network.moveNode(edge.to, pos.x, pos.y + 100);
+                    __$__.ObjectGraphNetwork.nodes.update({id: edge.to, fixed: true});
                 }
             }
         });

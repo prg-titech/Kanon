@@ -203,9 +203,9 @@ __$__.Context = {
 
             __$__.StorePositions.setPositions(graph);
 
-            __$__.options.nodes.color = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
-            __$__.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
-            __$__.network.setOptions(__$__.options);
+            __$__.ObjectGraphNetwork.options.nodes.color = 'rgba(' + __$__.ObjectGraphNetwork.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
+            __$__.ObjectGraphNetwork.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
+            __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
 
             let isChanged = false;
 
@@ -438,8 +438,8 @@ __$__.Context = {
         }
         document.getElementById('pullDownViewMode').value =
             (isSnapshot) ? 'Snapshot' : 'Summarized';
-        __$__.options.manipulation.enabled = isSnapshot;
-        __$__.network.setOptions(__$__.options);
+        __$__.ObjectGraphNetwork.options.manipulation.enabled = isSnapshot;
+        __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
     },
 
 
