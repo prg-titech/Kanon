@@ -92,14 +92,14 @@
 	<script>
 		jQuery.noConflict();
         __$__.StorePositions.registerPositions();
-        __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
+        __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.edges._data;
 
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
 
         jQuery(window).on('resize' ,function() {
             if (__$__.CallTreeNetwork.whileDrawing !== true) {
-                __$__.network.redraw();
+                __$__.ObjectGraphNetwork.network.redraw();
                 __$__.CallTreeNetwork.redraw();
             }
         });
@@ -119,7 +119,7 @@
                 })
 				.mousemove(function () {
 				    if (isDragging) {
-                        __$__.network.redraw();
+                        __$__.ObjectGraphNetwork.network.redraw();
                         __$__.CallTreeNetwork.redraw();
 					}
 				})

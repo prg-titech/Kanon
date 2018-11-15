@@ -13,7 +13,7 @@ __$__.Animation = {
     moveWithAnimation: function(node_id, to, animationID, ms = 1000) {
         const start_time = (new Date).getTime();
     
-        let node_pos = __$__.network.getPositions()[node_id];
+        let node_pos = __$__.ObjectGraphNetwork.network.getPositions()[node_id];
         let delta = {
             x: to.x - node_pos.x,
             y: to.y - node_pos.y
@@ -24,7 +24,7 @@ __$__.Animation = {
         let interval = setInterval(() => {
             let current_time = (new Date).getTime();
             if (current_time - start_time >= ms) {
-                __$__.network.moveNode(node_id, to.x, to.y);
+                __$__.ObjectGraphNetwork.network.moveNode(node_id, to.x, to.y);
                 __$__.Update.updateArrayPosition({nodes: [node_id]});
                 __$__.StorePositions.registerPositions();
                 clearInterval(interval);
@@ -35,7 +35,7 @@ __$__.Animation = {
                 return;
             }
             
-            __$__.network.moveNode(node_id, node_pos.x + Math.floor(delta.x * (current_time - start_time) / ms), node_pos.y + Math.floor(delta.y * (current_time - start_time) / ms));
+            __$__.ObjectGraphNetwork.network.moveNode(node_id, node_pos.x + Math.floor(delta.x * (current_time - start_time) / ms), node_pos.y + Math.floor(delta.y * (current_time - start_time) / ms));
             __$__.Update.updateArrayPosition({nodes: [node_id]});
             __$__.StorePositions.registerPositions();
         }, 1);
@@ -53,7 +53,7 @@ __$__.Animation = {
      */
     setData: function(graph) {
         let next_position = [];
-        let node_positions = __$__.network.getPositions();
+        let node_positions = __$__.ObjectGraphNetwork.network.getPositions();
         graph.nodes.forEach(node => {
             if (node_positions[node.id] && node.x) {
                 next_position.push({
@@ -65,21 +65,21 @@ __$__.Animation = {
                 node.y = node_positions[node.id].y;
             }
         });
-        __$__.nodes = new vis.DataSet(graph.nodes);
-        __$__.edges = new vis.DataSet(graph.edges);
-        __$__.network.setData({
-            nodes: __$__.nodes,
-            edges: __$__.edges
+        __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
+        __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
+        __$__.ObjectGraphNetwork.network.setData({
+            nodes: __$__.ObjectGraphNetwork.nodes,
+            edges: __$__.ObjectGraphNetwork.edges
         });
-        __$__.network.once('stabilized', param => {
-            __$__.nodes.forEach(node => {
+        __$__.ObjectGraphNetwork.network.once('stabilized', param => {
+            __$__.ObjectGraphNetwork.nodes.forEach(node => {
                 if (node.id.slice(0, 11) !== '__Variable-')
-                    __$__.nodes.update({id: node.id, fixed: true});
+                    __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
             });
         });
-        Object.keys(__$__.nodes._data).forEach(label => {
+        Object.keys(__$__.ObjectGraphNetwork.nodes._data).forEach(label => {
             if (node_positions[label])
-                __$__.network.moveNode(label, node_positions[label].x, node_positions[label].y);
+                __$__.ObjectGraphNetwork.network.moveNode(label, node_positions[label].x, node_positions[label].y);
         });
         __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArrayPosition({nodes: [arr[0]]})});
         if (next_position.length) {

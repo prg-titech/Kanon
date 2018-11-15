@@ -26,7 +26,7 @@ __$__.StorePositions = {
     
     // register the positions of the nodes to be able to use old network data
     registerPositions: function(positionUpdate = false) {
-        let pos = __$__.network.getPositions();
+        let pos = __$__.ObjectGraphNetwork.network.getPositions();
 
     
         Object.keys(pos).forEach(function(id) {
@@ -40,8 +40,8 @@ __$__.StorePositions = {
             }
         });
         if (positionUpdate) {
-            __$__.StorePositions.oldNetwork._nodesData = __$__.nodes._data;
-            __$__.StorePositions.oldNetwork._edgesData = __$__.edges._data;
+            __$__.StorePositions.oldNetwork._nodesData = __$__.ObjectGraphNetwork.nodes._data;
+            __$__.StorePositions.oldNetwork._edgesData = __$__.ObjectGraphNetwork.edges._data;
         }
     }
 };
