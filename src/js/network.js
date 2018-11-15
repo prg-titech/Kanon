@@ -48,54 +48,6 @@ __$__.ObjectGraphNetwork = {
     },
     arraySize: 12
 };
-// __$__.container = document.getElementById('mynetwork');
-// __$__.ObjectGraphNetwork.nodes = new vis.DataSet({});
-// __$__.ObjectGraphNetwork.edges = new vis.DataSet({});
-// __$__.data = {nodes: __$__.ObjectGraphNetwork.nodes, edges: __$__.ObjectGraphNetwork.edges};
-// __$__.colorRGB = {
-//     skyblue: '135,206,235'
-// };
-// __$__.options = {
-//     autoResize: false,
-//     nodes: {
-//         // color: {
-//         //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
-//         //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
-//         // }
-//         color: 'skyblue'
-//     },
-//     edges: {
-//         arrows: 'to',
-//         color: {
-//             color: 'skyblue',
-//             opacity: 1.0,
-//             highlight: 'skyblue',
-//             hover: 'skyblue'
-//         },
-//         width: 3,
-//         smooth: {
-//             enabled: true,
-//             forceDirection: 'none',
-//             roundness: 1.0
-//         }
-//     },
-//     physics: {
-//         enabled: true
-//     },
-//     interaction: {
-//         hover: true
-//         // zoomView: false
-//     },
-//     manipulation: {
-//         enabled: true,
-//         addNode: false,
-//         addEdge: __$__.Manipulate.addEdge,
-//         editEdge: __$__.Manipulate.editEdge,
-//         deleteNode: false,
-//         deleteEdge: false
-//     }
-// };
-// __$__.arraySize = 12;
 
 __$__.ObjectGraphNetwork.data = {nodes: __$__.ObjectGraphNetwork.nodes, edges: __$__.ObjectGraphNetwork.edges};
 __$__.ObjectGraphNetwork.network = new vis.Network(__$__.ObjectGraphNetwork.container, __$__.ObjectGraphNetwork.data, __$__.ObjectGraphNetwork.options);
