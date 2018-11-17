@@ -5,6 +5,7 @@ __$__.Context = {
     CheckPointID2LoopLabel: {},
     CheckPointTable: {},
     CheckPointAroundCursor: {},
+    CheckPointIDAroundFuncCall: {},
     CallTreeNodesOfEachLoop: {},
     InfLoop: '',
     LabelPos: {
@@ -29,6 +30,7 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
+        __$__.Context.CheckPointIDAroundFuncCall = {};
         __$__.Context.CallTreeNodesOfEachLoop = {main: [__$__.CallTree.rootNode]};
         __$__.Context.LastInfo = {};
         __$__.Context.StoredGraph = {};
@@ -509,7 +511,7 @@ __$__.Context = {
         let isChanged = false;
 
         // Find which loop should be changed.
-        let nearestLoopLabelObj = __$__.Context.findLoopLabelNearestCursorPosition();
+        let nearestLoopLabelObj = __$__.Context.findLoopLabel();
         let nearestLoopLabel = nearestLoopLabelObj.loop,
             contextSensitiveIDOfNearestLoop = __$__.Context.SpecifiedContext[nearestLoopLabel];
 
@@ -540,9 +542,15 @@ __$__.Context = {
     },
 
 
-    findLoopLabelNearestCursorPosition: function() {
-        let cursor = __$__.editor.getCursorPosition();
-        cursor.line = cursor.row + 1;
+    /**
+     * @param posArg: {row, column} or {line, column}
+     * @return {{loop: string, func: string}}
+     */
+    findLoopLabel: function(posArg = __$__.editor.getCursorPosition()) {
+        let pos = {
+            line: posArg.line || posArg.row + 1,
+            column: posArg.column
+        };
         let compare = __$__.UpdateLabelPos.ComparePosition;
         let nearestLoopLabels = {loop: 'main', func: 'main'};
 
@@ -553,7 +561,7 @@ __$__.Context = {
 
             let loop = __$__.Context.LabelPos.Loop[loopLabel];
 
-            if (compare(loop.start, "<", cursor) && compare(cursor, (loop.closed) ? "<" : "<=", loop.end)) {
+            if (compare(loop.start, "<", pos) && compare(pos, (loop.closed) ? "<" : "<=", loop.end)) {
                 checkProperty.forEach(prop => {
                     // if nearestLoopLabel === 'main' then nearestLoop is undefined.
                     let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabels[prop]];

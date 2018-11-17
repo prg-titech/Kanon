@@ -234,7 +234,7 @@ __$__.ASTTransforms = {
      *     return __temp;
      * })(obj)
      */
-    CallExpressionToFunction() {
+    ConvertCallExpression() {
         let b = __$__.ASTBuilder;
         return {
             leave(node, path) {
@@ -260,6 +260,11 @@ __$__.ASTTransforms = {
 
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
+
+                    __$__.Context.CheckPointIDAroundFuncCall[label] = {
+                        before: __$__.ASTTransforms.checkPoint_idCounter,
+                        after: __$__.ASTTransforms.checkPoint_idCounter + 1
+                    };
 
                     return b.CallExpression(
                         b.MemberExpression(

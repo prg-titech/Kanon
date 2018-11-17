@@ -148,11 +148,6 @@ __$__.Update = {
 
                 __$__.Context.Draw(e);
                 __$__.CallTreeNetwork.updateHighlightCircles();
-                if (__$__.Testize.cursorIsInFunctionCall()) {
-                    __$__.Testize.enableButton();
-                } else {
-                    __$__.Testize.disableButton();
-                }
 
             } catch (e) {
                 if (e === 'Infinite Loop') {

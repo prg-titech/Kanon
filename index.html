@@ -86,6 +86,19 @@
 		</div>
 	</div>
 	<div id='console'></div>
+	<div id="network-popUp">
+		<span id="operation">node</span> <br>
+		<table style="margin:auto;">
+			<tr>
+				<td>label</td>
+				<td><input id="node-label" value="new value" /></td>
+			</tr>
+		</table>
+		<input type="button" value="save" id="saveButtonForTestize" />
+		<input type="button" value="cancel" id="cancelButtonForTestize" />
+	</div>
+    <div id="tooltip_1" class="seecoderun_tooltip">set test</div>
+	<div id="tooltip_2" class="seecoderun_tooltip">remove test</div>
 
 	<script type="text/javascript" src="src/js/network.js"></script>
 	<script type="text/javascript" src="src/js/call-tree-network.js"></script>
@@ -128,27 +141,31 @@
 				});
         })();
 
-        // initialize div for popup
-        __$__.Testize.divPopup = document.getElementById('tooltip_0');
-        __$__.Testize.divPopup = document.createElement('div');
-        __$__.Testize.divPopup.setAttribute('id', 'tooltip_0');
-        __$__.Testize.divPopup.setAttribute('class', 'seecoderun_tooltip'); // and make sure myclass has some styles in css
-        __$__.Testize.divPopup.onclick = function(e) {
+		__$__.Testize.popup_addTest = document.getElementById('tooltip_1');
+        __$__.Testize.popup_addTest.onclick = function(e) {
             __$__.Testize.selectedCallInfo = {
-                callLabel: __$__.Testize.focusingCallLabel
+                label: __$__.Testize.hoveringCallInfo.label
             };
             __$__.Testize.openWin();
-            __$__.Testize.updateTooltip();
+            __$__.Testize.removeTooltip(this);
         };
-        __$__.Testize.divPopup.onmouseover = function(e) {
-            __$__.Testize.divPopup.style.cursor = 'pointer';
+        __$__.Testize.popup_addTest.onmouseover = function(e) {
+            __$__.Testize.popup_addTest.style.cursor = 'pointer';
         };
-        __$__.Testize.divPopup.onmouseout = function(e) {
-            __$__.Testize.divPopup.style.cursor = 'default';
+        __$__.Testize.popup_addTest.onmouseout = function(e) {
+            __$__.Testize.popup_addTest.style.cursor = 'default';
         };
-        document.body.appendChild(__$__.Testize.divPopup);
-        __$__.Testize.divPopup.style.display = "none";
-        __$__.Testize.divPopup.innerText = "";
+        __$__.Testize.popup_removeTest = document.getElementById('tooltip_2');
+        __$__.Testize.popup_removeTest.onclick = function(e) {
+            __$__.Testize.removeTest(__$__.Testize.hoveringCallInfo.label);
+            __$__.Testize.removeTooltip(this);
+        };
+        __$__.Testize.popup_removeTest.onmouseover = function(e) {
+            __$__.Testize.popup_removeTest.style.cursor = 'pointer';
+        };
+        __$__.Testize.popup_removeTest.onmouseout = function(e) {
+            __$__.Testize.popup_removeTest.style.cursor = 'default';
+        };
 	</script>
 </body>
 </html>
