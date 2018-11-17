@@ -43,11 +43,11 @@ __$__.CodeConversion = {
         visitors = [];
 
         visitors.push(tf.InsertCheckPoint());
-        visitors.push(tf.CallExpressionToFunction());
+        visitors.push(tf.ConvertCallExpression());
         visitors.push(tf.BlockedProgram());
         visitors.push(tf.AddSomeCodeInHead());
         visitors.push(tf.Context());
-        // visitors.push(tf.CallExpressionToFunction());
+        // visitors.push(tf.ConvertCallExpression());
         visitors.push(tf.CollectObjects());
 
     

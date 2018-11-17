@@ -1,7 +1,73 @@
 __$__.Testize = {
     callParenthesisPos: {},
-    focusingCallLabel: undefined,
+    hoveringCallInfo: {
+        label: undefined,
+        div: undefined
+    },
+    selectedCallInfo: {
+        label: undefined,
+        context_sensitiveID: undefined
+    },
     enable: false,
+    storedTest: {
+    },
+    network: {
+        options: {
+            autoResize: false,
+            nodes: {
+                color: 'skyblue'
+            },
+            edges: {
+                arrows: 'to',
+                color: {
+                    color: 'skyblue',
+                    opacity: 1.0,
+                    highlight: 'skyblue',
+                    hover: 'skyblue'
+                },
+                width: 3,
+                smooth: {
+                    enabled: true,
+                    forceDirection: 'none',
+                    roundness: 1.0
+                }
+            },
+            physics: {
+                enabled: true
+            },
+            interaction: {
+                hover: true
+                // zoomView: false
+            },
+            manipulation: {
+                enabled: true,
+                addNode: function (data, callback) {
+                    document.getElementById('operation').innerHTML = "Add Node";
+                    document.getElementById('node-label').value = data.label;
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
+                    document.getElementById('network-popUp').style.display = 'block';
+                },
+                addEdge: function (data, callback) {
+                    document.getElementById('operation').innerHTML = "Add Edge";
+                    document.getElementById('node-label').value = data.label;
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
+                    document.getElementById('network-popUp').style.display = 'block';
+                },
+                editNode: function (data, callback) {
+                    document.getElementById('operation').innerHTML = "Edit Node";
+                    document.getElementById('node-label').value = data.label;
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this,callback);
+                    document.getElementById('network-popUp').style.display = 'block';
+                },
+                editEdge: true,
+                deleteNode: true,
+                deleteEdge: true
+            }
+        }
+    },
 
 
     initialize() {
@@ -9,10 +75,22 @@ __$__.Testize = {
     },
 
 
+    cancelEdit(callback) {
+        __$__.Testize.clearPopUp();
+        callback(null);
+    },
+
+
+    clearPopUp() {
+        document.getElementById('saveButtonForTestize').onclick = null;
+        document.getElementById('cancelButtonForTestize').onclick = null;
+        document.getElementById('network-popUp').style.display = 'none';
+    },
+
+
     createWindow(width, height, title) {
-        __$__.win = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 100, title: title});
+        __$__.win = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 300, title: title});
         __$__.win.getContent().update('<div id="window-for-manipulation"></div>');
-        // document.getElementById('window-for-manipulation').style['background-color'] = 'blue';
         let windowSelection = __$__.d3.select('#window-for-manipulation');
 
         windowSelection.append('div')
@@ -22,7 +100,8 @@ __$__.Testize = {
             .text('accept')
             .on('click', function (e) {
                 // this function is invoked when this button is clicked.
-                console.log(e, this);
+                __$__.Testize.setTest();
+                __$__.win.close();
             })
             .on('mouseover', function (e) {
                 this.style.cursor = 'pointer';
@@ -33,30 +112,55 @@ __$__.Testize = {
 
         windowSelection.append('div')
             .attr('id', 'window-body');
-    },
 
+        jQuery('#network-popUp').appendTo('#window-for-manipulation');
 
-    cursorIsInFunctionCall() {
-        let compare = __$__.UpdateLabelPos.ComparePosition;
-        let cPos = __$__.editor.getCursorPosition();
-        cPos.line = cPos.row + 1;
-
-        let infoOfMostNearCall = {label: undefined};
-        Object.keys(__$__.Testize.callParenthesisPos).forEach(callLabel => {
-            let pos = __$__.Testize.callParenthesisPos[callLabel];
-
-            if (compare(pos.start, '<=', cPos) && compare(cPos, '<=', pos.end)) {
-                if (!infoOfMostNearCall.label || compare(infoOfMostNearCall.pos.start, '<=', pos.start)) {
-                    infoOfMostNearCall = {
-                        label: callLabel,
-                        pos: pos
-                    };
-                }
+        let networkInfo = __$__.Testize.network;
+        networkInfo.container = document.getElementById('window-body');
+        networkInfo.nodes = new vis.DataSet({});
+        networkInfo.edges = new vis.DataSet({});
+        networkInfo.data = {nodes: networkInfo.nodes, edges: networkInfo.edges};
+        networkInfo.network = new vis.Network(networkInfo.container, networkInfo.data, networkInfo.options);
+        Windows.addObserver({
+            onResize: function (a, win) {
+                networkInfo.network.redraw();
             }
         });
-
-        return infoOfMostNearCall.label;
     },
+
+
+    displayTooltip(div) {
+        div.style.display = 'inline';
+        if (div === __$__.Testize.popup_addTest) {
+            __$__.Testize.popup_removeTest.style.display = 'none';
+        } else {
+            __$__.Testize.popup_addTest.style.display = 'none';
+        }
+    },
+
+
+    divOfPopup(callLabel, context_sensitiveID) {
+        if (!context_sensitiveID) {
+            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
+            context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
+        }
+        if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
+            return __$__.Testize.popup_removeTest;
+        } else {
+            return __$__.Testize.popup_addTest;
+        }
+    },
+
+
+    duplicateGraph(graph) {
+        let duplicatedGraph = {};
+        jQuery.extend(true, duplicatedGraph, graph);
+        duplicatedGraph.nodes.forEach(node => {
+            delete node.fixed;
+        });
+        return duplicatedGraph;
+    },
+
 
     /**
      * @param e
@@ -79,13 +183,13 @@ __$__.Testize = {
             }, undefined);
 
             // if the popup is already displayed.
-            if (__$__.Testize.focusingCallLabel) {
+            if (__$__.Testize.hoveringCallInfo.label) {
                 // check whether Kanon should remove the popup
-                let div = __$__.Testize.divPopup;
+                let div = __$__.Testize.hoveringCallInfo.div;
                 let divRect = div.getBoundingClientRect();
                 let pixelPosition = __$__.editor.renderer.textToScreenCoordinates({
-                    row: __$__.Testize.callParenthesisPos[__$__.Testize.focusingCallLabel].start.line - 1,
-                    column: __$__.Testize.callParenthesisPos[__$__.Testize.focusingCallLabel].start.column
+                    row: __$__.Testize.callParenthesisPos[__$__.Testize.hoveringCallInfo.label].start.line - 1,
+                    column: __$__.Testize.callParenthesisPos[__$__.Testize.hoveringCallInfo.label].start.column
                 });
                 let lineHeight = __$__.editor.renderer.lineHeight;
 
@@ -93,25 +197,34 @@ __$__.Testize = {
                 if (Math.abs((__$__.mouse.pageX - pixelPosition.pageX) * 2) <= divRect.width
                     && pixelPosition.pageY - divRect.height - lineHeight/2 <= __$__.mouse.pageY
                     && __$__.mouse.pageY <= pixelPosition.pageY + lineHeight) {
+                    // do nothing
                 } else { // if Kanon should display newly popup
                     if (label) {
-                        __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates({
+                        let newDiv = __$__.Testize.divOfPopup(label);
+                        __$__.Testize.updateTooltipPos(__$__.editor.renderer.textToScreenCoordinates({
                             row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                             column: __$__.Testize.callParenthesisPos[label].start.column
-                        }), 'set test', label);
+                        }), newDiv);
+                        __$__.Testize.hoveringCallInfo.label = label;
+                        __$__.Testize.hoveringCallInfo.div = newDiv;
+                        __$__.Testize.displayTooltip(div);
                     } else {
-                        __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates(position));
+                        __$__.Testize.hoveringCallInfo.label = undefined;
+                        __$__.Testize.hoveringCallInfo.div = undefined;
+                        __$__.Testize.removeTooltip(div);
                     }
                 }
             } else { // any popups aren't displayed
                 // if Kanon should display newly popup
                 if (label) {
-                    __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates({
+                    let newDiv = __$__.Testize.divOfPopup(label);
+                    __$__.Testize.updateTooltipPos(__$__.editor.renderer.textToScreenCoordinates({
                         row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                         column: __$__.Testize.callParenthesisPos[label].start.column
-                    }), 'set test', label);
-                } else {
-                    __$__.Testize.updateTooltip(__$__.editor.renderer.textToScreenCoordinates(position));
+                    }), newDiv);
+                    __$__.Testize.hoveringCallInfo.label = label;
+                    __$__.Testize.hoveringCallInfo.div = newDiv;
+                    __$__.Testize.displayTooltip(newDiv);
                 }
             }
         }
@@ -125,7 +238,30 @@ __$__.Testize = {
         } else {
             __$__.win.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
         }
-        __$__.win.show();
+
+        // duplicate an object graph stored just before the focusing function call
+        let graph;
+        try {
+            let callLabel = __$__.Testize.selectedCallInfo.label;
+            let checkpointIDs = __$__.Context.CheckPointIDAroundFuncCall[callLabel];
+            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
+            let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
+            __$__.Testize.selectedCallInfo = {
+                label: callLabel,
+                context_sensitiveID: context_sensitiveID
+            };
+            graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
+            graph = __$__.Testize.duplicateGraph(graph);
+        } catch (e) {
+            graph = {nodes: [], edges: []};
+        }
+
+        __$__.Testize.network.network.setData({
+            nodes: graph.nodes,
+            edges: graph.edges
+        });
+        __$__.Testize.network.network.redraw();
+        __$__.win.showCenter();
     },
 
 
@@ -142,7 +278,13 @@ __$__.Testize = {
     registerParenthesisPos(node) {
         try {
             if (node.label) {
-                __$__.Testize.callParenthesisPos[node.label] = {
+                let arrayOfTextContainsParenthesis = __$__.editor.session.getTextRange(new __$__.Range(
+                    node.callee.loc.end.line-1,
+                    node.callee.loc.end.column,
+                    node.loc.end.line-1,
+                    node.loc.end.column
+                )).split('\n');
+                let registerPos = {
                     start: {
                         line: node.callee.loc.end.line,
                         column: node.callee.loc.end.column
@@ -152,6 +294,33 @@ __$__.Testize = {
                         column: node.loc.end.column
                     }
                 };
+
+                // find first open parenthesis
+                for (let i = 0; i < arrayOfTextContainsParenthesis.length; i++) {
+                    let text = arrayOfTextContainsParenthesis[i];
+                    let idx = text.indexOf('(');
+                    if (idx === -1) {
+                        registerPos.start.line += 1;
+                        registerPos.start.column = 0;
+                    } else {
+                        registerPos.start.column += idx;
+                        break;
+                    }
+                }
+                // find last close parenthesis
+                for (let i = arrayOfTextContainsParenthesis.length-1; i >= 0; i--) {
+                    let text = arrayOfTextContainsParenthesis[i];
+                    let idx = text.lastIndexOf(')');
+                    if (idx === -1) {
+                        registerPos.end.line -= 1;
+                        registerPos.end.column = arrayOfTextContainsParenthesis[i-1].length;
+                    } else {
+                        registerPos.end.column -= text.length-idx-1;
+                        break;
+                    }
+                }
+
+                __$__.Testize.callParenthesisPos[node.label] = registerPos;
             }
         } catch (e) {
             console.log(node, e);
@@ -159,19 +328,58 @@ __$__.Testize = {
     },
 
 
-    updateTooltip(position, text, callLabel) {
-        let div = document.getElementById('tooltip_0');
+    removeTest(callLabel) {
+        let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
+        let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
+        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        __$__.editor.session.removeMarker(testInfo.highlightID);
+        __$__.Testize.hoveringCallInfo = {};
+        delete __$__.Testize.storedTest[callLabel][context_sensitiveID];
+    },
 
-        if (text) {
-            div.style.left = position.pageX + 'px';
-            div.style.top  = position.pageY + 'px';
 
-            div.style.display = "block";
-            div.innerText = text;
-        } else {
-            div.style.display = "none";
-            div.innerText = "";
+    removeTooltip(div) {
+        div.style.display = 'none';
+    },
+
+
+    saveData(data, callback) {
+        data.label = document.getElementById('node-label').value;
+        __$__.Testize.clearPopUp();
+        callback(data);
+    },
+
+
+    setTest() {
+        let expectedGraphData = __$__.Testize.network.network.body.data;
+        let callLabel = __$__.Testize.selectedCallInfo.label;
+        let context_sensitiveID = __$__.Testize.selectedCallInfo.context_sensitiveID;
+        let callPos = __$__.Testize.callParenthesisPos[callLabel];
+        let highlightID = __$__.editor.session.addMarker(
+            new __$__.Range(
+                callPos.start.line - 1,
+                callPos.start.column,
+                callPos.end.line - 1,
+                callPos.end.column
+            ), 'testFailed', 'text');
+
+        if (!__$__.Testize.storedTest[callLabel]) {
+            __$__.Testize.storedTest[callLabel] = {};
         }
-        __$__.Testize.focusingCallLabel = callLabel;
+
+        __$__.Testize.storedTest[callLabel][context_sensitiveID] = {
+            testData: expectedGraphData,
+            passed: false,
+            highlightID: highlightID
+        };
+
+    },
+
+
+    updateTooltipPos(position, div) {
+        if (div) {
+            div.style.left = position.pageX + 'px';
+            div.style.top = position.pageY + 'px';
+        }
     }
 };
