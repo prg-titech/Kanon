@@ -129,13 +129,15 @@ __$__.Testize = {
     },
 
 
-    displayTooltip(div) {
+    displayTooltip(div, label) {
         div.style.display = 'inline';
         if (div === __$__.Testize.popup_addTest) {
             __$__.Testize.popup_removeTest.style.display = 'none';
         } else {
             __$__.Testize.popup_addTest.style.display = 'none';
         }
+        __$__.Testize.hoveringCallInfo.label = label;
+        __$__.Testize.hoveringCallInfo.div = div;
     },
 
 
@@ -205,12 +207,8 @@ __$__.Testize = {
                             row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                             column: __$__.Testize.callParenthesisPos[label].start.column
                         }), newDiv);
-                        __$__.Testize.hoveringCallInfo.label = label;
-                        __$__.Testize.hoveringCallInfo.div = newDiv;
-                        __$__.Testize.displayTooltip(div);
+                        __$__.Testize.displayTooltip(newDiv, label);
                     } else {
-                        __$__.Testize.hoveringCallInfo.label = undefined;
-                        __$__.Testize.hoveringCallInfo.div = undefined;
                         __$__.Testize.removeTooltip(div);
                     }
                 }
@@ -222,9 +220,7 @@ __$__.Testize = {
                         row: __$__.Testize.callParenthesisPos[label].start.line - 1,
                         column: __$__.Testize.callParenthesisPos[label].start.column
                     }), newDiv);
-                    __$__.Testize.hoveringCallInfo.label = label;
-                    __$__.Testize.hoveringCallInfo.div = newDiv;
-                    __$__.Testize.displayTooltip(newDiv);
+                    __$__.Testize.displayTooltip(newDiv, label);
                 }
             }
         }
@@ -333,7 +329,6 @@ __$__.Testize = {
                         // if the position of the marker is the same as the parenthesis position,
                         // do nothing
                     } else {
-                        __$__.editor.session.removeMarker(markerID);
                         let newMarkerRange = new __$__.Range(
                             registerPos.start.line-1,
                             registerPos.start.column,
@@ -341,8 +336,7 @@ __$__.Testize = {
                             registerPos.end.column
                         );
                         let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, 'testFailed', 'text');
-                        __$__.Testize.storedTest[node.label].markerRange = newMarkerRange;
-                        __$__.Testize.storedTest[node.label].markerID = newMarkerID;
+                        __$__.Testize.removeMarker(__$__.Testize.storedTest[node.label], newMarkerID, newMarkerRange);
                     }
                 }
             }
@@ -352,13 +346,18 @@ __$__.Testize = {
     },
 
 
+    removeMarker(testInfo, newMarkerID, newMarkerRange) {
+        __$__.editor.session.removeMarker(testInfo.markerID);
+        testInfo.markerID = newMarkerID;
+        testInfo.markerRange = newMarkerRange;
+    },
+
+
     removeTest(callLabel) {
         let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
         let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-        __$__.editor.session.removeMarker(__$__.Testize.storedTest[callLabel].markerID);
-        delete __$__.Testize.storedTest[callLabel].markerID;
-        delete __$__.Testize.storedTest[callLabel].markerRange;
+        __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
         delete __$__.Testize.storedTest[callLabel][context_sensitiveID];
         __$__.Testize.hoveringCallInfo = {};
     },
@@ -366,6 +365,8 @@ __$__.Testize = {
 
     removeTooltip(div) {
         div.style.display = 'none';
+        __$__.Testize.hoveringCallInfo.label = undefined;
+        __$__.Testize.hoveringCallInfo.div = undefined;
     },
 
 
@@ -408,10 +409,7 @@ __$__.Testize = {
             let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
             let specifiedContext = __$__.Context.SpecifiedContext[loopLabelAroundCall];
             if (__$__.Testize.storedTest[callLabel].markerID && !__$__.Testize.storedTest[callLabel][specifiedContext]) {
-                let markerID = __$__.Testize.storedTest[callLabel].markerID;
-                __$__.editor.session.removeMarker(markerID);
-                delete __$__.Testize.storedTest[callLabel].markerID;
-                delete __$__.Testize.storedTest[callLabel].markerRange;
+                __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
             } else if (!__$__.Testize.storedTest[callLabel].markerID && __$__.Testize.storedTest[callLabel][specifiedContext]) {
                 let callPos = __$__.Testize.callParenthesisPos[callLabel];
                 let markerRange = new __$__.Range(
@@ -438,14 +436,15 @@ __$__.Testize = {
                 let markerID = __$__.Testize.storedTest[callLabel].markerID;
                 if (markerID) {
                     let marker = __$__.editor.session.getMarkers()[markerID];
+                    let markerRange = __$__.Testize.storedTest[callLabel].markerRange;
                     let pos = {
                         start: {
-                            line: marker.range.start.row + 1,
-                            column: marker.range.start.column
+                            line: markerRange.start.row + 1,
+                            column: markerRange.start.column
                         },
                         end: {
-                            line: marker.range.end.row + 1,
-                            column: marker.range.end.column
+                            line: markerRange.end.row + 1,
+                            column: markerRange.end.column
                         }
                     };
 
@@ -459,9 +458,7 @@ __$__.Testize = {
                             pos.end.column
                         );
                         let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, marker.clazz, marker.type);
-                        __$__.editor.session.removeMarker(markerID);
-                        __$__.Testize.storedTest[callLabel].markerID = newMarkerID;
-                        __$__.Testize.storedTest[callLabel].markerRange = newMarkerRange;w
+                        __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange);
                     }
                 }
             });
@@ -494,9 +491,7 @@ __$__.Testize = {
                                 pos.end.column
                             );
                             let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, marker.clazz, marker.type);
-                            __$__.editor.session.removeMarker(markerID);
-                            __$__.Testize.storedTest[callLabel].markerID = newMarkerID;
-                            __$__.Testize.storedTest[callLabel].markerRange = newMarkerRange;
+                            __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange);
                         }
                     }
                 }
