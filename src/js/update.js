@@ -70,6 +70,7 @@ __$__.Update = {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
             }
 
+            __$__.Testize.updateMarker();
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
@@ -95,7 +96,7 @@ __$__.Update = {
             });
             __$__.StorePositions.registerPositions(true);
             __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
-    
+
             let stabilized = params => {
                 __$__.ObjectGraphNetwork.options.nodes.hidden = false;
                 __$__.ObjectGraphNetwork.options.edges.hidden = false;
@@ -104,15 +105,15 @@ __$__.Update = {
                     if (node.id.slice(0, 11) !== '__Variable-')
                         __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
                 });
-    
+
                 if (__$__.Update.updateValueOfArray)
                     __$__.Update.updateArrayValuePosition();
-    
+
                 __$__.Update.waitForStabilized = false;
                 __$__.StorePositions.registerPositions(true);
                 __$__.Update.ContextUpdate();
             };
-    
+
             __$__.Context.Arrays.forEach(array => {
                 if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
             });
@@ -122,7 +123,7 @@ __$__.Update = {
                 __$__.ObjectGraphNetwork.network.once('stabilized', stabilized);
             else
                 stabilized();
-    
+
         } catch (e) {
             if (e === 'Infinite Loop') {
                 document.getElementById('console').textContent = 'infinite loop?';
