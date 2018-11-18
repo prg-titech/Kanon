@@ -93,6 +93,83 @@ __$__.UpdateLabelPos = {
     },
 
 
+    modify_by_insert(editEvent, pos) {
+        let start = {line: editEvent.start.row + 1, column: editEvent.start.column};
+        let compare = __$__.UpdateLabelPos.ComparePosition;
+
+        // if inserted code is the upper part of the loop
+        if (compare(start, '<=', pos.start)) {
+            if (pos.start.line === start.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.start.column -= start.column;
+                }
+                pos.start.column += editEvent.lines.last().length;
+            }
+            if (pos.end.line === start.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.end.column -= start.column;
+                }
+                pos.end.column += editEvent.lines.last().length;
+            }
+
+            pos.start.line += editEvent.lines.length - 1;
+            pos.end.line   += editEvent.lines.length - 1;
+        } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
+            if (pos.end.line === start.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.end.column -= start.column;
+                }
+                pos.end.column += editEvent.lines.last().length;
+            }
+            pos.end.line += editEvent.lines.length - 1;
+        } else {
+            return false;
+        }
+        return true;
+    },
+
+
+    modify_by_remove(editEvent, pos) {
+        let start = {line: editEvent.start.row + 1, column: editEvent.start.column};
+        let end = {line: editEvent.end.row + 1, column: editEvent.end.column};
+        let compare = __$__.UpdateLabelPos.ComparePosition;
+
+        // if removed code is the upper part of the loop
+        if (compare(end, '<=', pos.start)) {
+            if (pos.start.line === end.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.start.column += start.column;
+                }
+                pos.start.column -= editEvent.lines.last().length;
+            }
+            if (pos.end.line === end.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.end.column += start.column;
+                }
+                pos.end.column -= editEvent.lines.last().length;
+            }
+
+            pos.start.line -= editEvent.lines.length - 1;
+            pos.end.line   -= editEvent.lines.length - 1;
+        } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
+            if (pos.end.line === end.line) {
+                if (editEvent.lines.length > 1) {
+                    pos.end.column += start.column;
+                }
+                pos.end.column -= editEvent.lines.last().length;
+            }
+
+            pos.end.line   -= editEvent.lines.length - 1;
+        } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
+            pos.end.column = start.column;
+            pos.end.line -= editEvent.lines.length - 1;
+        } else {
+            return false;
+        }
+        return true;
+    },
+
+
     assignLabel(node, c) {
         let i = 1;
         let label;

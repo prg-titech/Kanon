@@ -72,6 +72,7 @@ __$__.editor.commands.addCommand({
         if (isChanged) {
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+            __$__.Testize.updateMarker();
         }
     }
 });
@@ -83,6 +84,7 @@ __$__.editor.commands.addCommand({
         if (isChanged) {
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+            __$__.Testize.updateMarker();
         }
     }
 });
