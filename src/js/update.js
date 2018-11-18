@@ -21,6 +21,7 @@ __$__.Update = {
         if (__arg__) {
             __arg__.forEach(act => {
                 __$__.Update.UpdateLabelPositions(act);
+                __$__.Testize.updateMarkerPosition(act);
             });
         }
 
@@ -219,92 +220,18 @@ __$__.Update = {
      * In this function, update the positions of newLabel, loopLabel and callLabel.
      * If user code is edited, this function is executed.
      */
-    UpdateLabelPositions: function(e) {
-        let start = {line: e.start.row + 1, column: e.start.column};
-        let end = {line: e.end.row + 1, column: e.end.column};
+    UpdateLabelPositions: function(editEvent) {
+        let start = {line: editEvent.start.row + 1, column: editEvent.start.column};
+        let end = {line: editEvent.end.row + 1, column: editEvent.end.column};
         let compare = __$__.UpdateLabelPos.ComparePosition;
     
-        if (e.action === 'insert') {
-            let modify_by_insert = function(pos, kind, label) {
-                // if inserted code is the upper part of the loop
-                if (compare(start, '<=', pos.start)) {
-                    if (pos.start.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.start.column -= start.column;
-                        }
-                        pos.start.column += e.lines.last().length;
-                    }
-                    if (pos.end.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column -= start.column;
-                        }
-                        pos.end.column += e.lines.last().length;
-                    }
-
-                    pos.start.line += e.lines.length - 1;
-                    pos.end.line   += e.lines.length - 1;
-                } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                    if (pos.end.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column -= start.column;
-                        }
-                        pos.end.column += e.lines.last().length;
-                    }
-                    pos.end.line += e.lines.length - 1;
-                }
-                // register position of this node to the table for when editing the boundary.
-                __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
-                    pairPos: {line: pos.end.line, column: pos.end.column},
-                    kind: kind
-                };
-                __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
-                    pairPos: {line: pos.start.line, column: pos.start.column},
-                    kind: kind
-                };
-            };
-
+        if (editEvent.action === 'insert') {
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    modify_by_insert(__$__.Context.LabelPos[kind][label], kind, label);
-                });
-            });
-        } else { // e.action == 'remove'
-            let modify_by_remove = function(pos, kind, label) {
-                if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) {
-                    // if removed code is the outer part of the loop
-                    delete __$__.Context.LabelPos[kind][label];
-                } else {
-                    // if removed code is the upper part of the loop
-                    if (compare(end, '<=', pos.start)) {
-                        if (pos.start.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.start.column += start.column;
-                            }
-                            pos.start.column -= e.lines.last().length;
-                        }
-                        if (pos.end.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.end.column += start.column;
-                            }
-                            pos.end.column -= e.lines.last().length;
-                        }
+                    let pos = __$__.Context.LabelPos[kind][label];
+                    __$__.UpdateLabelPos.modify_by_insert(editEvent, pos);
 
-                        pos.start.line -= e.lines.length - 1;
-                        pos.end.line   -= e.lines.length - 1;
-                    } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                        if (pos.end.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.end.column += start.column;
-                            }
-                            pos.end.column -= e.lines.last().length;
-                        }
-
-                        pos.end.line   -= e.lines.length - 1;
-                    } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
-                        pos.end.column = start.column;
-                        pos.end.line -= e.lines.length - 1;
-                    }
                     // register position of this node to the table for when editing the boundary.
                     __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
                         pairPos: {line: pos.end.line, column: pos.end.column},
@@ -314,15 +241,29 @@ __$__.Update = {
                         pairPos: {line: pos.start.line, column: pos.start.column},
                         kind: kind
                     };
-                }
-            };
-
+                });
+            });
+        } else { // editEvent.action == 'remove'
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    let dlt = modify_by_remove(__$__.Context.LabelPos[kind][label], kind, label);
-                    if (dlt)
+                    let pos = __$__.Context.LabelPos[kind][label];
+                    if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) {
+                        // if removed code is the outer part of the loop
                         delete __$__.Context.LabelPos[kind][label];
+                    } else {
+                        __$__.UpdateLabelPos.modify_by_remove(editEvent, __$__.Context.LabelPos[kind][label]);
+
+                        // register position of this node to the table for when editing the boundary.
+                        __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
+                            pairPos: {line: pos.end.line, column: pos.end.column},
+                            kind: kind
+                        };
+                        __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
+                            pairPos: {line: pos.start.line, column: pos.start.column},
+                            kind: kind
+                        };
+                    }
                 });
             });
         }
