@@ -445,7 +445,7 @@ __$__.Testize = {
             let specifiedContext = __$__.Context.SpecifiedContext[loopLabelAroundCall];
             if (__$__.Testize.storedTest[callLabel].markerInfo && !__$__.Testize.storedTest[callLabel][specifiedContext]) {
                 __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
-            } else if (!__$__.Testize.storedTest[callLabel].markerInfo && __$__.Testize.storedTest[callLabel][specifiedContext]) {
+            } else if (__$__.Testize.storedTest[callLabel][specifiedContext]) {
                 let callPos = __$__.Testize.callParenthesisPos[callLabel];
                 let markerRange = new __$__.Range(
                     callPos.start.line - 1,
@@ -454,12 +454,23 @@ __$__.Testize = {
                     callPos.end.column
                 );
                 let clazz = (__$__.Testize.storedTest[callLabel][specifiedContext].passed) ? 'testPassed' : 'testFailed';
-                let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
-                __$__.Testize.storedTest[callLabel].markerInfo = {
-                    ID: markerID,
-                    range: markerRange,
-                    clazz: clazz
-                };
+                let markerInfo = __$__.Testize.storedTest[callLabel].markerInfo;
+
+                if (!markerInfo) {
+                    let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
+                    __$__.Testize.storedTest[callLabel].markerInfo = {
+                        ID: markerID,
+                        range: markerRange,
+                        clazz: clazz
+                    };
+                } else if (!(markerInfo.clazz === clazz
+                        && markerRange.start.row === callPos.start.row
+                        && markerRange.start.column === callPos.start.column
+                        && markerRange.end.row === callPos.end.row
+                        && markerRange.end.column === callPos.end.column)) {
+                    let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
+                    __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], markerID, markerRange, clazz);
+                }
             }
         });
     },
