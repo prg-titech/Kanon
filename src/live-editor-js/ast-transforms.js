@@ -200,6 +200,9 @@ __$__.ASTTransforms = {
      *     __newExpInfo.push(false);
      *     checkpoint;
      *     var __temp = __callee(arg1, arg2, ...);
+     *     // TODO: check test
+     *     __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *     // TODO: override
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
@@ -227,6 +230,9 @@ __$__.ASTTransforms = {
      *     __newExpInfo.push(false);
      *     checkpoint;
      *     var __temp = __obj.prop(arg1, arg2, ...);
+     *     // TODO: check test
+     *     __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *     // TODO: override
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
@@ -356,6 +362,61 @@ __$__.ASTTransforms = {
                                                 )
                                             )],
                                         'var'
+                                    ),
+                                    /**
+                                     * // TODO: check test
+                                     * __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+                                     */
+                                    b.ExpressionStatement(
+                                        b.CallExpression(
+                                            b.MemberExpression(
+                                                b.MemberExpression(
+                                                    b.Identifier('__$__'),
+                                                    b.Identifier('Testize')
+                                                ),
+                                                b.Identifier('assertion')
+                                            ),
+                                            [
+                                                b.Identifier('__objs'),
+                                                b.ObjectExpression(
+                                                    info.vars.map(function(val) {
+                                                        return b.Property(
+                                                            b.Identifier(val),
+                                                            b.ConditionalExpression(
+                                                                b.BinaryExpression(
+                                                                    b.UnaryExpression(
+                                                                        'typeof',
+                                                                        b.Identifier(val),
+                                                                        true
+                                                                    ),
+                                                                    '!==',
+                                                                    b.Literal('string')
+                                                                ),
+                                                                b.Identifier(val),
+                                                                b.Identifier("undefined")
+                                                            )
+                                                        );
+                                                    }).concat([
+                                                        b.Property(
+                                                            b.Identifier('this'),
+                                                            b.Identifier('this')
+                                                        )
+                                                    ])
+                                                ),
+                                                b.Literal(label),
+                                                b.CallExpression(
+                                                    b.MemberExpression(
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__stackForCallTree'),
+                                                                b.Identifier('last')
+                                                            ), []
+                                                        ),
+                                                        b.Identifier('getContextSensitiveID')
+                                                    ), []
+                                                )
+                                            ]
+                                        )
                                     ),
                                     __$__.ASTTransforms.changedGraphStmt(),
                                     __$__.ASTTransforms.makeCheckpoint(node.loc.end, info.vars),

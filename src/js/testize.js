@@ -75,6 +75,29 @@ __$__.Testize = {
     },
 
 
+    /**
+     * @param objects
+     * @param probe
+     * @param callLabel
+     * @param context_sensitiveID
+     *
+     * this function is invoked by the converted program (__$__.Update.CodeWithCP)
+     */
+    assertion(objects, probe, callLabel, context_sensitiveID) {
+        // console.log(objects, probe, callLabel, context_sensitiveID);
+        if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
+            // TODO: compare the objects at runtime with the inserted test
+            // let resultOfAssertion = ...
+            let resultOfAssertion = Math.random() < 0.8;
+            __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = resultOfAssertion;
+            if (!resultOfAssertion) {
+                // if the object graph !== the test,
+                // Kanon has to override the object graph here.
+            }
+        }
+    },
+
+
     cancelEdit(callback) {
         __$__.Testize.clearPopUp();
         callback(null);
@@ -102,6 +125,12 @@ __$__.Testize = {
                 // this function is invoked when this button is clicked.
                 __$__.Testize.setTest();
                 __$__.win.close();
+                __$__.Update.PositionUpdate([{
+                    start: {row: 0, column: 0},
+                    end: {row: 0, column: 0},
+                    lines: [""],
+                    action: 'insert'
+                }]);
             })
             .on('mouseover', function (e) {
                 this.style.cursor = 'pointer';
@@ -319,9 +348,9 @@ __$__.Testize = {
                 }
 
                 __$__.Testize.callParenthesisPos[node.label] = registerPos;
-                if (__$__.Testize.storedTest[node.label] && __$__.Testize.storedTest[node.label].markerID) {
-                    let markerID = __$__.Testize.storedTest[node.label].markerID;
-                    let markerRange = __$__.Testize.storedTest[node.label].markerRange;
+                if (__$__.Testize.storedTest[node.label] && __$__.Testize.storedTest[node.label].markerInfo) {
+                    let markerRange = __$__.Testize.storedTest[node.label].markerInfo.range;
+                    let markerClazz = __$__.Testize.storedTest[node.label].markerInfo.clazz;
                     if (registerPos.start.line-1 === markerRange.start.row
                         && registerPos.start.column === markerRange.start.column
                         && registerPos.end.line-1 === markerRange.end.row
@@ -335,8 +364,8 @@ __$__.Testize = {
                             registerPos.end.line-1,
                             registerPos.end.column
                         );
-                        let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, 'testFailed', 'text');
-                        __$__.Testize.removeMarker(__$__.Testize.storedTest[node.label], newMarkerID, newMarkerRange);
+                        let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, markerClazz, 'text');
+                        __$__.Testize.removeMarker(__$__.Testize.storedTest[node.label], newMarkerID, newMarkerRange, markerClazz);
                     }
                 }
             }
@@ -346,17 +375,19 @@ __$__.Testize = {
     },
 
 
-    removeMarker(testInfo, newMarkerID, newMarkerRange) {
-        __$__.editor.session.removeMarker(testInfo.markerID);
-        testInfo.markerID = newMarkerID;
-        testInfo.markerRange = newMarkerRange;
+    removeMarker(testInfo, newMarkerID, newMarkerRange, clazz) {
+        __$__.editor.session.removeMarker(testInfo.markerInfo.ID);
+        testInfo.markerInfo = (newMarkerID) ? {
+                ID: newMarkerID,
+                range: newMarkerRange,
+                clazz: clazz
+            } : undefined;
     },
 
 
     removeTest(callLabel) {
         let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
         let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
-        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
         __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
         delete __$__.Testize.storedTest[callLabel][context_sensitiveID];
         __$__.Testize.hoveringCallInfo = {};
@@ -388,14 +419,18 @@ __$__.Testize = {
             callPos.end.line - 1,
             callPos.end.column
         );
-        let markerID = __$__.editor.session.addMarker(markerRange, 'testFailed', 'text');
+        let clazz = 'testFailed'
+        let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
 
         if (!__$__.Testize.storedTest[callLabel]) {
             __$__.Testize.storedTest[callLabel] = {};
         }
 
-        __$__.Testize.storedTest[callLabel].markerID = markerID;
-        __$__.Testize.storedTest[callLabel].markerRange = markerRange;
+        __$__.Testize.storedTest[callLabel].markerInfo = {
+            ID: markerID,
+            range: markerRange,
+            clazz: clazz
+        };
         __$__.Testize.storedTest[callLabel][context_sensitiveID] = {
             testData: expectedGraphData,
             passed: false
@@ -408,9 +443,9 @@ __$__.Testize = {
         Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
             let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
             let specifiedContext = __$__.Context.SpecifiedContext[loopLabelAroundCall];
-            if (__$__.Testize.storedTest[callLabel].markerID && !__$__.Testize.storedTest[callLabel][specifiedContext]) {
+            if (__$__.Testize.storedTest[callLabel].markerInfo && !__$__.Testize.storedTest[callLabel][specifiedContext]) {
                 __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
-            } else if (!__$__.Testize.storedTest[callLabel].markerID && __$__.Testize.storedTest[callLabel][specifiedContext]) {
+            } else if (!__$__.Testize.storedTest[callLabel].markerInfo && __$__.Testize.storedTest[callLabel][specifiedContext]) {
                 let callPos = __$__.Testize.callParenthesisPos[callLabel];
                 let markerRange = new __$__.Range(
                     callPos.start.line - 1,
@@ -418,9 +453,13 @@ __$__.Testize = {
                     callPos.end.line - 1,
                     callPos.end.column
                 );
-                let markerID = __$__.editor.session.addMarker(markerRange, 'testFailed', 'text');
-                __$__.Testize.storedTest[callLabel].markerID = markerID;
-                __$__.Testize.storedTest[callLabel].markerRange = markerRange;
+                let clazz = (__$__.Testize.storedTest[callLabel][specifiedContext].passed) ? 'testPassed' : 'testFailed';
+                let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
+                __$__.Testize.storedTest[callLabel].markerInfo = {
+                    ID: markerID,
+                    range: markerRange,
+                    clazz: clazz
+                };
             }
         });
     },
@@ -433,10 +472,11 @@ __$__.Testize = {
 
         if (editEvent.action === 'insert') {
             Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
-                let markerID = __$__.Testize.storedTest[callLabel].markerID;
-                if (markerID) {
+                let markerInfo = __$__.Testize.storedTest[callLabel].markerInfo;
+                if (markerInfo) {
+                    let markerID = markerInfo.ID;
                     let marker = __$__.editor.session.getMarkers()[markerID];
-                    let markerRange = __$__.Testize.storedTest[callLabel].markerRange;
+                    let markerRange = markerInfo.range;
                     let pos = {
                         start: {
                             line: markerRange.start.row + 1,
@@ -458,14 +498,15 @@ __$__.Testize = {
                             pos.end.column
                         );
                         let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, marker.clazz, marker.type);
-                        __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange);
+                        __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange, marker.clazz);
                     }
                 }
             });
         } else { // editEvent.action == 'remove'
             Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
-                let markerID = __$__.Testize.storedTest[callLabel].markerID;
-                if (markerID) {
+                let markerInfo = __$__.Testize.storedTest[callLabel].markerInfo;
+                if (markerInfo) {
+                    let markerID = markerInfo.ID;
                     let marker = __$__.editor.session.getMarkers()[markerID];
                     let pos = {
                         start: {
@@ -491,7 +532,7 @@ __$__.Testize = {
                                 pos.end.column
                             );
                             let newMarkerID = __$__.editor.session.addMarker(newMarkerRange, marker.clazz, marker.type);
-                            __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange);
+                            __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], newMarkerID, newMarkerRange, marker.clazz);
                         }
                     }
                 }
