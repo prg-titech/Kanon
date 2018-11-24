@@ -9,7 +9,18 @@ __$__.ToVisjs = {
 
             if (graph.nodes[i] instanceof __$__.Traverse.__Literal) {
                 node = {
-                    color: 'white',
+                    color: {
+                        border: 'white',
+                        background: 'white',
+                        highlight: {
+                            border: 'white',
+                            background: 'white'
+                        },
+                        hover: {
+                            border: 'white',
+                            background: 'white'
+                        }
+                    },
                     id: __$__.Context.getObjectID(graph.nodes[i]),
                     label: "" + graph.nodes[i].value,
                     scaling: {

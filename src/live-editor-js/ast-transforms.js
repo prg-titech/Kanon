@@ -199,10 +199,24 @@ __$__.ASTTransforms = {
      *     );
      *     __newExpInfo.push(false);
      *     checkpoint;
-     *     var __temp = __callee(arg1, arg2, ...);
-     *     // TODO: check test
-     *     __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
-     *     // TODO: override
+     *     // TODO
+     *     var __temp, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+     *     try {
+     *         __temp = __callee(arg1, arg2, ...);
+     *         if (!__$__.Testize.matching(__objs, probe, __temp, 'unique Label', __context_sensitiveID)) {
+     *             // overrideで変数の参照の書き換えはできない、、、
+     *             // そこで、{変数名: 書き換えたいオブジェクト}という形で返すようにする
+     *             // その中に__tempを含めればreturnノードは表わせる
+     *             let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *         }
+     *     } catch (e) {
+     *         if (__$__.Testize.hasTest('unique Label', __context_sensitiveID)) {
+     *             // overrideで変数の参照の書き換えはできない、、、
+     *             let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *         } else {
+     *             throw e;
+     *         }
+     *     }
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
@@ -229,10 +243,24 @@ __$__.ASTTransforms = {
      *     );
      *     __newExpInfo.push(false);
      *     checkpoint;
-     *     var __temp = __obj.prop(arg1, arg2, ...);
-     *     // TODO: check test
-     *     __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
-     *     // TODO: override
+     *     // TODO
+     *     var __temp, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+     *     try {
+     *         __temp = __obj.prop(arg1, arg2, ...);
+     *         if (!__$__.Testize.matching(__objs, probe, __temp, 'unique Label', __context_sensitiveID)) {
+     *             // overrideで変数の参照の書き換えはできない、、、
+     *             // そこで、{変数名: 書き換えたいオブジェクト}という形で返すようにする
+     *             // その中に__tempを含めればreturnノードは表わせる
+     *             let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *         }
+     *     } catch (e) {
+     *         if (__$__.Testize.hasTest('unique Label', __context_sensitiveID)) {
+     *             // overrideで変数の参照の書き換えはできない、、、
+     *             let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+     *         } else {
+     *             throw e;
+     *         }
+     *     }
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
@@ -353,57 +381,82 @@ __$__.ASTTransforms = {
                                         )
                                     ),
                                     __$__.ASTTransforms.makeCheckpoint(node.loc.start, info.vars),
-                                    b.VariableDeclaration([
-                                            b.VariableDeclarator(
-                                                b.Identifier('__temp'),
-                                                b.CallExpression(
-                                                    info.callee,
-                                                    node.arguments
-                                                )
-                                            )],
-                                        'var'
-                                    ),
+                                    // var __temp = __obj.prop(arg1, arg2, ...);
+                                    // b.VariableDeclaration([
+                                    //         b.VariableDeclarator(
+                                    //             b.Identifier('__temp'),
+                                    //             b.CallExpression(
+                                    //                 info.callee,
+                                    //                 node.arguments
+                                    //             )
+                                    //         )],
+                                    //     'var'
+                                    // ),
                                     /**
                                      * // TODO: check test
-                                     * __$__.Testize.assertion(__objs, probe, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+                                     * __$__.Testize.matching(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
                                      */
-                                    b.ExpressionStatement(
-                                        b.CallExpression(
-                                            b.MemberExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__$__'),
-                                                    b.Identifier('Testize')
-                                                ),
-                                                b.Identifier('assertion')
+                                    // b.ExpressionStatement(
+                                    //     b.CallExpression(
+                                    //         b.MemberExpression(
+                                    //             b.MemberExpression(
+                                    //                 b.Identifier('__$__'),
+                                    //                 b.Identifier('Testize')
+                                    //             ),
+                                    //             b.Identifier('matching')
+                                    //         ),
+                                    //         [
+                                    //             b.Identifier('__objs'),
+                                    //             b.ObjectExpression(
+                                    //                 info.vars.map(function(val) {
+                                    //                     return b.Property(
+                                    //                         b.Identifier(val),
+                                    //                         b.ConditionalExpression(
+                                    //                             b.BinaryExpression(
+                                    //                                 b.UnaryExpression(
+                                    //                                     'typeof',
+                                    //                                     b.Identifier(val),
+                                    //                                     true
+                                    //                                 ),
+                                    //                                 '!==',
+                                    //                                 b.Literal('string')
+                                    //                             ),
+                                    //                             b.Identifier(val),
+                                    //                             b.Identifier("undefined")
+                                    //                         )
+                                    //                     );
+                                    //                 }).concat([
+                                    //                     b.Property(
+                                    //                         b.Identifier('this'),
+                                    //                         b.Identifier('this')
+                                    //                     )
+                                    //                 ])
+                                    //             ),
+                                    //             b.Identifier('__temp'),
+                                    //             b.Literal(label),
+                                    //             b.CallExpression(
+                                    //                 b.MemberExpression(
+                                    //                     b.CallExpression(
+                                    //                         b.MemberExpression(
+                                    //                             b.Identifier('__stackForCallTree'),
+                                    //                             b.Identifier('last')
+                                    //                         ), []
+                                    //                     ),
+                                    //                     b.Identifier('getContextSensitiveID')
+                                    //                 ), []
+                                    //             )
+                                    //         ]
+                                    //     )
+                                    // ),
+                                    /**
+                                     * var __temp, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+                                     */
+                                    b.VariableDeclaration([
+                                            b.VariableDeclarator(
+                                                b.Identifier('__temp')
                                             ),
-                                            [
-                                                b.Identifier('__objs'),
-                                                b.ObjectExpression(
-                                                    info.vars.map(function(val) {
-                                                        return b.Property(
-                                                            b.Identifier(val),
-                                                            b.ConditionalExpression(
-                                                                b.BinaryExpression(
-                                                                    b.UnaryExpression(
-                                                                        'typeof',
-                                                                        b.Identifier(val),
-                                                                        true
-                                                                    ),
-                                                                    '!==',
-                                                                    b.Literal('string')
-                                                                ),
-                                                                b.Identifier(val),
-                                                                b.Identifier("undefined")
-                                                            )
-                                                        );
-                                                    }).concat([
-                                                        b.Property(
-                                                            b.Identifier('this'),
-                                                            b.Identifier('this')
-                                                        )
-                                                    ])
-                                                ),
-                                                b.Literal(label),
+                                            b.VariableDeclarator(
+                                                b.Identifier('__context_sensitiveID'),
                                                 b.CallExpression(
                                                     b.MemberExpression(
                                                         b.CallExpression(
@@ -415,7 +468,207 @@ __$__.ASTTransforms = {
                                                         b.Identifier('getContextSensitiveID')
                                                     ), []
                                                 )
-                                            ]
+                                            )],
+                                        'var'
+                                    ),
+                                    /**
+                                     * try {
+                                     *     __temp = __obj.prop(arg1, arg2, ...);
+                                     *     if (!__$__.Testize.matching(__objs, probe, __temp, 'unique Label', __context_sensitiveID)) {
+                                     *         // overrideで変数の参照の書き換えはできない、、、
+                                     *         // そこで、{変数名: 書き換えたいオブジェクト}という形で返すようにする
+                                     *         // その中に__tempを含めればreturnノードは表わせる
+                                     *         let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+                                     *     }
+                                     * } catch (e) {
+                                     *     if (__$__.Testize.hasTest('unique Label', context_sensitiveID)) {
+                                     *         // overrideで変数の参照の書き換えはできない、、、
+                                     *         let __overrideInfo = __$__.Testize.override(__objs, probe, __temp, 'unique Label', __stackForCallTree.last().getContextSensitiveID());
+                                     *     } else {
+                                     *         throw e;
+                                     *     }
+                                     * }
+                                     */
+                                    b.TryStatement(
+                                        b.BlockStatement([
+                                            b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.Identifier('__temp'),
+                                                    '=',
+                                                    b.CallExpression(
+                                                        info.callee,
+                                                        node.arguments
+                                                    )
+                                                )
+                                            ),
+                                            b.IfStatement(
+                                                b.UnaryExpression(
+                                                    '!',
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('matching')
+                                                        ),
+                                                        [
+                                                            b.Identifier('__objs'),
+                                                            b.ObjectExpression(
+                                                                info.vars.map(function(val) {
+                                                                    return b.Property(
+                                                                        b.Identifier(val),
+                                                                        b.ConditionalExpression(
+                                                                            b.BinaryExpression(
+                                                                                b.UnaryExpression(
+                                                                                    'typeof',
+                                                                                    b.Identifier(val),
+                                                                                    true
+                                                                                ),
+                                                                                '!==',
+                                                                                b.Literal('string')
+                                                                            ),
+                                                                            b.Identifier(val),
+                                                                            b.Identifier("undefined")
+                                                                        )
+                                                                    );
+                                                                }).concat([
+                                                                    b.Property(
+                                                                        b.Identifier('this'),
+                                                                        b.Identifier('this')
+                                                                    )
+                                                                ])
+                                                            ),
+                                                            b.Identifier('__temp'),
+                                                            b.Literal(label),
+                                                            b.Identifier('__context_sensitiveID')
+                                                        ]
+                                                    ),
+                                                    true
+                                                ),
+                                                b.BlockStatement([
+                                                    b.VariableDeclaration([
+                                                        b.VariableDeclarator(
+                                                            b.Identifier('__overrideInfo'),
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('__$__'),
+                                                                        b.Identifier('Testize')
+                                                                    ),
+                                                                    b.Identifier('override')
+                                                                ),
+                                                                [
+                                                                    b.Identifier('__objs'),
+                                                                    b.ObjectExpression(
+                                                                        info.vars.map(function(val) {
+                                                                            return b.Property(
+                                                                                b.Identifier(val),
+                                                                                b.ConditionalExpression(
+                                                                                    b.BinaryExpression(
+                                                                                        b.UnaryExpression(
+                                                                                            'typeof',
+                                                                                            b.Identifier(val),
+                                                                                            true
+                                                                                        ),
+                                                                                        '!==',
+                                                                                        b.Literal('string')
+                                                                                    ),
+                                                                                    b.Identifier(val),
+                                                                                    b.Identifier("undefined")
+                                                                                )
+                                                                            );
+                                                                        }).concat([
+                                                                            b.Property(
+                                                                                b.Identifier('this'),
+                                                                                b.Identifier('this')
+                                                                            )
+                                                                        ])
+                                                                    ),
+                                                                    b.Identifier('__temp'),
+                                                                    b.Literal(label),
+                                                                    b.Identifier('__context_sensitiveID')
+                                                                ]
+
+                                                            )
+                                                        )
+                                                    ], 'let')
+                                                ])
+                                            )
+                                        ]),
+                                        b.CatchClause(
+                                            b.Identifier('e'),
+                                            b.BlockStatement([
+                                                b.IfStatement(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('hasTest')
+                                                        ),
+                                                        [
+                                                            b.Literal(label),
+                                                            b.Identifier('__context_sensitiveID')
+                                                        ]
+                                                    ),
+                                                    b.BlockStatement([
+                                                        b.VariableDeclaration([
+                                                            b.VariableDeclarator(
+                                                                b.Identifier('__overrideInfo'),
+                                                                b.CallExpression(
+                                                                    b.MemberExpression(
+                                                                        b.MemberExpression(
+                                                                            b.Identifier('__$__'),
+                                                                            b.Identifier('Testize')
+                                                                        ),
+                                                                        b.Identifier('override')
+                                                                    ),
+                                                                    [
+                                                                        b.Identifier('__objs'),
+                                                                        b.ObjectExpression(
+                                                                            info.vars.map(function(val) {
+                                                                                return b.Property(
+                                                                                    b.Identifier(val),
+                                                                                    b.ConditionalExpression(
+                                                                                        b.BinaryExpression(
+                                                                                            b.UnaryExpression(
+                                                                                                'typeof',
+                                                                                                b.Identifier(val),
+                                                                                                true
+                                                                                            ),
+                                                                                            '!==',
+                                                                                            b.Literal('string')
+                                                                                        ),
+                                                                                        b.Identifier(val),
+                                                                                        b.Identifier("undefined")
+                                                                                    )
+                                                                                );
+                                                                            }).concat([
+                                                                                b.Property(
+                                                                                    b.Identifier('this'),
+                                                                                    b.Identifier('this')
+                                                                                )
+                                                                            ])
+                                                                        ),
+                                                                        b.Identifier('__temp'),
+                                                                        b.Literal(label),
+                                                                        b.Identifier('__context_sensitiveID')
+                                                                    ]
+
+                                                                )
+                                                            )
+                                                        ], 'let')
+                                                    ]),
+                                                    b.BlockStatement([
+                                                        b.ThrowStatement(
+                                                            b.Identifier('e')
+                                                        )
+                                                    ])
+                                                )
+
+                                            ])
                                         )
                                     ),
                                     __$__.ASTTransforms.changedGraphStmt(),

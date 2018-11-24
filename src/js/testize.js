@@ -8,6 +8,7 @@ __$__.Testize = {
         label: undefined,
         context_sensitiveID: undefined
     },
+    testNodeCounter: 0,
     enable: false,
     storedTest: {
     },
@@ -44,21 +45,21 @@ __$__.Testize = {
                 addNode: function (data, callback) {
                     document.getElementById('operation').innerHTML = "Add Node";
                     document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, null);
                     document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
                     document.getElementById('network-popUp').style.display = 'block';
                 },
                 addEdge: function (data, callback) {
                     document.getElementById('operation').innerHTML = "Add Edge";
                     document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, null);
                     document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
                     document.getElementById('network-popUp').style.display = 'block';
                 },
                 editNode: function (data, callback) {
                     document.getElementById('operation').innerHTML = "Edit Node";
                     document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback);
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, data.id);
                     document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this,callback);
                     document.getElementById('network-popUp').style.display = 'block';
                 },
@@ -78,23 +79,116 @@ __$__.Testize = {
     /**
      * @param objects
      * @param probe
+     * @param retObj
      * @param callLabel
      * @param context_sensitiveID
      *
      * this function is invoked by the converted program (__$__.Update.CodeWithCP)
      */
-    assertion(objects, probe, callLabel, context_sensitiveID) {
-        // console.log(objects, probe, callLabel, context_sensitiveID);
-        if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
-            // TODO: compare the objects at runtime with the inserted test
-            // let resultOfAssertion = ...
-            let resultOfAssertion = Math.random() < 0.8;
-            __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = resultOfAssertion;
-            if (!resultOfAssertion) {
-                // if the object graph !== the test,
-                // Kanon has to override the object graph here.
+    matching(objects, probe, retObj, callLabel, context_sensitiveID) {
+        if (!__$__.Testize.hasTest(callLabel, context_sensitiveID))
+            return true;
+
+        let graph_runtime = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(graph_runtime.nodes, graph_runtime.edges);
+        let objectDuplication_test    = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
+
+        let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
+        let result = referencedObjects_runtime.every((variableName, idx, arr) => {
+            let obj_runtime = objectDuplication_runtime[variableName];
+            let obj_test    = objectDuplication_test[variableName];
+
+            if (obj_test) {
+                let result = __$__.Testize.traverseSimultaneously(obj_runtime, obj_test);
+
+                if (!result) return false;
+
+                delete objectDuplication_runtime[variableName];
+                delete objectDuplication_test[variableName];
+            } else {
+                return false;
             }
+
+            return idx !== arr.length - 1 || Object.keys(objectDuplication_test).length === 0;
+        });
+
+        __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = result;
+        return result;
+    },
+
+
+    traverseSimultaneously(obj_runtime, obj_test) {
+        let info_runtime = obj_runtime.__info;
+        let info_test = obj_test.__info;
+
+        if (info_test.id.slice(0, 6) === '__temp') info_test.id = info_runtime.id;
+        let isMatching = (info_runtime.prop.length === info_test.prop.length)
+                      && (info_runtime.id          === info_test.id)
+                      && (info_runtime.label       === info_test.label)
+                      && (info_runtime.literal     === info_test.literal);
+
+        if (isMatching) {
+            // check recursively
+            if (!info_runtime.checked) {
+                info_runtime.checked = true;
+                info_test.checked = true;
+
+                let result = info_runtime.prop.every(prop => {
+                    let nextObj_runtime = obj_runtime[prop];
+                    let nextObj_test = obj_test[prop];
+                    if (!nextObj_test) return false;
+
+                    let result = __$__.Testize.traverseSimultaneously(nextObj_runtime, nextObj_test);
+
+                    return result;
+                });
+                if (!result) return false;
+            }
+
+            return true;
+        } else {
+            return false;
         }
+    },
+
+
+    constructObjectForTraverse(nodes, edges) {
+        let variables = {};
+        let objects = {};
+        nodes.forEach(node => {
+            objects[node.id] = {
+                __info: {
+                    id: node.id,
+                    label: node.label,
+                    literal: node.color && node.color.background === 'white',
+                    prop: [],
+                    propObj: {}
+                }
+            };
+        });
+        edges.forEach(edge => {
+            if (edge.from.slice(0, 11) === '__Variable-') {
+                variables[edge.label] = objects[edge.to];
+            } else {
+                let prop = edge.label;
+                objects[edge.from][prop] = objects[edge.to];
+                objects[edge.from].__info.propObj[prop] = objects[edge.from].__info.prop.length;
+                objects[edge.from].__info.prop.push(prop);
+            }
+        });
+
+        return variables;
+    },
+
+
+    override(objects, probe, retObj, callLabel, context_sensitiveID) {
+        // TODO
+    },
+
+
+    hasTest(callLabel, context_sensitiveID) {
+        return __$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID];
     },
 
 
@@ -172,7 +266,7 @@ __$__.Testize = {
 
     divOfPopup(callLabel, context_sensitiveID) {
         if (!context_sensitiveID) {
-            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
+            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
             context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
         }
         if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
@@ -281,10 +375,7 @@ __$__.Testize = {
             graph = {nodes: [], edges: []};
         }
 
-        __$__.Testize.network.network.setData({
-            nodes: graph.nodes,
-            edges: graph.edges
-        });
+        __$__.Testize.network.network.setData(graph);
         __$__.Testize.network.network.redraw();
         __$__.win.showCenter();
     },
@@ -401,15 +492,17 @@ __$__.Testize = {
     },
 
 
-    saveData(data, callback) {
+    saveData(data, callback, id = null) {
         data.label = document.getElementById('node-label').value;
+        data.id = id || '__temp' + ++__$__.Testize.testNodeCounter;
         __$__.Testize.clearPopUp();
         callback(data);
     },
 
 
     setTest() {
-        let expectedGraphData = __$__.Testize.network.network.body.data;
+        let expectedGraphData = {};
+        jQuery.extend(true, expectedGraphData, __$__.Testize.network.network.body.data);
         let callLabel = __$__.Testize.selectedCallInfo.label;
         let context_sensitiveID = __$__.Testize.selectedCallInfo.context_sensitiveID;
         let callPos = __$__.Testize.callParenthesisPos[callLabel];
@@ -419,7 +512,7 @@ __$__.Testize = {
             callPos.end.line - 1,
             callPos.end.column
         );
-        let clazz = 'testFailed'
+        let clazz = 'testFailed';
         let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
 
         if (!__$__.Testize.storedTest[callLabel]) {

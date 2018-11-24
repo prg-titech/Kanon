@@ -347,7 +347,7 @@ __$__.ASTBuilder = {
      * @param {Identifier} id
      * @param {Expression?} init
      */
-    VariableDeclarator(id, init) {
+    VariableDeclarator(id, init = null) {
         return {
             type: "VariableDeclarator",
             id: id,
