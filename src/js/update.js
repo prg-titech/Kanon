@@ -76,6 +76,7 @@ __$__.Update = {
 
 
             __$__.CallTreeNetwork.draw();
+            __$__.CallTreeNetwork.updateTest();
 
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.waitForStabilized = false;
