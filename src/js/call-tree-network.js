@@ -69,17 +69,20 @@ __$__.CallTreeNetwork = {
             __$__.Context.SwitchViewMode(true);
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+            __$__.CallTreeNetwork.updateTest();
         });
         cc.on('dblclick', d => {
             if (__$__.CallTreeNetwork.whileDrawing === false) {
                 __$__.CallTreeNetwork.toggle(d);
                 __$__.CallTreeNetwork.update(d);
+                __$__.CallTreeNetwork.updateTest();
             }
         });
 
 
         nodeEnter.append('circle')
             .attr('r', 5)
+            .style('stroke', 'black')
             .style('fill', d => d._children ? 'lightsteelblue' : '#fff');
 
         __$__.CallTreeNetwork.text = nodeEnter.append('text')
@@ -108,6 +111,7 @@ __$__.CallTreeNetwork = {
 
         __$__.CallTreeNetwork.circle = nodeUpdate.select("circle")
             .attr("r", 8)
+            .style('stroke', 'black')
             .style("fill", d => d._children ? "lightsteelblue" : "#fff");
 
         __$__.CallTreeNetwork.updateHighlightCircles();
@@ -191,6 +195,7 @@ __$__.CallTreeNetwork = {
             .size([height, width - 150]);
 
         __$__.CallTreeNetwork.update(root, 0);
+        __$__.CallTreeNetwork.updateTest();
     },
 
     draw() {
@@ -213,6 +218,7 @@ __$__.CallTreeNetwork = {
         } else {
             __$__.CallTreeNetwork.update(root);
         }
+        __$__.CallTreeNetwork.updateTest();
     },
 
     constructData(node, data) {
@@ -320,14 +326,6 @@ __$__.CallTreeNetwork = {
         });
 
         nodeUpdate
-            .style('stroke', d => {
-                let contextSensitiveID = d.data.contextSensitiveID;
-                if (selectedContext[contextSensitiveID]) {
-                    return 'black';
-                } else {
-                    return 'gray';
-                }
-            })
             .style('stroke-width', d => {
                 let contextSensitiveID = d.data.contextSensitiveID;
                 if (selectedContext[contextSensitiveID]) {
@@ -336,6 +334,34 @@ __$__.CallTreeNetwork = {
                     return 1;
                 }
             });
+    },
+
+
+    updateTest() {
+        let nodeUpdate = __$__.CallTreeNetwork.circle;
+        if (nodeUpdate) {
+            let hoge = {};
+            Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
+                Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
+                    if (context_sensitiveID === 'markerInfo') return;
+                    let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+                    if (hoge[context_sensitiveID] === undefined) hoge[context_sensitiveID] = true;
+                    hoge[context_sensitiveID] = hoge[context_sensitiveID] && testInfo.passed;
+                });
+            });
+            console.log(hoge);
+            nodeUpdate
+                .style('fill', d => {
+                    let contextSensitiveID = d.data.contextSensitiveID;
+                    if (hoge[contextSensitiveID] === true) {
+                        return '#00ff00';
+                    } else if (hoge[contextSensitiveID] === false) {
+                        return '#ff0000';
+                    } else {
+                        return d._children ? 'lightsteelblue' : '#fff';
+                    }
+                });
+        }
     }
 };
 
