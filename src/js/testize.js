@@ -130,6 +130,7 @@ __$__.Testize = {
             document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.nodes, null);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'inline';
+            document.getElementById('checkboxForLiteral').checked = false;
             document.getElementById('network-popUp').style.display = 'block';
             document.getElementById('node-label').focus();
         }
@@ -480,7 +481,7 @@ __$__.Testize = {
     },
 
 
-    openWin() {
+    openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         if (!__$__.win) {
             __$__.Testize.createWindow(split_pane_size.width/2, split_pane_size.height/2, '');
@@ -499,8 +500,16 @@ __$__.Testize = {
                 label: callLabel,
                 context_sensitiveID: context_sensitiveID
             };
-            graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
-            graph = __$__.Testize.duplicateGraph(graph);
+            if (modified) {
+                let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+                graph = {
+                    nodes: testData.nodes,
+                    edges: testData.edges
+                }
+            } else {
+                graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
+                graph = __$__.Testize.duplicateGraph(graph);
+            }
         } catch (e) {
             graph = {nodes: [], edges: []};
         }
@@ -607,7 +616,7 @@ __$__.Testize = {
 
 
     removeTest(callLabel) {
-        let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel.start]).loop;
+        let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
         let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
         __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel]);
         delete __$__.Testize.storedTest[callLabel][context_sensitiveID];
@@ -651,6 +660,7 @@ __$__.Testize = {
             passed: false
         };
 
+        __$__.Testize.selectedCallInfo = {label: undefined, context_sensitiveID: undefined};
     },
 
 
