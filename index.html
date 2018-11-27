@@ -101,7 +101,8 @@
 		<input type="button" value="cancel" id="cancelButtonForTestize" />
 	</div>
     <div id="tooltip_1" class="seecoderun_tooltip">set test</div>
-	<div id="tooltip_2" class="seecoderun_tooltip">remove test</div>
+	<!--<div id="tooltip_2" class="seecoderun_tooltip">remove test</div>-->
+	<div id="tooltip_2" class="seecoderun_tooltip"><div id="tooltip_remove">remove</div><div id="tooltip_modify">modify</div></div>
 
 	<script type="text/javascript" src="src/js/network.js"></script>
 	<script type="text/javascript" src="src/js/call-tree-network.js"></script>
@@ -112,68 +113,7 @@
 
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
-
-        jQuery(window).on('resize' ,function() {
-            if (__$__.CallTreeNetwork.whileDrawing !== true) {
-                __$__.ObjectGraphNetwork.network.redraw();
-                __$__.CallTreeNetwork.redraw();
-            }
-        });
-        document.getElementById('pullDownViewMode').onchange = function() {
-            let selectedValue = document.getElementById('pullDownViewMode').value;
-			__$__.Context.SwitchViewMode(selectedValue === 'Snapshot');
-			__$__.Update.ContextUpdate('changed');
-		};
-		document.getElementById('autoLayout').onchange = function() {
-            __$__.Layout.switchEnabled();
-		};
-		(() => {
-		    var isDragging = false;
-            jQuery('div.split-pane')
-				.mousedown(function () {
-                    isDragging = true;
-                })
-				.mousemove(function () {
-				    if (isDragging) {
-                        __$__.ObjectGraphNetwork.network.redraw();
-                        __$__.CallTreeNetwork.redraw();
-					}
-				})
-				.mouseup(() => {
-				    isDragging = false;
-				});
-        })();
-
-		__$__.Testize.popup_addTest = document.getElementById('tooltip_1');
-        __$__.Testize.popup_addTest.onclick = function(e) {
-            __$__.Testize.selectedCallInfo = {
-                label: __$__.Testize.hoveringCallInfo.label
-            };
-            __$__.Testize.openWin();
-            __$__.Testize.removeTooltip(this);
-        };
-        __$__.Testize.popup_addTest.onmouseover = function(e) {
-            __$__.Testize.popup_addTest.style.cursor = 'pointer';
-        };
-        __$__.Testize.popup_addTest.onmouseout = function(e) {
-            __$__.Testize.popup_addTest.style.cursor = 'default';
-        };
-        __$__.Testize.popup_removeTest = document.getElementById('tooltip_2');
-        __$__.Testize.popup_removeTest.onclick = function(e) {
-            __$__.Testize.removeTest(__$__.Testize.hoveringCallInfo.label);
-            __$__.Testize.removeTooltip(this);
-        };
-        __$__.Testize.popup_removeTest.onmouseover = function(e) {
-            __$__.Testize.popup_removeTest.style.cursor = 'pointer';
-        };
-        __$__.Testize.popup_removeTest.onmouseout = function(e) {
-            __$__.Testize.popup_removeTest.style.cursor = 'default';
-        };
-        jQuery("#node-label").keyup(function(event) {
-            if (event.keyCode === 13) {
-                jQuery("#saveButtonForTestize").click();
-            }
-        });
 	</script>
+	<script type="text/javascript" src="src/js/eventHandler.js"></script>
 </body>
 </html>
