@@ -49,9 +49,13 @@ jQuery('#tooltip_1')
     });
 
 __$__.Testize.popup_removeTest = document.getElementById('tooltip_2');
-jQuery('#tooltip_remove')
+
+jQuery('#tooltip_modify')
     .click(function () {
-        __$__.Testize.removeTest(__$__.Testize.hoveringCallInfo.label);
+        __$__.Testize.selectedCallInfo = {
+            label: __$__.Testize.hoveringCallInfo.label
+        };
+        __$__.Testize.openWin(true);
         __$__.Testize.removeTooltip(__$__.Testize.popup_removeTest);
     })
     .mouseover(function() {
@@ -61,12 +65,9 @@ jQuery('#tooltip_remove')
         __$__.Testize.popup_removeTest.style.cursor = 'default';
     });
 
-jQuery('#tooltip_modify')
+jQuery('#tooltip_remove')
     .click(function () {
-        __$__.Testize.selectedCallInfo = {
-            label: __$__.Testize.hoveringCallInfo.label
-        };
-        __$__.Testize.openWin(true);
+        __$__.Testize.removeTest(__$__.Testize.hoveringCallInfo.label);
         __$__.Testize.removeTooltip(__$__.Testize.popup_removeTest);
     })
     .mouseover(function() {

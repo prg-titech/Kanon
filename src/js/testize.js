@@ -42,10 +42,51 @@ __$__.Testize = {
             },
             manipulation: {
                 enabled: true,
-                addNode: false,
-                addEdge: false,
-                editEdge: false,
-                deleteNode: true,
+                addNode: function(data, callback) {
+                    document.getElementById('operation').innerHTML = "Add Node";
+                    document.getElementById('node-label').value = "";
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, null);
+                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
+                    document.getElementById('isLiteral').style.display = 'inline';
+                    document.getElementById('network-popUp').style.display = 'block';
+                    document.getElementById('node-label').focus();
+                },
+                addEdge: function(data, callback) {
+                    if (data.from === '__RectForVariable__' && data.to !== '__RectForVariable__') {
+                        document.getElementById('operation').innerHTML = "Add Variable";
+                        document.getElementById('node-label').value = "";
+                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, true);
+                        document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
+                        document.getElementById('isLiteral').style.display = 'none';
+                        document.getElementById('network-popUp').style.display = 'block';
+                        document.getElementById('node-label').focus();
+                    } else if (data.to === '__RectForVariable__') {
+                        callback(null);
+                    } else {
+                        document.getElementById('operation').innerHTML = "Add Edge";
+                        document.getElementById('node-label').value = "";
+                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, null);
+                        document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
+                        document.getElementById('isLiteral').style.display = 'none';
+                        document.getElementById('network-popUp').style.display = 'block';
+                        document.getElementById('node-label').focus();
+                    }
+                },
+                editEdge: function(data, callback) {
+                    let origEdge = __$__.Testize.network.network.body.data.edges.get(data.id);
+                    if (origEdge.from.slice(0, 11) === '__Variable-' && data.from.slice(0, 11) !== '__Variable-' || data.from === '__RectForVariable__' || data.to === '__RectForVariable__') {
+                        callback(null);
+                    } else {
+                        callback(data);
+                    }
+                },
+                deleteNode: function(data, callback) {
+                    if (data.nodes.indexOf('__RectForVariable__') >= 0) {
+                        callback(null);
+                    } else {
+                        callback(data);
+                    }
+                },
                 deleteEdge: true
             }
         }
@@ -84,7 +125,7 @@ __$__.Testize = {
 
         // click blank
         else {
-            __$__.Testize.network.network.disableEditMode();
+            // __$__.Testize.network.network.disableEditMode();
         }
     },
 
@@ -149,6 +190,49 @@ __$__.Testize = {
         }
 
         else {/* do nothing */}
+    },
+
+
+    saveDataWithCallback(data, callback, additionalInfo = null) {
+        if (document.getElementById('isLiteral').style.display !== 'none') {
+            // node
+            data.id = additionalInfo || '__temp' + ++__$__.Testize.testNodeCounter;
+            if (document.getElementById('checkboxForLiteral').checked) {
+                data.color = __$__.TEstize.makeLiteralColor();
+            }
+        } else if (additionalInfo) {
+            // if a variable edge is added or edited
+            let variableName = document.getElementById('node-label').value;
+            let invisibleNodeID = '__Variable-' + variableName;
+
+            // if the variable is already declared
+            if (__$__.Testize.network.network.body.data.nodes.get(invisibleNodeID)) {
+                let variableEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === invisibleNodeID);
+                __$__.Testize.network.network.body.data.edges.update({
+                    id: variableEdge.id,
+                    to: data.to
+                });
+            } else {
+                __$__.Testize.network.network.body.data.nodes.add({
+                    id: invisibleNodeID,
+                    label: variableName,
+                    hidden: true
+                });
+                __$__.Testize.network.network.body.data.edges.add({
+                    from: invisibleNodeID,
+                    to: data.to,
+                    color: 'seagreen',
+                    label: variableName,
+                    length: 30
+                });
+            }
+            __$__.Testize.clearPopUp();
+            callback(null);
+            return;
+        }
+        data.label = document.getElementById('node-label').value;
+        __$__.Testize.clearPopUp();
+        callback(data);
     },
 
 
@@ -484,9 +568,9 @@ __$__.Testize = {
     openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         if (!__$__.win) {
-            __$__.Testize.createWindow(split_pane_size.width/2, split_pane_size.height/2, '');
+            __$__.Testize.createWindow(split_pane_size.width/1.5, split_pane_size.height/1.5, '');
         } else {
-            __$__.win.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
+            __$__.win.setSize(split_pane_size.width / 1.5, split_pane_size.height / 1.5);
         }
 
         // duplicate an object graph stored just before the focusing function call
@@ -509,6 +593,25 @@ __$__.Testize = {
             } else {
                 graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
                 graph = __$__.Testize.duplicateGraph(graph);
+                // push a special node so that the user can add green arrows which represent variable references.
+                graph.nodes.push({
+                    id: '__RectForVariable__',
+                    label: 'def var',
+                    color: {
+                        border: 'lightsalmon',
+                        background: 'lightsalmon',
+                        highlight: {
+                            border: 'lightsalmon',
+                            background: 'lightsalmon'
+                        },
+                        hover: {
+                            border: 'lightsalmon',
+                            background: 'lightsalmon'
+                        }
+                    },
+                    shape: 'box',
+                    physics: false
+                })
             }
         } catch (e) {
             graph = {nodes: [], edges: []};
