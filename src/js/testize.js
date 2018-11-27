@@ -42,30 +42,25 @@ __$__.Testize = {
             },
             manipulation: {
                 enabled: true,
-                addNode: function (data, callback) {
-                    document.getElementById('operation').innerHTML = "Add Node";
-                    document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, null);
-                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
-                    document.getElementById('network-popUp').style.display = 'block';
-                },
-                addEdge: function (data, callback) {
-                    document.getElementById('operation').innerHTML = "Add Edge";
-                    document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, null);
-                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
-                    document.getElementById('network-popUp').style.display = 'block';
-                },
-                editNode: function (data, callback) {
-                    document.getElementById('operation').innerHTML = "Edit Node";
-                    document.getElementById('node-label').value = data.label;
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, data, callback, data.id);
-                    document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this,callback);
-                    document.getElementById('network-popUp').style.display = 'block';
-                },
-                editEdge: true,
+                addNode: false,
+                addEdge: false,
+                editEdge: false,
                 deleteNode: true,
                 deleteEdge: true
+            }
+        }
+    },
+    makeLiteralColor() {
+        return {
+            border: 'white',
+            background: 'white',
+            highlight: {
+                border: 'white',
+                background: 'white'
+            },
+            hover: {
+                border: 'white',
+                background: 'white'
             }
         }
     },
@@ -74,6 +69,104 @@ __$__.Testize = {
     initialize() {
         __$__.Testize.callParenthesisPos = {};
     },
+
+
+    // ============== start: manipulation callback for constructing a test ==============
+
+
+    clickEvent(param) {
+        // click node
+        if (param.nodes.length) {/* do nothing */}
+
+        // click edge
+        else if (param.edges.length) {
+        }
+
+        // click blank
+        else {
+            __$__.Testize.network.network.disableEditMode();
+        }
+    },
+
+
+    doubleClickEvent(param) {
+        // double click node
+        if (param.nodes.length) {
+            // edit label of the node
+            let nodeID = param.nodes[0];
+            let node = __$__.Testize.network.network.body.data.nodes.get(nodeID);
+
+            document.getElementById('operation').innerHTML = "Edit Node";
+            document.getElementById('node-label').value = node.label;
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.nodes, nodeID);
+            document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
+            document.getElementById('isLiteral').style.display = 'inline';
+            document.getElementById('checkboxForLiteral').checked = (node.color && node.color.border === 'white');
+            document.getElementById('network-popUp').style.display = 'block';
+            document.getElementById('node-label').focus();
+        }
+
+        // double click edge
+        else if (param.edges.length) {
+            // edit label of the node
+            let edgeID = param.edges[0];
+            let edge = __$__.Testize.network.network.body.data.edges.get(edgeID);
+
+            document.getElementById('operation').innerHTML = "Edit Edge";
+            document.getElementById('node-label').value = edge.label || "";
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.edges, edgeID);
+            document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
+            document.getElementById('isLiteral').style.display = 'none';
+            document.getElementById('network-popUp').style.display = 'block';
+            document.getElementById('node-label').focus();
+        }
+
+        // double click blank
+        else {
+            // add a node
+
+            document.getElementById('operation').innerHTML = "Add Node";
+            document.getElementById('node-label').value = '';
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.nodes, null);
+            document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
+            document.getElementById('isLiteral').style.display = 'inline';
+            document.getElementById('network-popUp').style.display = 'block';
+            document.getElementById('node-label').focus();
+        }
+    },
+
+
+    holdingEvent(param) {
+        if (param.nodes.length) {
+            // add an edge
+            __$__.Testize.network.network.addEdgeMode();
+        }
+
+        else if (param.edges.length) {
+            // edit edge
+            __$__.Testize.network.network.editEdgeMode();
+        }
+
+        else {/* do nothing */}
+    },
+
+
+    saveData(dataSet, nodeID = null) {
+        let color;
+        if (document.getElementById('isLiteral').style.display !== 'none' && document.getElementById('checkboxForLiteral').checked) {
+            color = __$__.Testize.makeLiteralColor();
+        }
+        dataSet.update({
+            id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
+            label: document.getElementById('node-label').value,
+            color: color
+        });
+        __$__.Testize.clearPopUp();
+    },
+
+
+    // ====================================== end =======================================
+    // ============ start: invoked by __$__.Update.CodeWithCP ===============
 
 
     /**
@@ -192,6 +285,9 @@ __$__.Testize = {
     },
 
 
+    // ============================== end ===================================
+
+
     cancelEdit(callback) {
         __$__.Testize.clearPopUp();
         callback(null);
@@ -240,10 +336,44 @@ __$__.Testize = {
 
         let networkInfo = __$__.Testize.network;
         networkInfo.container = document.getElementById('window-body');
-        networkInfo.nodes = new vis.DataSet({});
-        networkInfo.edges = new vis.DataSet({});
-        networkInfo.data = {nodes: networkInfo.nodes, edges: networkInfo.edges};
-        networkInfo.network = new vis.Network(networkInfo.container, networkInfo.data, networkInfo.options);
+        networkInfo.network = new vis.Network(
+            networkInfo.container,
+            {nodes: new vis.DataSet({}), edges: new vis.DataSet({})},
+            networkInfo.options
+        );
+
+        // set event handlers
+        (() => {
+            let holding = false;
+            let clicked = false;
+            networkInfo.network.on('hold', function(param) {
+                holding = true;
+                // holding event
+                __$__.Testize.holdingEvent(param);
+            });
+            networkInfo.network.on('release', function(param) {
+                if (holding) {
+                    holding = false;
+                    clicked = false;
+                } else {
+                    if (clicked) {
+                        // double click event
+                        __$__.Testize.doubleClickEvent(param);
+                        clicked = false;
+                        return
+                    }
+
+                    clicked = true;
+                    setTimeout(function click() {
+                        // single click event
+                        if (clicked) {
+                            __$__.Testize.clickEvent(param);
+                        }
+                        clicked = false;
+                    }, 300);
+                }
+            });
+        })();
         Windows.addObserver({
             onResize: function (a, win) {
                 networkInfo.network.redraw();
@@ -489,14 +619,6 @@ __$__.Testize = {
         div.style.display = 'none';
         __$__.Testize.hoveringCallInfo.label = undefined;
         __$__.Testize.hoveringCallInfo.div = undefined;
-    },
-
-
-    saveData(data, callback, id = null) {
-        data.label = document.getElementById('node-label').value;
-        data.id = id || '__temp' + ++__$__.Testize.testNodeCounter;
-        __$__.Testize.clearPopUp();
-        callback(data);
     },
 
 

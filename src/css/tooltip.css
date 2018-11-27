@@ -70,10 +70,11 @@
 #network-popUp {
     display:none;
     position:absolute;
+    font-size: 12px;
     top:30px;
     z-index:300;
-    width:250px;
-    height:120px;
+    width:200px;
+    height:80px;
     background-color: #f9f9f9;
     border: 3px solid #5394ed;
     padding:10px;
