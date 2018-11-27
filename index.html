@@ -94,6 +94,9 @@
 				<td><input id="node-label" value="new value" /></td>
 			</tr>
 		</table>
+		<div id="isLiteral">
+			<input type="checkbox" name="isLiteral" id="checkboxForLiteral" value="true">Literal
+		</div>
 		<input type="button" value="save" id="saveButtonForTestize" />
 		<input type="button" value="cancel" id="cancelButtonForTestize" />
 	</div>
@@ -166,6 +169,11 @@
         __$__.Testize.popup_removeTest.onmouseout = function(e) {
             __$__.Testize.popup_removeTest.style.cursor = 'default';
         };
+        jQuery("#node-label").keyup(function(event) {
+            if (event.keyCode === 13) {
+                jQuery("#saveButtonForTestize").click();
+            }
+        });
 	</script>
 </body>
 </html>
