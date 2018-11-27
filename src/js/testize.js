@@ -91,6 +91,8 @@ __$__.Testize = {
             }
         }
     },
+
+
     makeLiteralColor() {
         return {
             border: 'white',
@@ -221,7 +223,7 @@ __$__.Testize = {
                 __$__.Testize.network.network.body.data.edges.add({
                     from: invisibleNodeID,
                     to: data.to,
-                    color: 'seagreen',
+                    color: (variableName === 'return') ? 'black' : 'seagreen',
                     label: variableName,
                     length: 30
                 });
@@ -268,9 +270,11 @@ __$__.Testize = {
             return true;
 
         let graph_runtime = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        let returnObjectID = (retObj && typeof retObj === 'object' && retObj.__id) ? retObj.__id : undefined;
+        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(graph_runtime.nodes, graph_runtime.edges, returnObjectID);
+
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(graph_runtime.nodes, graph_runtime.edges);
-        let objectDuplication_test    = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
+        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
 
         let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
         let result = referencedObjects_runtime.every((variableName, idx, arr) => {
@@ -331,7 +335,7 @@ __$__.Testize = {
     },
 
 
-    constructObjectForTraverse(nodes, edges) {
+    constructObjectForTraverse(nodes, edges, returnObjectID = null) {
         let variables = {};
         let objects = {};
         nodes.forEach(node => {
@@ -344,6 +348,9 @@ __$__.Testize = {
                     propObj: {}
                 }
             };
+            if (node.id === returnObjectID) {
+                variables.return = objects[node.id];
+            }
         });
         edges.forEach(edge => {
             if (edge.from.slice(0, 11) === '__Variable-') {
