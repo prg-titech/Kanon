@@ -340,23 +340,31 @@ __$__.CallTreeNetwork = {
     updateTest() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         if (nodeUpdate) {
-            let hoge = {};
+            // if there is no test in the context, the value is undefined
+            // if all tests failed, the value is -1
+            // if all tests passed, the value is 1
+            // if some tests passed and some tests failed, the value is 0
+            let testStatus = {};
             Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
                 Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
                     if (context_sensitiveID === 'markerInfo') return;
                     let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-                    if (hoge[context_sensitiveID] === undefined) hoge[context_sensitiveID] = true;
-                    hoge[context_sensitiveID] = hoge[context_sensitiveID] && testInfo.passed;
+                    if (testStatus[context_sensitiveID] === undefined)
+                        testStatus[context_sensitiveID] = testInfo.passed ? 1 : -1;
+                    else if (testStatus[context_sensitiveID] > 0 && !testInfo.passed || testStatus[context_sensitiveID] < 0 && testInfo.passed)
+                        testStatus[context_sensitiveID] = 0;
                 });
             });
-            console.log(hoge);
+            console.log(testStatus);
             nodeUpdate
                 .style('fill', d => {
                     let contextSensitiveID = d.data.contextSensitiveID;
-                    if (hoge[contextSensitiveID] === true) {
+                    if (testStatus[contextSensitiveID] === 1) {
                         return '#00ff00';
-                    } else if (hoge[contextSensitiveID] === false) {
+                    } else if (testStatus[contextSensitiveID] === -1) {
                         return '#ff0000';
+                    } else if (testStatus[contextSensitiveID] === 0) {
+                        return '#ffff00';
                     } else {
                         return d._children ? 'lightsteelblue' : '#fff';
                     }
