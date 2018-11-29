@@ -62,17 +62,18 @@ __$__.walkAST = function(node, path, visitors) {
                         if (prop === undefined && parent.body instanceof Array) {
                             prop = parent.body.indexOf(node);
                             parent.body[prop] = Object.assign({}, replacement);
+                            return;
                         } else if (prop !== undefined) {
                             parent[prop] = Object.assign({}, replacement);
+                            return;
                         }
-                    } else {
-                        Object.keys(node).forEach(key => {
-                            delete node[key];
-                        });
-                        Object.keys(replacement).forEach(key => {
-                            node[key] = replacement[key];
-                        });
                     }
+                    Object.keys(node).forEach(key => {
+                        delete node[key];
+                    });
+                    Object.keys(replacement).forEach(key => {
+                        node[key] = replacement[key];
+                    });
                 }
             }
         }
