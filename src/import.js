@@ -2,7 +2,6 @@ document.write('<script type="text/javascript" src="src/js/setup.js"></script>')
 document.write('<script type="text/javascript" src="external/vis/dist/vis.js"></script>');
 document.write('<script type="text/javascript" src="external/ace-builds/src/ace.js"></script>');
 document.write('<script type="text/javascript" src="external/ace-builds/src/ext-language_tools.js"></script>');
-document.write('<script type="text/javascript" src="https://d3js.org/d3.v5.js"></script>');
 document.write('<script type="text/javascript" src="external/esprima.js"></script>');
 document.write('<script type="text/javascript" src="external/jquery/dist/jquery.min.js"></script>');
 document.write('<script type="text/javascript" src="external/jquery-ui-dist/jquery-ui.js"></script>');
