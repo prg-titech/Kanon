@@ -83,7 +83,8 @@ __$__.CallTreeNetwork = {
         nodeEnter.append('circle')
             .attr('r', 5)
             .style('stroke', 'black')
-            .style('fill', d => d._children ? 'lightsteelblue' : '#fff');
+            // .style('fill', d => d._children ? 'lightsteelblue' : '#fff');
+            .style('fill', __$__.CallTreeNetwork.updateFill);
 
         __$__.CallTreeNetwork.text = nodeEnter.append('text')
             .attr('x', d => d.children || d._children ? -13 : 13)
@@ -112,7 +113,8 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.circle = nodeUpdate.select("circle")
             .attr("r", 8)
             .style('stroke', 'black')
-            .style("fill", d => d._children ? "lightsteelblue" : "#fff");
+            // .style("fill", d => d._children ? "lightsteelblue" : "#fff");
+            .style('fill', __$__.CallTreeNetwork.updateFill);
 
         __$__.CallTreeNetwork.updateHighlightCircles();
 
@@ -337,6 +339,41 @@ __$__.CallTreeNetwork = {
     },
 
 
+    updateTestInfo() {
+        // if there is no test in the context, the value is undefined
+        // if all tests failed, the value is -1
+        // if all tests passed, the value is 1
+        // if some tests passed and some tests failed, the value is 0
+        let testStatus = {};
+        Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
+            Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
+                if (context_sensitiveID === 'markerInfo') return;
+                let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+                if (testStatus[context_sensitiveID] === undefined)
+                    testStatus[context_sensitiveID] = testInfo.passed ? 1 : -1;
+                else if (testStatus[context_sensitiveID] > 0 && !testInfo.passed || testStatus[context_sensitiveID] < 0 && testInfo.passed)
+                    testStatus[context_sensitiveID] = 0;
+            });
+        });
+        __$__.CallTreeNetwork.testInfo = testStatus;
+    },
+
+
+    updateFill(d) {
+        let testStatus = __$__.CallTreeNetwork.testInfo || {};
+        let contextSensitiveID = (d && d.data && d.data.contextSensitiveID) ? d.data.contextSensitiveID : '';
+        if (testStatus[contextSensitiveID] === 1) {
+            return '#00ff00';
+        } else if (testStatus[contextSensitiveID] === -1) {
+            return '#ff0000';
+        } else if (testStatus[contextSensitiveID] === 0) {
+            return '#ffff00';
+        } else {
+            return d._children ? 'lightsteelblue' : '#fff';
+        }
+    },
+
+
     updateTest() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         if (nodeUpdate) {
@@ -355,7 +392,6 @@ __$__.CallTreeNetwork = {
                         testStatus[context_sensitiveID] = 0;
                 });
             });
-            console.log(testStatus);
             nodeUpdate
                 .style('fill', d => {
                     let contextSensitiveID = d.data.contextSensitiveID;

@@ -75,8 +75,8 @@ __$__.Update = {
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
 
+            __$__.CallTreeNetwork.updateTestInfo();
             __$__.CallTreeNetwork.draw();
-            __$__.CallTreeNetwork.updateTest();
 
             if (!__$__.Update.isChange(graph)) {
                 __$__.Update.waitForStabilized = false;
