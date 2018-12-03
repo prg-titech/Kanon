@@ -243,6 +243,9 @@ __$__.Testize = {
         if (document.getElementById('isLiteral').style.display !== 'none' && document.getElementById('checkboxForLiteral').checked) {
             color = __$__.Testize.makeLiteralColor();
         }
+        if (document.getElementById('isLiteral').style.display === 'none') {
+            color = (document.getElementById('node-label').value === 'return') ? 'black' : 'seagreen';
+        }
         dataSet.update({
             id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
             label: document.getElementById('node-label').value,
