@@ -85,7 +85,8 @@ __$__.UpdateLabelPos = {
                 node.loc.useLabel = true;
                 node.loc.closed = !__$__.ASTTransforms.Loop[node.type] || node.body.type === 'BlockStatement';
                 __$__.Context.LabelPos[posInfo.kind][label] = node.loc;
-                __$__.Testize.registerParenthesisPos(node);
+                if (node.type === 'CallExpression')
+                    __$__.Testize.registerParenthesisPos(node);
             } else {
                 node.label = __$__.UpdateLabelPos.assignLabel(nodeInfo.node, nodeInfo.c);
             }
