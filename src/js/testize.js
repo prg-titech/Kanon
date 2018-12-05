@@ -200,7 +200,7 @@ __$__.Testize = {
             // node
             data.id = additionalInfo || '__temp' + ++__$__.Testize.testNodeCounter;
             if (document.getElementById('checkboxForLiteral').checked) {
-                data.color = __$__.TEstize.makeLiteralColor();
+                data.color = __$__.Testize.makeLiteralColor();
             }
         } else if (additionalInfo) {
             // if a variable edge is added or edited
@@ -239,34 +239,42 @@ __$__.Testize = {
 
 
     saveData(dataSet, nodeID = null) {
-        let color;
+        let color, type;
         if (document.getElementById('isLiteral').style.display !== 'none' && document.getElementById('checkboxForLiteral').checked) {
             color = __$__.Testize.makeLiteralColor();
+            type = 'string';
         }
         if (document.getElementById('isLiteral').style.display === 'none') {
-            color = (document.getElementById('node-label').value === 'return') ? 'black' : 'seagreen';
+            let edgeID = nodeID;
+            color = (document.getElementById('node-label').value === 'return')
+                    ? 'black'
+                    : (dataSet.get(edgeID).from.slice(0, 11) === '__Variable-')
+                      ? 'seagreen'
+                      : undefined;
         }
         dataSet.update({
             id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
             label: document.getElementById('node-label').value,
-            color: color
+            color: color,
+            type: type
         });
         __$__.Testize.clearPopUp();
     },
 
 
     // ====================================== end =======================================
-    // ============ start: invoked by __$__.Update.CodeWithCP ===============
+
+    // ================== start: invoked by __$__.Update.CodeWithCP =====================
 
 
     /**
-     * @param objects
-     * @param probe
-     * @param retObj
-     * @param callLabel
-     * @param context_sensitiveID
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {Object} retObj
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
      *
-     * this function is invoked by the converted program (__$__.Update.CodeWithCP)
+     * @return {boolean} result
      */
     matching(objects, probe, retObj, callLabel, context_sensitiveID) {
         if (!__$__.Testize.hasTest(callLabel, context_sensitiveID))
@@ -280,7 +288,7 @@ __$__.Testize = {
         let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
 
         let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
-        let result = referencedObjects_runtime.every((variableName, idx, arr) => {
+        let result = referencedObjects_runtime.every(function (variableName, idx, arr) {
             let obj_runtime = objectDuplication_runtime[variableName];
             let obj_test    = objectDuplication_test[variableName];
 
@@ -300,6 +308,163 @@ __$__.Testize = {
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = result;
         return result;
+    },
+
+
+    /**
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {Object} retObj
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     *
+     * @return {Object} result
+     */
+    override(objects, probe, retObj, callLabel, context_sensitiveID) {
+        let result = {};
+        let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+
+        // make edge information
+        let edgeDir = {};
+        let varInfo = {};
+        Object.values(testData.edges._data).forEach(edge => {
+            let from = edge.from;
+            if (from.slice(0, 11) === '__Variable-') {
+                let variableName = edge.label;
+                varInfo[variableName] = {
+                    to: edge.to,
+                    label: edge.label // variable name
+                };
+            } else {
+                if (!edgeDir[from]) edgeDir[from] = [];
+                edgeDir[from].push({
+                    to: edge.to,
+                    label: edge.label
+                });
+            }
+        });
+
+
+        // to grasp all objects which are constructed at runtime.
+        //   key: object id
+        // value: runtime object
+        let runtimeObjects = {};
+        // here, collect runtimeObjects and delete all properties of all objects
+        objects.concat(Object.values(probe)).forEach(obj => {
+            if (runtimeObjects[obj.__id] || obj === null || obj === undefined)
+                return;
+
+            __$__.Testize.traverse(obj, runtimeObjects);
+        });
+
+
+        let queueForSetProp = Object.values(runtimeObjects);
+        while (queueForSetProp.length > 0) {
+            let obj = queueForSetProp.shift();
+            let objectID = obj.__id;
+
+            edgeDir[objectID].forEach(edge => {
+                let nextObject;
+                if (edge.to.slice(0, 6) === '__temp') {
+                    /**
+                     * TODO
+                     */
+                } else {
+                    nextObject = runtimeObjects[edge.to];
+
+                    if (!nextObject) {
+                        // case of literal
+                        let literalNode = testData.nodes._data[edge.to];
+                        if (literalNode.type === 'number') {
+                            nextObject = Number(literalNode.label);
+                        } else {
+                            nextObject = literalNode.label;
+                        }
+                    }
+                }
+                obj[edge.label] = nextObject;
+            });
+        }
+
+
+        // use varInfo to make return object which is used to change the variable references
+        Object.keys(probe).forEach(v => {
+            if (v === 'this') return;
+            let object = probe[v];
+            if (object.__id === varInfo[v].to) {
+                // do nothing
+            } else {
+                result[v] = runtimeObjects[varInfo[v].to];
+            }
+        });
+
+        Object.keys(varInfo).forEach(v => {
+            if (v === 'this') return;
+            else if (v === 'return') {
+                result['__retObj'] = runtimeObjects[varInfo[v].to];
+            } else if (!result[v]) {
+                result[v] = runtimeObjects[varInfo[v].to];
+            }
+        });
+
+        return result;
+    },
+
+
+    traverse: function(obj, referableObjects, literals) {
+        if (obj.__id && !referableObjects[obj.__id]) {
+            referableObjects[obj.__id] = obj;
+        } else {
+            return;
+        }
+
+        Object.keys(obj).forEach(prop => {
+            // Don't search if the head of property name is "__"
+            if (prop.slice(0, 2) === '__')
+                return;
+
+            // "to" is destination of edge
+            let to = obj[prop];
+
+            if (typeof to !== "function" && to !== null && to !== undefined) {
+                if (!__$__.Traverse.literals[typeof to]) { // if "to" is object
+                    __$__.Testize.traverse(to, referableObjects);
+                }
+            }
+
+            delete obj[prop];
+        });
+    },
+
+
+    /**
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {Object} retObj
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     * @param {boolean} errorOccurred
+     *
+     * @return {Object}
+     *
+     * This function checks whether the runtime structure matches the test structure
+     * and overrides the runtime objects if the test failed
+     * This function returns Object {variableName: Object} which represents variable reference information we want to override.
+     * If the test passed, this function returns an empty object.
+     */
+    testAndOverride(objects, probe, retObj, callLabel, context_sensitiveID, errorOccurred) {
+        let passed = !errorOccurred && __$__.Testize.matching(objects, probe, retObj, callLabel, context_sensitiveID);
+
+        __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = passed;
+
+        if (passed) {
+            // もしテストが通ってたら
+            return {};
+        } else {
+            // テストが通ってなかったら
+            return __$__.Testize.override(objects, probe, retObj, callLabel, context_sensitiveID);
+            // return {};
+        }
     },
 
 
@@ -367,11 +532,6 @@ __$__.Testize = {
         });
 
         return variables;
-    },
-
-
-    override(objects, probe, retObj, callLabel, context_sensitiveID) {
-        // TODO
     },
 
 

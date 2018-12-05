@@ -292,7 +292,7 @@ __$__.ASTBuilder = {
     /**
      * @param {BlockStatement} block
      * @param {CatchClause} handler
-     * @param {} finalizzer
+     * @param {BlockStatement} finalizzer
      */
     TryStatement(block, handler = null, finalizer = null) {
         return {
