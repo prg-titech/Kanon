@@ -977,7 +977,7 @@ __$__.Testize = {
 
         __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], markerID, markerRange, clazz);
 
-        __$__.Testize.storedTest[callLabel][context_senitiveID] = {
+        __$__.Testize.storedTest[callLabel][context_sensitiveID] = {
             testData: expectedGraphData,
             passed: false
         };
