@@ -199,7 +199,8 @@ __$__.Testize = {
         if (document.getElementById('isLiteral').style.display !== 'none') {
             // node
             data.id = additionalInfo || '__temp' + ++__$__.Testize.testNodeCounter;
-            if (document.getElementById('checkboxForLiteral').checked) {
+            data.isLiteral = document.getElementById('checkboxForLiteral').checked;
+            if (data.isLiteral) {
                 data.color = __$__.Testize.makeLiteralColor();
             }
         } else if (additionalInfo) {
@@ -239,25 +240,36 @@ __$__.Testize = {
 
 
     saveData(dataSet, nodeID = null) {
-        let color, type;
-        if (document.getElementById('isLiteral').style.display !== 'none' && document.getElementById('checkboxForLiteral').checked) {
-            color = __$__.Testize.makeLiteralColor();
-            type = 'string';
-        }
-        if (document.getElementById('isLiteral').style.display === 'none') {
+        let color = null, type = null;
+        if (document.getElementById('isLiteral').style.display !== 'none') {
+            // the case of node
+            let isLiteral = document.getElementById('checkboxForLiteral').checked;
+            if (isLiteral) {
+                color = __$__.Testize.makeLiteralColor();
+                type = 'string';
+            }
+
+            dataSet.update({
+                id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
+                label: document.getElementById('node-label').value,
+                color: color,
+                type: type,
+                isLiteral: isLiteral
+            });
+        } else {
+            // the case of edge
             let edgeID = nodeID;
             color = (document.getElementById('node-label').value === 'return')
-                    ? 'black'
-                    : (dataSet.get(edgeID).from.slice(0, 11) === '__Variable-')
-                      ? 'seagreen'
-                      : undefined;
+                ? 'black'
+                : (dataSet.get(edgeID).from.slice(0, 11) === '__Variable-')
+                    ? 'seagreen'
+                    : null;
+            dataSet.update({
+                id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
+                label: document.getElementById('node-label').value,
+                color: color
+            });
         }
-        dataSet.update({
-            id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
-            label: document.getElementById('node-label').value,
-            color: color,
-            type: type
-        });
         __$__.Testize.clearPopUp();
     },
 
@@ -317,10 +329,11 @@ __$__.Testize = {
      * @param {Object} retObj
      * @param {string} callLabel
      * @param {string} context_sensitiveID
+     * @param {Array} classes
      *
      * @return {Object} result
      */
-    override(objects, probe, retObj, callLabel, context_sensitiveID) {
+    override(objects, probe, retObj, callLabel, context_sensitiveID, classes) {
         let result = {};
         let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
 
@@ -368,6 +381,11 @@ __$__.Testize = {
                 if (edge.to.slice(0, 6) === '__temp') {
                     /**
                      * TODO
+                     * // 行き先のオブジェクトを新しく作る
+                     * nextObject = ...
+                     * // その後、作ったオブジェクトをqueueにプッシュする
+                     * queueForSetProp.push(nextObject);
+                     * // referableObjectsにも追加する？
                      */
                 } else {
                     nextObject = runtimeObjects[edge.to];
@@ -401,11 +419,19 @@ __$__.Testize = {
         Object.keys(varInfo).forEach(v => {
             if (v === 'this') return;
             else if (v === 'return') {
-                result['__retObj'] = runtimeObjects[varInfo[v].to];
+                result.__retObj = runtimeObjects[varInfo[v].to];
             } else if (!result[v]) {
                 result[v] = runtimeObjects[varInfo[v].to];
             }
         });
+
+        // if there is no "return" arrow in the test graph
+        if (!result.__retObj) {
+            // if the function inserted this test returns an object at runtime
+            if (typeof retObj !== "function" && retObj !== null && retObj !== undefined && !__$__.Traverse.literals[typeof retObj]) {
+                result.__retObj = undefined;
+            }
+        }
 
         return result;
     },
@@ -444,6 +470,7 @@ __$__.Testize = {
      * @param {string} callLabel
      * @param {string} context_sensitiveID
      * @param {boolean} errorOccurred
+     * @param {Array} classes
      *
      * @return {Object}
      *
@@ -452,18 +479,17 @@ __$__.Testize = {
      * This function returns Object {variableName: Object} which represents variable reference information we want to override.
      * If the test passed, this function returns an empty object.
      */
-    testAndOverride(objects, probe, retObj, callLabel, context_sensitiveID, errorOccurred) {
+    testAndOverride(objects, probe, retObj, callLabel, context_sensitiveID, errorOccurred, classes) {
         let passed = !errorOccurred && __$__.Testize.matching(objects, probe, retObj, callLabel, context_sensitiveID);
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = passed;
 
         if (passed) {
-            // もしテストが通ってたら
+            // if passed
             return {};
         } else {
-            // テストが通ってなかったら
-            return __$__.Testize.override(objects, probe, retObj, callLabel, context_sensitiveID);
-            // return {};
+            // if failed
+            return __$__.Testize.override(objects, probe, retObj, callLabel, context_sensitiveID, classes);
         }
     },
 
@@ -537,6 +563,27 @@ __$__.Testize = {
 
     hasTest(callLabel, context_sensitiveID) {
         return __$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID];
+    },
+
+
+    extractUsedClassNames(callLabel, context_sensitiveID) {
+        let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+        let retObj = {};
+        Object.values(testData.nodes._data).forEach(node => {
+            let id = node.id;
+            let label = node.label;
+            if (id.slice(0, 11) === '__Variable-') {
+                return;
+            } else if (id === '__RectForVariable__') {
+                return;
+            } else {
+                if (id.slice(0, 6) === '__temp' && !node.isLiteral) {
+                    retObj[label] = true;
+                }
+            }
+        });
+        console.log(Object.keys(retObj));
+        return Object.keys(retObj);
     },
 
 

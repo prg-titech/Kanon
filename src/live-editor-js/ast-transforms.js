@@ -210,6 +210,15 @@ __$__.ASTTransforms = {
      *             throw e;
      *     } finally {
      *         if (__hasTest) {
+     *             // TODO start
+     *             let classes = __$__.Testize.extractUsedClassNames('unique Label', __context_sensitiveID).map(className => {
+     *                 try {
+     *                     return eval(className);
+     *                 } catch (e) {
+     *                     return Object;
+     *                 }
+     *             })
+     *             // TODO end
      *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred);
      *             let __variableNames = Object.keys(__overrideInfo);
      *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
@@ -426,7 +435,16 @@ __$__.ASTTransforms = {
                                      *    __errorOccurred = true;
                                      * } finally {
                                      *     if (__hasTest) {
-                                     *         let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred);
+                                     *         // TODO start
+                                     *         let __classes = __$__.Testize.extractUsedClassNames('unique Label', __context_sensitiveID).map(className => {
+                                     *             try {
+                                     *                 return eval(className);
+                                     *             } catch (e) {
+                                     *                 return Object;
+                                     *             }
+                                     *         })
+                                     *         // TODO end
+                                     *         let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classes);
                                      *         let __variableNames = Object.keys(__overrideInfo);
                                      *         for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
                                      *             let __variableName = __variableNames[__i__];
@@ -503,6 +521,52 @@ __$__.ASTTransforms = {
                                                 b.BlockStatement([
                                                     b.VariableDeclaration([
                                                         b.VariableDeclarator(
+                                                            b.Identifier('__classes'),
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.CallExpression(
+                                                                        b.MemberExpression(
+                                                                            b.MemberExpression(
+                                                                                b.Identifier('__$__'),
+                                                                                b.Identifier('Testize')
+                                                                            ),
+                                                                            b.Identifier('extractUsedClassNames')
+                                                                        ),
+                                                                        [
+                                                                            b.Literal(label),
+                                                                            b.Identifier('__context_sensitiveID')
+                                                                        ]
+                                                                    ),
+                                                                    b.Identifier('map')
+                                                                ),
+                                                                [b.ArrowFunctionExpression(
+                                                                    [b.Identifier('className')],
+                                                                    b.BlockStatement([
+                                                                        b.TryStatement(
+                                                                            b.BlockStatement([
+                                                                                b.ReturnStatement(
+                                                                                    b.CallExpression(
+                                                                                        b.Identifier('eval'),
+                                                                                        [b.Identifier('className')]
+                                                                                    )
+                                                                                )
+                                                                            ]),
+                                                                            b.CatchClause(
+                                                                                b.Identifier('e'),
+                                                                                b.BlockStatement([
+                                                                                    b.ReturnStatement(
+                                                                                        b.Identifier('Object')
+                                                                                    )
+                                                                                ])
+                                                                            )
+                                                                        )
+                                                                    ])
+                                                                )]
+                                                            )
+                                                        )
+                                                    ], 'let'),
+                                                    b.VariableDeclaration([
+                                                        b.VariableDeclarator(
                                                             b.Identifier('__overrideInfo'),
                                                             b.CallExpression(
                                                                 b.MemberExpression(
@@ -542,7 +606,8 @@ __$__.ASTTransforms = {
                                                                     b.Identifier('__retObj'),
                                                                     b.Literal(label),
                                                                     b.Identifier('__context_sensitiveID'),
-                                                                    b.Identifier('__errorOccurred')
+                                                                    b.Identifier('__errorOccurred'),
+                                                                    b.Identifier('__classes')
                                                                 ]
                                                             ),
                                                         )], 'let'
