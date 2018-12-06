@@ -376,34 +376,51 @@ __$__.Testize = {
             let obj = queueForSetProp.shift();
             let objectID = obj.__id;
 
-            edgeDir[objectID].forEach(edge => {
-                let nextObject;
-                if (edge.to.slice(0, 6) === '__temp') {
-                    /**
-                     * TODO
-                     * let newObj2 = Object.create(Fuga.prototype)
-                     * // 行き先のオブジェクトを新しく作る
-                     * nextObject = ...
-                     * // その後、作ったオブジェクトをqueueにプッシュする
-                     * queueForSetProp.push(nextObject);
-                     * // referableObjectsにも追加する？
-                     */
-                    // let nextObj = Object.create(hoge.prototype);
-                } else {
-                    nextObject = runtimeObjects[edge.to];
-
-                    if (!nextObject) {
-                        // case of literal
-                        let literalNode = testData.nodes._data[edge.to];
-                        if (literalNode.type === 'number') {
-                            nextObject = Number(literalNode.label);
+            if (edgeDir[objectID]) {
+                edgeDir[objectID].forEach(edge => {
+                    let nextObject;
+                    if (edge.to.slice(0, 6) === '__temp') {
+                        /**
+                         * TODO
+                         * let newObj2 = Object.create(Fuga.prototype)
+                         * // 行き先のオブジェクトを新しく作る
+                         * nextObject = ...
+                         * // その後、作ったオブジェクトをqueueにプッシュする
+                         * queueForSetProp.push(nextObject);
+                         * // referableObjectsにも追加する？
+                         */
+                            // let nextObj = Object.create(hoge.prototype);
+                        let newlyConstructedNode = testData.nodes.get(edge.to);
+                        if (!newlyConstructedNode.isLiteral) {
+                            nextObject = Object.create(classes[newlyConstructedNode.label].prototype);
+                            Object.setProperty(nextObject, '__id', newlyConstructedNode.id);
+                            queueForSetProp.push(nextObject);
+                            runtimeObjects[nextObject.__id] = nextObject;
                         } else {
-                            nextObject = literalNode.label;
+                            // case of literal
+                            let literalNode = testData.nodes._data[edge.to];
+                            if (literalNode.type === 'number') {
+                                nextObject = Number(literalNode.label);
+                            } else {
+                                nextObject = literalNode.label;
+                            }
+                        }
+                    } else {
+                        nextObject = runtimeObjects[edge.to];
+
+                        if (!nextObject) {
+                            // case of literal
+                            let literalNode = testData.nodes._data[edge.to];
+                            if (literalNode.type === 'number') {
+                                nextObject = Number(literalNode.label);
+                            } else {
+                                nextObject = literalNode.label;
+                            }
                         }
                     }
-                }
-                obj[edge.label] = nextObject;
-            });
+                    obj[edge.label] = nextObject;
+                });
+            }
         }
 
 
@@ -584,7 +601,6 @@ __$__.Testize = {
                 }
             }
         });
-        console.log(Object.keys(retObj));
         return Object.keys(retObj);
     },
 
@@ -971,8 +987,7 @@ __$__.Testize = {
         let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
 
         if (!__$__.Testize.storedTest[callLabel]) {
-            __$__.Testize.storedTest[callLabel] = {
-            };
+            __$__.Testize.storedTest[callLabel] = {};
         }
 
         __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], markerID, markerRange, clazz);
