@@ -381,12 +381,14 @@ __$__.Testize = {
                 if (edge.to.slice(0, 6) === '__temp') {
                     /**
                      * TODO
+                     * let newObj2 = Object.create(Fuga.prototype)
                      * // 行き先のオブジェクトを新しく作る
                      * nextObject = ...
                      * // その後、作ったオブジェクトをqueueにプッシュする
                      * queueForSetProp.push(nextObject);
                      * // referableObjectsにも追加する？
                      */
+                    // let nextObj = Object.create(hoge.prototype);
                 } else {
                     nextObject = runtimeObjects[edge.to];
 
@@ -926,7 +928,9 @@ __$__.Testize = {
 
 
     removeMarker(testInfo, newMarkerID, newMarkerRange, clazz) {
-        __$__.editor.session.removeMarker(testInfo.markerInfo.ID);
+        if (testInfo.markerInfo)
+            __$__.editor.session.removeMarker(testInfo.markerInfo.ID);
+
         testInfo.markerInfo = (newMarkerID) ? {
                 ID: newMarkerID,
                 range: newMarkerRange,
@@ -967,15 +971,13 @@ __$__.Testize = {
         let markerID = __$__.editor.session.addMarker(markerRange, clazz, 'text');
 
         if (!__$__.Testize.storedTest[callLabel]) {
-            __$__.Testize.storedTest[callLabel] = {};
+            __$__.Testize.storedTest[callLabel] = {
+            };
         }
 
-        __$__.Testize.storedTest[callLabel].markerInfo = {
-            ID: markerID,
-            range: markerRange,
-            clazz: clazz
-        };
-        __$__.Testize.storedTest[callLabel][context_sensitiveID] = {
+        __$__.Testize.removeMarker(__$__.Testize.storedTest[callLabel], markerID, markerRange, clazz);
+
+        __$__.Testize.storedTest[callLabel][context_senitiveID] = {
             testData: expectedGraphData,
             passed: false
         };
