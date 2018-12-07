@@ -373,6 +373,18 @@ __$__.Testize = {
         });
 
 
+        // remove objects which this test does not include from __objs.
+        let i = 0;
+        while (i < objects.length) {
+            let obj = objects[i];
+            if (testData.nodes._data[obj.__id]) {
+                i++;
+            } else {
+                objects.splice(i, 1);
+            }
+        }
+
+
         let queueForSetProp = Object.values(runtimeObjects);
         while (queueForSetProp.length > 0) {
             let obj = queueForSetProp.shift();
@@ -521,7 +533,7 @@ __$__.Testize = {
         let isMatching = (info_runtime.prop.length === info_test.prop.length)
                       && (info_runtime.id          === info_test.id)
                       && (info_runtime.label       === info_test.label)
-                      && (info_runtime.literal     === info_test.literal);
+                      && (!info_runtime.literal    === !info_test.literal);
 
         if (isMatching) {
             // check recursively
