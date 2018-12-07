@@ -273,10 +273,16 @@ __$__.ASTTransforms = {
      *                 }
      *             })
      *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
+     *             // TODO start
+     *             Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+     *             let __variableNames = Object.keys(__overrideInfo.variableReferences);
+     *             // TODO end
      *             let __variableNames = Object.keys(__overrideInfo);
+     *             // change variable references
      *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
      *                 let __variableName = __variableNames[__i__];
-     *                 let __object = __overrideInfo[__variableName];
+     *                 // TODO
+     *                 let __object = __overrideInfo.variableReferences[__variableName];
      *                 eval(__variableName + ' = __object');
      *             }
      *         }
@@ -451,6 +457,8 @@ __$__.ASTTransforms = {
                                      *             }
                                      *         })
                                      *         let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
+                                     *         Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+                                     *         let __variableNames = Object.keys(__overrideInfo.variableReferences);
                                      *         let __variableNames = Object.keys(__overrideInfo);
                                      *         for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
                                      *             let __variableName = __variableNames[__i__];
@@ -637,6 +645,27 @@ __$__.ASTTransforms = {
                                                             ),
                                                         )], 'let'
                                                     ),
+                                                    b.ExpressionStatement(
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.MemberExpression(
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('Array'),
+                                                                        b.Identifier('prototype')
+                                                                    ),
+                                                                    b.Identifier('push')
+                                                                ),
+                                                                b.Identifier('apply')
+                                                            ),
+                                                            [
+                                                                b.Identifier('__objs'),
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__overrideInfo'),
+                                                                    b.Identifier('newObjects')
+                                                                )
+                                                            ]
+                                                        )
+                                                    ),
                                                     b.VariableDeclaration([
                                                         b.VariableDeclarator(
                                                             b.Identifier('__variableNames'),
@@ -645,7 +674,12 @@ __$__.ASTTransforms = {
                                                                     b.Identifier('Object'),
                                                                     b.Identifier('keys')
                                                                 ),
-                                                                [b.Identifier('__overrideInfo')]
+                                                                [
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('__overrideInfo'),
+                                                                        b.Identifier('variableReferences')
+                                                                    )
+                                                                ]
                                                             )
                                                         )
                                                     ], 'let'),
@@ -684,7 +718,10 @@ __$__.ASTTransforms = {
                                                                 b.VariableDeclarator(
                                                                     b.Identifier('__object'),
                                                                     b.MemberExpression(
-                                                                        b.Identifier('__overrideInfo'),
+                                                                        b.MemberExpression(
+                                                                            b.Identifier('__overrideInfo'),
+                                                                            b.Identifier('variableReferences')
+                                                                        ),
                                                                         b.Identifier('__variableName'),
                                                                         true
                                                                     )

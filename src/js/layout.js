@@ -29,12 +29,12 @@ __$__.Layout = {
     
         // This loop defines __next and __prev property to the nodes whose label are nodeLabel.
         listEdgesOfNext.forEach(edge => {
-            let fromNode = graph.nodes.filter(node => {
+            let fromNode = graph.nodes.find(node => {
                 return node.id === edge.from;
-            })[0];
-            let toNode = graph.nodes.filter(node => {
+            });
+            let toNode = graph.nodes.find(node => {
                 return node.id === edge.to;
-            })[0];
+            });
     
             if (fromNode.label === nodeLabel && toNode.label === nodeLabel) {
                 fromNode.__next = toNode;
@@ -44,12 +44,12 @@ __$__.Layout = {
     
         // This loop defines __val property to the nodes that have a property that represents valueLabel of the node.
         listEdgesOfValue.forEach(edge => {
-            let fromNode = graph.nodes.filter(node => {
+            let fromNode = graph.nodes.find(node => {
                 return node.id === edge.from;
-            })[0];
-            let valNode = graph.nodes.filter(node => {
+            });
+            let valNode = graph.nodes.find(node => {
                 return node.id === edge.to
-            })[0];
+            });
     
             if (fromNode.label === nodeLabel)
                 fromNode.__val = valNode;
@@ -57,13 +57,13 @@ __$__.Layout = {
     
         /**
          * sort listNodes in following code
-         * In order to support some linked-list,
+         * In order to support multiple linked-lists,
          * each list is a list that is a element of sortedListNode.
          * e.g.)
          * list1 : a -> b -> c
          * list2 : w -> x -> y -> z
          * then, sortedListNode is [[a, b, c], [w, x, y, z]]
-         * (where a, b, etc. represent nodes.)
+         * (where a, b, etc. mean nodes.)
          */
         let sortedListNode = [];
         let sortedListNode_CenterPos = [];
@@ -74,8 +74,8 @@ __$__.Layout = {
             list[0].__checked = true;
             while (list[0].__prev && !list[0].__prev.__checked) {
                 let prev = list[0].__prev;
-                pos.x += prev.x;
-                pos.y += prev.y;
+                pos.x += prev.x || 0;
+                pos.y += prev.y || 0;
                 prev.__checked = true;
                 list.unshift(listNodes.splice(listNodes.indexOf(prev),1)[0]);
                 delete list[1].__prev;
@@ -83,8 +83,8 @@ __$__.Layout = {
             }
             while (list[list.length-1].__next && !list[list.length-1].__next.__checked) {
                 let next = list[list.length-1].__next;
-                pos.x += next.x;
-                pos.y += next.y;
+                pos.x += next.x || 0;
+                pos.y += next.y || 0;
                 next.__checked = true;
                 delete list[list.length-1].__next;
                 list.push(listNodes.splice(listNodes.indexOf(next),1)[0]);

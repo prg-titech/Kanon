@@ -300,7 +300,8 @@ __$__.Testize = {
         let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
 
         let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
-        let result = referencedObjects_runtime.every(function (variableName, idx, arr) {
+        let result = referencedObjects_runtime.length !== 0;
+        result = result && referencedObjects_runtime.every(function (variableName, idx, arr) {
             let obj_runtime = objectDuplication_runtime[variableName];
             let obj_test    = objectDuplication_test[variableName];
 
@@ -334,7 +335,8 @@ __$__.Testize = {
      * @return {Object} result
      */
     override(objects, probe, retObj, callLabel, context_sensitiveID, classes) {
-        let result = {};
+        let variableReferences = {};
+        let newObjects = [];
         let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
 
         // make edge information
@@ -380,25 +382,17 @@ __$__.Testize = {
                 edgeDir[objectID].forEach(edge => {
                     let nextObject;
                     if (edge.to.slice(0, 6) === '__temp') {
-                        /**
-                         * TODO
-                         * let newObj2 = Object.create(Fuga.prototype)
-                         * // 行き先のオブジェクトを新しく作る
-                         * nextObject = ...
-                         * // その後、作ったオブジェクトをqueueにプッシュする
-                         * queueForSetProp.push(nextObject);
-                         * // referableObjectsにも追加する？
-                         */
-                            // let nextObj = Object.create(hoge.prototype);
                         let newlyConstructedNode = testData.nodes.get(edge.to);
                         if (!newlyConstructedNode.isLiteral) {
                             nextObject = Object.create(classes[newlyConstructedNode.label].prototype);
                             Object.setProperty(nextObject, '__id', newlyConstructedNode.id);
+                            Object.setProperty(nextObject, '__ClassName__', newlyConstructedNode.label);
                             queueForSetProp.push(nextObject);
                             runtimeObjects[nextObject.__id] = nextObject;
+                            newObjects.push(nextObject);
                         } else {
                             // case of literal
-                            let literalNode = testData.nodes._data[edge.to];
+                            let literalNode = testData.nodes.get(edge.to);
                             if (literalNode.type === 'number') {
                                 nextObject = Number(literalNode.label);
                             } else {
@@ -410,7 +404,7 @@ __$__.Testize = {
 
                         if (!nextObject) {
                             // case of literal
-                            let literalNode = testData.nodes._data[edge.to];
+                            let literalNode = testData.nodes.get(edge.to);
                             if (literalNode.type === 'number') {
                                 nextObject = Number(literalNode.label);
                             } else {
@@ -431,28 +425,31 @@ __$__.Testize = {
             if (object.__id === varInfo[v].to) {
                 // do nothing
             } else {
-                result[v] = runtimeObjects[varInfo[v].to];
+                variableReferences[v] = runtimeObjects[varInfo[v].to];
             }
         });
 
         Object.keys(varInfo).forEach(v => {
             if (v === 'this') return;
             else if (v === 'return') {
-                result.__retObj = runtimeObjects[varInfo[v].to];
-            } else if (!result[v]) {
-                result[v] = runtimeObjects[varInfo[v].to];
+                variableReferences.__retObj = runtimeObjects[varInfo[v].to];
+            } else if (!variableReferences[v]) {
+                variableReferences[v] = runtimeObjects[varInfo[v].to];
             }
         });
 
         // if there is no "return" arrow in the test graph
-        if (!result.__retObj) {
+        if (!variableReferences.__retObj) {
             // if the function inserted this test returns an object at runtime
             if (typeof retObj !== "function" && retObj !== null && retObj !== undefined && !__$__.Traverse.literals[typeof retObj]) {
-                result.__retObj = undefined;
+                variableReferences.__retObj = undefined;
             }
         }
 
-        return result;
+        return {
+            newObjects: newObjects,
+            variableReferences: variableReferences
+        };
     },
 
 
@@ -505,7 +502,10 @@ __$__.Testize = {
 
         if (passed) {
             // if passed
-            return {};
+            return {
+                newObjects: [],
+                variableReferences: {}
+            };
         } else {
             // if failed
             return __$__.Testize.override(objects, probe, retObj, callLabel, context_sensitiveID, classes);

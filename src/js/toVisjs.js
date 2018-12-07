@@ -66,7 +66,7 @@ __$__.ToVisjs = {
             } else {
                 node = {};
 
-                node.label = graph.nodes[i].constructor.name;
+                node.label = graph.nodes[i].__ClassName__ || graph.nodes[i].constructor.name;
                 node.id = __$__.Context.getObjectID(graph.nodes[i]);
 
                 retData.nodes.push(node);

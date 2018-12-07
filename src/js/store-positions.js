@@ -18,6 +18,9 @@ __$__.StorePositions = {
                 node.y = nodeData.y;
                 if (node.id.slice(0, 11) !== '__Variable-')
                     node.fixed = true;
+            } else {
+                node.x = undefined;
+                node.y = undefined;
             }
         }
         
@@ -35,7 +38,7 @@ __$__.StorePositions = {
             if (temp[id]) {
                 temp[id].x = pos[id].x;
                 temp[id].y = pos[id].y;
-            } else {
+            } else if (!isNaN(pos[id].x) && !isNaN(pos[id].y)) {
                 temp[id] = {x: pos[id].x, y: pos[id].y};
             }
         });
