@@ -8,6 +8,16 @@ __$__.Testize = {
         label: undefined,
         context_sensitiveID: undefined
     },
+    setSelectedCallInfo(label) {
+        try {
+            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[label].start).loop;
+            let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
+            __$__.Testize.selectedCallInfo = {
+                label: label,
+                context_sensitiveID: context_sensitiveID
+            };
+        } catch (e) {}
+    },
     testNodeCounter: 0,
     enable: false,
     storedTest: {
@@ -812,6 +822,9 @@ __$__.Testize = {
     },
 
 
+
+
+
     openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         if (!__$__.win) {
@@ -825,12 +838,7 @@ __$__.Testize = {
         try {
             let callLabel = __$__.Testize.selectedCallInfo.label;
             let checkpointIDs = __$__.Context.CheckPointIDAroundFuncCall[callLabel];
-            let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
-            let context_sensitiveID = __$__.Context.SpecifiedContext[loopLabelAroundCall];
-            __$__.Testize.selectedCallInfo = {
-                label: callLabel,
-                context_sensitiveID: context_sensitiveID
-            };
+            let context_sensitiveID = __$__.Testize.selectedCallInfo.context_sensitiveID;
             if (modified) {
                 let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
                 graph = {

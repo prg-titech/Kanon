@@ -32,12 +32,12 @@ document.getElementById('autoLayout').onchange = function() {
         });
 })();
 
-__$__.Testize.popup_addTest = document.getElementById('tooltip_1');
-jQuery('#tooltip_1')
+__$__.Testize.popup_addTest = document.getElementById('tooltip_set');
+__$__.Testize.popup_removeTest = document.getElementById('tooltips');
+
+jQuery('#tooltip_set')
     .click(function () {
-        __$__.Testize.selectedCallInfo = {
-            label: __$__.Testize.hoveringCallInfo.label
-        };
+        __$__.Testize.setSelectedCallInfo(__$__.Testize.hoveringCallInfo.label);
         __$__.Testize.openWin(false);
         __$__.Testize.removeTooltip(this);
     })
@@ -48,13 +48,9 @@ jQuery('#tooltip_1')
         __$__.Testize.popup_addTest.style.cursor = 'default';
     });
 
-__$__.Testize.popup_removeTest = document.getElementById('tooltip_2');
-
 jQuery('#tooltip_modify')
     .click(function () {
-        __$__.Testize.selectedCallInfo = {
-            label: __$__.Testize.hoveringCallInfo.label
-        };
+        __$__.Testize.setSelectedCallInfo(__$__.Testize.hoveringCallInfo.label);
         __$__.Testize.openWin(true);
         __$__.Testize.removeTooltip(__$__.Testize.popup_removeTest);
     })
