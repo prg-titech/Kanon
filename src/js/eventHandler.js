@@ -65,6 +65,12 @@ jQuery('#tooltip_remove')
     .click(function () {
         __$__.Testize.removeTest(__$__.Testize.hoveringCallInfo.label);
         __$__.Testize.removeTooltip(__$__.Testize.popup_removeTest);
+        __$__.Update.PositionUpdate([{
+            start: {row: 0, column: 0},
+            end: {row: 0, column: 0},
+            lines: [""],
+            action: 'insert'
+        }]);
     })
     .mouseover(function() {
         __$__.Testize.popup_removeTest.style.cursor = 'pointer';
