@@ -1139,8 +1139,10 @@ __$__.Testize = {
                 let testData = testInfo.testData;
                 __$__.Testize.focusedTestOperations = testInfo.operations;
                 graph = {
-                    nodes: testData.nodes,
-                    edges: testData.edges
+                    // nodes: testData.nodes,
+                    // edges: testData.edges
+                    nodes: new vis.DataSet(Object.values(testData.nodes._data).map(node => jQuery.extend(true, {}, node))),
+                    edges: new vis.DataSet(Object.values(testData.edges._data).map(edge => jQuery.extend(true, {}, edge)))
                 };
             } else {
                 graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
