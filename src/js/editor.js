@@ -53,6 +53,9 @@ __$__.editor.executeTask = () => {
 __$__.editor.on('change', (e) => {
     __$__.editor.task.PositionUpdate.push(e);
     setTimeout(__$__.editor.executeTask, 0);
+    if (__$__.Testize.hoveringCallInfo.div) {
+        __$__.Testize.removeTooltip(__$__.Testize.hoveringCallInfo.div);
+    }
 });
 
 // adding a tooltip

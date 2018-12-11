@@ -18,6 +18,7 @@ __$__.Testize = {
             };
         } catch (e) {}
     },
+    focusedTestOperations: undefined, // Array of mouse operation
     testNodeCounter: 0,
     enable: false,
     storedTest: {
@@ -53,29 +54,32 @@ __$__.Testize = {
             manipulation: {
                 enabled: true,
                 addNode: function(data, callback) {
+                    let editType = 'addNode';
                     document.getElementById('operation').innerHTML = "Add Node";
                     document.getElementById('node-label').value = "";
-                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, null);
+                    document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, editType, null);
                     document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
                     document.getElementById('isLiteral').style.display = 'inline';
                     document.getElementById('network-popUp').style.display = 'block';
                     document.getElementById('node-label').focus();
                 },
                 addEdge: function(data, callback) {
-                    if (data.from === '__RectForVariable__' && data.to !== '__RectForVariable__') {
+                    if (__$__.Testize.network.network.body.data.nodes.get(data.from).type || data.to === '__RectForVariable__') {
+                        callback(null);
+                    } else if (data.from === '__RectForVariable__') {
+                        let editType = 'addVariable';
                         document.getElementById('operation').innerHTML = "Add Variable";
                         document.getElementById('node-label').value = "";
-                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, true);
+                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, editType, true);
                         document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
                         document.getElementById('isLiteral').style.display = 'none';
                         document.getElementById('network-popUp').style.display = 'block';
                         document.getElementById('node-label').focus();
-                    } else if (data.to === '__RectForVariable__') {
-                        callback(null);
                     } else {
+                        let editType = 'addEdge';
                         document.getElementById('operation').innerHTML = "Add Edge";
                         document.getElementById('node-label').value = "";
-                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, null);
+                        document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithCallback.bind(this, data, callback, editType, null);
                         document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.cancelEdit.bind(this, callback);
                         document.getElementById('isLiteral').style.display = 'none';
                         document.getElementById('network-popUp').style.display = 'block';
@@ -84,20 +88,64 @@ __$__.Testize = {
                 },
                 editEdge: function(data, callback) {
                     let origEdge = __$__.Testize.network.network.body.data.edges.get(data.id);
-                    if (origEdge.from.slice(0, 11) === '__Variable-' && data.from.slice(0, 11) !== '__Variable-' || data.from === '__RectForVariable__' || data.to === '__RectForVariable__') {
+                    if (origEdge.from !== data.from || origEdge.from.slice(0, 11) === '__Variable-' && data.from.slice(0, 11) !== '__Variable-' || data.from === '__RectForVariable__' || data.to === '__RectForVariable__') {
                         callback(null);
                     } else {
+                        if (data.from.slice(0, 11) === '__Variable-') {
+                            let editType = 'editVariableReference';
+                            __$__.Testize.saveMouseOperation(editType, {
+                                oldTo: origEdge.to,
+                                newTo: data.to,
+                                label: data.label || __$__.Testize.network.network.body.data.edges.get(data.id).label
+                            });
+                        } else {
+                            let editType = 'editEdgeReference';
+                            __$__.Testize.saveMouseOperation(editType, {
+                                from: data.from,
+                                oldTo: origEdge.to,
+                                newTo: data.to,
+                                label: data.label || __$__.Testize.network.network.body.data.edges.get(data.id).label
+                            });
+                        }
                         callback(data);
                     }
                 },
                 deleteNode: function(data, callback) {
+                    let editType = 'deleteNode';
                     if (data.nodes.indexOf('__RectForVariable__') >= 0) {
                         callback(null);
                     } else {
+                        __$__.Testize.saveMouseOperation(editType, {
+                            editType: editType,
+                            id: data.nodes[0]
+                        });
                         callback(data);
                     }
                 },
-                deleteEdge: true
+                deleteEdge: function(data, callback) {
+                    let edgeInfo = __$__.Testize.network.network.body.data.edges.get(data.edges[0]);
+                    if (edgeInfo) {
+                        if (edgeInfo.from.slice(0, 11) === '__Variable-') {
+                            let editType = 'deleteVariable';
+                            __$__.Testize.saveMouseOperation(editType, {
+                                label: edgeInfo.label,
+                                to: edgeInfo.to
+                            });
+                            callback(data);
+                            __$__.Testize.network.network.body.data.nodes.remove(edgeInfo.from);
+                        } else {
+                            let editType = 'deleteEdge';
+                            __$__.Testize.saveMouseOperation(editType, {
+                                label: edgeInfo.label,
+                                from: edgeInfo.from,
+                                to: edgeInfo.to
+                            });
+                            callback(data);
+                        }
+                    } else {
+                        callback(null);
+                    }
+                }
             }
         }
     },
@@ -124,7 +172,9 @@ __$__.Testize = {
     },
 
 
+    // ==================================================================================
     // ============== start: manipulation callback for constructing a test ==============
+    // ==================================================================================
 
 
     clickEvent(param) {
@@ -148,10 +198,11 @@ __$__.Testize = {
             // edit label of the node
             let nodeID = param.nodes[0];
             let node = __$__.Testize.network.network.body.data.nodes.get(nodeID);
+            let editType = 'editNode';
 
             document.getElementById('operation').innerHTML = "Edit Node";
             document.getElementById('node-label').value = node.label;
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.nodes, nodeID);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, editType, nodeID);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'inline';
             document.getElementById('checkboxForLiteral').checked = (node.color && node.color.border === 'white');
@@ -161,13 +212,14 @@ __$__.Testize = {
 
         // double click edge
         else if (param.edges.length) {
-            // edit label of the node
+            // edit label of the edge
             let edgeID = param.edges[0];
             let edge = __$__.Testize.network.network.body.data.edges.get(edgeID);
+            let editType = (edge.from.slice(0, 11) === '__Variable-') ? 'editVariableLabel' : 'editEdgeLabel';
 
             document.getElementById('operation').innerHTML = "Edit Edge";
             document.getElementById('node-label').value = edge.label || "";
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.edges, edgeID);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.edges, editType, edgeID);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'none';
             document.getElementById('network-popUp').style.display = 'block';
@@ -180,7 +232,7 @@ __$__.Testize = {
 
             document.getElementById('operation').innerHTML = "Add Node";
             document.getElementById('node-label').value = '';
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveData.bind(this, __$__.Testize.network.network.body.data.nodes, null);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, 'addNode', null);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'inline';
             document.getElementById('checkboxForLiteral').checked = false;
@@ -205,54 +257,12 @@ __$__.Testize = {
     },
 
 
-    saveDataWithCallback(data, callback, additionalInfo = null) {
-        if (document.getElementById('isLiteral').style.display !== 'none') {
-            // node
-            data.id = additionalInfo || '__temp' + ++__$__.Testize.testNodeCounter;
-            data.isLiteral = document.getElementById('checkboxForLiteral').checked;
-            if (data.isLiteral) {
-                data.color = __$__.Testize.makeLiteralColor();
-            }
-        } else if (additionalInfo) {
-            // if a variable edge is added or edited
-            let variableName = document.getElementById('node-label').value;
-            let invisibleNodeID = '__Variable-' + variableName;
-
-            // if the variable is already declared
-            if (__$__.Testize.network.network.body.data.nodes.get(invisibleNodeID)) {
-                let variableEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === invisibleNodeID);
-                __$__.Testize.network.network.body.data.edges.update({
-                    id: variableEdge.id,
-                    to: data.to
-                });
-            } else {
-                __$__.Testize.network.network.body.data.nodes.add({
-                    id: invisibleNodeID,
-                    label: variableName,
-                    hidden: true
-                });
-                __$__.Testize.network.network.body.data.edges.add({
-                    from: invisibleNodeID,
-                    to: data.to,
-                    color: (variableName === 'return') ? 'black' : 'seagreen',
-                    label: variableName,
-                    length: 30
-                });
-            }
-            __$__.Testize.clearPopUp();
-            callback(null);
-            return;
-        }
-        data.label = document.getElementById('node-label').value;
-        __$__.Testize.clearPopUp();
-        callback(data);
-    },
-
-
-    saveData(dataSet, nodeID = null) {
+    saveDataWithoutCallback(dataSet, editType, id = null) {
         let color = null, type = null;
-        if (document.getElementById('isLiteral').style.display !== 'none') {
+        if (editType === 'addNode' || editType === 'editNode') {
             // the case of node
+            let nodeID = id || '__temp' + ++__$__.Testize.testNodeCounter;
+            let label = document.getElementById('node-label').value;
             let isLiteral = document.getElementById('checkboxForLiteral').checked;
             if (isLiteral) {
                 color = __$__.Testize.makeLiteralColor();
@@ -260,33 +270,314 @@ __$__.Testize = {
             }
 
             dataSet.update({
-                id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
-                label: document.getElementById('node-label').value,
+                id: nodeID,
+                label: label,
                 color: color,
                 type: type,
                 isLiteral: isLiteral
             });
+
+            __$__.Testize.saveMouseOperation(editType, {
+                editType: editType,
+                id: nodeID,
+                label: label,
+                isLiteral: isLiteral,
+                type: type
+            });
         } else {
             // the case of edge
-            let edgeID = nodeID;
-            color = (document.getElementById('node-label').value === 'return')
-                ? 'black'
-                : (dataSet.get(edgeID).from.slice(0, 11) === '__Variable-')
-                    ? 'seagreen'
-                    : null;
-            dataSet.update({
-                id: nodeID || '__temp' + ++__$__.Testize.testNodeCounter,
-                label: document.getElementById('node-label').value,
-                color: color
-            });
+            let edgeID = id;
+            let edgeInfo = dataSet.get(edgeID);
+            let label = document.getElementById('node-label').value;
+            color = null;
+
+            if (editType === 'editVariableLabel') {
+                // edit variable name
+                let origVariableNodeID = edgeInfo.from;
+                let nodeDataSet = __$__.Testize.network.network.body.data.nodes;
+                let node = nodeDataSet.get(edgeInfo.from);
+                let newNodeID = '__Variable-' + label;
+                color = (label === 'return') ? 'black' : 'seagreen';
+
+                if (origVariableNodeID !== newNodeID) {
+                    __$__.Testize.saveMouseOperation(editType, {
+                        to: edgeInfo.to,
+                        oldLabel: edgeInfo.label,
+                        newLabel: label
+                    });
+                    nodeDataSet.update({
+                        id: newNodeID,
+                        label: label,
+                        hidden: true
+                    });
+                    dataSet.update({
+                        id: edgeID,
+                        label: label,
+                        color: color,
+                        from: newNodeID
+                    });
+                    nodeDataSet.remove(origVariableNodeID);
+                }
+            } else {
+                // edit edge label
+                __$__.Testize.saveMouseOperation(editType, {
+                    from: edgeInfo.from,
+                    to: edgeInfo.to,
+                    oldLabel: edgeInfo.label,
+                    newLabel: label
+                });
+                dataSet.update({
+                    id: edgeID,
+                    label: label,
+                    color: color
+                });
+            }
         }
         __$__.Testize.clearPopUp();
     },
 
 
-    // ====================================== end =======================================
+    saveDataWithCallback(data, callback, editType) {
+        let saveOperationData;
+        switch (editType) {
+            case 'addNode': {
+                data.id = '__temp' + ++__$__.Testize.testNodeCounter;
+                data.isLiteral = document.getElementById('checkboxForLiteral').checked;
+                if (data.isLiteral) {
+                    data.color = __$__.Testize.makeLiteralColor();
+                    data.type = 'string';
+                }
+                saveOperationData = {
+                    editType: editType,
+                    id: data.id,
+                    isLiteral: data.isLiteral,
+                    type: data.type
+                };
+                break;
+            }
+            case 'editNode': {
+                break;
+            }
+            case 'deleteNode': {
+                break;
+            }
+            case 'addEdge': {
+                saveOperationData = {
+                    editType: editType,
+                    from: data.from,
+                    to: data.to
+                };
+                break;
+            }
+            case 'editEdgeReference': {
+                break;
+            }
+            case 'editEdgeLabel': {
+                break;
+            }
+            case 'deleteEdge': {
+                break;
+            }
+            case 'addVariable': {
+                // if a variable edge is added or edited
+                let variableName = document.getElementById('node-label').value;
+                let invisibleNodeID = '__Variable-' + variableName;
 
+                // if the variable is already defined and already refers to an object
+                if (__$__.Testize.network.network.body.data.nodes.get(invisibleNodeID)) {
+                    let variableEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === invisibleNodeID);
+                    // this operation type is 'editVariableReference'
+                    __$__.Testize.saveMouseOperation('editVariableReference', {
+                        oldTo: variableEdge.to,
+                        newTo: data.to,
+                        label: variableName
+                    });
+
+                    __$__.Testize.network.network.body.data.edges.update({
+                        id: variableEdge.id,
+                        to: data.to
+                    });
+                } else {
+                    __$__.Testize.network.network.body.data.nodes.add({
+                        id: invisibleNodeID,
+                        label: variableName,
+                        hidden: true
+                    });
+                    __$__.Testize.network.network.body.data.edges.add({
+                        from: invisibleNodeID,
+                        to: data.to,
+                        color: (variableName === 'return') ? 'black' : 'seagreen',
+                        label: variableName,
+                        length: 30
+                    });
+
+                    __$__.Testize.saveMouseOperation(editType, {
+                        to: data.to,
+                        label: variableName
+                    });
+                }
+                __$__.Testize.clearPopUp();
+                callback(null);
+                return;
+            }
+            case 'editVariableReference': {
+                break;
+            }
+            case 'editVariableLabel': {
+                break;
+            }
+            case 'deleteVariable': {
+                break;
+            }
+        }
+        data.label = document.getElementById('node-label').value;
+        saveOperationData.label = data.label;
+        __$__.Testize.clearPopUp();
+        __$__.Testize.saveMouseOperation(editType, saveOperationData);
+        callback(data);
+    },
+
+
+    /**
+     * @param {string} editType
+     * @param {Object} data
+     *
+     * - add    Node       : id, label, isLiteral, (optional) type
+     * - edit   Node(Label): id, label, isLiteral, (optional) type
+     * - delete Node       : id
+     * - add    Edge       : from, to, label
+     * - edit   Edge(Refer): from, oldTo, newTo, label
+     * - edit   Edge(Label): from, to, oldLabel, newLabel
+     * - delete Edge       : from, to, label
+     * - add    Variable       : to, label
+     * - edit   Variable(Refer): oldTo, newTo, label
+     * - edit   Variable(Label): to, oldLabel, newLabel
+     * - delete Variable       : to, label
+     */
+    saveMouseOperation(editType, data) {
+        let ope;
+        switch (editType) {
+            case 'addNode': {
+                ope = {
+                    editType: editType,
+                    id: data.id,
+                    label: data.label,
+                    isLiteral: data.isLiteral,
+                    type: data.type
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'editNode': {
+                ope = {
+                    editType: editType,
+                    id: data.id,
+                    label: data.label,
+                    isLiteral: data.isLiteral,
+                    type: data.type
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'deleteNode': {
+                ope = {
+                    editType: editType,
+                    id: data.id
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'addEdge': {
+                ope = {
+                    editType: editType,
+                    from: data.from,
+                    to: data.to,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'editEdgeReference': {
+                ope = {
+                    editType: editType,
+                    from: data.from,
+                    // to: data.to,
+                    oldTo: data.oldTo,
+                    newTo: data.newTo,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'editEdgeLabel': {
+                ope = {
+                    editType: editType,
+                    from: data.from,
+                    to: data.to,
+                    oldLabel: data.oldLabel,
+                    newLabel: data.newLabel
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'deleteEdge': {
+                ope = {
+                    editType: editType,
+                    from: data.from,
+                    to: data.to,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'addVariable': {
+                ope = {
+                    editType: editType,
+                    to: data.to,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'editVariableReference': {
+                ope = {
+                    editType: editType,
+                    oldTo: data.oldTo,
+                    newTo: data.newTo,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'editVariableLabel': {
+                ope = {
+                    editType: editType,
+                    to: data.to,
+                    oldLabel: data.oldLabel,
+                    newLabel: data.newLabel
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+            case 'deleteVariable': {
+                ope = {
+                    editType: editType,
+                    to: data.to,
+                    label: data.label
+                };
+                __$__.Testize.focusedTestOperations.push(ope);
+                break;
+            }
+        }
+        console.log(...__$__.Testize.focusedTestOperations);
+    },
+
+
+    // ==================================================================================
+    // ====================================== end =======================================
+    // ==================================================================================
     // ================== start: invoked by __$__.Update.CodeWithCP =====================
+    // ==================================================================================
 
 
     /**
@@ -627,7 +918,9 @@ __$__.Testize = {
     },
 
 
+    // ======================================================================
     // ============================== end ===================================
+    // ======================================================================
 
 
     cancelEdit(callback) {
@@ -717,8 +1010,13 @@ __$__.Testize = {
             });
         })();
         Windows.addObserver({
-            onResize: function (a, win) {
+            onResize() {
                 networkInfo.network.redraw();
+            },
+            onClose() {
+
+
+                __$__.Testize.focusedTestOperations = undefined;
             }
         });
     },
@@ -822,9 +1120,6 @@ __$__.Testize = {
     },
 
 
-
-
-
     openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         if (!__$__.win) {
@@ -840,11 +1135,13 @@ __$__.Testize = {
             let checkpointIDs = __$__.Context.CheckPointIDAroundFuncCall[callLabel];
             let context_sensitiveID = __$__.Testize.selectedCallInfo.context_sensitiveID;
             if (modified) {
-                let testData = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+                let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+                let testData = testInfo.testData;
+                __$__.Testize.focusedTestOperations = testInfo.operations;
                 graph = {
                     nodes: testData.nodes,
                     edges: testData.edges
-                }
+                };
             } else {
                 graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
                 graph = __$__.Testize.duplicateGraph(graph);
@@ -866,7 +1163,8 @@ __$__.Testize = {
                     },
                     shape: 'box',
                     physics: false
-                })
+                });
+                __$__.Testize.focusedTestOperations = [];
             }
         } catch (e) {
             graph = {nodes: [], edges: []};
@@ -1014,9 +1312,11 @@ __$__.Testize = {
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID] = {
             testData: expectedGraphData,
-            passed: false
+            passed: false,
+            operations: __$__.Testize.focusedTestOperations
         };
 
+        __$__.Testize.focusedTestOperations = undefined;
         __$__.Testize.selectedCallInfo = {label: undefined, context_sensitiveID: undefined};
     },
 
