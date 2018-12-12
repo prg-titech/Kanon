@@ -369,12 +369,6 @@ __$__.Testize = {
                 break;
             }
             case 'addEdge': {
-                saveOperationData = {
-                    editType: editType,
-                    label: data.label,
-                    from: data.from,
-                    to: data.to
-                };
                 let sameEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === data.from && edge.label === data.label);
                 if (sameEdge) {
                     __$__.Testize.network.network.body.data.edges.remove(sameEdge.id);
@@ -384,9 +378,22 @@ __$__.Testize = {
                         to: data.to
                     });
                     __$__.Testize.clearPopUp();
-                    __$__.Testize.saveMouseOperation('editEdgeReference', saveOperationData);
+                    __$__.Testize.saveMouseOperation('editEdgeReference', {
+                        editType: editType,
+                        label: data.label,
+                        from: data.from,
+                        oldTo: sameEdge.to,
+                        newTo: data.to
+                    });
                     callback(null);
                     return;
+                } else {
+                    saveOperationData = {
+                        editType: editType,
+                        label: data.label,
+                        from: data.from,
+                        to: data.to
+                    };
                 }
                 break;
             }
@@ -599,29 +606,29 @@ __$__.Testize = {
     // ==================================================================================
 
 
-    matching(runtimeGraph, testGraph, returnObjectID = undefined) {
-        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(runtimeGraph.nodes, runtimeGraph.edges, returnObjectID);
+    matching(actualGraph, expectedGraph, returnObjectID = undefined) {
+        let objectDuplication_actual = __$__.Testize.constructObjectForTraverse(actualGraph.nodes, actualGraph.edges, returnObjectID);
 
-        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(testGraph.nodes, testGraph.edges);
+        let objectDuplication_expected = __$__.Testize.constructObjectForTraverse(expectedGraph.nodes, expectedGraph.edges);
 
-        let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
+        let referencedObjects_runtime = Object.keys(objectDuplication_actual);
 
         return referencedObjects_runtime.length !== 0 && referencedObjects_runtime.every(function (variableName, idx, arr) {
-            let obj_runtime = objectDuplication_runtime[variableName];
-            let obj_test    = objectDuplication_test[variableName];
+            let obj_actual   = objectDuplication_actual[variableName];
+            let obj_expected = objectDuplication_expected[variableName];
 
-            if (obj_test) {
-                let result = __$__.Testize.traverseSimultaneously(obj_runtime, obj_test);
+            if (obj_expected) {
+                let result = __$__.Testize.traverseSimultaneously(obj_actual, obj_expected);
 
                 if (!result) return false;
 
-                delete objectDuplication_runtime[variableName];
-                delete objectDuplication_test[variableName];
+                delete objectDuplication_actual[variableName];
+                delete objectDuplication_expected[variableName];
             } else {
                 return false;
             }
 
-            return idx !== arr.length - 1 || Object.keys(objectDuplication_test).length === 0;
+            return idx !== arr.length - 1 || Object.keys(objectDuplication_expected).length === 0;
         });
     },
 
@@ -635,20 +642,20 @@ __$__.Testize = {
      *
      * @return {boolean} result
      */
-    checkRuntimeGraph(objects, probe, retObj, callLabel, context_sensitiveID) {
+    checkActualGraph(objects, probe, retObj, callLabel, context_sensitiveID) {
         if (!__$__.Testize.hasTest(callLabel, context_sensitiveID))
             return true;
 
 
-        let runtimeGraph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        let actualGraph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-        let testGraph = {
+        let expectedGraph = {
             nodes: Object.values(testInfo.testData.nodes._data),
             edges: Object.values(testInfo.testData.edges._data)
         };
         let returnObjectID = (retObj && typeof retObj === 'object' && retObj.__id) ? retObj.__id : undefined;
 
-        let result = __$__.Testize.matching(runtimeGraph, testGraph, returnObjectID);
+        let result = __$__.Testize.matching(actualGraph, expectedGraph, returnObjectID);
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = result;
         return result;
@@ -839,7 +846,7 @@ __$__.Testize = {
      * If the test passed, this function returns an empty object.
      */
     testAndOverride(objects, probe, retObj, callLabel, context_sensitiveID, errorOccurred, classes) {
-        let passed = !errorOccurred && __$__.Testize.checkRuntimeGraph(objects, probe, retObj, callLabel, context_sensitiveID);
+        let passed = !errorOccurred && __$__.Testize.checkActualGraph(objects, probe, retObj, callLabel, context_sensitiveID);
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = passed;
 
@@ -856,28 +863,28 @@ __$__.Testize = {
     },
 
 
-    traverseSimultaneously(obj_runtime, obj_test) {
-        let info_runtime = obj_runtime.__info;
-        let info_test = obj_test.__info;
+    traverseSimultaneously(obj_actual, obj_expected) {
+        let info_actual = obj_actual.__info;
+        let info_expected = obj_expected.__info;
 
-        if (info_test.id.slice(0, 6) === '__temp') info_test.id = info_runtime.id;
-        let isMatching = (info_runtime.prop.length === info_test.prop.length)
-                      && (info_runtime.id          === info_test.id)
-                      && (info_runtime.label       === info_test.label)
-                      && (!info_runtime.literal    === !info_test.literal);
+        if (info_expected.id.slice(0, 6) === '__temp') info_expected.id = info_actual.id;
+        let isMatching = (info_actual.prop.length === info_expected.prop.length)
+                      && (info_actual.id          === info_expected.id)
+                      && (info_actual.label       === info_expected.label)
+                      && (!info_actual.literal    === !info_expected.literal);
 
         if (isMatching) {
             // check recursively
-            if (!info_runtime.checked) {
-                info_runtime.checked = true;
-                info_test.checked = true;
+            if (!info_actual.checked) {
+                info_actual.checked = true;
+                info_expected.checked = true;
 
-                let result = info_runtime.prop.every(prop => {
-                    let nextObj_runtime = obj_runtime[prop];
-                    let nextObj_test = obj_test[prop];
-                    if (!nextObj_test) return false;
+                let result = info_actual.prop.every(prop => {
+                    let nextObj_actual   = obj_actual[prop];
+                    let nextObj_expected = obj_expected[prop];
+                    if (!nextObj_expected) return false;
 
-                    let result = __$__.Testize.traverseSimultaneously(nextObj_runtime, nextObj_test);
+                    let result = __$__.Testize.traverseSimultaneously(nextObj_actual, nextObj_expected);
 
                     return result;
                 });
@@ -966,8 +973,14 @@ __$__.Testize = {
             let newPrecond = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
             if (testInfo.precond) {
                 if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
-                    __$__.Testize.precond = newPrecond;
-                    __$__.Testize.tryReconstructingTest(newPrecond, callLabel, context_sensitiveID);
+                    testInfo.precond = newPrecond;
+                    let newTestGraph = __$__.Testize.tryReconstructingTest(newPrecond, callLabel, context_sensitiveID);
+                    if (newTestGraph) {
+                        testInfo.testData = {
+                            nodes: new vis.DataSet(newTestGraph.nodes),
+                            edges: new vis.DataSet(newTestGraph.edges)
+                        };
+                    }
                 }
             } else {
                 testInfo.precond = newPrecond;
@@ -983,10 +996,12 @@ __$__.Testize = {
      */
     tryReconstructingTest(precond, callLabel, context_sensitiveID) {
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        let testGraph = jQuery.extend(true, {}, precond);
         let operations = testInfo.operations;
-        for (let i = 0; i < operations; i++) {
-            __$__.Testize.applyOperation(precond, operations[i]);
+        for (let i = 0; i < operations.length; i++) {
+            __$__.Testize.applyOperation(testGraph, operations[i]);
         }
+        return testGraph;
     },
 
 
@@ -1010,46 +1025,189 @@ __$__.Testize = {
         switch (ope.editType) {
             case 'addNode': {
                 // id, label, isLiteral (optional) type
+                let newNode = {
+                    id: ope.id,
+                    label: ope.label,
+                    isLiteral: ope.isLiteral,
+                    type: ope.type
+                };
+                if (ope.isLiteral) newNode.color = __$__.Testize.makeLiteralColor();
+                if (!graph.nodes.find(node => node.id === ope.id)) {
+                    graph.nodes.push(newNode);
+                } else {
+                    // error
+                    throw new Error('Cannot reconstruct');
+                }
                 break;
             }
             case 'editNode': {
                 // id, label, isLiteral (optional) type
+                let nodeToEdit = graph.nodes.find(node => node.id === ope.id);
+                if (nodeToEdit) {
+                    nodeToEdit.label = ope.label;
+                    nodeToEdit.isLiteral = ope.isLiteral;
+                    nodeToEdit.type = ope.type;
+                    nodeToEdit.color = ope.isLiteral ? null : __$__.Testize.makeLiteralColor();
+                } else {
+                    // error
+                }
                 break;
             }
             case 'deleteNode': {
                 // id
+                let i = 0;
+                while (i < graph.nodes.length) {
+                    let node = graph.nodes[i];
+                    if (node.id === ope.id) {
+                        graph.nodes.splice(i, 1);
+                        i = -1;
+                        break;
+                    } else {
+                        i++;
+                    }
+                }
+                if (i === -1) {
+                    i = 0;
+                    while (i < graph.edges.length) {
+                        let edge = graph.edges[i];
+
+                        if (edge.from === ope.id || edge.to === ope.id) graph.edges.splice(i, 1);
+                        else i++;
+                    }
+                }
+
                 break;
             }
             case 'addEdge': {
                 // from, to, label
+                // memo: How should Kanon do when the from-node already has the property?
+                let checked = {from: false, to: false};
+                graph.nodes.forEach(node => {
+                    checked.from = checked.from || node.id === ope.from;
+                    checked.to = checked.to || node.id === ope.to;
+                });
+                if (checked.from && checked.to) {
+                    graph.edges.push({
+                        from: ope.from,
+                        to: ope.to,
+                        label: ope.label
+                    });
+                } else {
+                    // error(?)
+                }
                 break;
             }
             case 'editEdgeReference': {
                 // from, oldTo, newTo, label
+                let edgeToEdit = graph.edges.find(edge => edge.from === ope.from && edge.to === ope.oldTo && edge.label === ope.label);
+                if (edgeToEdit) {
+                    edgeToEdit.to = ope.newTo;
+                } else {
+                    // error
+                }
                 break;
             }
             case 'editEdgeLabel': {
                 // from, to, oldLabel, newLabel
+                let edgeToEdit = graph.edges.find(edge => edge.from === ope.from && edge.to === ope.to && edge.label === ope.oldLabel);
+                if (edgeToEdit) {
+                    edgeToEdit.label = ope.newLabel;
+                } else {
+                    // error
+                }
                 break;
             }
             case 'deleteEdge': {
                 // from, to, label
+                let i = 0;
+                while (i < graph.edges.length) {
+                    let edge = graph.edges[i];
+                    if (edge.from === ope.from && edge.to === ope.to && edge.label === ope.label) {
+                        graph.edges.splice(i, 1);
+                        break;
+                    } else {
+                        i++;
+                    }
+                }
                 break;
             }
             case 'addVariable': {
                 // to, label
-                return;
+                // memo: How should Kanon do when the from-node already has the property?
+                let hiddenNodeID = '__Variable-' + ope.label;
+                let referredNode = graph.nodes.find(node => node.id === ope.id);
+                let variableEdge = graph.edges.find(edge => edge.from === hiddenNodeID);
+                if (referredNode) {
+                    if (variableEdge) {
+                        variableEdge.to = ope.to;
+                    } else {
+                        graph.nodes.push({
+                            id: hiddenNodeID,
+                            label: ope.label,
+                            hidden: true
+                        });
+                        graph.edges.push({
+                            from: hiddenNodeID,
+                            to: ope.to,
+                            label: ope.label,
+                            color: (ope.label === 'return') ? 'black' : 'seagreen'
+                        });
+                    }
+                } else {
+                    // error
+                }
+                break;
             }
             case 'editVariableReference': {
                 // oldTo, newTo, label
+                let variableNodeID = '__Variable-' + ope.label;
+                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID && edge.to === ope.oldTo && edge.label === ope.label);
+                if (edgeToEdit) {
+                    edgeToEdit.to = ope.newTo;
+                } else {
+                    // error
+                }
                 break;
             }
             case 'editVariableLabel': {
                 // to, oldLabel, newLabel
+                let variableNodeID = '__Variable-' + ope.oldLabel;
+                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID && edge.to === ope.to && edge.label === ope.oldLabel);
+                if (edgeToEdit) {
+                    edgeToEdit.label = ope.newLabel;
+                    let variableNode = graph.nodes.find(node => node.id === variableNodeID);
+                    variableNode.label = ope.newLabel;
+                    variableNode.id = '__Variable-' + ope.newLabel;
+                } else {
+                    // error
+                }
                 break;
             }
             case 'deleteVariable': {
                 // to, label
+                let variableNodeID = '__Variable-' + ope.label;
+                let i = 0;
+                while (i < graph.nodes.length) {
+                    let node = graph.nodes[i];
+                    if (node.id === variableNodeID) {
+                        graph.nodes.splice(i, 1);
+                        i = -1;
+                        break;
+                    }
+                    else i++;
+                }
+                if (i === -1) {
+                    i = 0;
+                    while (i < graph.edges.length) {
+                        let edge = graph.edges[i];
+                        if (edge.from === variableNodeID && edge.label === ope.label) {
+                            graph.edges.splice(i, 1);
+                            i === -1;
+                            break;
+                        }
+                        else i++;
+                    }
+                }
                 break;
             }
         }
