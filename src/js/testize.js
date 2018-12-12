@@ -569,7 +569,7 @@ __$__.Testize = {
                 break;
             }
         }
-        console.log(...__$__.Testize.focusedTestOperations);
+        // console.log(...__$__.Testize.focusedTestOperations);
     },
 
 
@@ -580,29 +580,14 @@ __$__.Testize = {
     // ==================================================================================
 
 
-    /**
-     * @param {Array} objects
-     * @param {Object} probe
-     * @param {Object} retObj
-     * @param {string} callLabel
-     * @param {string} context_sensitiveID
-     *
-     * @return {boolean} result
-     */
-    matching(objects, probe, retObj, callLabel, context_sensitiveID) {
-        if (!__$__.Testize.hasTest(callLabel, context_sensitiveID))
-            return true;
+    matching(runtimeGraph, testGraph, returnObjectID = undefined) {
+        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(runtimeGraph.nodes, runtimeGraph.edges, returnObjectID);
 
-        let graph_runtime = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
-        let returnObjectID = (retObj && typeof retObj === 'object' && retObj.__id) ? retObj.__id : undefined;
-        let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(graph_runtime.nodes, graph_runtime.edges, returnObjectID);
-
-        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testInfo.testData.nodes._data), Object.values(testInfo.testData.edges._data));
+        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testGraph.nodes._data), Object.values(testGraph.edges._data));
 
         let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
-        let result = referencedObjects_runtime.length !== 0;
-        result = result && referencedObjects_runtime.every(function (variableName, idx, arr) {
+
+        return referencedObjects_runtime.length !== 0 && referencedObjects_runtime.every(function (variableName, idx, arr) {
             let obj_runtime = objectDuplication_runtime[variableName];
             let obj_test    = objectDuplication_test[variableName];
 
@@ -619,6 +604,28 @@ __$__.Testize = {
 
             return idx !== arr.length - 1 || Object.keys(objectDuplication_test).length === 0;
         });
+    },
+
+
+    /**
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {Object} retObj
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     *
+     * @return {boolean} result
+     */
+    checkRuntimeGraph(objects, probe, retObj, callLabel, context_sensitiveID) {
+        if (!__$__.Testize.hasTest(callLabel, context_sensitiveID))
+            return true;
+
+
+        let runtimeGraph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        let testGraph = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+        let returnObjectID = (retObj && typeof retObj === 'object' && retObj.__id) ? retObj.__id : undefined;
+
+        let result = __$__.Testize.matching(runtimeGraph, testGraph, returnObjectID);
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = result;
         return result;
@@ -809,7 +816,7 @@ __$__.Testize = {
      * If the test passed, this function returns an empty object.
      */
     testAndOverride(objects, probe, retObj, callLabel, context_sensitiveID, errorOccurred, classes) {
-        let passed = !errorOccurred && __$__.Testize.matching(objects, probe, retObj, callLabel, context_sensitiveID);
+        let passed = !errorOccurred && __$__.Testize.checkRuntimeGraph(objects, probe, retObj, callLabel, context_sensitiveID);
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = passed;
 
@@ -918,9 +925,45 @@ __$__.Testize = {
     },
 
 
-    // ======================================================================
-    // ============================== end ===================================
-    // ======================================================================
+    /**
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     *
+     * This function is called before executing a function call which has a test.
+     * First, check whether the runtime graph matches the stored precondition graph.
+     * Second, if doesn't match, execute the following two steps.
+     *   - update the precondition graph of this function call
+     *   - reconstruct the test of this function call by using operations when the test is constructed by mouse operation
+     */
+    checkPrecondGraph(objects, probe, callLabel, context_sensitiveID) {
+        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        let newPrecond = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        if (testInfo.precond) {
+            if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
+                __$__.Testize.precond = newPrecond;
+                __$__.Testize.tryReconstructingTest(newPrecond, callLabel, context_sensitiveID);
+            }
+        } else {
+            testInfo.precond = newPrecond;
+        }
+    },
+
+
+    /**
+     * @param {Object} precond (graph)
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     */
+    tryReconstructingTest(precond, callLabel, context_sensitiveID) {
+
+    },
+
+
+    // ==================================================================================
+    // ====================================== end =======================================
+    // ==================================================================================
 
 
     cancelEdit(callback) {

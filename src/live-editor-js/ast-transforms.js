@@ -202,6 +202,7 @@ __$__.ASTTransforms = {
      *     var __retObj, __hasTest, __errorOccurred, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
      *     try {
      *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
+     *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *         __retObj = __callee(arg1, arg2, ...);
      *         __errorOccurred = false;
      *     } catch (e) {
@@ -219,10 +220,12 @@ __$__.ASTTransforms = {
      *                 }
      *             })
      *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
-     *             let __variableNames = Object.keys(__overrideInfo);
+     *             Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+     *             let __variableNames = Object.keys(__overrideInfo.variableReferences);
+     *             // change variable references
      *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
      *                 let __variableName = __variableNames[__i__];
-     *                 let __object = __overrideInfo[__variableName];
+     *                 let __object = __overrideInfo.variableReferences[__variableName];
      *                 eval(__variableName + ' = __object');
      *             }
      *         }
@@ -256,6 +259,7 @@ __$__.ASTTransforms = {
      *     var __retObj, __hasTest, __errorOccurred, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
      *     try {
      *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
+     *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *         __retObj = __obj.prop(arg1, arg2, ...);
      *         __errorOccurred = false;
      *     } catch (e) {
@@ -273,15 +277,11 @@ __$__.ASTTransforms = {
      *                 }
      *             })
      *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
-     *             // TODO start
      *             Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
      *             let __variableNames = Object.keys(__overrideInfo.variableReferences);
-     *             // TODO end
-     *             let __variableNames = Object.keys(__overrideInfo);
      *             // change variable references
      *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
      *                 let __variableName = __variableNames[__i__];
-     *                 // TODO
      *                 let __object = __overrideInfo.variableReferences[__variableName];
      *                 eval(__variableName + ' = __object');
      *             }
@@ -440,6 +440,7 @@ __$__.ASTTransforms = {
                                      *
                                      * try {
                                      *     __hasTest = __$__.Testize.hasTest(...);
+                                     *     if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
                                      *     __retObj = func();
                                      *    __errorOccurred = false;
                                      * } catch (e) {
@@ -485,6 +486,50 @@ __$__.ASTTransforms = {
                                                         [
                                                             b.Literal(label),
                                                             b.Identifier('__context_sensitiveID')
+                                                        ]
+                                                    )
+                                                )
+                                            ),
+                                            b.IfStatement(
+                                                b.Identifier('__hasTest'),
+                                                b.ExpressionStatement(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('checkPrecondGraph')
+                                                        ),
+                                                        [
+                                                            b.Identifier('__objs'),
+                                                            b.ObjectExpression(
+                                                                info.vars.map(function(val) {
+                                                                    return b.Property(
+                                                                        b.Identifier(val),
+                                                                        b.ConditionalExpression(
+                                                                            b.BinaryExpression(
+                                                                                b.UnaryExpression(
+                                                                                    'typeof',
+                                                                                    b.Identifier(val),
+                                                                                    true
+                                                                                ),
+                                                                                '!==',
+                                                                                b.Literal('string')
+                                                                            ),
+                                                                            b.Identifier(val),
+                                                                            b.Identifier("undefined")
+                                                                        )
+                                                                    );
+                                                                }).concat([
+                                                                    b.Property(
+                                                                        b.Identifier('this'),
+                                                                        b.Identifier('this')
+                                                                    )
+                                                                ])
+                                                            ),
+                                                            b.Literal(label),
+                                                            b.Identifier('__context_sensitiveID'),
                                                         ]
                                                     )
                                                 )
