@@ -337,8 +337,14 @@ __$__.Testize = {
     },
 
 
+    /**
+     * @param {Object} data
+     * @param {Function} callback
+     * @param {string} editType
+     */
     saveDataWithCallback(data, callback, editType) {
         let saveOperationData;
+        data.label = document.getElementById('node-label').value;
         switch (editType) {
             case 'addNode': {
                 data.id = '__temp' + ++__$__.Testize.testNodeCounter;
@@ -350,6 +356,7 @@ __$__.Testize = {
                 saveOperationData = {
                     editType: editType,
                     id: data.id,
+                    label: data.label,
                     isLiteral: data.isLiteral,
                     type: data.type
                 };
@@ -364,9 +371,23 @@ __$__.Testize = {
             case 'addEdge': {
                 saveOperationData = {
                     editType: editType,
+                    label: data.label,
                     from: data.from,
                     to: data.to
                 };
+                let sameEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === data.from && edge.label === data.label);
+                if (sameEdge) {
+                    __$__.Testize.network.network.body.data.edges.remove(sameEdge.id);
+                    __$__.Testize.network.network.body.data.edges.add({
+                        label: data.label,
+                        from: data.from,
+                        to: data.to
+                    });
+                    __$__.Testize.clearPopUp();
+                    __$__.Testize.saveMouseOperation('editEdgeReference', saveOperationData);
+                    callback(null);
+                    return;
+                }
                 break;
             }
             case 'editEdgeReference': {
@@ -430,8 +451,6 @@ __$__.Testize = {
                 break;
             }
         }
-        data.label = document.getElementById('node-label').value;
-        saveOperationData.label = data.label;
         __$__.Testize.clearPopUp();
         __$__.Testize.saveMouseOperation(editType, saveOperationData);
         callback(data);
@@ -583,7 +602,7 @@ __$__.Testize = {
     matching(runtimeGraph, testGraph, returnObjectID = undefined) {
         let objectDuplication_runtime = __$__.Testize.constructObjectForTraverse(runtimeGraph.nodes, runtimeGraph.edges, returnObjectID);
 
-        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(Object.values(testGraph.nodes._data), Object.values(testGraph.edges._data));
+        let objectDuplication_test = __$__.Testize.constructObjectForTraverse(testGraph.nodes, testGraph.edges);
 
         let referencedObjects_runtime = Object.keys(objectDuplication_runtime);
 
@@ -622,7 +641,11 @@ __$__.Testize = {
 
 
         let runtimeGraph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
-        let testGraph = __$__.Testize.storedTest[callLabel][context_sensitiveID].testData;
+        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        let testGraph = {
+            nodes: Object.values(testInfo.testData.nodes._data),
+            edges: Object.values(testInfo.testData.edges._data)
+        };
         let returnObjectID = (retObj && typeof retObj === 'object' && retObj.__id) ? retObj.__id : undefined;
 
         let result = __$__.Testize.matching(runtimeGraph, testGraph, returnObjectID);
@@ -938,26 +961,98 @@ __$__.Testize = {
      *   - reconstruct the test of this function call by using operations when the test is constructed by mouse operation
      */
     checkPrecondGraph(objects, probe, callLabel, context_sensitiveID) {
-        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-        let newPrecond = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
-        if (testInfo.precond) {
-            if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
-                __$__.Testize.precond = newPrecond;
-                __$__.Testize.tryReconstructingTest(newPrecond, callLabel, context_sensitiveID);
+        if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
+            let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+            let newPrecond = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+            if (testInfo.precond) {
+                if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
+                    __$__.Testize.precond = newPrecond;
+                    __$__.Testize.tryReconstructingTest(newPrecond, callLabel, context_sensitiveID);
+                }
+            } else {
+                testInfo.precond = newPrecond;
             }
-        } else {
-            testInfo.precond = newPrecond;
         }
     },
 
 
     /**
-     * @param {Object} precond (graph)
+     * @param {Object} precond (graph formatted to vis.js)
      * @param {string} callLabel
      * @param {string} context_sensitiveID
      */
     tryReconstructingTest(precond, callLabel, context_sensitiveID) {
+        let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
+        let operations = testInfo.operations;
+        for (let i = 0; i < operations; i++) {
+            __$__.Testize.applyOperation(precond, operations[i]);
+        }
+    },
 
+
+    /**
+     * @param {Object} graph
+     * @param {Object} ope
+     *
+     * - add    Node       : id, label, isLiteral, (optional) type
+     * - edit   Node(Label): id, label, isLiteral, (optional) type
+     * - delete Node       : id
+     * - add    Edge       : from, to, label
+     * - edit   Edge(Refer): from, oldTo, newTo, label
+     * - edit   Edge(Label): from, to, oldLabel, newLabel
+     * - delete Edge       : from, to, label
+     * - add    Variable       : to, label
+     * - edit   Variable(Refer): oldTo, newTo, label
+     * - edit   Variable(Label): to, oldLabel, newLabel
+     * - delete Variable       : to, label
+     */
+    applyOperation(graph, ope) {
+        switch (ope.editType) {
+            case 'addNode': {
+                // id, label, isLiteral (optional) type
+                break;
+            }
+            case 'editNode': {
+                // id, label, isLiteral (optional) type
+                break;
+            }
+            case 'deleteNode': {
+                // id
+                break;
+            }
+            case 'addEdge': {
+                // from, to, label
+                break;
+            }
+            case 'editEdgeReference': {
+                // from, oldTo, newTo, label
+                break;
+            }
+            case 'editEdgeLabel': {
+                // from, to, oldLabel, newLabel
+                break;
+            }
+            case 'deleteEdge': {
+                // from, to, label
+                break;
+            }
+            case 'addVariable': {
+                // to, label
+                return;
+            }
+            case 'editVariableReference': {
+                // oldTo, newTo, label
+                break;
+            }
+            case 'editVariableLabel': {
+                // to, oldLabel, newLabel
+                break;
+            }
+            case 'deleteVariable': {
+                // to, label
+                break;
+            }
+        }
     },
 
 
