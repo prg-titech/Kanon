@@ -344,15 +344,20 @@ __$__.CallTreeNetwork = {
         // if all tests failed, the value is -1
         // if all tests passed, the value is 1
         // if some tests passed and some tests failed, the value is 0
+        // if at least one test failed to reconstruct, the value is 2
         let testStatus = {};
         Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
             Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
-                if (context_sensitiveID === 'markerInfo') return;
+                if (context_sensitiveID === 'markerInfo' || testStatus[context_sensitiveID] === 2)
+                    return;
+
                 let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
                 if (testStatus[context_sensitiveID] === undefined)
                     testStatus[context_sensitiveID] = testInfo.passed ? 1 : -1;
                 else if (testStatus[context_sensitiveID] > 0 && !testInfo.passed || testStatus[context_sensitiveID] < 0 && testInfo.passed)
                     testStatus[context_sensitiveID] = 0;
+                if (testInfo.testReconstructionFailed)
+                    testStatus[context_sensitiveID] = 2;
             });
         });
         __$__.CallTreeNetwork.testInfo = testStatus;
@@ -368,6 +373,8 @@ __$__.CallTreeNetwork = {
             return '#ff0000';
         } else if (testStatus[contextSensitiveID] === 0) {
             return '#ffff00';
+        } else if (testStatus[contextSensitiveID] === 2) {
+            return '#ff00ff';
         } else {
             return d._children ? 'lightsteelblue' : '#fff';
         }
@@ -377,21 +384,8 @@ __$__.CallTreeNetwork = {
     updateTest() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         if (nodeUpdate) {
-            // if there is no test in the context, the value is undefined
-            // if all tests failed, the value is -1
-            // if all tests passed, the value is 1
-            // if some tests passed and some tests failed, the value is 0
-            let testStatus = {};
-            Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
-                Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
-                    if (context_sensitiveID === 'markerInfo') return;
-                    let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-                    if (testStatus[context_sensitiveID] === undefined)
-                        testStatus[context_sensitiveID] = testInfo.passed ? 1 : -1;
-                    else if (testStatus[context_sensitiveID] > 0 && !testInfo.passed || testStatus[context_sensitiveID] < 0 && testInfo.passed)
-                        testStatus[context_sensitiveID] = 0;
-                });
-            });
+            __$__.CallTreeNetwork.updateTestInfo();
+            let testStatus = __$__.CallTreeNetwork.testInfo || {};
             nodeUpdate
                 .style('fill', d => {
                     let contextSensitiveID = d.data.contextSensitiveID;
@@ -401,6 +395,8 @@ __$__.CallTreeNetwork = {
                         return '#ff0000';
                     } else if (testStatus[contextSensitiveID] === 0) {
                         return '#ffff00';
+                    } else if (testStatus[contextSensitiveID] === 2) {
+                        return '#ff00ff';
                     } else {
                         return d._children ? 'lightsteelblue' : '#fff';
                     }
