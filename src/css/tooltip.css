@@ -81,6 +81,11 @@
     text-align: center;
 }
 
+.testWarning {
+    position: absolute;
+    background: #d315ff;
+}
+
 .testPassed {
     position: absolute;
     background: #bcff87;

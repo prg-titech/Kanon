@@ -24,6 +24,7 @@ __$__.ToVisjs = {
                     id: __$__.Context.getObjectID(graph.nodes[i]),
                     label: "" + graph.nodes[i].value,
                     type: typeof graph.nodes[i].value,
+                    isLiteral: true,
                     scaling: {
                         min: 10
                     }

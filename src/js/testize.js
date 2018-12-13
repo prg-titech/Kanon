@@ -731,10 +731,39 @@ __$__.Testize = {
             if (edgeDir[objectID]) {
                 edgeDir[objectID].forEach(edge => {
                     let nextObject;
-                    if (edge.to.slice(0, 6) === '__temp') {
+                    // if (edge.to.slice(0, 6) === '__temp') {
+                    if (!runtimeObjects[edge.to]) {
                         let newlyConstructedNode = testData.nodes.get(edge.to);
                         if (!newlyConstructedNode.isLiteral) {
                             nextObject = Object.create(classes[newlyConstructedNode.label].prototype);
+                            if (edge.to.slice(0, 6) !== '__temp') {
+                                // update the test
+                                let newID, i = 1;
+                                while (!newID) {
+                                    let candidate = '__temp' + i;
+                                    if (!testData.nodes.get(candidate)) newID = candidate;
+                                    i++;
+                                }
+                                let nodeInfo = testData.nodes.get(newlyConstructedNode.id);
+                                nodeInfo.id = newID;
+                                testData.nodes.add(nodeInfo);
+                                testData.nodes.remove(newlyConstructedNode.id);
+                                Object.values(testData.edges._data).forEach(edge => {
+                                    if (edge.from === newlyConstructedNode.id) {
+                                        testData.edges.update({
+                                            id: edge.id,
+                                            from: newID
+                                        });
+                                    }
+                                    if (edge.to === newlyConstructedNode.id) {
+                                        testData.edges.update({
+                                            id: edge.id,
+                                            to: newID
+                                        });
+                                    }
+                                });
+                                newlyConstructedNode = nodeInfo;
+                            }
                             Object.setProperty(nextObject, '__id', newlyConstructedNode.id);
                             Object.setProperty(nextObject, '__ClassName__', newlyConstructedNode.label);
                             queueForSetProp.push(nextObject);
@@ -980,6 +1009,9 @@ __$__.Testize = {
                             nodes: new vis.DataSet(newTestGraph.nodes),
                             edges: new vis.DataSet(newTestGraph.edges)
                         };
+                        testInfo.testReconstructionFailed = false;
+                    } else {
+                        testInfo.testReconstructionFailed = true;
                     }
                 }
             } else {
@@ -998,8 +1030,12 @@ __$__.Testize = {
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
         let testGraph = jQuery.extend(true, {}, precond);
         let operations = testInfo.operations;
-        for (let i = 0; i < operations.length; i++) {
-            __$__.Testize.applyOperation(testGraph, operations[i]);
+        try {
+            for (let i = 0; i < operations.length; i++) {
+                __$__.Testize.applyOperation(testGraph, operations[i]);
+            }
+        } catch (e) {
+            return;
         }
         return testGraph;
     },
@@ -1029,9 +1065,9 @@ __$__.Testize = {
                     id: ope.id,
                     label: ope.label,
                     isLiteral: ope.isLiteral,
-                    type: ope.type
+                    type: ope.type,
+                    color: ope.isLiteral ? null : __$__.Testize.makeLiteralColor()
                 };
-                if (ope.isLiteral) newNode.color = __$__.Testize.makeLiteralColor();
                 if (!graph.nodes.find(node => node.id === ope.id)) {
                     graph.nodes.push(newNode);
                 } else {
@@ -1050,6 +1086,7 @@ __$__.Testize = {
                     nodeToEdit.color = ope.isLiteral ? null : __$__.Testize.makeLiteralColor();
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1094,6 +1131,7 @@ __$__.Testize = {
                     });
                 } else {
                     // error(?)
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1104,6 +1142,7 @@ __$__.Testize = {
                     edgeToEdit.to = ope.newTo;
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1114,6 +1153,7 @@ __$__.Testize = {
                     edgeToEdit.label = ope.newLabel;
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1155,17 +1195,19 @@ __$__.Testize = {
                     }
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
             case 'editVariableReference': {
                 // oldTo, newTo, label
                 let variableNodeID = '__Variable-' + ope.label;
-                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID && edge.to === ope.oldTo && edge.label === ope.label);
+                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID);
                 if (edgeToEdit) {
                     edgeToEdit.to = ope.newTo;
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1180,6 +1222,7 @@ __$__.Testize = {
                     variableNode.id = '__Variable-' + ope.newLabel;
                 } else {
                     // error
+                    throw new Error('Cannot reconstruct');
                 }
                 break;
             }
@@ -1633,7 +1676,12 @@ __$__.Testize = {
                     callPos.end.line - 1,
                     callPos.end.column
                 );
-                let clazz = (__$__.Testize.storedTest[callLabel][specifiedContext].passed) ? 'testPassed' : 'testFailed';
+                let clazz = (__$__.Testize.storedTest[callLabel][specifiedContext].testReconstructionFailed)
+                    ? 'testWarning'
+                    : (__$__.Testize.storedTest[callLabel][specifiedContext].passed)
+                        ? 'testPassed'
+                        : 'testFailed';
+
                 let markerInfo = __$__.Testize.storedTest[callLabel].markerInfo;
 
                 if (!markerInfo) {
