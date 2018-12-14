@@ -1501,6 +1501,8 @@ __$__.Testize = {
         __$__.Testize.network.network.setData(graph);
         __$__.Testize.network.network.redraw();
         __$__.win.showCenter();
+        __$__.Testize.network.network.once('stabilized', param => {
+        });
     },
 
 

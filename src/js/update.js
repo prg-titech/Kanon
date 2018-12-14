@@ -105,9 +105,9 @@ __$__.Update = {
 
             __$__.Update.waitForStabilized = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
-                __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilized);
+                __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilizedEvent);
             else
-                __$__.ObjectGraphNetwork.stabilized();
+                __$__.ObjectGraphNetwork.stabilizedEvent();
 
         } catch (e) {
             if (e === 'Infinite Loop') {
