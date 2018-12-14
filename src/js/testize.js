@@ -468,6 +468,7 @@ __$__.Testize = {
      * @param {string} editType
      * @param {Object} data
      *
+     * // information to be store
      * - add    Node       : id, label, isLiteral, (optional) type
      * - edit   Node(Label): id, label, isLiteral, (optional) type
      * - delete Node       : id
@@ -731,7 +732,6 @@ __$__.Testize = {
             if (edgeDir[objectID]) {
                 edgeDir[objectID].forEach(edge => {
                     let nextObject;
-                    // if (edge.to.slice(0, 6) === '__temp') {
                     if (!runtimeObjects[edge.to]) {
                         let newlyConstructedNode = testData.nodes.get(edge.to);
                         if (!newlyConstructedNode.isLiteral) {
@@ -749,18 +749,16 @@ __$__.Testize = {
                                 testData.nodes.add(nodeInfo);
                                 testData.nodes.remove(newlyConstructedNode.id);
                                 Object.values(testData.edges._data).forEach(edge => {
-                                    if (edge.from === newlyConstructedNode.id) {
+                                    if (edge.from === newlyConstructedNode.id)
                                         testData.edges.update({
                                             id: edge.id,
                                             from: newID
                                         });
-                                    }
-                                    if (edge.to === newlyConstructedNode.id) {
+                                    if (edge.to === newlyConstructedNode.id)
                                         testData.edges.update({
                                             id: edge.id,
                                             to: newID
                                         });
-                                    }
                                 });
                                 newlyConstructedNode = nodeInfo;
                             }
@@ -807,6 +805,7 @@ __$__.Testize = {
                 variableReferences[v] = runtimeObjects[varInfo[v].to];
             }
         });
+
 
         Object.keys(varInfo).forEach(v => {
             if (v === 'this') return;
@@ -1044,18 +1043,6 @@ __$__.Testize = {
     /**
      * @param {Object} graph
      * @param {Object} ope
-     *
-     * - add    Node       : id, label, isLiteral, (optional) type
-     * - edit   Node(Label): id, label, isLiteral, (optional) type
-     * - delete Node       : id
-     * - add    Edge       : from, to, label
-     * - edit   Edge(Refer): from, oldTo, newTo, label
-     * - edit   Edge(Label): from, to, oldLabel, newLabel
-     * - delete Edge       : from, to, label
-     * - add    Variable       : to, label
-     * - edit   Variable(Refer): oldTo, newTo, label
-     * - edit   Variable(Label): to, oldLabel, newLabel
-     * - delete Variable       : to, label
      */
     applyOperation(graph, ope) {
         switch (ope.editType) {

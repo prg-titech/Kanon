@@ -46,7 +46,23 @@ __$__.ObjectGraphNetwork = {
             deleteEdge: false
         }
     },
-    arraySize: 12
+    arraySize: 12,
+    stabilizedEvent(param) {
+        __$__.ObjectGraphNetwork.options.nodes.hidden = false;
+        __$__.ObjectGraphNetwork.options.edges.hidden = false;
+        __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+        __$__.ObjectGraphNetwork.nodes.forEach(node => {
+            if (node.id.slice(0, 11) !== '__Variable-')
+                __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
+        });
+
+        if (__$__.Update.updateValueOfArray)
+            __$__.Update.updateArrayValuePosition();
+
+        __$__.Update.waitForStabilized = false;
+        __$__.StorePositions.registerPositions(true);
+        __$__.Update.ContextUpdate();
+    }
 };
 
 __$__.ObjectGraphNetwork.data = {nodes: __$__.ObjectGraphNetwork.nodes, edges: __$__.ObjectGraphNetwork.edges};

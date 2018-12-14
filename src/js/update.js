@@ -98,22 +98,6 @@ __$__.Update = {
             __$__.StorePositions.registerPositions(true);
             __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
 
-            let stabilized = params => {
-                __$__.ObjectGraphNetwork.options.nodes.hidden = false;
-                __$__.ObjectGraphNetwork.options.edges.hidden = false;
-                __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
-                __$__.ObjectGraphNetwork.nodes.forEach(node => {
-                    if (node.id.slice(0, 11) !== '__Variable-')
-                        __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
-                });
-
-                if (__$__.Update.updateValueOfArray)
-                    __$__.Update.updateArrayValuePosition();
-
-                __$__.Update.waitForStabilized = false;
-                __$__.StorePositions.registerPositions(true);
-                __$__.Update.ContextUpdate();
-            };
 
             __$__.Context.Arrays.forEach(array => {
                 if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
@@ -121,9 +105,9 @@ __$__.Update = {
 
             __$__.Update.waitForStabilized = true;
             if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
-                __$__.ObjectGraphNetwork.network.once('stabilized', stabilized);
+                __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilized);
             else
-                stabilized();
+                __$__.ObjectGraphNetwork.stabilized();
 
         } catch (e) {
             if (e === 'Infinite Loop') {

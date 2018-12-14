@@ -22,6 +22,7 @@ __$__.CallTreeNetwork = {
         document.getElementById('callTreeDiagram').style.display = (this.enable) ? '' : 'none';
     },
 
+
     toggle(d) {
         if (d.children) {
             d._children = d.children;
@@ -33,6 +34,7 @@ __$__.CallTreeNetwork = {
             __$__.CallTreeNetwork.displayChildren[d.data.contextSensitiveID] = true;
         }
     },
+
 
     update(source, duration = 500) {
         let root = __$__.CallTreeNetwork.root;
@@ -169,6 +171,7 @@ __$__.CallTreeNetwork = {
         });
     },
 
+
     initialize() {
         let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height();
         let width = __$__.CallTreeNetwork.windowSize.width = jQuery('#callTree').width();
@@ -180,6 +183,7 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.g = __$__.CallTreeNetwork.svg.append('g')
             .attr("transform", 'translate(50, 0)');
     },
+
 
     redraw() {
         let height = __$__.CallTreeNetwork.windowSize.height = jQuery('#callTree').height(),
@@ -199,6 +203,7 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.update(root, 0);
         __$__.CallTreeNetwork.updateTest();
     },
+
 
     draw() {
         if (__$__.CallTreeNetwork.whileDrawing === undefined) __$__.CallTreeNetwork.initialize();
@@ -223,6 +228,7 @@ __$__.CallTreeNetwork = {
         __$__.CallTreeNetwork.updateTest();
     },
 
+
     constructData(node, data) {
         data.name = node.getDisplayedLabel();
         data.contextSensitiveID = node.getContextSensitiveID();
@@ -240,6 +246,7 @@ __$__.CallTreeNetwork = {
             __$__.CallTreeNetwork.constructData(child, childData);
         }
     },
+
 
     traverseCallTree(node) {
         let contextSensitiveID = node.data.contextSensitiveID;
@@ -261,6 +268,7 @@ __$__.CallTreeNetwork = {
             }
         }
     },
+
 
     /**
      * this function is defined by referencing to the following web site.
@@ -320,6 +328,7 @@ __$__.CallTreeNetwork = {
         return d3rebind(cc, dispatcher, 'on');
     },
 
+
     updateHighlightCircles() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
         let selectedContext = {};
@@ -339,12 +348,14 @@ __$__.CallTreeNetwork = {
     },
 
 
+    /**
+     * if there is no test in the context, the value is undefined
+     * if all tests failed, the value is -1
+     * if all tests passed, the value is 1
+     * if some tests passed and some tests failed, the value is 0
+     * if at least one test failed to reconstruct, the value is 2
+     */
     updateTestInfo() {
-        // if there is no test in the context, the value is undefined
-        // if all tests failed, the value is -1
-        // if all tests passed, the value is 1
-        // if some tests passed and some tests failed, the value is 0
-        // if at least one test failed to reconstruct, the value is 2
         let testStatus = {};
         Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
             Object.keys(__$__.Testize.storedTest[callLabel]).forEach(context_sensitiveID => {
