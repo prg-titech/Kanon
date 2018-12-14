@@ -39,7 +39,7 @@ __$__.ToVisjs = {
                 };
 
                 retData.nodes.push(node);
-            } else if (graph.nodes[i].constructor === [].constructor && graph.nodes[i].length > 0) {
+            } else if (__$__.Update.useBoxToVisualizeArray && graph.nodes[i].constructor === [].constructor && graph.nodes[i].length > 0) {
                 let arrayLabels = [];
                 for (let j = 0; j < graph.nodes[i].length; j++) {
                     let arrLabel = __$__.Context.getObjectID(graph.nodes[i]);
@@ -79,12 +79,12 @@ __$__.ToVisjs = {
 
             edge.from = __$__.Context.getObjectID(graph.edges[i].from);
             // if the type of the start node of the edge is Array
-            if (graph.edges[i].from.constructor === [].constructor)
+            if (__$__.Update.useBoxToVisualizeArray && graph.edges[i].from.constructor === [].constructor)
                 edge.from += '@block' + graph.edges[i].label + '@';
 
             edge.to = __$__.Context.getObjectID(graph.edges[i].to);
             // if the type of the end node of the edge is Array
-            if (graph.edges[i].to.constructor === [].constructor && graph.edges[i].to.length > 0)
+            if (__$__.Update.useBoxToVisualizeArray && graph.edges[i].to.constructor === [].constructor && graph.edges[i].to.length > 0)
                 edge.to += '@block0@';
 
             edge.label = graph.edges[i].label;

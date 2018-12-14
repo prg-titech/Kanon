@@ -231,7 +231,6 @@ __$__.Testize = {
             // add a node
             let editType = 'addNode';
 
-            console.log(param);
             document.getElementById('operation').innerHTML = "Add Node";
             document.getElementById('node-label').value = '';
             document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, editType, param, null);

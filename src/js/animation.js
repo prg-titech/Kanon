@@ -81,7 +81,9 @@ __$__.Animation = {
             if (node_positions[label])
                 __$__.ObjectGraphNetwork.network.moveNode(label, node_positions[label].x, node_positions[label].y);
         });
-        __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArrayPosition({nodes: [arr[0]]})});
+        if (__$__.Update.useBoxToVisualizeArray)
+            __$__.Context.Arrays.forEach(arr => {__$__.Update.updateArrayPosition({nodes: [arr[0]]})});
+
         if (next_position.length) {
             __$__.Animation.nowAnimationID++;
             next_position.forEach(pos => {

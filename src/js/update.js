@@ -1,6 +1,7 @@
 __$__.Update = {
     CodeWithCP: '',
     waitForStabilized: false,
+    useBoxToVisualizeArray: false,
     updateValueOfArray: true,
     onlyMoveCursor: false,
 
@@ -99,12 +100,13 @@ __$__.Update = {
             __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
 
 
-            __$__.Context.Arrays.forEach(array => {
-                if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
-            });
+            if (__$__.Update.useBoxToVisualizeArray)
+                __$__.Context.Arrays.forEach(array => {
+                    if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
+                });
 
             __$__.Update.waitForStabilized = true;
-            if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
+            if (graph.nodes.length > 0 && graph.nodes.find(node => node.x === undefined))
                 __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilizedEvent);
             else
                 __$__.ObjectGraphNetwork.stabilizedEvent();
@@ -286,12 +288,12 @@ __$__.Update = {
         }
     },
 
-    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.ObjectGraphNetwork.nodes._data).filter(label => {return label.indexOf('@block') >= 0;})) => {
+    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.ObjectGraphNetwork.nodes._data).filter(label => label.indexOf('@block') >= 0)) => {
         Object.values(__$__.ObjectGraphNetwork.edges._data).forEach(edge => {
             let index = arrayBlocks.indexOf(edge.from);
 
             if (index >= 0) {
-                if (__$__.ObjectGraphNetwork.nodes._data[edge.to].color && __$__.ObjectGraphNetwork.nodes._data[edge.to].color === 'white') {
+                if (__$__.ObjectGraphNetwork.nodes._data[edge.to].isLiteral) {
                     let pos = __$__.ObjectGraphNetwork.network.getPositions(edge.from)[edge.from];
                     __$__.ObjectGraphNetwork.network.moveNode(edge.to, pos.x, pos.y + 100);
                     __$__.ObjectGraphNetwork.nodes.update({id: edge.to, fixed: true});
