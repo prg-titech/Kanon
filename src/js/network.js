@@ -77,7 +77,7 @@ __$__.ObjectGraphNetwork.network.on('dragStart', params => {
 __$__.ObjectGraphNetwork.network.on('dragEnd', params => {
     if (params.nodes.length > 0) {
         let nodeId = params.nodes[0];
-        __$__.ObjectGraphNetwork.nodes.update({id: nodeId, fixed: true})
+        __$__.ObjectGraphNetwork.nodes.update({id: nodeId, fixed: true});
     }
 });
 __$__.ObjectGraphNetwork.network.on('dragging', __$__.Update.updateArrayPosition);

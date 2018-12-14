@@ -202,7 +202,7 @@ __$__.Testize = {
 
             document.getElementById('operation').innerHTML = "Edit Node";
             document.getElementById('node-label').value = node.label;
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, editType, nodeID);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, editType, param, nodeID);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'inline';
             document.getElementById('checkboxForLiteral').checked = (node.color && node.color.border === 'white');
@@ -219,7 +219,7 @@ __$__.Testize = {
 
             document.getElementById('operation').innerHTML = "Edit Edge";
             document.getElementById('node-label').value = edge.label || "";
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.edges, editType, edgeID);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.edges, editType, param, edgeID);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'none';
             document.getElementById('network-popUp').style.display = 'block';
@@ -229,10 +229,12 @@ __$__.Testize = {
         // double click blank
         else {
             // add a node
+            let editType = 'addNode';
 
+            console.log(param);
             document.getElementById('operation').innerHTML = "Add Node";
             document.getElementById('node-label').value = '';
-            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, 'addNode', null);
+            document.getElementById('saveButtonForTestize').onclick = __$__.Testize.saveDataWithoutCallback.bind(this, __$__.Testize.network.network.body.data.nodes, editType, param, null);
             document.getElementById('cancelButtonForTestize').onclick = __$__.Testize.clearPopUp;
             document.getElementById('isLiteral').style.display = 'inline';
             document.getElementById('checkboxForLiteral').checked = false;
@@ -257,7 +259,7 @@ __$__.Testize = {
     },
 
 
-    saveDataWithoutCallback(dataSet, editType, id = null) {
+    saveDataWithoutCallback(dataSet, editType, param, id = null) {
         let color = null, type = null;
         if (editType === 'addNode' || editType === 'editNode') {
             // the case of node
@@ -269,13 +271,28 @@ __$__.Testize = {
                 type = 'string';
             }
 
-            dataSet.update({
-                id: nodeID,
-                label: label,
-                color: color,
-                type: type,
-                isLiteral: isLiteral
-            });
+            if (editType === 'addNode') {
+                let pos = {x: param.pointer.canvas.x, y: param.pointer.canvas.y};
+                dataSet.update({
+                    id: nodeID,
+                    label: label,
+                    color: color,
+                    type: type,
+                    fixed: true,
+                    isLiteral: isLiteral,
+                    x: pos.x,
+                    y: pos.y
+                });
+            } else {
+                dataSet.update({
+                    id: nodeID,
+                    label: label,
+                    color: color,
+                    type: type,
+                    fixed: true,
+                    isLiteral: isLiteral
+                });
+            }
 
             __$__.Testize.saveMouseOperation(editType, {
                 editType: editType,
@@ -349,6 +366,7 @@ __$__.Testize = {
             case 'addNode': {
                 data.id = '__temp' + ++__$__.Testize.testNodeCounter;
                 data.isLiteral = document.getElementById('checkboxForLiteral').checked;
+                data.fixed = true;
                 if (data.isLiteral) {
                     data.color = __$__.Testize.makeLiteralColor();
                     data.type = 'string';
@@ -1053,6 +1071,7 @@ __$__.Testize = {
                     label: ope.label,
                     isLiteral: ope.isLiteral,
                     type: ope.type,
+                    fixed: true,
                     color: ope.isLiteral ? null : __$__.Testize.makeLiteralColor()
                 };
                 if (!graph.nodes.find(node => node.id === ope.id)) {
@@ -1334,14 +1353,24 @@ __$__.Testize = {
                     }, 300);
                 }
             });
+            networkInfo.network.on('dragStart', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    networkInfo.network.body.data.nodes.update({id: nodeId, fixed: false});
+                }
+            });
+            networkInfo.network.on('dragEnd', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    networkInfo.network.body.data.nodes.update({id: nodeId, fixed: true});
+                }
+            });
         })();
         Windows.addObserver({
             onResize() {
                 networkInfo.network.redraw();
             },
             onClose() {
-
-
                 __$__.Testize.focusedTestOperations = undefined;
             }
         });
@@ -1502,6 +1531,10 @@ __$__.Testize = {
         __$__.Testize.network.network.redraw();
         __$__.win.showCenter();
         __$__.Testize.network.network.once('stabilized', param => {
+            Object.values(__$__.Testize.network.network.body.data.nodes._data).forEach(node => {
+                if (node.id.slice(0, 11) !== '__Variable-' && node.id !== '__RectForVariable__')
+                    __$__.Testize.network.network.body.data.nodes.update({id: node.id, fixed: true});
+            });
         });
     },
 
