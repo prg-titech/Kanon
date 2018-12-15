@@ -1621,6 +1621,7 @@ __$__.Testize = {
         __$__.Testize.network.network.setData(graph);
         __$__.Testize.network.network.redraw();
         __$__.Testize.window.testGraph.showCenter();
+        __$__.Testize.window.runtimeGraph.close();
         __$__.Testize.network.network.once('stabilized', param => {
             Object.values(__$__.Testize.network.network.body.data.nodes._data).forEach(node => {
                 if (node.id.slice(0, 11) !== '__Variable-' && node.id !== '__RectForVariable__')
@@ -1633,9 +1634,25 @@ __$__.Testize = {
     openRuntimeGraphWin() {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         __$__.Testize.window.runtimeGraph.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
-
         let selectedCallInfo = __$__.Testize.selectedCallInfo;
         let graph = __$__.Testize.storedActualGraph[selectedCallInfo.label][selectedCallInfo.context_sensitiveID] || {nodes: [], edges: []};
+
+        let positions = __$__.Testize.network.network.getPositions();
+
+        // set positions
+        graph.nodes.forEach(node => {
+            if (positions[node.id]) {
+                let pos = positions[node.id];
+                node.x = pos.x;
+                node.y = pos.y;
+                node.fixed = true;
+            } else {
+                delete node.x;
+                delete node.y;
+                delete node.fixed;
+            }
+        });
+
         __$__.Testize.actualGraphNetwork.network.setData({
             nodes: new vis.DataSet(graph.nodes),
             edges: new vis.DataSet(graph.edges)
@@ -1643,6 +1660,13 @@ __$__.Testize = {
         __$__.Testize.actualGraphNetwork.network.redraw();
         __$__.Testize.window.runtimeGraph.show();
         __$__.Testize.window.runtimeGraph.toFront();
+
+        __$__.Testize.actualGraphNetwork.network.once('stabilized', param => {
+            Object.values(__$__.Testize.actualGraphNetwork.network.body.data.nodes._data).forEach(node => {
+                if (node.id.slice(0, 11) !== '__Variable-')
+                    __$__.Testize.actualGraphNetwork.network.body.data.nodes.update({id: node.id, fixed: true});
+            });
+        });
     },
 
 
