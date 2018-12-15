@@ -205,7 +205,9 @@ __$__.ASTTransforms = {
      *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *         __retObj = __callee(arg1, arg2, ...);
      *         __errorOccurred = false;
+     *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
+     *         __$__.Testize.storeActualGraph();
      *         __errorOccurred = true;
      *         if (!__hasTest)
      *             throw e;
@@ -262,7 +264,9 @@ __$__.ASTTransforms = {
      *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *         __retObj = __obj.prop(arg1, arg2, ...);
      *         __errorOccurred = false;
+     *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
+     *         __$__.Testize.storeActualGraph();
      *         if (!__hasTest)
      *             throw e;
      *         __errorOccurred = true;
@@ -442,8 +446,10 @@ __$__.ASTTransforms = {
                                      *     __hasTest = __$__.Testize.hasTest(...);
                                      *     if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
                                      *     __retObj = func();
-                                     *    __errorOccurred = false;
+                                     *     __errorOccurred = false;
+                                     *     __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
                                      * } catch (e) {
+                                     *     __$__.Testize.storeActualGraph();
                                      *     if (!__hasTest)
                                      *         throw e;
                                      *    __errorOccurred = true;
@@ -550,11 +556,63 @@ __$__.ASTTransforms = {
                                                     '=',
                                                     b.Literal(false)
                                                 )
+                                            ),
+                                            b.ExpressionStatement(
+                                                b.CallExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__$__'),
+                                                            b.Identifier('Testize')
+                                                        ),
+                                                        b.Identifier('storeActualGraph')
+                                                    ),
+                                                    [
+                                                        b.Identifier('__objs'),
+                                                        b.ObjectExpression(
+                                                            info.vars.map(function(val) {
+                                                                return b.Property(
+                                                                    b.Identifier(val),
+                                                                    b.ConditionalExpression(
+                                                                        b.BinaryExpression(
+                                                                            b.UnaryExpression(
+                                                                                'typeof',
+                                                                                b.Identifier(val),
+                                                                                true
+                                                                            ),
+                                                                            '!==',
+                                                                            b.Literal('string')
+                                                                        ),
+                                                                        b.Identifier(val),
+                                                                        b.Identifier("undefined")
+                                                                    )
+                                                                );
+                                                            }).concat([
+                                                                b.Property(
+                                                                    b.Identifier('this'),
+                                                                    b.Identifier('this')
+                                                                )
+                                                            ])
+                                                        ),
+                                                        b.Literal(label),
+                                                        b.Identifier('__context_sensitiveID')
+                                                    ]
+                                                )
                                             )
                                         ]),
                                         b.CatchClause(
                                             b.Identifier('e'),
                                             b.BlockStatement([
+                                                b.ExpressionStatement(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('storeActualGraph')
+                                                        ), []
+                                                    )
+                                                ),
                                                 b.IfStatement(
                                                     b.UnaryExpression(
                                                         '!',

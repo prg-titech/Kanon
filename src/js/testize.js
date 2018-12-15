@@ -21,8 +21,9 @@ __$__.Testize = {
     focusedTestOperations: undefined, // Array of mouse operation
     testNodeCounter: 0,
     enable: false,
-    storedTest: {
-    },
+    storedTest: {},
+    storedActualGraph: {},
+    window: {},
     network: {
         options: {
             autoResize: false,
@@ -146,6 +147,36 @@ __$__.Testize = {
                         callback(null);
                     }
                 }
+            }
+        }
+    },
+    actualGraphNetwork: {
+        options: {
+            autoResize: false,
+            nodes: {
+                color: 'skyblue'
+            },
+            edges: {
+                arrows: 'to',
+                color: {
+                    color: 'skyblue',
+                    opacity: 1.0,
+                    highlight: 'skyblue',
+                    hover: 'skyblue'
+                },
+                width: 3,
+                smooth: {
+                    enabled: true,
+                    forceDirection: 'none',
+                    roundness: 1.0
+                }
+            },
+            physics: {
+                enabled: true
+            },
+            interaction: {
+                hover: true
+                // zoomView: false
             }
         }
     },
@@ -665,7 +696,7 @@ __$__.Testize = {
             return true;
 
 
-        let actualGraph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        let actualGraph = jQuery.extend(true, {}, __$__.Testize.storedActualGraph[callLabel][context_sensitiveID]);
         let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
         let expectedGraph = {
             nodes: Object.values(testInfo.testData.nodes._data),
@@ -677,6 +708,22 @@ __$__.Testize = {
 
         __$__.Testize.storedTest[callLabel][context_sensitiveID].passed = result;
         return result;
+    },
+
+
+    /**
+     * @param {Array} objects
+     * @param {Object} probe
+     * @param {string} callLabel
+     * @param {string} context_sensitiveID
+     */
+    storeActualGraph(objects, probe, callLabel, context_sensitiveID) {
+        if (!__$__.Testize.storedActualGraph[callLabel]) __$__.Testize.storedActualGraph[callLabel] = {};
+        if (objects) {
+            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+        } else {
+            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = undefined;
+        }
     },
 
 
@@ -1281,25 +1328,41 @@ __$__.Testize = {
 
 
     createWindow(width, height, title) {
-        __$__.win = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 300, title: title});
-        __$__.win.getContent().update('<div id="window-for-manipulation"></div>');
+        __$__.Testize.window.testGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 300, title: title});
+        __$__.Testize.window.runtimeGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 500, title: 'actual object graph'});
+        __$__.Testize.window.testGraph.getContent().update('<div id="window-for-manipulation"></div>');
+        __$__.Testize.window.runtimeGraph.getContent().update('<div id="window-for-actualGraph"></div>');
         let windowSelection = __$__.d3.select('#window-for-manipulation');
 
-        windowSelection.append('div')
-            .attr('id', 'window-header')
-            .append('text')
+        let header = windowSelection.append('div')
+            .attr('id', 'window-header');
+
+        header.append('text')
             .attr('id', 'acceptButton')
             .text('accept')
             .on('click', function (e) {
                 // this function is invoked when this button is clicked.
                 __$__.Testize.setTest();
-                __$__.win.close();
+                __$__.Testize.window.testGraph.close();
                 __$__.Update.PositionUpdate([{
                     start: {row: 0, column: 0},
                     end: {row: 0, column: 0},
                     lines: [""],
                     action: 'insert'
                 }]);
+            })
+            .on('mouseover', function (e) {
+                this.style.cursor = 'pointer';
+            })
+            .on('mouseout', function (e) {
+                this.style.cursor = 'default';
+            });
+
+        header.append('text')
+            .attr('id', 'actualGraphButton')
+            .text('actual graph')
+            .on('click', function (e) {
+                __$__.Testize.openRuntimeGraphWin();
             })
             .on('mouseover', function (e) {
                 this.style.cursor = 'pointer';
@@ -1319,6 +1382,14 @@ __$__.Testize = {
             networkInfo.container,
             {nodes: new vis.DataSet({}), edges: new vis.DataSet({})},
             networkInfo.options
+        );
+
+        let actualGraphNetworkInfo = __$__.Testize.actualGraphNetwork;
+        actualGraphNetworkInfo.container = document.getElementById('window-for-actualGraph');
+        actualGraphNetworkInfo.network = new vis.Network(
+            actualGraphNetworkInfo.container,
+            {nodes: new vis.DataSet({}), edges: new vis.DataSet({})},
+            actualGraphNetworkInfo.options
         );
 
         // set event handlers
@@ -1364,13 +1435,34 @@ __$__.Testize = {
                     networkInfo.network.body.data.nodes.update({id: nodeId, fixed: true});
                 }
             });
+            actualGraphNetworkInfo.network.on('dragStart', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    actualGraphNetworkInfo.network.body.data.nodes.update({id: nodeId, fixed: false});
+                }
+            });
+            actualGraphNetworkInfo.network.on('dragEnd', params => {
+                if (params.nodes.length > 0) {
+                    let nodeId = params.nodes[0];
+                    actualGraphNetworkInfo.network.body.data.nodes.update({id: nodeId, fixed: true});
+                }
+            });
         })();
+
         Windows.addObserver({
-            onResize() {
-                networkInfo.network.redraw();
+            onResize(eventName, win) {
+                if (win === __$__.Testize.window.testGraph) {
+                    __$__.Testize.network.network.redraw();
+                } else if (win === __$__.Testize.window.runtimeGraph) {
+                    __$__.Testize.actualGraphNetwork.network.redraw();
+                }
             },
-            onClose() {
-                __$__.Testize.focusedTestOperations = undefined;
+            onClose(eventName, win) {
+                if (win === __$__.Testize.window.testGraph) {
+                    __$__.Testize.focusedTestOperations = undefined;
+                    __$__.Testize.window.runtimeGraph.close();
+                } else if (win === __$__.Testize.window.runtimeGraph) {
+                }
             }
         });
     },
@@ -1476,10 +1568,10 @@ __$__.Testize = {
 
     openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
-        if (!__$__.win) {
+        if (!__$__.Testize.window.testGraph) {
             __$__.Testize.createWindow(split_pane_size.width/1.5, split_pane_size.height/1.5, '');
         } else {
-            __$__.win.setSize(split_pane_size.width / 1.5, split_pane_size.height / 1.5);
+            __$__.Testize.window.testGraph.setSize(split_pane_size.width / 1.5, split_pane_size.height / 1.5);
         }
 
         // duplicate an object graph stored just before the focusing function call
@@ -1528,13 +1620,29 @@ __$__.Testize = {
 
         __$__.Testize.network.network.setData(graph);
         __$__.Testize.network.network.redraw();
-        __$__.win.showCenter();
+        __$__.Testize.window.testGraph.showCenter();
         __$__.Testize.network.network.once('stabilized', param => {
             Object.values(__$__.Testize.network.network.body.data.nodes._data).forEach(node => {
                 if (node.id.slice(0, 11) !== '__Variable-' && node.id !== '__RectForVariable__')
                     __$__.Testize.network.network.body.data.nodes.update({id: node.id, fixed: true});
             });
         });
+    },
+
+
+    openRuntimeGraphWin() {
+        let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
+        __$__.Testize.window.runtimeGraph.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
+
+        let selectedCallInfo = __$__.Testize.selectedCallInfo;
+        let graph = __$__.Testize.storedActualGraph[selectedCallInfo.label][selectedCallInfo.context_sensitiveID] || {nodes: [], edges: []};
+        __$__.Testize.actualGraphNetwork.network.setData({
+            nodes: new vis.DataSet(graph.nodes),
+            edges: new vis.DataSet(graph.edges)
+        });
+        __$__.Testize.actualGraphNetwork.network.redraw();
+        __$__.Testize.window.runtimeGraph.show();
+        __$__.Testize.window.runtimeGraph.toFront();
     },
 
 

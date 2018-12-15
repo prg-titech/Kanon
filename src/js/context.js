@@ -213,7 +213,7 @@ __$__.Context = {
 
             if (__$__.Layout.enabled) {
                 isChanged = __$__.Layout.setLinkedList(graph);
-                isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
+                isChanged = __$__.Layout.setBinaryTree(graph) || isChanged;
             }
     
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {

@@ -62,9 +62,32 @@
     font-size: 12px;
 }
 
+#actualGraphButton {
+    color: #ff0000;
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    -webkit-transform: translate(0, -50%);
+    -moz-transform: translate(0, -50%);
+    -ms-transform: translate(0, -50%);
+    -o-transform: translate(0, -50%);
+    transform: translate(0, -50%);
+    background: #FFF;
+    border: solid 3px #ff0000;
+    border-radius: 5px;
+    padding: 2px 2px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
 #window-body {
     width: 100%;
     height: calc(100% - 30px);
+}
+
+#window-for-actualGraph {
+    width: 100%;
+    height: 100%;
 }
 
 #network-popUp {
