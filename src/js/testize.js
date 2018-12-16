@@ -799,7 +799,6 @@ __$__.Testize = {
                     if (!runtimeObjects[edge.to]) {
                         let newlyConstructedNode = testData.nodes.get(edge.to);
                         if (!newlyConstructedNode.isLiteral) {
-                            // TODO: この辺のどっかにバグがあるはず
                             nextObject = Object.create(classes[newlyConstructedNode.label].prototype);
                             if (edge.to.slice(0, 6) !== '__temp') {
                                 // update the test
@@ -1441,7 +1440,12 @@ __$__.Testize = {
             networkInfo.network.on('dragEnd', params => {
                 if (params.nodes.length > 0) {
                     let nodeId = params.nodes[0];
-                    networkInfo.network.body.data.nodes.update({id: nodeId, fixed: true});
+                    networkInfo.network.body.data.nodes.update({
+                        id: nodeId,
+                        x: networkInfo.network.getPositions(nodeId).x,
+                        y: networkInfo.network.getPositions(nodeId).y,
+                        fixed: true
+                    });
                 }
             });
             actualGraphNetworkInfo.network.on('dragStart', params => {
@@ -1453,7 +1457,12 @@ __$__.Testize = {
             actualGraphNetworkInfo.network.on('dragEnd', params => {
                 if (params.nodes.length > 0) {
                     let nodeId = params.nodes[0];
-                    actualGraphNetworkInfo.network.body.data.nodes.update({id: nodeId, fixed: true});
+                    actualGraphNetworkInfo.network.body.data.nodes.update({
+                        id: nodeId,
+                        x: actualGraphNetworkInfo.network.getPositions(nodeId).x,
+                        y: actualGraphNetworkInfo.network.getPositions(nodeId).y,
+                        fixed: true
+                    });
                 }
             });
         })();
@@ -1575,6 +1584,20 @@ __$__.Testize = {
     },
 
 
+    setPositions(graph) {
+        Object.keys(graph.nodes._data).forEach(nodeID => {
+            if (__$__.StorePositions.oldNetwork.nodes[nodeID]) {
+                graph.nodes.update({
+                    id: nodeID,
+                    x: __$__.StorePositions.oldNetwork.nodes[nodeID].x,
+                    y: __$__.StorePositions.oldNetwork.nodes[nodeID].y,
+                    fixed: true
+                });
+            }
+        });
+    },
+
+
     openWin(modified = false) {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
         if (!__$__.Testize.window.testGraph) {
@@ -1594,8 +1617,6 @@ __$__.Testize = {
                 let testData = testInfo.testData;
                 __$__.Testize.focusedTestOperations = testInfo.operations;
                 graph = {
-                    // nodes: testData.nodes,
-                    // edges: testData.edges
                     nodes: new vis.DataSet(Object.values(testData.nodes._data).map(node => jQuery.extend(true, {}, node))),
                     edges: new vis.DataSet(Object.values(testData.edges._data).map(edge => jQuery.extend(true, {}, edge)))
                 };
@@ -1621,12 +1642,18 @@ __$__.Testize = {
                     shape: 'box',
                     physics: false
                 });
+                graph.nodes = new vis.DataSet(graph.nodes);
+                graph.edges = new vis.DataSet(graph.edges);
                 __$__.Testize.focusedTestOperations = [];
             }
         } catch (e) {
-            graph = {nodes: [], edges: []};
+            graph = {
+                nodes: new vis.DataSet([]),
+                edges: new vis.DataSet([])
+            };
         }
 
+        __$__.Testize.setPositions(graph);
         __$__.Testize.network.network.setData(graph);
         __$__.Testize.network.network.redraw();
         __$__.Testize.window.testGraph.showCenter();

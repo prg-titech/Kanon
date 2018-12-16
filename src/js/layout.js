@@ -5,7 +5,6 @@ __$__.Layout = {
      * We assume that linked-list is already completed(this means that next edges are defined between nodes).
      */
     setLinkedList: function(graph, nodeLabel = "Node", nextLabel = 'next', valueLabel = 'val') {
-        let isChanged = false;
         // collect nodes whose label are nodeLabel
         let listNodes = [];
         graph.nodes.forEach(node => {
@@ -70,7 +69,10 @@ __$__.Layout = {
     
         while (listNodes.length > 0) {
             let list = [listNodes.shift()];
-            let pos = {x: list[0].x, y: list[0].y};
+            let pos = {
+                x: list[0].x || 0,
+                y: list[0].y || 0
+            };
             list[0].__checked = true;
             while (list[0].__prev && !list[0].__prev.__checked) {
                 let prev = list[0].__prev;
@@ -108,7 +110,6 @@ __$__.Layout = {
             let region = {x: {from: NaN, to: NaN}, y: {from: NaN, to: NaN}};
             for (let j = 0; j < sortedListNode[i].length; j++) {
                 let node = sortedListNode[i][j];
-                let pos = __$__.StorePositions.oldNetwork.nodes[node.id];
 
                 let newPos = {
                     x: sortedListNode_CenterPos[i].x + 100 * (j - (sortedListNode[i].length - 1) / 2),
@@ -124,14 +125,10 @@ __$__.Layout = {
                 if (!(region.y.to > newPos.y))
                     region.y.to = newPos.y;
 
-                if (!isChanged && (pos.x !== newPos.x || pos.y !== newPos.y))
-                    isChanged = true;
                 node.x = newPos.x;
                 node.y = newPos.y;
     
                 if (node.__val) {
-                    let valPos = __$__.StorePositions.oldNetwork.nodes[node.__val.id];
-
                     if (!(node.x > region.x.from))
                         region.x.from = node.x;
                     if (!(region.x.to > node.x))
@@ -141,8 +138,6 @@ __$__.Layout = {
                     if (!(region.y.to > node.y + 100))
                         region.y.to = node.y + 100;
 
-                    if (!isChanged && (valPos.x !== node.x || valPos.y !== node.y + 100))
-                        isChanged = true;
                     node.__val.x = node.x;
                     node.__val.y = node.y + 100;
                     node.__val.__checked = true;
@@ -177,14 +172,16 @@ __$__.Layout = {
             if (node.__val !== undefined)
                 delete node.__val;
         });
-    
-        return isChanged;
     },
     
     RedrawLinkedList: function(graph = __$__.Context.LastGraph) {
         __$__.StorePositions.setPositions(graph);
         if (__$__.Layout.enabled) {
-            let isChanged = __$__.Layout.setLinkedList(graph);
+            __$__.Layout.setLinkedList(graph);
+            let isChanged = graph.nodes.some(node => {
+                let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+                return beforePos.x !== node.x || beforePos.y !== node.y;
+            });
             if (isChanged) {
                 __$__.Animation.setData(graph);
                 __$__.StorePositions.registerPositions();
@@ -197,8 +194,6 @@ __$__.Layout = {
      * We assume that binary tree is already completed(this means that left and right edges are defined between nodes).
      */
     setBinaryTree: function(graph, nodeLabel = "Node", leftLabel = 'left', rightLabel = 'right', valueLabel = 'val') {
-        let isChanged = false;
-    
         // collect nodes whose label are nodeLabel
         let listNodes = [];
         graph.nodes.forEach(node => {
@@ -413,8 +408,6 @@ __$__.Layout = {
                 let mvPos = mvRootPos[node.__tree_num];
                 node.x += mvPos.x;
                 node.y += mvPos.y;
-                if (!isChanged && (beforePos.x !== node.x || beforePos.y !== node.y))
-                    isChanged = true;
                 delete node.__tree_num;
             }
             if (node.__left !== undefined)
@@ -426,13 +419,15 @@ __$__.Layout = {
             if (node.__val !== undefined)
                 delete node.__val;
         });
-    
-        return isChanged;
     },
     
     RedrawBinaryTree: graph =>{
         __$__.StorePositions.setPositions(graph);
-        let isChanged = __$__.Layout.setBinaryTree(graph);
+        __$__.Layout.setBinaryTree(graph);
+        let isChanged = graph.nodes.some(node => {
+            let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+            return beforePos.x !== node.x || beforePos.y !== node.y;
+        });
         if (isChanged) {
             __$__.Animation.setData(graph);
             __$__.StorePositions.registerPositions();

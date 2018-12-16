@@ -209,13 +209,16 @@ __$__.Context = {
             __$__.ObjectGraphNetwork.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
             __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
 
-            let isChanged = false;
-
+            let isChanged;
             if (__$__.Layout.enabled) {
-                isChanged = __$__.Layout.setLinkedList(graph);
-                isChanged = __$__.Layout.setBinaryTree(graph) || isChanged;
+                __$__.Layout.setLinkedList(graph);
+                __$__.Layout.setBinaryTree(graph);
+                isChanged = graph.nodes.some(node => {
+                    let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+                    return beforePos.x !== node.x || beforePos.y !== node.y;
+                });
             }
-    
+
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
                 __$__.Animation.setData(graph);
                 if (__$__.Update.useBoxToVisualizeArray) {
@@ -322,10 +325,14 @@ __$__.Context = {
 
             __$__.StorePositions.setPositions(graph);
 
-            let isChanged = false;
+            let isChanged;
             if (__$__.Layout.enabled) {
-                isChanged = __$__.Layout.setLinkedList(graph);
-                isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
+                __$__.Layout.setLinkedList(graph);
+                __$__.Layout.setBinaryTree(graph);
+                isChanged = graph.nodes.some(node => {
+                    let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+                    return beforePos.x !== node.x || beforePos.y !== node.y;
+                });
             }
     
             // change color of added node to orange in this part
