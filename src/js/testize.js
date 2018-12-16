@@ -799,6 +799,7 @@ __$__.Testize = {
                     if (!runtimeObjects[edge.to]) {
                         let newlyConstructedNode = testData.nodes.get(edge.to);
                         if (!newlyConstructedNode.isLiteral) {
+                            // TODO: この辺のどっかにバグがあるはず
                             nextObject = Object.create(classes[newlyConstructedNode.label].prototype);
                             if (edge.to.slice(0, 6) !== '__temp') {
                                 // update the test
@@ -1118,7 +1119,7 @@ __$__.Testize = {
                     isLiteral: ope.isLiteral,
                     type: ope.type,
                     fixed: true,
-                    color: ope.isLiteral ? null : __$__.Testize.makeLiteralColor()
+                    color: ope.isLiteral ? __$__.Testize.makeLiteralColor() : null
                 };
                 if (!graph.nodes.find(node => node.id === ope.id)) {
                     graph.nodes.push(newNode);
@@ -1135,7 +1136,7 @@ __$__.Testize = {
                     nodeToEdit.label = ope.label;
                     nodeToEdit.isLiteral = ope.isLiteral;
                     nodeToEdit.type = ope.type;
-                    nodeToEdit.color = ope.isLiteral ? null : __$__.Testize.makeLiteralColor();
+                    nodeToEdit.color = ope.isLiteral ? __$__.Testize.makeLiteralColor() : null;
                 } else {
                     // error
                     throw new Error('Cannot reconstruct');
@@ -1176,11 +1177,19 @@ __$__.Testize = {
                     checked.to = checked.to || node.id === ope.to;
                 });
                 if (checked.from && checked.to) {
-                    graph.edges.push({
-                        from: ope.from,
-                        to: ope.to,
-                        label: ope.label
+                    let alreadyDefined = graph.edges.some(edge => {
+                        if (edge.from === ope.from && edge.label === ope.label) {
+                            edge.to = ope.to;
+                            return true;
+                        }
                     });
+                    if (!alreadyDefined) {
+                        graph.edges.push({
+                            from: ope.from,
+                            to: ope.to,
+                            label: ope.label
+                        });
+                    }
                 } else {
                     // error(?)
                     throw new Error('Cannot reconstruct');
