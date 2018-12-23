@@ -749,9 +749,12 @@ __$__.Testize = {
             let from = edge.from;
             if (from.slice(0, 11) === '__Variable-') {
                 let variableName = edge.label;
+                let node = testData.nodes.get(edge.to);
                 varInfo[variableName] = {
                     to: edge.to,
-                    label: edge.label // variable name
+                    label: variableName, // variable name
+                    isLiteral: node.isLiteral,
+                    type: node.type
                 };
             } else {
                 if (!edgeDir[from]) edgeDir[from] = [];
@@ -874,9 +877,21 @@ __$__.Testize = {
         Object.keys(varInfo).forEach(v => {
             if (v === 'this') return;
             else if (v === 'return') {
-                variableReferences.__retObj = runtimeObjects[varInfo[v].to];
+                if (varInfo[v].isLiteral)
+                    if (varInfo[v].type === 'number')
+                        variableReferences.__retObj = parseFloat(testData.nodes.get(varInfo[v].to).label);
+                    else
+                        variableReferences.__retObj = testData.nodes.get(varInfo[v].to).label;
+                else
+                    variableReferences.__retObj = runtimeObjects[varInfo[v].to];
             } else if (!variableReferences[v]) {
-                variableReferences[v] = runtimeObjects[varInfo[v].to];
+                if (varInfo[v].isLiteral)
+                    if (varInfo[v].type === 'number')
+                        variableReferences[v] = parseFloat(testData.nodes.get(varInfo[v].to).label);
+                    else
+                        variableReferences[v] = testData.nodes.get(varInfo[v].to).label;
+                else
+                    variableReferences[v] = runtimeObjects[varInfo[v].to];
             }
         });
 
