@@ -1548,7 +1548,7 @@ __$__.Testize = {
         if (cursorPos) {
             let label = Object.keys(__$__.Testize.callParenthesisPos).reduceNative((accLabel, currentLabel) => {
                 let callPos = __$__.Testize.callParenthesisPos[currentLabel];
-                if (compare(callPos.start, '<=', cursorPos) && compare(cursorPos, '<=', callPos.end)) {
+                if (compare(callPos.start, '<=', cursorPos) && compare(cursorPos, '<', callPos.end)) {
                     if (!currentLabel || compare(__$__.Testize.callParenthesisPos[currentLabel].start, '<=', callPos.start)) {
                         return currentLabel;
                     }
