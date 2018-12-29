@@ -331,7 +331,7 @@ __$__.Context = {
                 __$__.Layout.setBinaryTree(graph);
                 isChanged = graph.nodes.some(node => {
                     let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
-                    return beforePos.x !== node.x || beforePos.y !== node.y;
+                    return beforePos && (beforePos.x !== node.x || beforePos.y !== node.y);
                 });
             }
     
