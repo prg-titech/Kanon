@@ -74,7 +74,6 @@ __$__.ASTTransforms = {
      *     __loopCount = 1,
      *     __loopCounterObject = {},
      *     __time_counter = 0,
-     *     __time_counter_stack = [],
      *     __call_count = {},
      *     __newObjectIds = [],
      *     __newExpInfo = [],
@@ -117,10 +116,6 @@ __$__.ASTTransforms = {
                             b.VariableDeclarator(
                                 b.Identifier('__time_counter'),
                                 b.Literal(0)
-                            ),
-                            b.VariableDeclarator(
-                                b.Identifier('__time_counter_stack'),
-                                b.ArrayExpression([])
                             ),
                             b.VariableDeclarator(
                                 b.Identifier('__call_count'),
@@ -207,8 +202,8 @@ __$__.ASTTransforms = {
      *         __errorOccurred = false;
      *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
-     *         __$__.Testize.storeActualGraph();
      *         __errorOccurred = true;
+     *         __$__.Testize.storeActualGraph();
      *         if (!__hasTest)
      *             throw e;
      *     } finally {
@@ -230,6 +225,9 @@ __$__.ASTTransforms = {
      *                 let __object = __overrideInfo.variableReferences[__variableName];
      *                 eval(__variableName + ' = __object');
      *             }
+     *         } else if (__errorOccurred) {
+     *             __newExpInfo.pop();
+     *             __stackForCallTree.pop();
      *         }
      *     }
      *     changed;
@@ -266,10 +264,10 @@ __$__.ASTTransforms = {
      *         __errorOccurred = false;
      *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
+     *         __errorOccurred = true;
      *         __$__.Testize.storeActualGraph();
      *         if (!__hasTest)
      *             throw e;
-     *         __errorOccurred = true;
      *     } finally {
      *         if (__hasTest) {
      *             let __classesObject = {};
@@ -289,6 +287,9 @@ __$__.ASTTransforms = {
      *                 let __object = __overrideInfo.variableReferences[__variableName];
      *                 eval(__variableName + ' = __object');
      *             }
+     *         } else if (__errorOccurred) {
+     *             __newExpInfo.pop();
+     *             __stackForCallTree.pop();
      *         }
      *     }
      *     changed;
@@ -449,10 +450,10 @@ __$__.ASTTransforms = {
                                      *     __errorOccurred = false;
                                      *     __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
                                      * } catch (e) {
+                                     *    __errorOccurred = true;
                                      *     __$__.Testize.storeActualGraph();
                                      *     if (!__hasTest)
                                      *         throw e;
-                                     *    __errorOccurred = true;
                                      * } finally {
                                      *     if (__hasTest) {
                                      *         let __classesObject = {};
@@ -472,6 +473,9 @@ __$__.ASTTransforms = {
                                      *             let __object = __overrideInfo[__variableName];
                                      *             eval(__variableName + ' = __object');
                                      *         }
+                                     *     } else if (__errorOccurred) {
+                                     *         __newExpInfo.pop();
+                                     *         __stackForCallTree.pop();
                                      *     }
                                      * }
                                      */
@@ -603,6 +607,13 @@ __$__.ASTTransforms = {
                                             b.Identifier('e'),
                                             b.BlockStatement([
                                                 b.ExpressionStatement(
+                                                    b.AssignmentExpression(
+                                                        b.Identifier('__errorOccurred'),
+                                                        '=',
+                                                        b.Literal(true)
+                                                    )
+                                                ),
+                                                b.ExpressionStatement(
                                                     b.CallExpression(
                                                         b.MemberExpression(
                                                             b.MemberExpression(
@@ -621,13 +632,6 @@ __$__.ASTTransforms = {
                                                     ),
                                                     b.ThrowStatement(
                                                         b.Identifier('e')
-                                                    )
-                                                ),
-                                                b.ExpressionStatement(
-                                                    b.AssignmentExpression(
-                                                        b.Identifier('__errorOccurred'),
-                                                        '=',
-                                                        b.Literal(true)
                                                     )
                                                 )
                                             ])
@@ -842,7 +846,28 @@ __$__.ASTTransforms = {
                                                             )
                                                         ])
                                                     )
-                                                ])
+                                                ]),
+                                                b.IfStatement(
+                                                    b.Identifier('__errorOccurred'),
+                                                    b.BlockStatement([
+                                                        b.ExpressionStatement(
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__newExpInfo'),
+                                                                    b.Identifier('pop')
+                                                                ), []
+                                                            )
+                                                        ),
+                                                        b.ExpressionStatement(
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__stackForCallTree'),
+                                                                    b.Identifier('pop')
+                                                                ), []
+                                                            )
+                                                        )
+                                                    ])
+                                                )
                                             )
                                         ])
                                     ),
@@ -1169,9 +1194,7 @@ __$__.ASTTransforms = {
      *           __$__.Context.InfLoop = __loopLabel;
      *           throw 'Infinite Loop';
      *       }
-     *       let __start = __time_counter,
-     *           __startEndObject__ = {start: __time_counter};
-     *       __time_counter_stack.push(__startEndObject__);
+     *       let __start = __time_counter
      *       __stackForCallTree.push(
      *           new __$__.CallTree.Function(
      *               __loopLabel,
@@ -1195,8 +1218,6 @@ __$__.ASTTransforms = {
      *       try {
      *           ... (body)
      *       } finally {
-     *           __startEndObject__.end = __time_counter - 1;
-     *           __time_counter_stack.pop();
      *           __stackForCallTree.pop();
      *           __loopLabels.pop();
      *       }
@@ -1227,9 +1248,7 @@ __$__.ASTTransforms = {
      *                     __$__.Context.InfLoop = __loopLabel;
      *                     throw 'Infinite Loop';
      *                 }
-     *                 let __start = __time_counter,
-     *                     __startEndObject__ = {start: __time_counter};
-     *                 __time_counter_stack.push(__startEndObject__);
+     *                 let __start = __time_counter
      *                 __stackForCallTree.push(
      *                     new __$__.CallTree.Loop(
      *                         __loopLabel,
@@ -1254,8 +1273,6 @@ __$__.ASTTransforms = {
      *                 try {
      *                     ... (body of the loop)
      *                 } finally {
-     *                     __startEndObject__.end = __time_counter-1;
-     *                     __time_counter_stack.pop();
      *                     __stackForCallTree.pop();
      *                 }
      *             }
@@ -1302,12 +1319,6 @@ __$__.ASTTransforms = {
 
 
                     let finallyBody = [
-                        b.ExpressionStatement(
-                            b.Identifier('__startEndObject__.end = __time_counter-1')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__time_counter_stack.pop()')
-                        ),
                         b.ExpressionStatement(
                             b.CallExpression(
                                 b.MemberExpression(
@@ -1463,29 +1474,8 @@ __$__.ASTTransforms = {
                             b.VariableDeclarator(
                                 b.Identifier('__start'),
                                 b.Identifier('__time_counter')
-                            ),
-                            b.VariableDeclarator(
-                                b.Identifier('__startEndObject__'),
-                                b.ObjectExpression([
-                                    b.Property(
-                                        b.Identifier('start'),
-                                        b.Identifier('__time_counter')
-                                    )
-                                ])
                             )
                         ], 'let')
-                    );
-
-                    newBlockStmt.body.push(
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__time_counter_stack'),
-                                    b.Identifier('push')
-                                ),
-                                b.Identifier('__startEndObject')
-                            )
-                        )
                     );
 
                     /**

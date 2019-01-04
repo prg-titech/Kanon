@@ -1868,6 +1868,7 @@ __$__.Testize = {
 
     updateMarker() {
         Object.keys(__$__.Testize.storedTest).forEach(callLabel => {
+            if (!__$__.Context.LabelPos.Call[callLabel]) return;
             let loopLabelAroundCall = __$__.Context.findLoopLabel(__$__.Context.LabelPos.Call[callLabel].start).loop;
             let specifiedContext = __$__.Context.SpecifiedContext[loopLabelAroundCall];
             if (__$__.Testize.storedTest[callLabel].markerInfo && !__$__.Testize.storedTest[callLabel][specifiedContext]) {

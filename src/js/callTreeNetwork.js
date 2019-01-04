@@ -72,6 +72,7 @@ __$__.CallTreeNetwork = {
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
             __$__.CallTreeNetwork.updateTest();
+            __$__.Testize.updateMarker();
         });
         cc.on('dblclick', d => {
             if (__$__.CallTreeNetwork.whileDrawing === false) {
