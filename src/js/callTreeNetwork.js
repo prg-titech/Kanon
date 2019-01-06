@@ -146,7 +146,7 @@ __$__.CallTreeNetwork = {
             .data(root.links(), d => d.target.data.contextSensitiveID);
 
         let linkEnter = link.enter().insert('path', "g")
-            .attr('class', 'link')
+            .attr('class', __$__.CallTreeNetwork.updateLink)
             .attr('d', __$__.d3.linkHorizontal()
                 .x(d => source.y0)
                 .y(d => source.x0));
@@ -157,6 +157,9 @@ __$__.CallTreeNetwork = {
             .attr('d', __$__.d3.linkHorizontal()
                 .x(d => d.y)
                 .y(d => d.x));
+
+        __$__.CallTreeNetwork.link = linkUpdate
+            .attr('class', __$__.CallTreeNetwork.updateLink);
 
         link.exit()
             .transition()
@@ -373,6 +376,33 @@ __$__.CallTreeNetwork = {
             });
         });
         __$__.CallTreeNetwork.testInfo = testStatus;
+    },
+
+
+    updateLink(d) {
+        console.log(d);
+        let sourceCSID = d.source.data.contextSensitiveID;
+        let targetCSID = d.target.data.contextSensitiveID;
+        let callLabel = __$__.Context.CallRelationship[sourceCSID] && __$__.Context.CallRelationship[sourceCSID][targetCSID];
+        if (callLabel) {
+            let test = __$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][sourceCSID];
+            if (!test) {
+                console.log('link');
+                return 'link';
+            } else if (test.testReconstructionFailed) {
+                console.log('linkWarning');
+                return 'linkWarning link';
+            } else if (test.passed) {
+                console.log('linkPassed');
+                return 'linkPassed link';
+            } else {
+                console.log('linkFailed');
+                return 'linkFailed link';
+            }
+        } else {
+            console.log('link');
+            return 'link';
+        }
     },
 
 

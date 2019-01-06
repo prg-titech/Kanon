@@ -1214,6 +1214,7 @@ __$__.ASTTransforms = {
      *           Object.setProperty(this, '__id', __newObjectIds.pop());
      *           __objs.push(this);
      *       }
+     *       __$__.Context.RegisterCallRelationship(__stackForCallTree);
      *
      *       try {
      *           ... (body)
@@ -1265,6 +1266,7 @@ __$__.ASTTransforms = {
      *                 __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
      *
      *                 // there is following IfStatement in the case only of functions
+     *                 // The body of this IfStatement is executed only in the case of functions
      *                 if (__newExpInfo.last()) {
      *                     Object.setProperty(this, '__id', __newObjectIds.pop());
      *                     __objs.push(this);
@@ -1632,6 +1634,12 @@ __$__.ASTTransforms = {
                         )
                     );
 
+                    /**
+                     * if (__newExpInfo.last()) {
+                     *     Object.setProperty(this, '__id', __newObjectIds.pop());
+                     *     __objs.push(this);
+                     * }
+                     */
                     newBlockStmt.body.push(
                         b.IfStatement(
                             b.CallExpression(
@@ -1672,6 +1680,27 @@ __$__.ASTTransforms = {
                             ])
                         )
                     );
+
+
+                    if (isFunction)
+                        /**
+                         * __$__.Context.RegisterCallRelationship(__stackForCallTree);
+                         */
+                        newBlockStmt.body.push(
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('RegisterCallRelationship')
+                                    ), [
+                                        b.Identifier('__stackForCallTree')
+                                    ]
+                                )
+                            )
+                        );
 
 
                     newBlockStmt.body.push(

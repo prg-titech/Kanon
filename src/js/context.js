@@ -6,6 +6,7 @@ __$__.Context = {
     CheckPointTable: {},
     CheckPointAroundCursor: {},
     CheckPointIDAroundFuncCall: {},
+    CallRelationship: {},
     CallTreeNodesOfEachLoop: {},
     InfLoop: '',
     LabelPos: {
@@ -31,6 +32,7 @@ __$__.Context = {
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
         __$__.Context.CheckPointIDAroundFuncCall = {};
+        __$__.Context.CallRelationship = {};
         __$__.Context.CallTreeNodesOfEachLoop = {main: [__$__.CallTree.rootNode]};
         __$__.Context.LastInfo = {};
         __$__.Context.StoredGraph = {};
@@ -582,5 +584,32 @@ __$__.Context = {
         });
 
         return nearestLoopLabels;
+    },
+
+
+    /**
+     * @param {Array} stackForCallTree
+     * @constructor
+     */
+    RegisterCallRelationship(stackForCallTree) {
+        let callLabel, sourceCSID;
+        if (stackForCallTree[stackForCallTree.length - 2].constructor.name !== 'Instance') {
+            callLabel = stackForCallTree[stackForCallTree.length - 2].label;
+            sourceCSID = stackForCallTree[stackForCallTree.length - 2].getContextSensitiveID();
+        }
+        // for (let i = stackForCallTree.length-2; i >= 0; i--) {
+        //     let node = stackForCallTree[i];
+        //     if (node.constructor.name !== 'Instance') {
+        //         callLabel = node.label;
+        //         sourceCSID = node.getContextSensitiveID();
+        //         break;
+        //     }
+        // }
+        let targetCSID = stackForCallTree.last().getContextSensitiveID();
+        if (callLabel && sourceCSID && targetCSID) {
+            if (!__$__.Context.CallRelationship[sourceCSID])
+                __$__.Context.CallRelationship[sourceCSID] = {};
+            __$__.Context.CallRelationship[sourceCSID][targetCSID] = callLabel;
+        }
     }
 };
