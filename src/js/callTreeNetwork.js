@@ -380,29 +380,23 @@ __$__.CallTreeNetwork = {
 
 
     updateLink(d) {
-        console.log(d);
         let sourceCSID = d.source.data.contextSensitiveID;
         let targetCSID = d.target.data.contextSensitiveID;
         let callLabel = __$__.Context.CallRelationship[sourceCSID] && __$__.Context.CallRelationship[sourceCSID][targetCSID];
+        let className = 'link';
         if (callLabel) {
             let test = __$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][sourceCSID];
-            if (!test) {
-                console.log('link');
-                return 'link';
-            } else if (test.testReconstructionFailed) {
-                console.log('linkWarning');
-                return 'linkWarning link';
-            } else if (test.passed) {
-                console.log('linkPassed');
-                return 'linkPassed link';
-            } else {
-                console.log('linkFailed');
-                return 'linkFailed link';
+            if (test) {
+                if (test.testReconstructionFailed) {
+                    className = 'linkWarning link';
+                } else if (test.passed) {
+                    className = 'linkPassed link';
+                } else {
+                    className = 'linkFailed link';
+                }
             }
-        } else {
-            console.log('link');
-            return 'link';
         }
+        return className;
     },
 
 
