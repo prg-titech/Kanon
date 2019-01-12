@@ -174,35 +174,40 @@ __$__.Context = {
                     loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
                     if (loopLabel) {
                         contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
-                    } else if (__$__.Error.hasError &&
-                        cpIDs.filter(cpid => __$__.ASTTransforms.pairCPID[cpid] === __$__.Context.LastInfo.CPID).length > 0) {
-
-
-                        let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[__$__.Context.LastInfo.CPID];
+                        graph = __$__.Context.StoredGraph[cpID][contextSensitiveID];
+                        __$__.Context.SnapshotContext.cpID = cpID;
+                        __$__.Context.SnapshotContext.loopLabel = loopLabel;
+                        __$__.Context.SnapshotContext.contextSensitiveID = contextSensitiveID;
+                    } else if (__$__.Context.CheckPointID2LoopLabel[__$__.ASTTransforms.pairCPID[cpID]]) {
+                        let tmp_cpID = __$__.ASTTransforms.pairCPID[cpID];
+                        let tmp_loopLabel = __$__.Context.CheckPointID2LoopLabel[tmp_cpID];
                         let tmp_contextSensitiveID = __$__.Context.SpecifiedContext[tmp_loopLabel];
 
-                        if (tmp_loopLabel === __$__.Context.LastInfo.loopLabel
-                            && tmp_contextSensitiveID === __$__.Context.LastInfo.contextSensitiveID) {
+                        if (__$__.Context.StoredGraph[tmp_cpID] && __$__.Context.StoredGraph[tmp_cpID][tmp_contextSensitiveID]) {
+                            graph = __$__.Context.StoredGraph[tmp_cpID][tmp_contextSensitiveID];
+                            __$__.Context.SnapshotContext.cpID = tmp_cpID;
+                            __$__.Context.SnapshotContext.loopLabel = tmp_loopLabel;
+                            __$__.Context.SnapshotContext.contextSensitiveID = tmp_contextSensitiveID;
                             showLightly = true;
-                            cpID = __$__.Context.LastInfo.CPID;
-                            loopLabel = __$__.Context.CheckPointID2LoopLabel[cpID];
-                            contextSensitiveID = __$__.Context.SpecifiedContext[loopLabel];
+                        } else {
+                            graph = {nodes: [], edges: []};
                         }
                     }
-
-
-                    graph = __$__.Context.StoredGraph[cpID][contextSensitiveID];
                 } catch (e) {
-                    graph = {nodes: [], edges: []};
                 }
 
-                __$__.Context.SnapshotContext.cpID = cpID;
-                __$__.Context.SnapshotContext.loopLabel = loopLabel;
-                __$__.Context.SnapshotContext.contextSensitiveID = contextSensitiveID;
-    
-                if (!graph) graph = {nodes: [], edges: []};
+
+                if (!graph) {
+                    graph = {nodes: [], edges: []};
+                    delete __$__.Context.SnapshotContext.cpID;
+                    delete __$__.Context.SnapshotContext.loopLabel;
+                    delete __$__.Context.SnapshotContext.contextSensitiveID;
+                }
             } catch (e) {
                 graph = {nodes: [], edges: []};
+                delete __$__.Context.SnapshotContext.cpID;
+                delete __$__.Context.SnapshotContext.loopLabel;
+                delete __$__.Context.SnapshotContext.contextSensitiveID;
             }
 
             __$__.StorePositions.setPositions(graph);
@@ -538,6 +543,9 @@ __$__.Context = {
             let newlyContextNode = __$__.Context.CallTreeNodesOfEachLoop[nearestLoopLabel][idx + moveTo];
             if (newlyContextNode) {
                 __$__.Context.SpecifiedContext[nearestLoopLabel] = newlyContextNode.getContextSensitiveID();
+                if (!__$__.Error.hasError) {
+                    __$__.Context.SpecifiedContextWhenExecutable[nearestLoopLabel] = __$__.Context.SpecifiedContext[nearestLoopLabel];
+                }
                 // __$__.Context.ChangeInnerAndParentContext(nearestLoopLabel);
                 isChanged = true;
             }
