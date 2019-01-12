@@ -772,7 +772,7 @@ __$__.Testize = {
         let runtimeObjects = {};
         // here, collect runtimeObjects and delete all properties of all objects
         objects.concat(Object.values(probe)).forEach(obj => {
-            if (runtimeObjects[obj.__id] || obj === null || obj === undefined)
+            if (!obj || runtimeObjects[obj.__id] || obj === null || obj === undefined)
                 return;
 
             __$__.Testize.traverse(obj, runtimeObjects);
@@ -866,7 +866,7 @@ __$__.Testize = {
         Object.keys(probe).forEach(v => {
             if (v === 'this') return;
             let object = probe[v];
-            if (object.__id === varInfo[v].to) {
+            if (!object ||  object.__id === varInfo[v].to) {
                 // do nothing
             } else {
                 variableReferences[v] = runtimeObjects[varInfo[v].to];
