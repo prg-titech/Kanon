@@ -53,7 +53,14 @@ __$__.editor.executeTask = () => {
 __$__.editor.on('change', (e) => {
     __$__.editor.task.PositionUpdate.push(e);
     setTimeout(__$__.editor.executeTask, 0);
+    if (__$__.Testize.hoveringCallInfo.div) {
+        __$__.Testize.removeTooltip(__$__.Testize.hoveringCallInfo.div);
+    }
 });
+
+// adding a tooltip
+__$__.editor.on('mousemove', __$__.Testize.mousemove);
+
 __$__.editor.getSelection().on('changeCursor', (e) => {
     __$__.editor.task.ContextUpdate.push(e);
     setTimeout(__$__.editor.executeTask, 0);
@@ -68,6 +75,7 @@ __$__.editor.commands.addCommand({
         if (isChanged) {
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+            __$__.Testize.updateMarker();
         }
     }
 });
@@ -79,6 +87,8 @@ __$__.editor.commands.addCommand({
         if (isChanged) {
             __$__.Context.Draw();
             __$__.CallTreeNetwork.updateHighlightCircles();
+            __$__.Testize.updateMarker();
         }
     }
 });
+

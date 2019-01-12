@@ -1,18 +1,21 @@
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/estools/escodegen.git
-[submodule "external/jquery"]
-	path = external/jquery
-	url = https://github.com/jquery/jquery.git
+[submodule "external/prototype_window"]
+	path = external/prototype_window
+	url = https://github.com/sgruhier/prototype_window.git
 [submodule "external/ace-builds"]
 	path = external/ace-builds
 	url = https://github.com/ajaxorg/ace-builds.git
+[submodule "external/jquery"]
+	path = external/jquery
+	url = https://github.com/jquery/jquery.git
 [submodule "external/jquery-ui-dist"]
 	path = external/jquery-ui-dist
 	url = https://github.com/sschadwick/jquery-ui-dist.git
-[submodule "external/vis"]
-	path = external/vis
-	url = https://github.com/almende/vis.git
 [submodule "external/split-pane"]
 	path = external/split-pane
 	url = https://github.com/shagstrom/split-pane.git
+[submodule "external/vis"]
+	path = external/vis
+	url = https://github.com/almende/vis.git

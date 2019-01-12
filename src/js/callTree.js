@@ -22,7 +22,6 @@ __$__.CallTree.Node = class Node {
         this.label = label;
         this.callPath = callPath.concat(this);
         this.children = [];
-        this.shape = 'box';
         if (callPath.length >= 1) {
             let parent = callPath[callPath.length - 1];
             parent.children.push(this);

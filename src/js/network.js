@@ -1,66 +1,85 @@
-__$__.container = document.getElementById('mynetwork');
-__$__.nodes = new vis.DataSet({});
-__$__.edges = new vis.DataSet({});
-__$__.data = {nodes: __$__.nodes, edges: __$__.edges};
-__$__.colorRGB = {
-    skyblue: '135,206,235'
-};
-__$__.options = {
-    autoResize: false,
-    nodes: {
-        // color: {
-        //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
-        //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
-        // }
-        color: 'skyblue'
+__$__.ObjectGraphNetwork = {
+    container: document.getElementById('mynetwork'),
+    nodes: new vis.DataSet({}),
+    edges: new vis.DataSet({}),
+
+    colorRGB: {
+        skyblue: '135,206,235'
     },
-    edges: {
-        arrows: 'to',
-        color: {
-            color: 'skyblue',
-            opacity: 1.0,
-            highlight: 'skyblue',
-            hover: 'skyblue'
+    options: {
+        autoResize: false,
+        nodes: {
+            // color: {
+            //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
+            //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
+            // }
+            color: 'skyblue'
         },
-        width: 3,
-        smooth: {
+        edges: {
+            arrows: 'to',
+            color: {
+                color: 'skyblue',
+                opacity: 1.0,
+                highlight: 'skyblue',
+                hover: 'skyblue'
+            },
+            width: 3,
+            smooth: {
+                enabled: true,
+                forceDirection: 'none',
+                roundness: 1.0
+            }
+        },
+        physics: {
+            enabled: true
+        },
+        interaction: {
+            hover: true
+            // zoomView: false
+        },
+        manipulation: {
             enabled: true,
-            forceDirection: 'none',
-            roundness: 1.0
+            addNode: false,
+            addEdge: __$__.Manipulate.addEdge,
+            editEdge: __$__.Manipulate.editEdge,
+            deleteNode: false,
+            deleteEdge: false
         }
     },
-    physics: {
-        enabled: true
-    },
-    interaction: {
-        hover: true
-        // zoomView: false
-    },
-    manipulation: {
-        enabled: true,
-        addNode: false,
-        addEdge: __$__.Manipulate.addEdge,
-        editEdge: __$__.Manipulate.editEdge,
-        deleteNode: false,
-        deleteEdge: false
+    arraySize: 12,
+    stabilizedEvent(param) {
+        __$__.ObjectGraphNetwork.options.nodes.hidden = false;
+        __$__.ObjectGraphNetwork.options.edges.hidden = false;
+        __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+        __$__.ObjectGraphNetwork.nodes.forEach(node => {
+            if (node.id.slice(0, 11) !== '__Variable-')
+                __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
+        });
+
+        if (__$__.Update.updateValueOfArray)
+            __$__.Update.updateArrayValuePosition();
+
+        __$__.Update.waitForStabilized = false;
+        __$__.StorePositions.registerPositions(true);
+        __$__.Update.ContextUpdate();
     }
 };
-__$__.arraySize = 12;
 
-__$__.network = new vis.Network(__$__.container, __$__.data, __$__.options);
-__$__.network.on('doubleClick', __$__.JumpToConstruction.ClickEventFunction);
-__$__.network.on('dragStart', params => {
+__$__.ObjectGraphNetwork.data = {nodes: __$__.ObjectGraphNetwork.nodes, edges: __$__.ObjectGraphNetwork.edges};
+__$__.ObjectGraphNetwork.network = new vis.Network(__$__.ObjectGraphNetwork.container, __$__.ObjectGraphNetwork.data, __$__.ObjectGraphNetwork.options);
+__$__.ObjectGraphNetwork.network.on('doubleClick', __$__.JumpToConstruction.ClickEventFunction);
+__$__.ObjectGraphNetwork.network.on('dragStart', params => {
     if (params.nodes.length > 0) {
         let nodeId = params.nodes[0];
-        __$__.nodes.update({id: nodeId, fixed: false});
+        __$__.ObjectGraphNetwork.nodes.update({id: nodeId, fixed: false});
     }
 });
-__$__.network.on('dragEnd', params => {
+__$__.ObjectGraphNetwork.network.on('dragEnd', params => {
     if (params.nodes.length > 0) {
         let nodeId = params.nodes[0];
-        __$__.nodes.update({id: nodeId, fixed: true})
+        __$__.ObjectGraphNetwork.nodes.update({id: nodeId, fixed: true});
     }
 });
-__$__.network.on('dragging', __$__.Update.updateArrayPosition);
-__$__.network.on('dragEnd', __$__.Update.updateArrayPosition);
-__$__.network.on('dragEnd', __$__.StorePositions.registerPositions);
+__$__.ObjectGraphNetwork.network.on('dragging', __$__.Update.updateArrayPosition);
+__$__.ObjectGraphNetwork.network.on('dragEnd', __$__.Update.updateArrayPosition);
+__$__.ObjectGraphNetwork.network.on('dragEnd', __$__.StorePositions.registerPositions);

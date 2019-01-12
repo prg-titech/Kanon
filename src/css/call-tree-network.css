@@ -14,3 +14,21 @@
     stroke-opacity: 0.4;
     stroke-width: 1.5px;
 }
+
+.linkWarning {
+    stroke: #ff00ff !important;
+    stroke-opacity: 0.8 !important;
+    stroke-width: 1.8px !important;
+}
+
+.linkPassed {
+    stroke: #00ff00 !important;
+    stroke-opacity: 0.8 !important;
+    stroke-width: 1.8px !important;
+}
+
+.linkFailed {
+    stroke: #ff0000 !important;
+    stroke-opacity: 0.8 !important;
+    stroke-width: 1.8px !important;
+}

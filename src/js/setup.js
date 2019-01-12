@@ -33,6 +33,8 @@
         return this[this.length - 1];
     };
 
+    Array.prototype.reduceNative = Array.prototype.reduce;
+
     Array.prototype.indexOf = function(elem) {
         for (let i = 0; i < this.length; i++) {
             if (this[i] === elem)
@@ -69,6 +71,11 @@
 })();
 
 var __$__ = {
+    mouse: {
+        pageX: undefined,
+        pageY: undefined
+    },
+
     SummarizedViewColor: {
         AddNode: 'orange',
         AddEdge: 'orange',
@@ -82,4 +89,11 @@ var __$__ = {
         else
             __$__.editor.setFontSize(parseInt(font));
     }
+};
+
+window.onload=function(){
+    document.body.addEventListener("mousemove", function(e){
+        __$__.mouse.pageX = e.pageX;
+        __$__.mouse.pageY = e.pageY;
+    });
 };

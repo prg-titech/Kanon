@@ -1,6 +1,7 @@
 __$__.Update = {
     CodeWithCP: '',
     waitForStabilized: false,
+    useBoxToVisualizeArray: false,
     updateValueOfArray: true,
     onlyMoveCursor: false,
 
@@ -14,12 +15,14 @@ __$__.Update = {
         __$__.CallTree.Initialize();
         __$__.Context.Initialize();
         __$__.UpdateLabelPos.Initialize();
+        __$__.Testize.initialize();
         __$__.JumpToConstruction.resetGraphData();
         __$__.editor.task.ContextUpdate = [];
 
         if (__arg__) {
             __arg__.forEach(act => {
                 __$__.Update.UpdateLabelPositions(act);
+                __$__.Testize.updateMarkerPosition(act);
             });
         }
 
@@ -68,10 +71,12 @@ __$__.Update = {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
             }
 
+            __$__.Testize.updateMarker();
 
             let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
 
 
+            __$__.CallTreeNetwork.updateTestInfo();
             __$__.CallTreeNetwork.draw();
 
             if (!__$__.Update.isChange(graph)) {
@@ -81,46 +86,31 @@ __$__.Update = {
             }
 
 
-            __$__.options.nodes.hidden = true;
-            __$__.options.edges.hidden = true;
+            __$__.ObjectGraphNetwork.options.nodes.hidden = true;
+            __$__.ObjectGraphNetwork.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
-            __$__.network.setOptions(__$__.options);
-            __$__.nodes = new vis.DataSet(graph.nodes);
-            __$__.edges = new vis.DataSet(graph.edges);
-            __$__.network.setData({
-                nodes: __$__.nodes,
-                edges: __$__.edges
+            __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+            __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
+            __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
+            __$__.ObjectGraphNetwork.network.setData({
+                nodes: __$__.ObjectGraphNetwork.nodes,
+                edges: __$__.ObjectGraphNetwork.edges
             });
             __$__.StorePositions.registerPositions(true);
-            __$__.StorePositions.oldNetwork.edges = __$__.network.body.data.edges._data;
-    
-            let stabilized = params => {
-                __$__.options.nodes.hidden = false;
-                __$__.options.edges.hidden = false;
-                __$__.network.setOptions(__$__.options);
-                __$__.nodes.forEach(node => {
-                    if (node.id.slice(0, 11) !== '__Variable-')
-                        __$__.nodes.update({id: node.id, fixed: true});
+            __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
+
+
+            if (__$__.Update.useBoxToVisualizeArray)
+                __$__.Context.Arrays.forEach(array => {
+                    if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
                 });
-    
-                if (__$__.Update.updateValueOfArray)
-                    __$__.Update.updateArrayValuePosition();
-    
-                __$__.Update.waitForStabilized = false;
-                __$__.StorePositions.registerPositions(true);
-                __$__.Update.ContextUpdate();
-            };
-    
-            __$__.Context.Arrays.forEach(array => {
-                if (array.length >= 0) __$__.Update.updateArrayPosition({nodes: [array[0]]});
-            });
 
             __$__.Update.waitForStabilized = true;
-            if (graph.nodes.length > 0 && graph.nodes.filter(node => node.x === undefined).length > 0)
-                __$__.network.once('stabilized', stabilized);
+            if (graph.nodes.length > 0 && graph.nodes.find(node => node.x === undefined))
+                __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilizedEvent);
             else
-                stabilized();
-    
+                __$__.ObjectGraphNetwork.stabilizedEvent();
+
         } catch (e) {
             if (e === 'Infinite Loop') {
                 document.getElementById('console').textContent = 'infinite loop?';
@@ -153,7 +143,7 @@ __$__.Update = {
                     document.getElementById('console').textContent = 'infinite loop?';
                 }
             }
-            __$__.network.redraw();
+            __$__.ObjectGraphNetwork.network.redraw();
         }
     },
 
@@ -180,9 +170,9 @@ __$__.Update = {
                 return [edge.from, edge.to, edge.label];
         });
         let networkNodes = [];
-        // let temp = (snapshot) ? __$__.nodes._data : __$__.Context.LastGraph.nodes;
-        let temp = (snapshot) ? __$__.nodes._data : __$__.StorePositions.oldNetwork._nodesData;
-        // let temp = __$__.nodes._data;
+        // let temp = (snapshot) ? __$__.ObjectGraphNetwork.nodes._data : __$__.Context.LastGraph.nodes;
+        let temp = (snapshot) ? __$__.ObjectGraphNetwork.nodes._data : __$__.StorePositions.oldNetwork._nodesData;
+        // let temp = __$__.ObjectGraphNetwork.nodes._data;
 
         Object.keys(temp).forEach(key => {
             if (snapshot)
@@ -193,9 +183,9 @@ __$__.Update = {
 
 
         let networkEdges = [];
-        // temp = (snapshot) ? __$__.edges._data : __$__.Context.LastGraph.edges;
-        temp = (snapshot) ? __$__.edges._data : __$__.StorePositions.oldNetwork._edgesData;
-        // temp = __$__.edges._data;
+        // temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.Context.LastGraph.edges;
+        temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.StorePositions.oldNetwork._edgesData;
+        // temp = __$__.ObjectGraphNetwork.edges._data;
 
         Object.keys(temp).forEach(function(key){
             if (snapshot)
@@ -218,92 +208,18 @@ __$__.Update = {
      * In this function, update the positions of newLabel, loopLabel and callLabel.
      * If user code is edited, this function is executed.
      */
-    UpdateLabelPositions: function(e) {
-        let start = {line: e.start.row + 1, column: e.start.column};
-        let end = {line: e.end.row + 1, column: e.end.column};
+    UpdateLabelPositions: function(editEvent) {
+        let start = {line: editEvent.start.row + 1, column: editEvent.start.column};
+        let end = {line: editEvent.end.row + 1, column: editEvent.end.column};
         let compare = __$__.UpdateLabelPos.ComparePosition;
     
-        if (e.action === 'insert') {
-            let modify_by_insert = function(pos, kind, label) {
-                // if inserted code is the upper part of the loop
-                if (compare(start, '<=', pos.start)) {
-                    if (pos.start.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.start.column -= start.column;
-                        }
-                        pos.start.column += e.lines.last().length;
-                    }
-                    if (pos.end.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column -= start.column;
-                        }
-                        pos.end.column += e.lines.last().length;
-                    }
-
-                    pos.start.line += e.lines.length - 1;
-                    pos.end.line   += e.lines.length - 1;
-                } else if (compare(start, '<', pos.end)) { // if inserted code is the inner part of the loop
-                    if (pos.end.line === start.line) {
-                        if (e.lines.length > 1) {
-                            pos.end.column -= start.column;
-                        }
-                        pos.end.column += e.lines.last().length;
-                    }
-                    pos.end.line += e.lines.length - 1;
-                }
-                // register position of this node to the table for when editing the boundary.
-                __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
-                    pairPos: {line: pos.end.line, column: pos.end.column},
-                    kind: kind
-                };
-                __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
-                    pairPos: {line: pos.start.line, column: pos.start.column},
-                    kind: kind
-                };
-            };
-
+        if (editEvent.action === 'insert') {
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    modify_by_insert(__$__.Context.LabelPos[kind][label], kind, label);
-                });
-            });
-        } else { // e.action == 'remove'
-            let modify_by_remove = function(pos, kind, label) {
-                if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) {
-                    // if removed code is the outer part of the loop
-                    delete __$__.Context.LabelPos[kind][label];
-                } else {
-                    // if removed code is the upper part of the loop
-                    if (compare(end, '<=', pos.start)) {
-                        if (pos.start.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.start.column += start.column;
-                            }
-                            pos.start.column -= e.lines.last().length;
-                        }
-                        if (pos.end.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.end.column += start.column;
-                            }
-                            pos.end.column -= e.lines.last().length;
-                        }
+                    let pos = __$__.Context.LabelPos[kind][label];
+                    __$__.UpdateLabelPos.modify_by_insert(editEvent, pos);
 
-                        pos.start.line -= e.lines.length - 1;
-                        pos.end.line   -= e.lines.length - 1;
-                    } else if (compare(pos.start, '<', start) && compare(end, '<', pos.end)) { // if removed code is the inner part of the loop
-                        if (pos.end.line === end.line) {
-                            if (e.lines.length > 1) {
-                                pos.end.column += start.column;
-                            }
-                            pos.end.column -= e.lines.last().length;
-                        }
-
-                        pos.end.line   -= e.lines.length - 1;
-                    } else if (compare(pos.start, '<', start) && compare(end, '==', pos.end) && !pos.closed) {
-                        pos.end.column = start.column;
-                        pos.end.line -= e.lines.length - 1;
-                    }
                     // register position of this node to the table for when editing the boundary.
                     __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
                         pairPos: {line: pos.end.line, column: pos.end.column},
@@ -313,15 +229,29 @@ __$__.Update = {
                         pairPos: {line: pos.start.line, column: pos.start.column},
                         kind: kind
                     };
-                }
-            };
-
+                });
+            });
+        } else { // editEvent.action == 'remove'
             // update
             Object.keys(__$__.Context.LabelPos).forEach(kind => {
                 Object.keys(__$__.Context.LabelPos[kind]).forEach(label => {
-                    let dlt = modify_by_remove(__$__.Context.LabelPos[kind][label], kind, label);
-                    if (dlt)
+                    let pos = __$__.Context.LabelPos[kind][label];
+                    if (compare(start, '<=', pos.start) && compare(pos.end, '<=', end)) {
+                        // if removed code is the outer part of the loop
                         delete __$__.Context.LabelPos[kind][label];
+                    } else {
+                        __$__.UpdateLabelPos.modify_by_remove(editEvent, __$__.Context.LabelPos[kind][label]);
+
+                        // register position of this node to the table for when editing the boundary.
+                        __$__.UpdateLabelPos.table.get(pos.start.line, pos.start.column)[label] = {
+                            pairPos: {line: pos.end.line, column: pos.end.column},
+                            kind: kind
+                        };
+                        __$__.UpdateLabelPos.table.get(pos.end.line, pos.end.column)[label] = {
+                            pairPos: {line: pos.start.line, column: pos.start.column},
+                            kind: kind
+                        };
+                    }
                 });
             });
         }
@@ -343,13 +273,13 @@ __$__.Update = {
             });
 
             if (isBlock) {
-                let arrayLabels = Object.keys(__$__.network.body.data.nodes._data).filter(label => {
+                let arrayLabels = Object.keys(__$__.ObjectGraphNetwork.network.body.data.nodes._data).filter(label => {
                     return label.indexOf(arr_label + '@block') >= 0;
                 });
                 let idx0 = arrayLabels.indexOf(id);
-                let pos = __$__.network.getPositions(id)[id];
+                let pos = __$__.ObjectGraphNetwork.network.getPositions(id)[id];
                 for (let i = 0; i < arrayLabels.length; i++) {
-                    __$__.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.arraySize * 2, pos.y);
+                    __$__.ObjectGraphNetwork.network.moveNode(arrayLabels[i], pos.x + (i - idx0) * __$__.ObjectGraphNetwork.arraySize * 2, pos.y);
                 }
 
                 if (__$__.Update.updateValueOfArray)
@@ -358,15 +288,15 @@ __$__.Update = {
         }
     },
 
-    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.nodes._data).filter(label => {return label.indexOf('@block') >= 0;})) => {
-        Object.values(__$__.edges._data).forEach(edge => {
+    updateArrayValuePosition: (arrayBlocks = Object.keys(__$__.ObjectGraphNetwork.nodes._data).filter(label => label.indexOf('@block') >= 0)) => {
+        Object.values(__$__.ObjectGraphNetwork.edges._data).forEach(edge => {
             let index = arrayBlocks.indexOf(edge.from);
 
             if (index >= 0) {
-                if (__$__.nodes._data[edge.to].color && __$__.nodes._data[edge.to].color === 'white') {
-                    let pos = __$__.network.getPositions(edge.from)[edge.from];
-                    __$__.network.moveNode(edge.to, pos.x, pos.y + 100);
-                    __$__.nodes.update({id: edge.to, fixed: true});
+                if (__$__.ObjectGraphNetwork.nodes._data[edge.to].isLiteral) {
+                    let pos = __$__.ObjectGraphNetwork.network.getPositions(edge.from)[edge.from];
+                    __$__.ObjectGraphNetwork.network.moveNode(edge.to, pos.x, pos.y + 100);
+                    __$__.ObjectGraphNetwork.nodes.update({id: edge.to, fixed: true});
                 }
             }
         });

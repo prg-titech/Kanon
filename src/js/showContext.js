@@ -3,7 +3,7 @@ __$__.ShowContext = {
     infLoopMessage: 'Infinite Loop? ',
     editorSize: setTimeout(function timeout() {
         try {
-            let elem = $('#editor');
+            let elem = jQuery('#editor');
             __$__.ShowContext.editorSize = {
                 h: parseInt(elem.css('height').slice(0, -2)),
                 w: parseInt(elem.css('width').slice(0, -2))
@@ -20,12 +20,12 @@ __$__.ShowContext = {
      */
     show: function() {
         let checked_arr = [];
-        let show_div = $('#show_context');
+        let show_div = jQuery('#show_context');
         let divs = show_div.children();
 
         for (let i = 0; i < divs.length; i++) {
             let id = divs[i].id;
-            let elem = $('#' + id);
+            let elem = jQuery('#' + id);
 
             if (!__$__.Context.LabelPos.Loop[id])
                 elem.remove();
@@ -70,7 +70,7 @@ __$__.ShowContext = {
             __$__.Context.LabelPos.Loop[id].start.line-1,
             __$__.Context.LabelPos.Loop[id].start.column
         );
-        return {x: coord.pageX - 5 + $(window).scrollLeft(), y: coord.pageY - 40 + $(window).scrollTop()};
+        return {x: coord.pageX - 5 + jQuery(window).scrollLeft(), y: coord.pageY - 40 + jQuery(window).scrollTop()};
     },
 
 
@@ -131,7 +131,7 @@ __$__.ShowContext = {
     },
 
     updateEditorSize() {
-        let elem = $('#editor');
+        let elem = jQuery('#editor');
         __$__.ShowContext.editorSize = {
             h: parseInt(elem.css('height').slice(0, -2)),
             w: parseInt(elem.css('width').slice(0, -2))
