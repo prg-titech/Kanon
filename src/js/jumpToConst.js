@@ -15,7 +15,7 @@ __$__.JumpToConstruction = {
         // choose edge
         else if (param.edges.length) {
             let edgeId = param.edges[0];
-            __$__.JumpToConstruction.ClickElement.edge = __$__.network.body.data.edges._data[edgeId];
+            __$__.JumpToConstruction.ClickElement.edge = __$__.ObjectGraphNetwork.network.body.data.edges._data[edgeId];
         }
     
         // no choose

@@ -24,7 +24,7 @@ __$__.Manipulate = {
      * @param callback
      */
     editEdge: function(edgeData, callback) {
-        if (__$__.edges._data[edgeData.id].from !== edgeData.from) {
+        if (__$__.ObjectGraphNetwork.edges._data[edgeData.id].from !== edgeData.from) {
             // In the case that the user edits the from-side of the edge
             // In current implementation, do nothing
             callback();
@@ -54,8 +54,8 @@ __$__.Manipulate = {
         // this variable is a table that represents which edges the node is pointed to.
         // {nodeId: [edgeId1, edgeId2, ...]}
         let edgesThatReferTo = new Object();
-        Object.keys(__$__.edges._data).forEach(edgeId => {
-            let edge = __$__.edges._data[edgeId];
+        Object.keys(__$__.ObjectGraphNetwork.edges._data).forEach(edgeId => {
+            let edge = __$__.ObjectGraphNetwork.edges._data[edgeId];
             if (edgesThatReferTo[edge.to]) {
                 edgesThatReferTo[edge.to].push(edge.id);
             } else {
@@ -81,7 +81,7 @@ __$__.Manipulate = {
 
             if (edgesThatReferTo[nodeId])
                 edgesThatReferTo[nodeId].forEach(eId => {
-                    let edge = __$__.edges._data[eId];
+                    let edge = __$__.ObjectGraphNetwork.edges._data[eId];
                     acc.label.unshift(edge.label);
 
                     rec(edge.from, acc);
@@ -106,8 +106,8 @@ __$__.Manipulate = {
         // this variable is a table that represents which edges the node is pointed to.
         // {nodeId: [edgeId1, edgeId2, ...]}
         let node2Edges = new Object();
-        Object.keys(__$__.edges._data).forEach(edgeId => {
-            let edge = __$__.edges._data[edgeId];
+        Object.keys(__$__.ObjectGraphNetwork.edges._data).forEach(edgeId => {
+            let edge = __$__.ObjectGraphNetwork.edges._data[edgeId];
             if (node2Edges[edge.to]) {
                 node2Edges[edge.to].push(edge.id);
             } else {
@@ -123,7 +123,7 @@ __$__.Manipulate = {
             if (acc.passedEdgeIds[edgeId]) {
                 return;
             }
-            let edge = __$__.edges._data[edgeId];
+            let edge = __$__.ObjectGraphNetwork.edges._data[edgeId];
 
             acc.label.unshift(edge.label);
             acc.passedEdgeIds[edgeId] = true;
@@ -168,7 +168,7 @@ __$__.Manipulate = {
                         from[nodeId1].forEach(labels_l => {
                             if (!labels_l.label.length && nodeId1 === '__Variable-this')
                                 return;
-                            let exp_l = labels_l.label.concat([((prop) ? __$__.edges._data[prop].label : '${0:prop}')]).join('.');
+                            let exp_l = labels_l.label.concat([((prop) ? __$__.ObjectGraphNetwork.edges._data[prop].label : '${0:prop}')]).join('.');
                             let score_l = labels_l.label.length;
                             if (labels_l.label[0] === 'this') score_l += 0.2;
 

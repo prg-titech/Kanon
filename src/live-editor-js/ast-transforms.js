@@ -74,7 +74,6 @@ __$__.ASTTransforms = {
      *     __loopCount = 1,
      *     __loopCounterObject = {},
      *     __time_counter = 0,
-     *     __time_counter_stack = [],
      *     __call_count = {},
      *     __newObjectIds = [],
      *     __newExpInfo = [],
@@ -117,10 +116,6 @@ __$__.ASTTransforms = {
                             b.VariableDeclarator(
                                 b.Identifier('__time_counter'),
                                 b.Literal(0)
-                            ),
-                            b.VariableDeclarator(
-                                b.Identifier('__time_counter_stack'),
-                                b.ArrayExpression([])
                             ),
                             b.VariableDeclarator(
                                 b.Identifier('__call_count'),
@@ -199,12 +194,47 @@ __$__.ASTTransforms = {
      *     );
      *     __newExpInfo.push(false);
      *     checkpoint;
-     *     var __temp = __callee(arg1, arg2, ...);
+     *     var __retObj, __hasTest, __errorOccurred, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+     *     try {
+     *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
+     *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+     *         __retObj = __callee(arg1, arg2, ...);
+     *         __errorOccurred = false;
+     *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+     *     } catch (e) {
+     *         __errorOccurred = true;
+     *         __$__.Testize.storeActualGraph();
+     *         if (!__hasTest)
+     *             throw e;
+     *     } finally {
+     *         if (__hasTest) {
+     *             let __classesObject = {};
+     *             __$__.Testize.extractUsedClassNames(...).forEach(className => {
+     *                 try {
+     *                     __classesObject[className] = eval(className);
+     *                 } catch (e) {
+     *                     __classesObject[className] = Object;
+     *                 }
+     *             })
+     *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
+     *             Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+     *             let __variableNames = Object.keys(__overrideInfo.variableReferences);
+     *             // change variable references
+     *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
+     *                 let __variableName = __variableNames[__i__];
+     *                 let __object = __overrideInfo.variableReferences[__variableName];
+     *                 eval(__variableName + ' = __object');
+     *             }
+     *         } else if (__errorOccurred) {
+     *             __newExpInfo.pop();
+     *             __stackForCallTree.pop();
+     *         }
+     *     }
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
      *     __stackForCallTree.pop();
-     *     return __temp;
+     *     return __retObj;
      * }).call(this, func)
      *
      * exceptional case in which the callee node is 'MemberExpression'
@@ -226,21 +256,57 @@ __$__.ASTTransforms = {
      *     );
      *     __newExpInfo.push(false);
      *     checkpoint;
-     *     var __temp = __obj.prop(arg1, arg2, ...);
+     *     var __retObj, __hasTest, __errorOccurred, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+     *     try {
+     *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
+     *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+     *         __retObj = __obj.prop(arg1, arg2, ...);
+     *         __errorOccurred = false;
+     *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+     *     } catch (e) {
+     *         __errorOccurred = true;
+     *         __$__.Testize.storeActualGraph();
+     *         if (!__hasTest)
+     *             throw e;
+     *     } finally {
+     *         if (__hasTest) {
+     *             let __classesObject = {};
+     *             __$__.Testize.extractUsedClassNames(...).forEach(className => {
+     *                 try {
+     *                     __classesObject[className] = eval(className);
+     *                 } catch (e) {
+     *                     __classesObject[className] = Object;
+     *                 }
+     *             })
+     *             let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
+     *             Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+     *             let __variableNames = Object.keys(__overrideInfo.variableReferences);
+     *             // change variable references
+     *             for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
+     *                 let __variableName = __variableNames[__i__];
+     *                 let __object = __overrideInfo.variableReferences[__variableName];
+     *                 eval(__variableName + ' = __object');
+     *             }
+     *         } else if (__errorOccurred) {
+     *             __newExpInfo.pop();
+     *             __stackForCallTree.pop();
+     *         }
+     *     }
      *     changed;
      *     checkpoint;
      *     __newExpInfo.pop();
      *     __stackForCallTree.pop();
-     *     return __temp;
+     *     return __retObj;
      * })(obj)
      */
-    CallExpressionToFunction() {
+    ConvertCallExpression() {
         let b = __$__.ASTBuilder;
         return {
             leave(node, path) {
                 if (node.type === "CallExpression" && node.loc) {
                     const counterName = "__call_count";
                     let label = node.label;
+
                     let info = {};
                     if (node.callee.type === 'MemberExpression') {
                         info.argName = '__obj';
@@ -256,8 +322,14 @@ __$__.ASTTransforms = {
                     }
                     info.arg.unshift(b.Identifier('this'));
                     info.vars = __$__.ASTTransforms.varEnv.Variables();
+
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
+
+                    __$__.Context.CheckPointIDAroundFuncCall[label] = {
+                        before: __$__.ASTTransforms.checkPoint_idCounter,
+                        after: __$__.ASTTransforms.checkPoint_idCounter + 1
+                    };
 
                     return b.CallExpression(
                         b.MemberExpression(
@@ -340,15 +412,464 @@ __$__.ASTTransforms = {
                                         )
                                     ),
                                     __$__.ASTTransforms.makeCheckpoint(node.loc.start, info.vars),
+                                    /**
+                                     * var __retObj, __hasTest, __errorOccurred, __context_sensitiveID = __stackForCallTree.last().getContextSensitiveID();
+                                     */
                                     b.VariableDeclaration([
                                             b.VariableDeclarator(
-                                                b.Identifier('__temp'),
+                                                b.Identifier('__retObj')
+                                            ),
+                                            b.VariableDeclarator(
+                                                b.Identifier('__hasTest')
+                                            ),
+                                            b.VariableDeclarator(
+                                                b.Identifier('__errorOccurred')
+                                            ),
+                                            b.VariableDeclarator(
+                                                b.Identifier('__context_sensitiveID'),
                                                 b.CallExpression(
-                                                    info.callee,
-                                                    node.arguments
+                                                    b.MemberExpression(
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__stackForCallTree'),
+                                                                b.Identifier('last')
+                                                            ), []
+                                                        ),
+                                                        b.Identifier('getContextSensitiveID')
+                                                    ), []
                                                 )
                                             )],
                                         'var'
+                                    ),
+                                    /**
+                                     *
+                                     * try {
+                                     *     __hasTest = __$__.Testize.hasTest(...);
+                                     *     if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+                                     *     __retObj = func();
+                                     *     __errorOccurred = false;
+                                     *     __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
+                                     * } catch (e) {
+                                     *    __errorOccurred = true;
+                                     *     __$__.Testize.storeActualGraph();
+                                     *     if (!__hasTest)
+                                     *         throw e;
+                                     * } finally {
+                                     *     if (__hasTest) {
+                                     *         let __classesObject = {};
+                                     *         __$__.Testize.extractUsedClassNames(...).forEach(className => {
+                                     *             try {
+                                     *                 __classesObject[className] = eval(className);
+                                     *             } catch (e) {
+                                     *                 __classesObject[className] = Object;
+                                     *             }
+                                     *         })
+                                     *         let __overrideInfo = __$__.Testize.testAndOverride(__objs, probe, __retObj, 'unique Label', __context_sensitiveID, __errorOccurred, __classesObject);
+                                     *         Array.prototype.push.apply(__objs, __overrideInfo.newObjects);
+                                     *         let __variableNames = Object.keys(__overrideInfo.variableReferences);
+                                     *         let __variableNames = Object.keys(__overrideInfo);
+                                     *         for (let __i__ = 0; __i__ < __variableNames.length; __i__++) {
+                                     *             let __variableName = __variableNames[__i__];
+                                     *             let __object = __overrideInfo[__variableName];
+                                     *             eval(__variableName + ' = __object');
+                                     *         }
+                                     *     } else if (__errorOccurred) {
+                                     *         __newExpInfo.pop();
+                                     *         __stackForCallTree.pop();
+                                     *     }
+                                     * }
+                                     */
+                                    b.TryStatement(
+                                        b.BlockStatement([
+                                            b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.Identifier('__hasTest'),
+                                                    '=',
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('hasTest')
+                                                        ),
+                                                        [
+                                                            b.Literal(label),
+                                                            b.Identifier('__context_sensitiveID')
+                                                        ]
+                                                    )
+                                                )
+                                            ),
+                                            b.IfStatement(
+                                                b.Identifier('__hasTest'),
+                                                b.ExpressionStatement(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('checkPrecondGraph')
+                                                        ),
+                                                        [
+                                                            b.Identifier('__objs'),
+                                                            b.ObjectExpression(
+                                                                info.vars.map(function(val) {
+                                                                    return b.Property(
+                                                                        b.Identifier(val),
+                                                                        b.ConditionalExpression(
+                                                                            b.BinaryExpression(
+                                                                                b.UnaryExpression(
+                                                                                    'typeof',
+                                                                                    b.Identifier(val),
+                                                                                    true
+                                                                                ),
+                                                                                '!==',
+                                                                                b.Literal('string')
+                                                                            ),
+                                                                            b.Identifier(val),
+                                                                            b.Identifier("undefined")
+                                                                        )
+                                                                    );
+                                                                }).concat([
+                                                                    b.Property(
+                                                                        b.Identifier('this'),
+                                                                        b.Identifier('this')
+                                                                    )
+                                                                ])
+                                                            ),
+                                                            b.Literal(label),
+                                                            b.Identifier('__context_sensitiveID'),
+                                                        ]
+                                                    )
+                                                )
+                                            ),
+                                            b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.Identifier('__retObj'),
+                                                    '=',
+                                                    b.CallExpression(
+                                                        info.callee,
+                                                        node.arguments
+                                                    )
+                                                )
+                                            ),
+                                            b.ExpressionStatement(
+                                                b.AssignmentExpression(
+                                                    b.Identifier('__errorOccurred'),
+                                                    '=',
+                                                    b.Literal(false)
+                                                )
+                                            ),
+                                            b.ExpressionStatement(
+                                                b.CallExpression(
+                                                    b.MemberExpression(
+                                                        b.MemberExpression(
+                                                            b.Identifier('__$__'),
+                                                            b.Identifier('Testize')
+                                                        ),
+                                                        b.Identifier('storeActualGraph')
+                                                    ),
+                                                    [
+                                                        b.Identifier('__objs'),
+                                                        b.ObjectExpression(
+                                                            info.vars.map(function(val) {
+                                                                return b.Property(
+                                                                    b.Identifier(val),
+                                                                    b.ConditionalExpression(
+                                                                        b.BinaryExpression(
+                                                                            b.UnaryExpression(
+                                                                                'typeof',
+                                                                                b.Identifier(val),
+                                                                                true
+                                                                            ),
+                                                                            '!==',
+                                                                            b.Literal('string')
+                                                                        ),
+                                                                        b.Identifier(val),
+                                                                        b.Identifier("undefined")
+                                                                    )
+                                                                );
+                                                            }).concat([
+                                                                b.Property(
+                                                                    b.Identifier('this'),
+                                                                    b.Identifier('this')
+                                                                )
+                                                            ])
+                                                        ),
+                                                        b.Literal(label),
+                                                        b.Identifier('__context_sensitiveID')
+                                                    ]
+                                                )
+                                            )
+                                        ]),
+                                        b.CatchClause(
+                                            b.Identifier('e'),
+                                            b.BlockStatement([
+                                                b.ExpressionStatement(
+                                                    b.AssignmentExpression(
+                                                        b.Identifier('__errorOccurred'),
+                                                        '=',
+                                                        b.Literal(true)
+                                                    )
+                                                ),
+                                                b.ExpressionStatement(
+                                                    b.CallExpression(
+                                                        b.MemberExpression(
+                                                            b.MemberExpression(
+                                                                b.Identifier('__$__'),
+                                                                b.Identifier('Testize')
+                                                            ),
+                                                            b.Identifier('storeActualGraph')
+                                                        ), []
+                                                    )
+                                                ),
+                                                b.IfStatement(
+                                                    b.UnaryExpression(
+                                                        '!',
+                                                        b.Identifier('__hasTest'),
+                                                        true
+                                                    ),
+                                                    b.ThrowStatement(
+                                                        b.Identifier('e')
+                                                    )
+                                                )
+                                            ])
+                                        ),
+                                        b.BlockStatement([
+                                            b.IfStatement(
+                                                b.Identifier('__hasTest'),
+                                                b.BlockStatement([
+                                                    b.VariableDeclaration([
+                                                        b.VariableDeclarator(
+                                                            b.Identifier('__classesObject'),
+                                                            b.ObjectExpression([])
+                                                        )
+                                                    ], 'let'),
+                                                    b.ExpressionStatement(
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.CallExpression(
+                                                                    b.MemberExpression(
+                                                                        b.MemberExpression(
+                                                                            b.Identifier('__$__'),
+                                                                            b.Identifier('Testize')
+                                                                        ),
+                                                                        b.Identifier('extractUsedClassNames')
+                                                                    ),
+                                                                    [
+                                                                        b.Literal(label),
+                                                                        b.Identifier('__context_sensitiveID')
+                                                                    ]
+                                                                ),
+                                                                b.Identifier('forEach')
+                                                            ),
+                                                            [b.ArrowFunctionExpression(
+                                                                [b.Identifier('className')],
+                                                                b.BlockStatement([
+                                                                    b.TryStatement(
+                                                                        b.BlockStatement([
+                                                                            b.ExpressionStatement(
+                                                                                b.AssignmentExpression(
+                                                                                    b.MemberExpression(
+                                                                                        b.Identifier('__classesObject'),
+                                                                                        b.Identifier('className'),
+                                                                                        true
+                                                                                    ),
+                                                                                    '=',
+                                                                                    b.CallExpression(
+                                                                                        b.Identifier('eval'),
+                                                                                        [b.Identifier('className')]
+                                                                                    )
+                                                                                )
+                                                                            )
+                                                                        ]),
+                                                                        b.CatchClause(
+                                                                            b.Identifier('e'),
+                                                                            b.BlockStatement([
+                                                                                b.ExpressionStatement(
+                                                                                    b.AssignmentExpression(
+                                                                                        b.MemberExpression(
+                                                                                            b.Identifier('__classesObject'),
+                                                                                            b.Identifier('className'),
+                                                                                            true
+                                                                                        ),
+                                                                                        '=',
+                                                                                        b.Identifier('Object')
+                                                                                    )
+                                                                                )
+                                                                            ])
+                                                                        )
+                                                                    )
+                                                                ])
+                                                            )]
+                                                        )
+                                                    ),
+                                                    b.VariableDeclaration([
+                                                        b.VariableDeclarator(
+                                                            b.Identifier('__overrideInfo'),
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('__$__'),
+                                                                        b.Identifier('Testize')
+                                                                    ),
+                                                                    b.Identifier('testAndOverride')
+                                                                ),
+                                                                [
+                                                                    b.Identifier('__objs'),
+                                                                    b.ObjectExpression(
+                                                                        info.vars.map(function(val) {
+                                                                            return b.Property(
+                                                                                b.Identifier(val),
+                                                                                b.ConditionalExpression(
+                                                                                    b.BinaryExpression(
+                                                                                        b.UnaryExpression(
+                                                                                            'typeof',
+                                                                                            b.Identifier(val),
+                                                                                            true
+                                                                                        ),
+                                                                                        '!==',
+                                                                                        b.Literal('string')
+                                                                                    ),
+                                                                                    b.Identifier(val),
+                                                                                    b.Identifier("undefined")
+                                                                                )
+                                                                            );
+                                                                        }).concat([
+                                                                            b.Property(
+                                                                                b.Identifier('this'),
+                                                                                b.Identifier('this')
+                                                                            )
+                                                                        ])
+                                                                    ),
+                                                                    b.Identifier('__retObj'),
+                                                                    b.Literal(label),
+                                                                    b.Identifier('__context_sensitiveID'),
+                                                                    b.Identifier('__errorOccurred'),
+                                                                    b.Identifier('__classesObject')
+                                                                ]
+                                                            ),
+                                                        )], 'let'
+                                                    ),
+                                                    b.ExpressionStatement(
+                                                        b.CallExpression(
+                                                            b.MemberExpression(
+                                                                b.MemberExpression(
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('Array'),
+                                                                        b.Identifier('prototype')
+                                                                    ),
+                                                                    b.Identifier('push')
+                                                                ),
+                                                                b.Identifier('apply')
+                                                            ),
+                                                            [
+                                                                b.Identifier('__objs'),
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__overrideInfo'),
+                                                                    b.Identifier('newObjects')
+                                                                )
+                                                            ]
+                                                        )
+                                                    ),
+                                                    b.VariableDeclaration([
+                                                        b.VariableDeclarator(
+                                                            b.Identifier('__variableNames'),
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.Identifier('Object'),
+                                                                    b.Identifier('keys')
+                                                                ),
+                                                                [
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('__overrideInfo'),
+                                                                        b.Identifier('variableReferences')
+                                                                    )
+                                                                ]
+                                                            )
+                                                        )
+                                                    ], 'let'),
+                                                    b.ForStatement(
+                                                        b.VariableDeclaration([
+                                                            b.VariableDeclarator(
+                                                                b.Identifier('__i__'),
+                                                                b.Literal(0)
+                                                            )
+                                                        ], 'let'),
+                                                        b.BinaryExpression(
+                                                            b.Identifier('__i__'),
+                                                            '<',
+                                                            b.MemberExpression(
+                                                                b.Identifier('__variableNames'),
+                                                                b.Identifier('length')
+                                                            )
+                                                        ),
+                                                        b.UpdateExpression(
+                                                            b.Identifier('__i__'),
+                                                            '++',
+                                                            false
+                                                        ),
+                                                        b.BlockStatement([
+                                                            b.VariableDeclaration([
+                                                                b.VariableDeclarator(
+                                                                    b.Identifier('__variableName'),
+                                                                    b.MemberExpression(
+                                                                        b.Identifier('__variableNames'),
+                                                                        b.Identifier('__i__'),
+                                                                        true
+                                                                    )
+                                                                )
+                                                            ], 'let'),
+                                                            b.VariableDeclaration([
+                                                                b.VariableDeclarator(
+                                                                    b.Identifier('__object'),
+                                                                    b.MemberExpression(
+                                                                        b.MemberExpression(
+                                                                            b.Identifier('__overrideInfo'),
+                                                                            b.Identifier('variableReferences')
+                                                                        ),
+                                                                        b.Identifier('__variableName'),
+                                                                        true
+                                                                    )
+                                                                )
+                                                            ], 'let'),
+                                                            b.ExpressionStatement(
+                                                                b.CallExpression(
+                                                                    b.Identifier('eval'),
+                                                                    [b.BinaryExpression(
+                                                                        b.Identifier('__variableName'),
+                                                                        '+',
+                                                                        b.Literal(' = __object')
+                                                                    )]
+                                                                )
+                                                            )
+                                                        ])
+                                                    )
+                                                ]),
+                                                b.IfStatement(
+                                                    b.Identifier('__errorOccurred'),
+                                                    b.BlockStatement([
+                                                        b.ExpressionStatement(
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__newExpInfo'),
+                                                                    b.Identifier('pop')
+                                                                ), []
+                                                            )
+                                                        ),
+                                                        b.ExpressionStatement(
+                                                            b.CallExpression(
+                                                                b.MemberExpression(
+                                                                    b.Identifier('__stackForCallTree'),
+                                                                    b.Identifier('pop')
+                                                                ), []
+                                                            )
+                                                        )
+                                                    ])
+                                                )
+                                            )
+                                        ])
                                     ),
                                     __$__.ASTTransforms.changedGraphStmt(),
                                     __$__.ASTTransforms.makeCheckpoint(node.loc.end, info.vars),
@@ -370,7 +891,7 @@ __$__.ASTTransforms = {
                                         )
                                     ),
                                     b.ReturnStatement(
-                                        b.Identifier('__temp')
+                                        b.Identifier('__retObj')
                                     )
                                 ])
                             ),
@@ -673,9 +1194,7 @@ __$__.ASTTransforms = {
      *           __$__.Context.InfLoop = __loopLabel;
      *           throw 'Infinite Loop';
      *       }
-     *       let __start = __time_counter,
-     *           __startEndObject__ = {start: __time_counter};
-     *       __time_counter_stack.push(__startEndObject__);
+     *       let __start = __time_counter
      *       __stackForCallTree.push(
      *           new __$__.CallTree.Function(
      *               __loopLabel,
@@ -695,12 +1214,11 @@ __$__.ASTTransforms = {
      *           Object.setProperty(this, '__id', __newObjectIds.pop());
      *           __objs.push(this);
      *       }
+     *       __$__.Context.RegisterCallRelationship(__stackForCallTree);
      *
      *       try {
      *           ... (body)
      *       } finally {
-     *           __startEndObject__.end = __time_counter - 1;
-     *           __time_counter_stack.pop();
      *           __stackForCallTree.pop();
      *           __loopLabels.pop();
      *       }
@@ -731,9 +1249,7 @@ __$__.ASTTransforms = {
      *                     __$__.Context.InfLoop = __loopLabel;
      *                     throw 'Infinite Loop';
      *                 }
-     *                 let __start = __time_counter,
-     *                     __startEndObject__ = {start: __time_counter};
-     *                 __time_counter_stack.push(__startEndObject__);
+     *                 let __start = __time_counter
      *                 __stackForCallTree.push(
      *                     new __$__.CallTree.Loop(
      *                         __loopLabel,
@@ -750,6 +1266,7 @@ __$__.ASTTransforms = {
      *                 __$__.Context.CallTreeNodesOfEachLoop[__loopLabel].push(__stackForCallTree.last());
      *
      *                 // there is following IfStatement in the case only of functions
+     *                 // The body of this IfStatement is executed only in the case of functions
      *                 if (__newExpInfo.last()) {
      *                     Object.setProperty(this, '__id', __newObjectIds.pop());
      *                     __objs.push(this);
@@ -758,8 +1275,6 @@ __$__.ASTTransforms = {
      *                 try {
      *                     ... (body of the loop)
      *                 } finally {
-     *                     __startEndObject__.end = __time_counter-1;
-     *                     __time_counter_stack.pop();
      *                     __stackForCallTree.pop();
      *                 }
      *             }
@@ -806,12 +1321,6 @@ __$__.ASTTransforms = {
 
 
                     let finallyBody = [
-                        b.ExpressionStatement(
-                            b.Identifier('__startEndObject__.end = __time_counter-1')
-                        ),
-                        b.ExpressionStatement(
-                            b.Identifier('__time_counter_stack.pop()')
-                        ),
                         b.ExpressionStatement(
                             b.CallExpression(
                                 b.MemberExpression(
@@ -967,29 +1476,8 @@ __$__.ASTTransforms = {
                             b.VariableDeclarator(
                                 b.Identifier('__start'),
                                 b.Identifier('__time_counter')
-                            ),
-                            b.VariableDeclarator(
-                                b.Identifier('__startEndObject__'),
-                                b.ObjectExpression([
-                                    b.Property(
-                                        b.Identifier('start'),
-                                        b.Identifier('__time_counter')
-                                    )
-                                ])
                             )
                         ], 'let')
-                    );
-
-                    newBlockStmt.body.push(
-                        b.ExpressionStatement(
-                            b.CallExpression(
-                                b.MemberExpression(
-                                    b.Identifier('__time_counter_stack'),
-                                    b.Identifier('push')
-                                ),
-                                b.Identifier('__startEndObject')
-                            )
-                        )
                     );
 
                     /**
@@ -1146,6 +1634,12 @@ __$__.ASTTransforms = {
                         )
                     );
 
+                    /**
+                     * if (__newExpInfo.last()) {
+                     *     Object.setProperty(this, '__id', __newObjectIds.pop());
+                     *     __objs.push(this);
+                     * }
+                     */
                     newBlockStmt.body.push(
                         b.IfStatement(
                             b.CallExpression(
@@ -1186,6 +1680,27 @@ __$__.ASTTransforms = {
                             ])
                         )
                     );
+
+
+                    if (isFunction)
+                        /**
+                         * __$__.Context.RegisterCallRelationship(__stackForCallTree);
+                         */
+                        newBlockStmt.body.push(
+                            b.ExpressionStatement(
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.MemberExpression(
+                                            b.Identifier('__$__'),
+                                            b.Identifier('Context')
+                                        ),
+                                        b.Identifier('RegisterCallRelationship')
+                                    ), [
+                                        b.Identifier('__stackForCallTree')
+                                    ]
+                                )
+                            )
+                        );
 
 
                     newBlockStmt.body.push(
@@ -1636,6 +2151,9 @@ __$__.ASTTransforms = {
                     }
 
                     node.label = label;
+                    if (node.type === 'CallExpression' && label) {
+                        __$__.Testize.registerParenthesisPos(node);
+                    }
                 }
             }
         }

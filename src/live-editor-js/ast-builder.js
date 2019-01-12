@@ -292,7 +292,7 @@ __$__.ASTBuilder = {
     /**
      * @param {BlockStatement} block
      * @param {CatchClause} handler
-     * @param {} finalizzer
+     * @param {BlockStatement} finalizzer
      */
     TryStatement(block, handler = null, finalizer = null) {
         return {
@@ -347,7 +347,7 @@ __$__.ASTBuilder = {
      * @param {Identifier} id
      * @param {Expression?} init
      */
-    VariableDeclarator(id, init) {
+    VariableDeclarator(id, init = null) {
         return {
             type: "VariableDeclarator",
             id: id,

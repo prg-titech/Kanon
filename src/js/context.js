@@ -5,6 +5,8 @@ __$__.Context = {
     CheckPointID2LoopLabel: {},
     CheckPointTable: {},
     CheckPointAroundCursor: {},
+    CheckPointIDAroundFuncCall: {},
+    CallRelationship: {},
     CallTreeNodesOfEachLoop: {},
     InfLoop: '',
     LabelPos: {
@@ -29,6 +31,8 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __$__.Context.CheckPointID2LoopLabel = {};
         __$__.Context.CheckPointTable = {};
+        __$__.Context.CheckPointIDAroundFuncCall = {};
+        __$__.Context.CallRelationship = {};
         __$__.Context.CallTreeNodesOfEachLoop = {main: [__$__.CallTree.rootNode]};
         __$__.Context.LastInfo = {};
         __$__.Context.StoredGraph = {};
@@ -203,22 +207,27 @@ __$__.Context = {
 
             __$__.StorePositions.setPositions(graph);
 
-            __$__.options.nodes.color = 'rgba(' + __$__.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
-            __$__.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
-            __$__.network.setOptions(__$__.options);
+            __$__.ObjectGraphNetwork.options.nodes.color = 'rgba(' + __$__.ObjectGraphNetwork.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
+            __$__.ObjectGraphNetwork.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
+            __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
 
-            let isChanged = false;
-
+            let isChanged;
             if (__$__.Layout.enabled) {
-                isChanged = __$__.Layout.setLinkedList(graph);
-                isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
+                __$__.Layout.setLinkedList(graph);
+                __$__.Layout.setBinaryTree(graph);
+                isChanged = graph.nodes.some(node => {
+                    let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+                    return beforePos && (beforePos.x !== node.x || beforePos.y !== node.y);
+                });
             }
-    
+
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
                 __$__.Animation.setData(graph);
-                __$__.Context.Arrays.forEach(arr => {
-                    __$__.Update.updateArrayPosition({nodes: [arr[0]]});
-                });
+                if (__$__.Update.useBoxToVisualizeArray) {
+                    __$__.Context.Arrays.forEach(arr => {
+                        __$__.Update.updateArrayPosition({nodes: [arr[0]]});
+                    });
+                }
                 __$__.StorePositions.registerPositions();
             }
         } else {
@@ -318,10 +327,14 @@ __$__.Context = {
 
             __$__.StorePositions.setPositions(graph);
 
-            let isChanged = false;
+            let isChanged;
             if (__$__.Layout.enabled) {
-                isChanged = __$__.Layout.setLinkedList(graph);
-                isChanged = isChanged || __$__.Layout.setBinaryTree(graph);
+                __$__.Layout.setLinkedList(graph);
+                __$__.Layout.setBinaryTree(graph);
+                isChanged = graph.nodes.some(node => {
+                    let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
+                    return beforePos && (beforePos.x !== node.x || beforePos.y !== node.y);
+                });
             }
     
             // change color of added node to orange in this part
@@ -438,8 +451,8 @@ __$__.Context = {
         }
         document.getElementById('pullDownViewMode').value =
             (isSnapshot) ? 'Snapshot' : 'Summarized';
-        __$__.options.manipulation.enabled = isSnapshot;
-        __$__.network.setOptions(__$__.options);
+        __$__.ObjectGraphNetwork.options.manipulation.enabled = isSnapshot;
+        __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
     },
 
 
@@ -509,7 +522,7 @@ __$__.Context = {
         let isChanged = false;
 
         // Find which loop should be changed.
-        let nearestLoopLabelObj = __$__.Context.findLoopLabelNearestCursorPosition();
+        let nearestLoopLabelObj = __$__.Context.findLoopLabel();
         let nearestLoopLabel = nearestLoopLabelObj.loop,
             contextSensitiveIDOfNearestLoop = __$__.Context.SpecifiedContext[nearestLoopLabel];
 
@@ -540,9 +553,15 @@ __$__.Context = {
     },
 
 
-    findLoopLabelNearestCursorPosition: function() {
-        let cursor = __$__.editor.getCursorPosition();
-        cursor.line = cursor.row + 1;
+    /**
+     * @param posArg: {row, column} or {line, column}
+     * @return {{loop: string, func: string}}
+     */
+    findLoopLabel: function(posArg = __$__.editor.getCursorPosition()) {
+        let pos = {
+            line: posArg.line || posArg.row + 1,
+            column: posArg.column
+        };
         let compare = __$__.UpdateLabelPos.ComparePosition;
         let nearestLoopLabels = {loop: 'main', func: 'main'};
 
@@ -553,7 +572,7 @@ __$__.Context = {
 
             let loop = __$__.Context.LabelPos.Loop[loopLabel];
 
-            if (compare(loop.start, "<", cursor) && compare(cursor, (loop.closed) ? "<" : "<=", loop.end)) {
+            if (compare(loop.start, "<", pos) && compare(pos, (loop.closed) ? "<" : "<=", loop.end)) {
                 checkProperty.forEach(prop => {
                     // if nearestLoopLabel === 'main' then nearestLoop is undefined.
                     let nearestLoop = __$__.Context.LabelPos.Loop[nearestLoopLabels[prop]];
@@ -565,5 +584,32 @@ __$__.Context = {
         });
 
         return nearestLoopLabels;
+    },
+
+
+    /**
+     * @param {Array} stackForCallTree
+     * @constructor
+     */
+    RegisterCallRelationship(stackForCallTree) {
+        let callLabel, sourceCSID;
+        if (stackForCallTree[stackForCallTree.length - 2].constructor.name !== 'Instance') {
+            callLabel = stackForCallTree[stackForCallTree.length - 2].label;
+            sourceCSID = stackForCallTree[stackForCallTree.length - 2].getContextSensitiveID();
+        }
+        // for (let i = stackForCallTree.length-2; i >= 0; i--) {
+        //     let node = stackForCallTree[i];
+        //     if (node.constructor.name !== 'Instance') {
+        //         callLabel = node.label;
+        //         sourceCSID = node.getContextSensitiveID();
+        //         break;
+        //     }
+        // }
+        let targetCSID = stackForCallTree.last().getContextSensitiveID();
+        if (callLabel && sourceCSID && targetCSID) {
+            if (!__$__.Context.CallRelationship[sourceCSID])
+                __$__.Context.CallRelationship[sourceCSID] = {};
+            __$__.Context.CallRelationship[sourceCSID][targetCSID] = callLabel;
+        }
     }
 };

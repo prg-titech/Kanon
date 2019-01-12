@@ -1,0 +1,120 @@
+.seecoderun_tooltip {
+    background-color: #FFF;
+    background-image: -webkit-linear-gradient(top, transparent, rgba(0, 0, 0, 0.1));
+    background-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+    border: 1px solid gray;
+    border-radius: 1px;
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+    color: black;
+    display: none;
+    max-width: 100%;
+    padding: 3px 4px;
+    position: absolute;
+    z-index: 100;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -webkit-transform: translate(-50%, -100%);
+    -moz-transform: translate(-50%, -100%);
+    -ms-transform: translate(-50%, -100%);
+    -o-transform: translate(-50%, -100%);
+    transform: translate(-50%, -100%);
+    box-sizing: border-box;
+    cursor: default;
+    white-space: pre;
+    word-wrap: break-word;
+    line-height: normal;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 12px;
+    letter-spacing: normal;
+    text-align: center;
+}
+
+#window-for-manipulation {
+    width: 100%;
+    height: 100%;
+    font-size: 18px;
+    position: relative;
+}
+
+#window-header {
+    width: 100%;
+    height: 30px;
+    background-color: lightblue;
+    position: relative;
+}
+
+#acceptButton {
+    color: #6091d3;
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    -webkit-transform: translate(0, -50%);
+    -moz-transform: translate(0, -50%);
+    -ms-transform: translate(0, -50%);
+    -o-transform: translate(0, -50%);
+    transform: translate(0, -50%);
+    background: #FFF;
+    border: solid 3px #6091d3;
+    border-radius: 5px;
+    padding: 2px 2px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+#actualGraphButton {
+    color: #ff0000;
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    -webkit-transform: translate(0, -50%);
+    -moz-transform: translate(0, -50%);
+    -ms-transform: translate(0, -50%);
+    -o-transform: translate(0, -50%);
+    transform: translate(0, -50%);
+    background: #FFF;
+    border: solid 3px #ff0000;
+    border-radius: 5px;
+    padding: 2px 2px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+#window-body {
+    width: 100%;
+    height: calc(100% - 30px);
+}
+
+#window-for-actualGraph {
+    width: 100%;
+    height: 100%;
+}
+
+#network-popUp {
+    display:none;
+    position:absolute;
+    font-size: 12px;
+    top:30px;
+    z-index:300;
+    width:200px;
+    height:80px;
+    background-color: #f9f9f9;
+    border: 3px solid #5394ed;
+    padding:10px;
+    text-align: center;
+}
+
+.testWarning {
+    position: absolute;
+    background: #ff00ff;
+}
+
+.testPassed {
+    position: absolute;
+    background: #bcff87;
+}
+
+.testFailed {
+    position: absolute;
+    background: #ffa9a9;
+}

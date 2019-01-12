@@ -5,10 +5,13 @@
 
     	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
     	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<link rel="stylesheet" href="external/prototype_window/themes/default.css"/>
+		<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css"/>
     	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css"/>
     	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css"/>
     	<link rel="stylesheet" type="text/css" href="src/css/style.css">
     	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
+		<link rel="stylesheet" type="text/css" href="src/css/tooltip.css">
 
 		<script type="text/javascript" src="src/import.js"></script>
 
@@ -24,9 +27,10 @@
 		<link rel="stylesheet" type="text/css" href="src/css/split-pane.css">
 
 		<script>
-            $(function() {
-                $('div.split-pane').splitPane();
+            jQuery(function() {
+                jQuery('div.split-pane').splitPane();
             });
+            __$__.d3 = d3;
     	</script>
     </head>
 <body>
@@ -82,46 +86,33 @@
 		</div>
 	</div>
 	<div id='console'></div>
+	<div id="network-popUp">
+		<span id="operation">node</span> <br>
+		<table style="margin:auto;">
+			<tr>
+				<td>label</td>
+				<td><input id="node-label" value="new value" /></td>
+			</tr>
+		</table>
+		<div id="isLiteral">
+			<input type="checkbox" name="isLiteral" id="checkboxForLiteral" value="true">Literal
+		</div>
+		<input type="button" value="save" id="saveButtonForTestize" />
+		<input type="button" value="cancel" id="cancelButtonForTestize" />
+	</div>
+    <div id="tooltip_set" class="seecoderun_tooltip">set test</div>
+	<div id="tooltips" class="seecoderun_tooltip"><div id="tooltip_modify">modify</div><div id="tooltip_remove">remove</div></div>
 
 	<script type="text/javascript" src="src/js/network.js"></script>
-	<script type="text/javascript" src="src/js/call-tree-network.js"></script>
+	<script type="text/javascript" src="src/js/callTreeNetwork.js"></script>
 	<script>
+		jQuery.noConflict();
         __$__.StorePositions.registerPositions();
-        __$__.StorePositions.oldNetwork.edges = __$__.edges._data;
+        __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.edges._data;
 
         __$__.editor.getSelection().clearSelection();
         __$__.Update.PositionUpdate();
-
-        $(window).on('resize' ,function() {
-            if (__$__.CallTreeNetwork.whileDrawing !== true) {
-                __$__.network.redraw();
-                __$__.CallTreeNetwork.redraw();
-            }
-        });
-        document.getElementById('pullDownViewMode').onchange = function() {
-            let selectedValue = document.getElementById('pullDownViewMode').value;
-			__$__.Context.SwitchViewMode(selectedValue === 'Snapshot');
-			__$__.Update.ContextUpdate('changed');
-		};
-		document.getElementById('autoLayout').onchange = function() {
-            __$__.Layout.switchEnabled();
-		};
-		(() => {
-		    var isDragging = false;
-            $('div.split-pane')
-				.mousedown(function () {
-                    isDragging = true;
-                })
-				.mousemove(function () {
-				    if (isDragging) {
-                        __$__.network.redraw();
-                        __$__.CallTreeNetwork.redraw();
-					}
-				})
-				.mouseup(() => {
-				    isDragging = false;
-				});
-        })();
 	</script>
+	<script type="text/javascript" src="src/js/eventHandler.js"></script>
 </body>
 </html>
