@@ -745,6 +745,7 @@ __$__.Testize = {
         // make edge information
         let edgeDir = {};
         let varInfo = {};
+        let runtimeObjects = {};
         Object.values(testData.edges._data).forEach(edge => {
             let from = edge.from;
             if (from.slice(0, 11) === '__Variable-') {
@@ -756,6 +757,16 @@ __$__.Testize = {
                     isLiteral: node.isLiteral,
                     type: node.type
                 };
+
+                // create newly constructed object
+                if (edge.to.slice(0, 6) === '__temp' && !node.isLiteral) {
+                    let className = testData.nodes.get(edge.to).label;
+                    let newObject = Object.create(classes[className].prototype);
+                    Object.setProperty(newObject, '__id', edge.to);
+                    Object.setProperty(newObject, '__ClassName', className);
+                    runtimeObjects[edge.to] = newObject;
+                    newObjects.push(newObject);
+                }
             } else {
                 if (!edgeDir[from]) edgeDir[from] = [];
                 edgeDir[from].push({
@@ -765,11 +776,9 @@ __$__.Testize = {
             }
         });
 
-
         // to grasp all objects which are constructed at runtime.
         //   key: object id
         // value: runtime object
-        let runtimeObjects = {};
         // here, collect runtimeObjects and delete all properties of all objects
         objects.concat(Object.values(probe)).forEach(obj => {
             if (!obj || runtimeObjects[obj.__id] || obj === null || obj === undefined)
