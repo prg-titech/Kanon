@@ -459,9 +459,10 @@ __$__.Testize = {
                 let variableName = document.getElementById('node-label').value;
                 let invisibleNodeID = '__Variable-' + variableName;
 
+                let invisibleNode = __$__.Testize.network.network.body.data.nodes.get(invisibleNodeID);
+                let variableEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === invisibleNodeID);
                 // if the variable is already defined and already refers to an object
-                if (__$__.Testize.network.network.body.data.nodes.get(invisibleNodeID)) {
-                    let variableEdge = Object.values(__$__.Testize.network.network.body.data.edges._data).find(edge => edge.from === invisibleNodeID);
+                if (invisibleNode && variableEdge) {
                     // this operation type is 'editVariableReference'
                     __$__.Testize.saveMouseOperation('editVariableReference', {
                         oldTo: variableEdge.to,
@@ -474,11 +475,13 @@ __$__.Testize = {
                         to: data.to
                     });
                 } else {
-                    __$__.Testize.network.network.body.data.nodes.add({
-                        id: invisibleNodeID,
-                        label: variableName,
-                        hidden: true
-                    });
+                    if (!invisibleNode)
+                        __$__.Testize.network.network.body.data.nodes.add({
+                            id: invisibleNodeID,
+                            label: variableName,
+                            hidden: true
+                        });
+
                     __$__.Testize.network.network.body.data.edges.add({
                         from: invisibleNodeID,
                         to: data.to,
