@@ -55,7 +55,7 @@ __$__.Animation = {
         let next_position = [];
         let node_positions = __$__.ObjectGraphNetwork.network.getPositions();
         graph.nodes.forEach(node => {
-            if (node_positions[node.id] && node.x) {
+            if (node.id.slice(0, 2) !== '__' && node_positions[node.id] && node.x) {
                 next_position.push({
                     id: node.id,
                     x: node.x,
@@ -78,7 +78,7 @@ __$__.Animation = {
             });
         });
         Object.keys(__$__.ObjectGraphNetwork.nodes._data).forEach(label => {
-            if (node_positions[label])
+            if (label.slice(0, 2) !== '__' && node_positions[label])
                 __$__.ObjectGraphNetwork.network.moveNode(label, node_positions[label].x, node_positions[label].y);
         });
         if (__$__.Update.useBoxToVisualizeArray)

@@ -849,6 +849,7 @@ __$__.Testize = {
                         } else {
                             // case of literal
                             let literalNode = testData.nodes.get(edge.to);
+                            __$__.StorePositions.updateIDForExpectedStructure(edge.to, obj.__id + '-' + edge.label);
                             if (literalNode.type === 'number') {
                                 nextObject = Number(literalNode.label);
                             } else {
@@ -861,6 +862,7 @@ __$__.Testize = {
                         if (!nextObject) {
                             // case of literal
                             let literalNode = testData.nodes.get(edge.to);
+                            __$__.StorePositions.updateIDForExpectedStructure(edge.to, obj.__id + '-' + edge.label);
                             if (literalNode.type === 'number') {
                                 nextObject = Number(literalNode.label);
                             } else {
@@ -1262,7 +1264,7 @@ __$__.Testize = {
                 // to, label
                 // memo: How should Kanon do when the from-node already has the property?
                 let hiddenNodeID = '__Variable-' + ope.label;
-                let referredNode = graph.nodes.find(node => node.id === ope.id);
+                let referredNode = graph.nodes.find(node => node.id === ope.to);
                 let variableEdge = graph.edges.find(edge => edge.from === hiddenNodeID);
                 if (referredNode) {
                     if (variableEdge) {
@@ -1379,6 +1381,7 @@ __$__.Testize = {
                 // this function is invoked when this button is clicked.
                 __$__.Testize.setTest();
                 __$__.Testize.window.testGraph.close();
+                __$__.StorePositions.registerPositionsOfExpectedStructure();
                 __$__.Update.PositionUpdate([{
                     start: {row: 0, column: 0},
                     end: {row: 0, column: 0},
@@ -1648,8 +1651,15 @@ __$__.Testize = {
                     edges: new vis.DataSet(Object.values(testData.edges._data).map(edge => jQuery.extend(true, {}, edge)))
                 };
             } else {
-                graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
-                graph = __$__.Testize.duplicateGraph(graph);
+                try {
+                    graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
+                    graph = __$__.Testize.duplicateGraph(graph);
+                } catch (e)  {
+                    graph = {
+                        nodes: [],
+                        edges: []
+                    };
+                }
                 // push a special node so that the user can add green arrows which represent variable references.
                 graph.nodes.push({
                     id: '__RectForVariable__',
