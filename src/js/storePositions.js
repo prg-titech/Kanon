@@ -5,15 +5,20 @@ __$__.StorePositions = {
         _nodesData: {},
         _edgesData: {}
     },
+    positionsOfExpectedStructure: undefined,
 
 
     // if nodePositions have the position of node.id, set the position at graph.node.
-    setPositions: function(graph) {
+    setPositions: function(graph, positionUpdate = false) {
         for (let i = 0; i < graph.nodes.length; i++) {
             let node = graph.nodes[i];
             let nodeData = __$__.StorePositions.oldNetwork.nodes[node.id];
-    
-            if (nodeData && nodeData.x !== undefined) {
+            let posOfExpStr = __$__.StorePositions.positionsOfExpectedStructure;
+
+            if (!positionUpdate && posOfExpStr && posOfExpStr[node.id]){
+                node.x = posOfExpStr[node.id].x;
+                node.y = posOfExpStr[node.id].y;
+            } else if (nodeData && nodeData.x !== undefined) {
                 node.x = nodeData.x;
                 node.y = nodeData.y;
                 if (node.id.slice(0, 11) !== '__Variable-')
@@ -23,7 +28,8 @@ __$__.StorePositions = {
                 node.y = undefined;
             }
         }
-        
+        if (!positionUpdate)
+            delete __$__.StorePositions.positionsOfExpectedStructure;
     },
     
     
@@ -45,6 +51,20 @@ __$__.StorePositions = {
         if (positionUpdate) {
             __$__.StorePositions.oldNetwork._nodesData = __$__.ObjectGraphNetwork.nodes._data;
             __$__.StorePositions.oldNetwork._edgesData = __$__.ObjectGraphNetwork.edges._data;
+        }
+    },
+
+
+    registerPositionsOfExpectedStructure() {
+        __$__.StorePositions.positionsOfExpectedStructure = __$__.Testize.network.network.getPositions();
+    },
+
+
+    updateIDForExpectedStructure(oldID, newID) {
+        let posOfExpStr = __$__.StorePositions.positionsOfExpectedStructure;
+        if (posOfExpStr && !posOfExpStr[newID]) {
+            posOfExpStr[newID] = posOfExpStr[oldID];
+            delete posOfExpStr[oldID];
         }
     }
 };
