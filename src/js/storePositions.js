@@ -18,6 +18,8 @@ __$__.StorePositions = {
             if (!positionUpdate && posOfExpStr && posOfExpStr[node.id]){
                 node.x = posOfExpStr[node.id].x;
                 node.y = posOfExpStr[node.id].y;
+                if (node.id.slice(0, 11) !== '__Variable-')
+                    node.fixed = true;
             } else if (nodeData && nodeData.x !== undefined) {
                 node.x = nodeData.x;
                 node.y = nodeData.y;
@@ -28,8 +30,8 @@ __$__.StorePositions = {
                 node.y = undefined;
             }
         }
-        if (!positionUpdate)
-            delete __$__.StorePositions.positionsOfExpectedStructure;
+        // if (!positionUpdate)
+        //     delete __$__.StorePositions.positionsOfExpectedStructure;
     },
     
     
