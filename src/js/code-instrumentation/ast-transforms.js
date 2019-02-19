@@ -1822,7 +1822,7 @@ __$__.ASTTransforms = {
      * the scope of variables is implemented by my environment whose style is stack.
      *
      * inserted check point is
-     * '__$__.Context.CheckPoint(__objs, __loopLabel, __loopCount, __time_counter, {})'
+     * '__$__.Checkpoint.checkpoint(__objs, __loopLabel, __loopCount, __time_counter, {})'
      * and, the last of arguments is object which means visualization of variables.
      * the argument is {v: typeof v === 'string' ? eval(v) : undefined} if variable 'v' should be visualized.
      *
@@ -2164,7 +2164,7 @@ __$__.ASTTransforms = {
         __$__.Context.CheckPointTable[__$__.ASTTransforms.checkPoint_idCounter] = loc;
         return b.ExpressionStatement(
             b.CallExpression(
-                b.Identifier('__$__.Context.CheckPoint'),
+                b.Identifier('__$__.Checkpoint.checkpoint'),
                 [
                     b.Identifier('__objs'),
                     b.CallExpression(

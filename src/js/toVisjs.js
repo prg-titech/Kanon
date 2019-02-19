@@ -1,5 +1,5 @@
 __$__.ToVisjs = {
-    Translator: function(graph) {
+    translator: function(graph) {
         // initialize
         __$__.Context.Arrays = [];
         let retData = {nodes: [], edges: []};

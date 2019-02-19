@@ -723,7 +723,7 @@ __$__.Testize = {
     storeActualGraph(objects, probe, callLabel, context_sensitiveID) {
         if (!__$__.Testize.storedActualGraph[callLabel]) __$__.Testize.storedActualGraph[callLabel] = {};
         if (objects) {
-            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = __$__.ToVisjs.translator(__$__.Traverse.traverse(objects, probe));
         } else {
             __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = undefined;
         }
@@ -1091,7 +1091,7 @@ __$__.Testize = {
     checkPrecondGraph(objects, probe, callLabel, context_sensitiveID) {
         if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
             let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-            let newPrecond = __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe));
+            let newPrecond = __$__.ToVisjs.translator(__$__.Traverse.traverse(objects, probe));
             if (testInfo.precond) {
                 if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
                     testInfo.precond = newPrecond;
