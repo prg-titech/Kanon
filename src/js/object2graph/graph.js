@@ -107,7 +107,7 @@ __$__.StoredGraphFormat = {
          * @return {Array of string} array of unique IDs of all objects
          */
         getObjectIDs() {
-            // TODO
+            return Object.keys(this.nodes);
         }
 
         /**
@@ -115,14 +115,33 @@ __$__.StoredGraphFormat = {
          * @return {Class}
          */
         getClass(ID) {
-            // TODO
+            let node = this.nodes[ID];
+            if (node) {
+                if (node.isLiteral) {
+                    return node.type;
+                } else {
+                    return node.label;
+                }
+            }
         }
 
         /**
          * @param {string} ID
          */
         getFields(ID) {
-            // TODO
+            let node = this.nodes[ID];
+            if (node) {
+                let fields = [];
+                for (let i = 0; i < this.edges.length; i++) {
+                    let edge = this.edges[i];
+                    if (edge.from === ID) {
+                        fields.push(edge.label);
+                    }
+                }
+                return fields;
+            } else {
+                return [];
+            }
         }
 
         /**
@@ -130,7 +149,15 @@ __$__.StoredGraphFormat = {
          * @param {string} FN
          */
         getField(ID, FN) {
-            // TODO
+            let node = this.nodes[ID];
+            if (node) {
+                for (let i = 0; i < this.edges.length; i++) {
+                    let edge = this.edges[i];
+                    if (edge.from === ID && edge.label === FN) {
+                        return edge.to;
+                    }
+                }
+            }
         }
 
         /**
@@ -139,7 +166,11 @@ __$__.StoredGraphFormat = {
          * @param {number} y
          */
         setLocation(ID, x, y) {
-            // TODO
+            let node = this.nodes[ID];
+            if (node) {
+                node.x = x;
+                node.y = y;
+            }
         }
 
         generateVisjsGraph() {
