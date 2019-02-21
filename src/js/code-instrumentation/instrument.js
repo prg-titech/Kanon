@@ -1,4 +1,4 @@
-__$__.CodeConversion = {
+__$__.CodeInstrumentation = {
     /**
      * memo: code(string) -> ast -> new ast -> code(string)
      *
@@ -11,7 +11,7 @@ __$__.CodeConversion = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    TransformCode: function(code) {
+    instrument: function(code) {
         let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];

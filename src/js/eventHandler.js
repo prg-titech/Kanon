@@ -2,6 +2,7 @@ jQuery(window).on('resize' ,function() {
     if (__$__.CallTreeNetwork.whileDrawing !== true) {
         __$__.ObjectGraphNetwork.network.redraw();
         __$__.CallTreeNetwork.redraw();
+        __$__.editor.renderer.onGutterResize();
     }
 });
 

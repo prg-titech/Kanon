@@ -28,7 +28,7 @@ __$__.Update = {
 
         try {
             try {
-                __$__.Update.CodeWithCP = __$__.CodeConversion.TransformCode(__$__.editor.getValue());
+                __$__.Update.CodeWithCP = __$__.CodeInstrumentation.instrument(__$__.editor.getValue());
             } catch (e) {
                 document.getElementById('console').textContent = 'Syntax Error';
                 if (e.message.slice(0, 5) === 'Line ')
