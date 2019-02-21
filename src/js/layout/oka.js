@@ -1,6 +1,20 @@
 __$__.Layout = {
     enabled: true,
 
+
+    setLocation(graph) {
+        let visGraph = graph.generateVisjsGraph(true);
+        __$__.Layout.setLinkedList(visGraph);
+        __$__.Layout.setBinaryTree(visGraph);
+        for (let i = 0; i < visGraph.nodes.length; i++) {
+            let node = visGraph.nodes[i];
+            if (node.x !== undefined && node.y !== undefined) {
+                graph.setLocation(node.id, node.x, node.y);
+            }
+        }
+    },
+
+
     /**
      * We assume that linked-list is already completed(this means that next edges are defined between nodes).
      */
@@ -174,22 +188,7 @@ __$__.Layout = {
         });
     },
     
-    RedrawLinkedList: function(graph = __$__.Context.LastGraph) {
-        __$__.StorePositions.setPositions(graph);
-        if (__$__.Layout.enabled) {
-            __$__.Layout.setLinkedList(graph);
-            let isChanged = graph.nodes.some(node => {
-                let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
-                return beforePos.x !== node.x || beforePos.y !== node.y;
-            });
-            if (isChanged) {
-                __$__.Animation.setData(graph);
-                __$__.StorePositions.registerPositions();
-                __$__.Context.Draw('redraw');
-            }
-        }
-    },
-    
+
     /**
      * We assume that binary tree is already completed(this means that left and right edges are defined between nodes).
      */
@@ -419,20 +418,6 @@ __$__.Layout = {
             if (node.__val !== undefined)
                 delete node.__val;
         });
-    },
-    
-    RedrawBinaryTree: graph =>{
-        __$__.StorePositions.setPositions(graph);
-        __$__.Layout.setBinaryTree(graph);
-        let isChanged = graph.nodes.some(node => {
-            let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
-            return beforePos.x !== node.x || beforePos.y !== node.y;
-        });
-        if (isChanged) {
-            __$__.Animation.setData(graph);
-            __$__.StorePositions.registerPositions();
-            __$__.Context.Draw('redraw');
-        }
     },
 
     switchEnabled: () => {

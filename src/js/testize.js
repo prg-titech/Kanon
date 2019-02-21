@@ -723,7 +723,7 @@ __$__.Testize = {
     storeActualGraph(objects, probe, callLabel, context_sensitiveID) {
         if (!__$__.Testize.storedActualGraph[callLabel]) __$__.Testize.storedActualGraph[callLabel] = {};
         if (objects) {
-            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = __$__.ToVisjs.translator(__$__.Traverse.traverse(objects, probe));
+            __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = __$__.Traverse.traverse(objects, probe).generateVisjsGraph(true);
         } else {
             __$__.Testize.storedActualGraph[callLabel][context_sensitiveID] = undefined;
         }
@@ -1091,7 +1091,7 @@ __$__.Testize = {
     checkPrecondGraph(objects, probe, callLabel, context_sensitiveID) {
         if (__$__.Testize.storedTest[callLabel] && __$__.Testize.storedTest[callLabel][context_sensitiveID]) {
             let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
-            let newPrecond = __$__.ToVisjs.translator(__$__.Traverse.traverse(objects, probe));
+            let newPrecond = __$__.Traverse.traverse(objects, probe).generateVisjsGraph();
             if (testInfo.precond) {
                 if (!__$__.Testize.matching(newPrecond, testInfo.precond)) {
                     testInfo.precond = newPrecond;
@@ -1134,10 +1134,10 @@ __$__.Testize = {
 
 
     /**
-     * @param {Object} graph
+     * @param {Object} visGraph
      * @param {Object} ope
      */
-    applyOperation(graph, ope) {
+    applyOperation(visGraph, ope) {
         switch (ope.editType) {
             case 'addNode': {
                 // id, label, isLiteral (optional) type
@@ -1149,8 +1149,8 @@ __$__.Testize = {
                     fixed: true,
                     color: ope.isLiteral ? __$__.Testize.makeLiteralColor() : null
                 };
-                if (!graph.nodes.find(node => node.id === ope.id)) {
-                    graph.nodes.push(newNode);
+                if (!visGraph.nodes.find(node => node.id === ope.id)) {
+                    visGraph.nodes.push(newNode);
                 } else {
                     // error
                     throw new Error('Cannot reconstruct');
@@ -1159,7 +1159,7 @@ __$__.Testize = {
             }
             case 'editNode': {
                 // id, label, isLiteral (optional) type
-                let nodeToEdit = graph.nodes.find(node => node.id === ope.id);
+                let nodeToEdit = visGraph.nodes.find(node => node.id === ope.id);
                 if (nodeToEdit) {
                     nodeToEdit.label = ope.label;
                     nodeToEdit.isLiteral = ope.isLiteral;
@@ -1174,10 +1174,10 @@ __$__.Testize = {
             case 'deleteNode': {
                 // id
                 let i = 0;
-                while (i < graph.nodes.length) {
-                    let node = graph.nodes[i];
+                while (i < visGraph.nodes.length) {
+                    let node = visGraph.nodes[i];
                     if (node.id === ope.id) {
-                        graph.nodes.splice(i, 1);
+                        visGraph.nodes.splice(i, 1);
                         i = -1;
                         break;
                     } else {
@@ -1186,10 +1186,10 @@ __$__.Testize = {
                 }
                 if (i === -1) {
                     i = 0;
-                    while (i < graph.edges.length) {
-                        let edge = graph.edges[i];
+                    while (i < visGraph.edges.length) {
+                        let edge = visGraph.edges[i];
 
-                        if (edge.from === ope.id || edge.to === ope.id) graph.edges.splice(i, 1);
+                        if (edge.from === ope.id || edge.to === ope.id) visGraph.edges.splice(i, 1);
                         else i++;
                     }
                 }
@@ -1200,19 +1200,19 @@ __$__.Testize = {
                 // from, to, label
                 // memo: How should Kanon do when the from-node already has the property?
                 let checked = {from: false, to: false};
-                graph.nodes.forEach(node => {
+                visGraph.nodes.forEach(node => {
                     checked.from = checked.from || node.id === ope.from;
                     checked.to = checked.to || node.id === ope.to;
                 });
                 if (checked.from && checked.to) {
-                    let alreadyDefined = graph.edges.some(edge => {
+                    let alreadyDefined = visGraph.edges.some(edge => {
                         if (edge.from === ope.from && edge.label === ope.label) {
                             edge.to = ope.to;
                             return true;
                         }
                     });
                     if (!alreadyDefined) {
-                        graph.edges.push({
+                        visGraph.edges.push({
                             from: ope.from,
                             to: ope.to,
                             label: ope.label
@@ -1226,7 +1226,7 @@ __$__.Testize = {
             }
             case 'editEdgeReference': {
                 // from, oldTo, newTo, label
-                let edgeToEdit = graph.edges.find(edge => edge.from === ope.from && edge.to === ope.oldTo && edge.label === ope.label);
+                let edgeToEdit = visGraph.edges.find(edge => edge.from === ope.from && edge.to === ope.oldTo && edge.label === ope.label);
                 if (edgeToEdit) {
                     edgeToEdit.to = ope.newTo;
                 } else {
@@ -1237,7 +1237,7 @@ __$__.Testize = {
             }
             case 'editEdgeLabel': {
                 // from, to, oldLabel, newLabel
-                let edgeToEdit = graph.edges.find(edge => edge.from === ope.from && edge.to === ope.to && edge.label === ope.oldLabel);
+                let edgeToEdit = visGraph.edges.find(edge => edge.from === ope.from && edge.to === ope.to && edge.label === ope.oldLabel);
                 if (edgeToEdit) {
                     edgeToEdit.label = ope.newLabel;
                 } else {
@@ -1249,10 +1249,10 @@ __$__.Testize = {
             case 'deleteEdge': {
                 // from, to, label
                 let i = 0;
-                while (i < graph.edges.length) {
-                    let edge = graph.edges[i];
+                while (i < visGraph.edges.length) {
+                    let edge = visGraph.edges[i];
                     if (edge.from === ope.from && edge.to === ope.to && edge.label === ope.label) {
-                        graph.edges.splice(i, 1);
+                        visGraph.edges.splice(i, 1);
                         break;
                     } else {
                         i++;
@@ -1264,18 +1264,18 @@ __$__.Testize = {
                 // to, label
                 // memo: How should Kanon do when the from-node already has the property?
                 let hiddenNodeID = '__Variable-' + ope.label;
-                let referredNode = graph.nodes.find(node => node.id === ope.to);
-                let variableEdge = graph.edges.find(edge => edge.from === hiddenNodeID);
+                let referredNode = visGraph.nodes.find(node => node.id === ope.to);
+                let variableEdge = visGraph.edges.find(edge => edge.from === hiddenNodeID);
                 if (referredNode) {
                     if (variableEdge) {
                         variableEdge.to = ope.to;
                     } else {
-                        graph.nodes.push({
+                        visGraph.nodes.push({
                             id: hiddenNodeID,
                             label: ope.label,
                             hidden: true
                         });
-                        graph.edges.push({
+                        visGraph.edges.push({
                             from: hiddenNodeID,
                             to: ope.to,
                             label: ope.label,
@@ -1291,7 +1291,7 @@ __$__.Testize = {
             case 'editVariableReference': {
                 // oldTo, newTo, label
                 let variableNodeID = '__Variable-' + ope.label;
-                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID);
+                let edgeToEdit = visGraph.edges.find(edge => edge.from === variableNodeID);
                 if (edgeToEdit) {
                     edgeToEdit.to = ope.newTo;
                 } else {
@@ -1303,10 +1303,10 @@ __$__.Testize = {
             case 'editVariableLabel': {
                 // to, oldLabel, newLabel
                 let variableNodeID = '__Variable-' + ope.oldLabel;
-                let edgeToEdit = graph.edges.find(edge => edge.from === variableNodeID && edge.to === ope.to && edge.label === ope.oldLabel);
+                let edgeToEdit = visGraph.edges.find(edge => edge.from === variableNodeID && edge.to === ope.to && edge.label === ope.oldLabel);
                 if (edgeToEdit) {
                     edgeToEdit.label = ope.newLabel;
-                    let variableNode = graph.nodes.find(node => node.id === variableNodeID);
+                    let variableNode = visGraph.nodes.find(node => node.id === variableNodeID);
                     variableNode.label = ope.newLabel;
                     variableNode.id = '__Variable-' + ope.newLabel;
                 } else {
@@ -1319,10 +1319,10 @@ __$__.Testize = {
                 // to, label
                 let variableNodeID = '__Variable-' + ope.label;
                 let i = 0;
-                while (i < graph.nodes.length) {
-                    let node = graph.nodes[i];
+                while (i < visGraph.nodes.length) {
+                    let node = visGraph.nodes[i];
                     if (node.id === variableNodeID) {
-                        graph.nodes.splice(i, 1);
+                        visGraph.nodes.splice(i, 1);
                         i = -1;
                         break;
                     }
@@ -1330,10 +1330,10 @@ __$__.Testize = {
                 }
                 if (i === -1) {
                     i = 0;
-                    while (i < graph.edges.length) {
-                        let edge = graph.edges[i];
+                    while (i < visGraph.edges.length) {
+                        let edge = visGraph.edges[i];
                         if (edge.from === variableNodeID && edge.label === ope.label) {
-                            graph.edges.splice(i, 1);
+                            visGraph.edges.splice(i, 1);
                             i === -1;
                             break;
                         }
@@ -1541,16 +1541,6 @@ __$__.Testize = {
     },
 
 
-    duplicateGraph(graph) {
-        let duplicatedGraph = {};
-        jQuery.extend(true, duplicatedGraph, graph);
-        duplicatedGraph.nodes.forEach(node => {
-            delete node.fixed;
-        });
-        return duplicatedGraph;
-    },
-
-
     /**
      * @param e
      *
@@ -1637,7 +1627,7 @@ __$__.Testize = {
         }
 
         // duplicate an object graph stored just before the focusing function call
-        let graph;
+        let graph, visGraph;
         try {
             let callLabel = __$__.Testize.selectedCallInfo.label;
             let checkpointIDs = __$__.Context.CheckPointIDAroundFuncCall[callLabel];
@@ -1646,22 +1636,22 @@ __$__.Testize = {
                 let testInfo = __$__.Testize.storedTest[callLabel][context_sensitiveID];
                 let testData = testInfo.testData;
                 __$__.Testize.focusedTestOperations = testInfo.operations;
-                graph = {
+                visGraph = {
                     nodes: new vis.DataSet(Object.values(testData.nodes._data).map(node => jQuery.extend(true, {}, node))),
                     edges: new vis.DataSet(Object.values(testData.edges._data).map(edge => jQuery.extend(true, {}, edge)))
                 };
             } else {
                 try {
                     graph = __$__.Context.StoredGraph[checkpointIDs.before][context_sensitiveID];
-                    graph = __$__.Testize.duplicateGraph(graph);
+                    visGraph = graph.generateVisjsGraph();
                 } catch (e)  {
-                    graph = {
+                    visGraph = {
                         nodes: [],
                         edges: []
                     };
                 }
                 // push a special node so that the user can add green arrows which represent variable references.
-                graph.nodes.push({
+                visGraph.nodes.push({
                     id: '__RectForVariable__',
                     label: 'def var',
                     color: {
@@ -1679,19 +1669,19 @@ __$__.Testize = {
                     shape: 'box',
                     physics: false
                 });
-                graph.nodes = new vis.DataSet(graph.nodes);
-                graph.edges = new vis.DataSet(graph.edges);
+                visGraph.nodes = new vis.DataSet(visGraph.nodes);
+                visGraph.edges = new vis.DataSet(visGraph.edges);
                 __$__.Testize.focusedTestOperations = [];
             }
         } catch (e) {
-            graph = {
+            visGraph = {
                 nodes: new vis.DataSet([]),
                 edges: new vis.DataSet([])
             };
         }
 
-        __$__.Testize.setPositions(graph);
-        __$__.Testize.network.network.setData(graph);
+        __$__.Testize.setPositions(visGraph);
+        __$__.Testize.network.network.setData(visGraph);
         __$__.Testize.network.network.redraw();
         __$__.Testize.window.testGraph.showCenter();
         __$__.Testize.window.runtimeGraph.close();

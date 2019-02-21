@@ -2,7 +2,7 @@ __$__.Update = {
     CodeWithCP: '',
     waitForStabilized: false,
     useBoxToVisualizeArray: false,
-    updateValueOfArray: true,
+    updateValueOfArray: true, // this should be false because the array visualization
     onlyMoveCursor: false,
 
     // this function is called when ace editor is edited.
@@ -73,13 +73,12 @@ __$__.Update = {
 
             __$__.Testize.updateMarker();
 
-            let graph = __$__.ToVisjs.translator(__$__.Traverse.traverse(__objs));
-
+            let graph = __$__.Traverse.traverse(__objs);
 
             __$__.CallTreeNetwork.updateTestInfo();
             __$__.CallTreeNetwork.draw();
 
-            if (!__$__.Update.isChange(graph)) {
+            if (!__$__.Update.isChange(graph.generateVisjsGraph())) {
                 __$__.Update.waitForStabilized = false;
                 __$__.Update.ContextUpdate();
                 return;
@@ -89,12 +88,11 @@ __$__.Update = {
             __$__.ObjectGraphNetwork.options.nodes.hidden = true;
             __$__.ObjectGraphNetwork.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
+            let visGraph = graph.generateVisjsGraph(false);
             __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
-            __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
-            __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
             __$__.ObjectGraphNetwork.network.setData({
-                nodes: __$__.ObjectGraphNetwork.nodes,
-                edges: __$__.ObjectGraphNetwork.edges
+                nodes: __$__.ObjectGraphNetwork.nodes = new vis.DataSet(visGraph.nodes),
+                edges: __$__.ObjectGraphNetwork.edges = new vis.DataSet(visGraph.edges)
             });
             __$__.StorePositions.registerPositions(true);
             __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
@@ -106,7 +104,7 @@ __$__.Update = {
                 });
 
             __$__.Update.waitForStabilized = true;
-            if (graph.nodes.length > 0 && graph.nodes.find(node => node.x === undefined))
+            if (visGraph.nodes.length > 0 && visGraph.nodes.find(node => node.x === undefined))
                 __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilizedEvent);
             else
                 __$__.ObjectGraphNetwork.stabilizedEvent();
@@ -150,9 +148,9 @@ __$__.Update = {
 
     /**
      * @param {Object} graph: graph has the property is nodes and edges
-     * @param {Boolean} snapshot
+     * @param {boolean} snapshot
      *
-     * This function compares old graph and new graph.
+     * This function compares currently displayed graph with new graph.
      * return true if new graph is different from old graph
      * return false otherwise
      */
@@ -187,7 +185,7 @@ __$__.Update = {
         temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.StorePositions.oldNetwork._edgesData;
         // temp = __$__.ObjectGraphNetwork.edges._data;
 
-        Object.keys(temp).forEach(function(key){
+        Object.keys(temp).forEach(key => {
             if (snapshot)
                 networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);
             else if (temp[key].from.slice(0, 11) !== '__Variable-')

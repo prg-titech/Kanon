@@ -12,7 +12,6 @@ document.write('<script type="text/javascript" src="external/prototype_window/ja
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
-document.write('<script type="text/javascript" src="src/js/object2graph/examples.js"></script>');
 document.write('<script type="text/javascript" src="src/js/layout/oka.js"></script>');
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree/callTree.js"></script>');
@@ -25,8 +24,6 @@ document.write('<script type="text/javascript" src="src/js/readFile.js"></script
 document.write('<script type="text/javascript" src="src/js/saveFile.js"></script>');
 document.write('<script type="text/javascript" src="src/js/storePositions.js"></script>');
 document.write('<script type="text/javascript" src="src/js/testize.js"></script>');
-document.write('<script type="text/javascript" src="src/js/toVisjs.js"></script>');
-document.write('<script type="text/javascript" src="src/js/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/update.js"></script>');
 document.write('<script type="text/javascript" src="src/js/updateLabelPos.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/instrument.js"></script>');

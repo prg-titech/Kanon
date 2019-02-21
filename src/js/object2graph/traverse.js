@@ -1,4 +1,4 @@
-__$__.NewTraverse = {
+__$__.Traverse = {
     literals: {
         boolean: true,
         number: true,
@@ -17,7 +17,7 @@ __$__.NewTraverse = {
             if (graphNodes[obj.__id] || obj === null || obj === undefined)
                 continue;
     
-            __$__.NewTraverse.dfs(retGraph, obj, graphNodes, objs);
+            __$__.Traverse.dfs(retGraph, obj, graphNodes, objs);
         }
 
         Object.keys(variables).forEach(key => {
@@ -75,7 +75,7 @@ __$__.NewTraverse = {
                     ));
                 } else {
                     if (!to.__id) Object.setProperty(to, '__id' , obj.__id + '-' + key);
-                    __$__.NewTraverse.dfs(graph, to, graphNodes, objs);
+                    __$__.Traverse.dfs(graph, to, graphNodes, objs);
 
                     graph.pushEdge(new __$__.StoredGraphFormat.Edge(
                         obj.__id,

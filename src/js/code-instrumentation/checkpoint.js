@@ -20,6 +20,7 @@ __$__.Checkpoint = {
         };
 
         let storedGraph = __$__.Checkpoint.StoreGraph(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID);
+        let visjsGraph = storedGraph.generateVisjsGraph();
 
         __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
         __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
@@ -27,7 +28,7 @@ __$__.Checkpoint = {
 
         if (__$__.Context.ChangedGraph) {
             // the node of storedGraph is whether first appearing or not in this part
-            storedGraph.nodes.forEach(node => {
+            visjsGraph.nodes.forEach(node => {
                 if (!__$__.JumpToConstruction.GraphData.nodes[node.id]) {
                     if (newExpInfo) {
                         __$__.JumpToConstruction.GraphData.nodes[node.id] = {
@@ -50,7 +51,7 @@ __$__.Checkpoint = {
             });
 
             // the edge of storedGraph is whether first appearing or not in this part
-            storedGraph.edges.forEach(edge => {
+            visjsGraph.edges.forEach(edge => {
                 let flag = false;
 
                 __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
@@ -92,7 +93,7 @@ __$__.Checkpoint = {
 
     StoreGraph: function(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID) {
         let graph = (__$__.Context.ChangedGraph)
-            ? __$__.ToVisjs.translator(__$__.Traverse.traverse(objects, probe))
+            ? __$__.Traverse.traverse(objects, probe)
             : __$__.Context.LastGraph;
 
 
@@ -103,6 +104,5 @@ __$__.Checkpoint = {
 
 
         return graph;
-    },
-
+    }
 }

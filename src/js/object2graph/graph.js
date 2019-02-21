@@ -1,41 +1,65 @@
 __$__.StoredGraphFormat = {
     Node: class __Node__ {
-        constructor(id, label, isLiteral, type) {
+        constructor(id, label, isLiteral, type, color) {
             this.id = id;
-            this.label = label;
+            this.value = label;
+            this.label = label + '';
             this.isLiteral = isLiteral;
             this.type = type;
+            if (color) {
+                this.color = color;
+            } else if (isLiteral) {
+                this.color = {
+                    border: 'white',
+                    background: 'white',
+                    highlight: {
+                        border: 'white',
+                        background: 'white'
+                    },
+                    hover: {
+                        border: 'white',
+                        background: 'white'
+                    }
+                };
+            }
         }
 
-        generateVisjsNode() {
+        generateVisjsNode(fixed = false) {
+            let node;
             if (this.isLiteral) {
-                return {
-                    color: {
-                        border: 'white',
-                        background: 'white',
-                        highlight: {
-                            border: 'white',
-                            background: 'white'
-                        },
-                        hover: {
-                            border: 'white',
-                            background: 'white'
-                        }
-                    },
+                node = {
+                    color: this.color,
                     id: this.id,
                     label: "" + this.label,
                     type: this.type,
                     isLiteral: true,
                     scaling: {
                         min: 10
-                    }
+                    },
+                    fixed: fixed
                 };
             } else {
-                return {
+                node = {
                     id: this.id,
-                    label: "" + this.label
+                    label: "" + this.label,
+                    fixed: fixed
                 };
             }
+            if (this.x !== undefined) node.x = this.x;
+            if (this.y !== undefined) node.y = this.y;
+            return node;
+        }
+
+        setLocation(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        duplicate() {
+            let newNode = new __$__.StoredGraphFormat.Node(this.id, this.value, this.isLiteral, this.type);
+            if (this.x) newNode.x = this.x;
+            if (this.y) newNode.y = this.y;
+            return newNode;
         }
     },
 
@@ -52,6 +76,10 @@ __$__.StoredGraphFormat = {
                 id: this.id,
                 label: this.label
             };
+        }
+
+        duplicate() {
+            return new __$__.StoredGraphFormat.VariableNode(this.label);
         }
     },
 
@@ -76,6 +104,10 @@ __$__.StoredGraphFormat = {
             }
 
             return edge;
+        }
+
+        duplicate() {
+            return new __$__.StoredGraphFormat.Edge(this.from, this.to, this.label);
         }
     },
 
@@ -168,16 +200,19 @@ __$__.StoredGraphFormat = {
         setLocation(ID, x, y) {
             let node = this.nodes[ID];
             if (node) {
-                node.x = x;
-                node.y = y;
+                node.setLocation(x, y);
             }
         }
 
-        generateVisjsGraph() {
+        /**
+         * @param {boolean} nodeFixed
+         * @return {{nodes: Array, edges: Array}}
+         */
+        generateVisjsGraph(nodeFixed = false) {
             let visGraph = {nodes: [], edges: []};
 
             for (let nodeID of Object.keys(this.nodes)) {
-                visGraph.nodes.push(this.nodes[nodeID].generateVisjsNode());
+                visGraph.nodes.push(this.nodes[nodeID].generateVisjsNode(nodeFixed));
             }
 
             for (let nodeID of Object.keys(this.variableNodes)) {
@@ -192,6 +227,30 @@ __$__.StoredGraphFormat = {
                 visGraph.edges.push(this.variableEdges[i].generateVisjsEdge());
             }
             return visGraph;
+        }
+
+        duplicate() {
+            let newGraph = new __$__.StoredGraphFormat.Graph();
+
+            Object.keys(this.nodes).forEach(nodeID => {
+                let node = this.nodes[nodeID];
+                if (node) newGraph.nodes[nodeID] = node.duplicate();
+            });
+
+            Object.keys(this.variableNodes).forEach(nodeID => {
+                let node = this.variableNodes[nodeID];
+                if (node) newGraph.variableNodes[nodeID] = node.duplicate();
+            });
+
+            for (let i = 0; i < this.edges.length; i++) {
+                newGraph.edges.push(this.edges[i].duplicate());
+            }
+
+            for (let i = 0; i < this.variableEdges.length; i++) {
+                newGraph.variableEdges.push(this.variableEdges[i].duplicate());
+            }
+
+            return newGraph;
         }
     }
 };
