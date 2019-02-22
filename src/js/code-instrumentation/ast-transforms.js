@@ -924,6 +924,7 @@ __$__.ASTTransforms = {
      *
      *             __newObjectIds.push(__newObjectId);
      *             var __temp = new Class(arg1, ...);
+     *             __$__.Context.ChangedGraph = true;
      *             __newExpInfo.pop();
      *             __stackForCallTree.pop();
      *             if (!__temp.__id) {
@@ -1088,6 +1089,7 @@ __$__.ASTTransforms = {
                                         c.this_node
                                     )
                                 ], 'var'),
+                                __$__.ASTTransforms.changedGraphStmt(),
                                 b.ExpressionStatement(
                                     b.CallExpression(
                                         b.MemberExpression(
