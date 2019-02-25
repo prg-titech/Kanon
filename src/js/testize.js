@@ -766,7 +766,7 @@ __$__.Testize = {
                     let className = testData.nodes.get(edge.to).label;
                     let newObject = Object.create(classes[className].prototype);
                     Object.setProperty(newObject, '__id', edge.to);
-                    Object.setProperty(newObject, '__ClassName', className);
+                    Object.setProperty(newObject, '__ClassName__', className);
                     runtimeObjects[edge.to] = newObject;
                     newObjects.push(newObject);
                 }
@@ -784,7 +784,7 @@ __$__.Testize = {
         // value: runtime object
         // here, collect runtimeObjects and delete all properties of all objects
         objects.concat(Object.values(probe)).forEach(obj => {
-            if (!obj || runtimeObjects[obj.__id] || obj === null || obj === undefined)
+            if (!obj || runtimeObjects[obj.__id] || obj === null || obj === undefined || obj === __$__.Update)
                 return;
 
             __$__.Testize.traverse(obj, runtimeObjects);
