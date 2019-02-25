@@ -152,22 +152,21 @@ __$__.Context = {
         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
         let checkPointId = __$__.Context.CheckPointAroundCursor = {
             beforeId: checkPointIds.beforeIds[0],
-            afterId: checkPointIds.afterIds[0]
+            afterId: checkPointIds.afterIds.last()
         };
 
         if (__$__.Context.Snapshot) {
-            let loopLabel, cpID, cpIDs, graph;
+            let loopLabel, cpID, graph;
             let contextSensitiveID;
             let showLightly = false;
             try {
-                if (checkPointId.afterId &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
+                if (!checkPointId.afterId) {
+                    cpID = checkPointId.beforeId = checkPointIds.beforeIds.last();
+                } else if (__$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
+                           __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
                     cpID = checkPointId.afterId;
-                    cpIDs = checkPointIds.afterIds;
                 } else {
                     cpID = checkPointId.beforeId;
-                    cpIDs = checkPointIds.beforeIds;
                 }
 
                 try {
