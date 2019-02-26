@@ -54,9 +54,10 @@ __$__.Context = {
             let contextSensitiveID;
             let showLightly = false;
             try {
-                if (checkPointId.afterId &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
-                    __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
+                if (!checkPointId.afterId) {
+                    cpID = checkPointId.beforeId = checkPointIds.beforeIds.last();
+                } else if (__$__.Context.CheckPointTable[checkPointId.afterId].column === cursor_position.column &&
+                           __$__.Context.CheckPointTable[checkPointId.afterId].line === cursor_position.row + 1) {
                     cpID = checkPointId.afterId;
                 } else {
                     cpID = checkPointId.beforeId;
