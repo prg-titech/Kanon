@@ -880,7 +880,7 @@ __$__.Testize = {
         Object.keys(probe).forEach(v => {
             if (v === 'this') return;
             let object = probe[v];
-            if (!object ||  object.__id === varInfo[v].to) {
+            if (!object || __$__.Traverse.literals[typeof object] ||  object.__id === varInfo[v].to) {
                 // do nothing
             } else {
                 variableReferences[v] = runtimeObjects[varInfo[v].to];
