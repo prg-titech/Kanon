@@ -181,7 +181,7 @@ __$__.ASTTransforms = {
      * func(arg1, arg2, ...)
      *
      * after:
-     * ((__callee) => {
+     * (function (__callee, ...args) {
      *     if (__call_count['unique Label']) __call_count['unique Label']++;
      *     else __call_count['unique Label'] = 1;
      *
@@ -198,7 +198,7 @@ __$__.ASTTransforms = {
      *     try {
      *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
      *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
-     *         __retObj = __callee(arg1, arg2, ...);
+     *         __retObj = __callee(...args);
      *         __errorOccurred = false;
      *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
@@ -235,7 +235,7 @@ __$__.ASTTransforms = {
      *     __newExpInfo.pop();
      *     __stackForCallTree.pop();
      *     return __retObj;
-     * }).call(this, func)
+     * }).call(this, func, arg1, arg2, ...)
      *
      * exceptional case in which the callee node is 'MemberExpression'
      *
@@ -243,7 +243,7 @@ __$__.ASTTransforms = {
      * obj.prop(arg1, arg2, ...)
      *
      * after:
-     * ((__obj) => {
+     * (function (__obj, ...args) {
      *     if (__call_count['unique Label']) __call_count['unique Label']++;
      *     else __call_count['unique Label'] = 1;
      *
@@ -260,7 +260,7 @@ __$__.ASTTransforms = {
      *     try {
      *         __hasTest = __$__.Testize.hasTest('unique Label', __context_sensitiveID);
      *         if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
-     *         __retObj = __obj.prop(arg1, arg2, ...);
+     *         __retObj = __obj.prop(...args);
      *         __errorOccurred = false;
      *         __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
      *     } catch (e) {
@@ -297,7 +297,7 @@ __$__.ASTTransforms = {
      *     __newExpInfo.pop();
      *     __stackForCallTree.pop();
      *     return __retObj;
-     * })(obj)
+     * }).call(this, obj, arg1, arg2, ...)
      */
     ConvertCallExpression() {
         let b = __$__.ASTBuilder;
@@ -310,14 +310,14 @@ __$__.ASTTransforms = {
                     let info = {};
                     if (node.callee.type === 'MemberExpression') {
                         info.argName = '__obj';
-                        info.arg = [node.callee.object];
+                        info.arg = [node.callee.object, ...node.arguments];
                         info.callee = b.MemberExpression(
                             b.Identifier('__obj'),
                             node.callee.property
                         );
                     } else {
                         info.argName = '__callee';
-                        info.arg = [node.callee];
+                        info.arg = [node.callee, ...node.arguments];
                         info.callee = b.Identifier('__callee')
                     }
                     info.arg.unshift(b.Identifier('this'));
@@ -335,7 +335,8 @@ __$__.ASTTransforms = {
                         b.MemberExpression(
                             b.FunctionExpression(
                                 [
-                                    b.Identifier(info.argName)
+                                    b.Identifier(info.argName),
+                                    b.Identifier('...args')
                                 ],
                                 b.BlockStatement([
                                     b.IfStatement(
@@ -446,7 +447,7 @@ __$__.ASTTransforms = {
                                      * try {
                                      *     __hasTest = __$__.Testize.hasTest(...);
                                      *     if (__hasTest) __$__.Testize.checkPrecondGraph(__objs, probe, 'unique Label', __context_sensitiveID);
-                                     *     __retObj = func();
+                                     *     __retObj = func(...args);
                                      *     __errorOccurred = false;
                                      *     __$__.Testize.storeActualGraph(__objs, probe, 'unique Label', __context_sensitiveID);
                                      * } catch (e) {
@@ -550,7 +551,8 @@ __$__.ASTTransforms = {
                                                     '=',
                                                     b.CallExpression(
                                                         info.callee,
-                                                        node.arguments
+                                                        //node.arguments
+                                                        [b.Identifier('...args')]
                                                     )
                                                 )
                                             ),
