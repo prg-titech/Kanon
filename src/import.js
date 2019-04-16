@@ -12,7 +12,15 @@ document.write('<script type="text/javascript" src="external/prototype_window/ja
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
+
+/*
+ * layout algorithm can be changed here
+ */
+
 document.write('<script type="text/javascript" src="src/js/layout/oka.js"></script>');
+//document.write('<script type="text/javascript" src="src/js/layout/simple.js"></script>');
+//document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
+
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree/callTree.js"></script>');
 document.write('<script type="text/javascript" src="src/js/error.js"></script>');

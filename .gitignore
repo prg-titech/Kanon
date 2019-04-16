@@ -2,3 +2,4 @@ node_modules/
 *-darwin-x64/
 .idea/
 package-lock.json
+/src/js/layout/ogushi/UsingKanonAPI/v15/
