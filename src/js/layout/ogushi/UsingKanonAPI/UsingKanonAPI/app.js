@@ -294,6 +294,7 @@ function setGraphLocation(graph) {
                 var unnecessaryFields = new Array();
                 //⇄の関係となっているフィールド名のペアを列挙
                 var setFields = identifySetField(graph, cls, IDs);
+                alert(setFields);
                 identifyUnnecessaryField_sub(setFields, unnecessaryFields);
                 return unnecessaryFields;
                 //⇄の関係となっているフィールド名のペアを列挙する補助関数
@@ -329,6 +330,7 @@ function setGraphLocation(graph) {
                 function identifyUnnecessaryField_sub(setField, unnecessaryField) {
                     if (setField.length != 0) {
                         var str = mode_inArray(setField);
+                        console.log(str);
                         unnecessaryField[Object.keys(unnecessaryField).length] = str;
                         var numArray = new Array();
                         for (var i = 0; i < Object.keys(setField).length / 2; i++) {

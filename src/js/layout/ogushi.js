@@ -146,6 +146,7 @@ __$__.Layout = {
                     function identifySetField(graph, cls, IDs) {
                         var usedObjectIDs = new Array();
                         var pairFields = new Array();
+                        alert(Object.keys(pairFields).length);
                         for (var i = 0; i < IDs.length; i++) {
                             identifySetField_sub(graph, cls, IDs[i]);
                         }
