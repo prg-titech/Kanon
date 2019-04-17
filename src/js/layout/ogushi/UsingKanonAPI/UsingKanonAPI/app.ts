@@ -178,7 +178,7 @@ function setGraphLocation(graph: Graph) {
                     var getFields: string[] = graph.getFields(IDs[i]);
                     for (var j = 0; j < getFields.length; j++) {
                         if (graph.getClass(graph.getField(IDs[i], getFields[j])) == cls && !sameT_InArray<string>(getFields[j], fieldArray)) {
-                            fieldArray[Object.keys(fieldArray).length] = getFields[j];
+                            fieldArray.push(getFields[j]);
                         }
                     }
                 }
@@ -192,7 +192,7 @@ function setGraphLocation(graph: Graph) {
 
                 //⇄の関係となっているフィールド名のペアを列挙
                 var setFields: string[] = identifySetField(graph, cls, IDs);
-                alert(setFields);
+
                 identifyUnnecessaryField_sub(setFields, unnecessaryFields);
 
                 return unnecessaryFields;
@@ -213,7 +213,7 @@ function setGraphLocation(graph: Graph) {
                     //補助関数の補助関数
                     function identifySetField_sub(graph: Graph, cls: string, ID: string) {
                         if (!sameT_InArray<string>(ID, usedObjectIDs)) {
-                            usedObjectIDs[Object.keys(usedObjectIDs).length] = ID;      //今見ているオブジェクトのID
+                            usedObjectIDs.push(ID);                             //今見ているオブジェクトのID
                             var getFields: string[] = graph.getFields(ID);
 
                             for (var j = 0; j < getFields.length; j++) {
@@ -223,8 +223,8 @@ function setGraphLocation(graph: Graph) {
 
                                     for (var k = 0; k < getFields2.length; k++) {
                                         if (graph.getField(nextID, getFields2[k]) == ID) {
-                                            pairFields[Object.keys(pairFields).length] = getFields[j];
-                                            pairFields[Object.keys(pairFields).length] = getFields2[k];
+                                            pairFields.push(getFields[j]);
+                                            pairFields.push(getFields2[k]);
                                         }
                                     }
 
@@ -240,12 +240,11 @@ function setGraphLocation(graph: Graph) {
                 function identifyUnnecessaryField_sub(setField: string[], unnecessaryField: string[]) {
                     if (setField.length != 0) {
                         var str: string = mode_inArray(setField);
-                        console.log(str);
-                        unnecessaryField[Object.keys(unnecessaryField).length] = str;
+                        unnecessaryField.push(str);
                         var numArray: number[] = new Array();
                         for (var i = 0; i < Object.keys(setField).length / 2; i++) {
                             if (setField[2 * i] == str || setField[2 * i + 1] == str) {
-                                numArray[Object.keys(numArray).length] = i;
+                                numArray.push(i);
                             }
                         }
                         for (var i = 0; i < Object.keys(numArray).length; i++) {
@@ -261,7 +260,7 @@ function setGraphLocation(graph: Graph) {
                         var strArray: string[] = new Array();
                         for (var i = 0; i < Object.keys(array).length; i++) {
                             if (!sameT_InArray<string>(array[i], strArray)) {
-                                strArray[Object.keys(strArray).length] = array[i];
+                                strArray.push(array[i]);
                             }
                         }
 
@@ -309,7 +308,7 @@ function setGraphLocation(graph: Graph) {
             //補助関数
             function makeEdgeListConnectingSameClass_sub(graph: Graph, edgelist: EdgeWithAngle[], cls: string, ID: string, arrayField: string[]) {
                 if (!sameT_InArray<string>(ID, usedObjectIDs)) {                //引数のオブジェクトIDがまだ見たことのないものならば
-                    usedObjectIDs[Object.keys(usedObjectIDs).length] = ID;      //見ているオブジェクトのIDを記録
+                    usedObjectIDs.push(ID);                                 //見ているオブジェクトのIDを記録
 
                     for (var j = 0; j < arrayField.length; j++) {
                         var nextID: string = graph.getField(ID, arrayField[j]);     //次のオブジェクトのID
@@ -317,12 +316,13 @@ function setGraphLocation(graph: Graph) {
                         if (graph.getClass(nextID) == cls) {
                             switch (arrayField.length) {
                                 case 0:
-                                    edgelist[Object.keys(edgelist).length] = new EdgeWithAngle(ID, nextID, 9973);
+                                    edgelist.push(new EdgeWithAngle(ID, nextID, 9973));
+                                    break;
                                 case 1:
-                                    edgelist[Object.keys(edgelist).length] = new EdgeWithAngle(ID, nextID, 0);
+                                    edgelist.push(new EdgeWithAngle(ID, nextID, 0));
                                     break;
                                 default:
-                                    edgelist[Object.keys(edgelist).length] = new EdgeWithAngle(ID, nextID, Math.PI * (arrayField.length * 2 - j * 2 - 1) / (arrayField.length * 2));
+                                    edgelist.push(new EdgeWithAngle(ID, nextID, Math.PI * (arrayField.length * 2 - j * 2 - 1) / (arrayField.length * 2)));
                             }
                             makeEdgeListConnectingSameClass_sub(graph, edgelist, cls, nextID, arrayField);
                         }
@@ -365,7 +365,7 @@ function setGraphLocation(graph: Graph) {
                     var cycleIDsFromOneID: string[][] = cycleGraphIDsFromOneID(graph, cls, IDs, arrayField, IDs[i]);
                     for (var j = 0; j < cycleIDsFromOneID.length; j++) {
                         if (!sameCycleGraph(cycleIDsFromOneID[j], cycleIDs)) {
-                            cycleIDs[Object.keys(cycleIDs).length] = cycleIDsFromOneID[j];
+                            cycleIDs.push(cycleIDsFromOneID[j]);
                         }
                     }
                 }
@@ -382,13 +382,13 @@ function setGraphLocation(graph: Graph) {
                     while (!stack.isZero) {
                         var v: string = stack.pop();
                         if (v == ID && !stack.isZero()) {
-                            cycleIDs[Object.keys(cycleIDs).length] = stack.returnArray();
-                            cycleIDs[Object.keys(cycleIDs).length - 1][Object.keys(stack.returnArray()).length] = v;
+                            cycleIDs.push(stack.returnArray());
+                            cycleIDs[Object.keys(cycleIDs).length].push(v);
                         }
                         for (var i = 0; i < arrayField.length; i++) {
                             var u: string = graph.getField(v, arrayField[i]);
                             if (!sameT_InArray<string>(u, usedIDs)) {
-                                usedIDs[Object.keys(usedIDs).length] = u;
+                                usedIDs.push(u);
                                 stack.push(u);
                             }
                         }
@@ -449,7 +449,7 @@ function setGraphLocation(graph: Graph) {
             var allCls: string[] = new Array();
             for (var i = 0; i < cafs.length; i++) {
                 if (!sameT_InArray<string>(cafs[i].cls, allCls)) {
-                    allCls[Object.keys(allCls).length] = cafs[i].cls;
+                    allCls.push(cafs[i].cls);
                 }
             }
 
@@ -496,7 +496,7 @@ function setGraphLocation(graph: Graph) {
                     if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i]) && sameT_InArray<string>(fieldIDs[j], withoutPrimitiveIDs)) {
                         var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
                         if (!sameT_InArray<ClassAndField>(caf, necessaryfields)) {
-                            necessaryfields[Object.keys(necessaryfields).length] = caf;
+                            necessaryfields.push(caf);
                         }
                     }
                 }
@@ -521,7 +521,7 @@ function setGraphLocation(graph: Graph) {
                     for (var k = 0; k < arrayField.length; k++) {
                         if (arrayField[k].cls == graph.getClass(withoutPrimitiveIDs[i]) && arrayField[k].field == fields[j]) {
                             var newedge: EdgeWithAngle = new EdgeWithAngle(withoutPrimitiveIDs[i], fieldIDs[j], arrayField[k].angle);
-                            edgelist[Object.keys(edgelist).length] = newedge;
+                            edgelist.push(newedge);
                         }
                     }
                 }
@@ -538,7 +538,7 @@ function setGraphLocation(graph: Graph) {
                     var nextID: string = graph.getField(withoutPrimitiveIDs[i], fields[j]);
                     if (!sameT_InArray<string>(nextID, withoutPrimitiveIDs)) {
                         var newedge: EdgeWithAngle = new EdgeWithAngle(withoutPrimitiveIDs[i], nextID, 9973);
-                        edgelist[Object.keys(edgelist).length] = newedge;
+                        edgelist.push(newedge);
                     }
                 }
             }
