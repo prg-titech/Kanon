@@ -331,12 +331,12 @@ function setGraphLocation(graph) {
                         var str = mode_inArray(setField);
                         unnecessaryField.push(str);
                         var numArray = new Array();
-                        for (var i = 0; i < Object.keys(setField).length / 2; i++) {
+                        for (var i = 0; i < setField.length / 2; i++) {
                             if (setField[2 * i] == str || setField[2 * i + 1] == str) {
                                 numArray.push(i);
                             }
                         }
-                        for (var i = 0; i < Object.keys(numArray).length; i++) {
+                        for (var i = 0; i < numArray.length; i++) {
                             numArray[i] = numArray[i] - i;
                             setField.splice(2 * numArray[i], 2);
                         }
@@ -345,17 +345,17 @@ function setGraphLocation(graph) {
                     //補助関数の補助関数、配列の中の最頻値を求める
                     function mode_inArray(array) {
                         var strArray = new Array();
-                        for (var i = 0; i < Object.keys(array).length; i++) {
+                        for (var i = 0; i < array.length; i++) {
                             if (!sameT_InArray(array[i], strArray)) {
                                 strArray.push(array[i]);
                             }
                         }
-                        var length = Object.keys(strArray).length;
+                        var length = strArray.length;
                         var numArray = new Array(length);
                         for (var i = 0; i < length; i++) {
                             numArray[i] = 0;
                         }
-                        for (var i = 0; i < Object.keys(array).length; i++) {
+                        for (var i = 0; i < array.length; i++) {
                             for (var j = 0; j < length; j++) {
                                 if (array[i] == strArray[j]) {
                                     numArray[j] += 1;
