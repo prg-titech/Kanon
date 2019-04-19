@@ -14,6 +14,7 @@ console.log(grp);
 
 
 
+
 //Kanonからgraphオブジェクトを受け取り、graphオブジェクト内のノードの座標を更新する関する（メイン関数）
 function setGraphLocation(graph: Graph) {
 
@@ -35,8 +36,7 @@ function setGraphLocation(graph: Graph) {
             if (this.stack.length == 0) {
                 return null;
             } else {
-                var p: string = this.stack[this.stack.length - 1];
-                this.stack.pop();
+                var p: string = this.stack.pop();
                 return p;
             }
         }
@@ -48,7 +48,11 @@ function setGraphLocation(graph: Graph) {
 
         //スタックされている値を配列として返す
         returnArray(): string[] {
-            return this.stack;
+            var array: string[] = new Array(this.stack.length);
+            for (var i = 0; i < this.stack.length; i++) {
+                array[i] = this.stack[i];
+            }
+            return array;
         }
     }
 
@@ -357,7 +361,7 @@ function setGraphLocation(graph: Graph) {
                  */
             }
 
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す
+            //補助関数、閉路を探索し、閉路上のIDの配列を返す（問題あり）
             function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
                 var cycleIDs: string[][] = new Array();
 
@@ -374,23 +378,38 @@ function setGraphLocation(graph: Graph) {
 
                 //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
                 function cycleGraphIDsFromOneID(graph: Graph, cls: string, IDs: string[], arrayField: string[], ID: string): string[][] {
+
                     var cycleIDs: string[][] = new Array();
 
                     var stack: Stack = new Stack();     //経路を記録するためのスタック
                     var usedIDs: string[] = new Array();    //訪問したノードのIDを記録するための配列
+
+                    usedIDs.push(ID);
                     stack.push(ID);
-                    while (!stack.isZero) {
-                        var v: string = stack.pop();
-                        if (v == ID && !stack.isZero()) {
-                            cycleIDs.push(stack.returnArray());
-                            cycleIDs[Object.keys(cycleIDs).length].push(v);
-                        }
+
+                    while (true) {
+                        var v: string = stack.pop();        //現在注目しているノード
+                        stack.push(v);
+                        var isConnectNonvisitedNode: boolean = false;        //まだ訪問していないノードが接続先にある場合trueを返す変数
                         for (var i = 0; i < arrayField.length; i++) {
                             var u: string = graph.getField(v, arrayField[i]);
                             if (!sameT_InArray<string>(u, usedIDs)) {
+                                isConnectNonvisitedNode = true;
                                 usedIDs.push(u);
                                 stack.push(u);
+                            } else if (u == ID) {
+                                isConnectNonvisitedNode = false;
+                                cycleIDs.push(stack.returnArray());
+                                cycleIDs[cycleIDs.length - 1].push(ID);
+                            } else {
+                                isConnectNonvisitedNode = false;
                             }
+                        }
+                        if (!isConnectNonvisitedNode) {
+                            stack.pop();
+                        }
+                        if (stack.isZero()) {
+                            break;
                         }
                     }
 

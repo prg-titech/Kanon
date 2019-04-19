@@ -21,8 +21,7 @@ __$__.Layout = {
                     return null;
                 }
                 else {
-                    var p = this.stack[this.stack.length - 1];
-                    this.stack.pop();
+                    var p = this.stack.pop();
                     return p;
                 }
             };
@@ -32,7 +31,11 @@ __$__.Layout = {
             };
             //スタックされている値を配列として返す
             Stack.prototype.returnArray = function () {
-                return this.stack;
+                var array = new Array(this.stack.length);
+                for (var i = 0; i < this.stack.length; i++) {
+                    array[i] = this.stack[i];
+                }
+                return array;
             };
             return Stack;
         }());
@@ -278,7 +281,7 @@ __$__.Layout = {
                      * アルゴリズムが思い浮かばなかったので後回し
                      */
                 }
-                //補助関数、閉路を探索し、閉路上のIDの配列を返す
+                //補助関数、閉路を探索し、閉路上のIDの配列を返す（問題あり）
                 function cycleGraphIDs(graph, cls, IDs, arrayField) {
                     var cycleIDs = new Array();
                     for (var i = 0; i < IDs.length; i++) {
@@ -295,19 +298,33 @@ __$__.Layout = {
                         var cycleIDs = new Array();
                         var stack = new Stack(); //経路を記録するためのスタック
                         var usedIDs = new Array(); //訪問したノードのIDを記録するための配列
+                        usedIDs.push(ID);
                         stack.push(ID);
-                        while (!stack.isZero) {
-                            var v = stack.pop();
-                            if (v == ID && !stack.isZero()) {
-                                cycleIDs.push(stack.returnArray());
-                                cycleIDs[Object.keys(cycleIDs).length].push(v);
-                            }
+                        while (true) {
+                            var v = stack.pop(); //現在注目しているノード
+                            stack.push(v);
+                            var isConnectNonvisitedNode = false; //まだ訪問していないノードが接続先にある場合trueを返す変数
                             for (var i = 0; i < arrayField.length; i++) {
                                 var u = graph.getField(v, arrayField[i]);
                                 if (!sameT_InArray(u, usedIDs)) {
+                                    isConnectNonvisitedNode = true;
                                     usedIDs.push(u);
                                     stack.push(u);
                                 }
+                                else if (u == ID) {
+                                    isConnectNonvisitedNode = false;
+                                    cycleIDs.push(stack.returnArray());
+                                    cycleIDs[cycleIDs.length - 1].push(ID);
+                                }
+                                else {
+                                    isConnectNonvisitedNode = false;
+                                }
+                            }
+                            if (!isConnectNonvisitedNode) {
+                                stack.pop();
+                            }
+                            if (stack.isZero()) {
+                                break;
                             }
                         }
                         return cycleIDs;

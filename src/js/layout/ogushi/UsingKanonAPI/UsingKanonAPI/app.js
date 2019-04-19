@@ -84,6 +84,7 @@ var Dot = /** @class */ (function () {
 }());
 /*
  * Example and Test 1
+ * simple list
  */
 //var dot1: Dot = new Dot("id1", "Node");
 //var dot2: Dot = new Dot("id2", "Node");
@@ -107,49 +108,105 @@ var Dot = /** @class */ (function () {
 //console.log(grp.getField("id1", "next"));
 /*
  * Example and Test 2
+ * list having tree
  */
-var dot1 = new Dot("id1", "List");
-var dot2 = new Dot("id2", "List");
-var dot3 = new Dot("id3", "List");
-var dot4 = new Dot("id4", "Tree");
-var dot5 = new Dot("id5", "Tree");
-var dot6 = new Dot("id6", "Tree");
-var dot7 = new Dot("id7", "Tree");
-var dot8 = new Dot("id8", "Tree");
-var dot9 = new Dot("id9", "Tree");
-var dot10 = new Dot("id10", "number");
-var dot11 = new Dot("id11", "number");
-var dot12 = new Dot("id12", "number");
-var dot13 = new Dot("id13", "number");
-var dot14 = new Dot("id14", "number");
-var dot15 = new Dot("id15", "number");
-var dot16 = new Dot("id16", "number");
-var dot17 = new Dot("id17", "number");
-var dot18 = new Dot("id18", "number");
+//var dot1: Dot = new Dot("id1", "List");
+//var dot2: Dot = new Dot("id2", "List");
+//var dot3: Dot = new Dot("id3", "List");
+//var dot4: Dot = new Dot("id4", "Tree");
+//var dot5: Dot = new Dot("id5", "Tree");
+//var dot6: Dot = new Dot("id6", "Tree");
+//var dot7: Dot = new Dot("id7", "Tree");
+//var dot8: Dot = new Dot("id8", "Tree");
+//var dot9: Dot = new Dot("id9", "Tree");
+//var dot10: Dot = new Dot("id10", "number");
+//var dot11: Dot = new Dot("id11", "number");
+//var dot12: Dot = new Dot("id12", "number");
+//var dot13: Dot = new Dot("id13", "number");
+//var dot14: Dot = new Dot("id14", "number");
+//var dot15: Dot = new Dot("id15", "number");
+//var dot16: Dot = new Dot("id16", "number");
+//var dot17: Dot = new Dot("id17", "number");
+//var dot18: Dot = new Dot("id18", "number");
+//dot1.addfield("next", dot2);
+//dot1.addfield("in", dot4);
+//dot1.addfield("num", dot10);
+//dot2.addfield("next", dot3);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("in", dot6);
+//dot2.addfield("num", dot11);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("in", dot9);
+//dot3.addfield("num", dot12);
+//dot4.addfield("right", dot5);
+//dot4.addfield("val", dot13);
+//dot5.addfield("parent", dot4);
+//dot5.addfield("val", dot14);
+//dot6.addfield("left", dot7);
+//dot6.addfield("right", dot8);
+//dot6.addfield("val", dot16);
+//dot7.addfield("parent", dot6);
+//dot7.addfield("val", dot15);
+//dot8.addfield("parent", dot6);
+//dot8.addfield("val", dot17);
+//dot9.addfield("val", dot18);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
+//var grp: Graph = new Graph(nodes);
+/*
+ * Example and Test 3
+ * cycle list
+ */
+var dot1 = new Dot("id1", "Node");
+var dot2 = new Dot("id2", "Node");
+var dot3 = new Dot("id3", "Node");
+var dot4 = new Dot("id4", "Node");
+var dot5 = new Dot("id5", "number");
+var dot6 = new Dot("id6", "number");
+var dot7 = new Dot("id7", "number");
+var dot8 = new Dot("id8", "number");
 dot1.addfield("next", dot2);
-dot1.addfield("in", dot4);
-dot1.addfield("num", dot10);
+dot1.addfield("prev", dot4);
+dot1.addfield("val", dot5);
 dot2.addfield("next", dot3);
 dot2.addfield("prev", dot1);
-dot2.addfield("in", dot6);
-dot2.addfield("num", dot11);
+dot2.addfield("val", dot6);
+dot3.addfield("next", dot4);
 dot3.addfield("prev", dot2);
-dot3.addfield("in", dot9);
-dot3.addfield("num", dot12);
-dot4.addfield("right", dot5);
-dot4.addfield("val", dot13);
-dot5.addfield("parent", dot4);
-dot5.addfield("val", dot14);
-dot6.addfield("left", dot7);
-dot6.addfield("right", dot8);
-dot6.addfield("val", dot16);
-dot7.addfield("parent", dot6);
-dot7.addfield("val", dot15);
-dot8.addfield("parent", dot6);
-dot8.addfield("val", dot17);
-dot9.addfield("val", dot18);
-var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
+dot3.addfield("val", dot7);
+dot4.addfield("next", dot1);
+dot4.addfield("prev", dot3);
+dot4.addfield("val", dot8);
+var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
 var grp = new Graph(nodes);
+/*
+ * Example and Test 3
+ * simple tree
+ */
+//var dot0: Dot = new Dot("id0", "Node");
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "number");
+//var dot6: Dot = new Dot("id6", "number");
+//var dot7: Dot = new Dot("id7", "number");
+//var dot8: Dot = new Dot("id8", "number");
+//var dot9: Dot = new Dot("id9", "number");
+//dot0.addfield("left", dot1);
+//dot0.addfield("right", dot4);
+//dot0.addfield("val", dot5);
+//dot1.addfield("left", dot2);
+//dot1.addfield("right", dot3);
+//dot1.addfield("parent", dot0);
+//dot1.addfield("val", dot6);
+//dot2.addfield("parent", dot1);
+//dot2.addfield("val", dot7);
+//dot3.addfield("parent", dot1);
+//dot3.addfield("val", dot8);
+//dot4.addfield("parent", dot0);
+//dot4.addfield("val", dot9);
+//var nodes: Dot[] = [dot0, dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9];
+//var grp: Graph = new Graph(nodes);
 ///<reference path="example.ts" />
 setGraphLocation(grp);
 //グラフの描画をするための変数
@@ -175,8 +232,7 @@ function setGraphLocation(graph) {
                 return null;
             }
             else {
-                var p = this.stack[this.stack.length - 1];
-                this.stack.pop();
+                var p = this.stack.pop();
                 return p;
             }
         };
@@ -186,7 +242,11 @@ function setGraphLocation(graph) {
         };
         //スタックされている値を配列として返す
         Stack.prototype.returnArray = function () {
-            return this.stack;
+            var array = new Array(this.stack.length);
+            for (var i = 0; i < this.stack.length; i++) {
+                array[i] = this.stack[i];
+            }
+            return array;
         };
         return Stack;
     }());
@@ -432,7 +492,7 @@ function setGraphLocation(graph) {
                  * アルゴリズムが思い浮かばなかったので後回し
                  */
             }
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す
+            //補助関数、閉路を探索し、閉路上のIDの配列を返す（問題あり）
             function cycleGraphIDs(graph, cls, IDs, arrayField) {
                 var cycleIDs = new Array();
                 for (var i = 0; i < IDs.length; i++) {
@@ -449,19 +509,33 @@ function setGraphLocation(graph) {
                     var cycleIDs = new Array();
                     var stack = new Stack(); //経路を記録するためのスタック
                     var usedIDs = new Array(); //訪問したノードのIDを記録するための配列
+                    usedIDs.push(ID);
                     stack.push(ID);
-                    while (!stack.isZero) {
-                        var v = stack.pop();
-                        if (v == ID && !stack.isZero()) {
-                            cycleIDs.push(stack.returnArray());
-                            cycleIDs[Object.keys(cycleIDs).length].push(v);
-                        }
+                    while (true) {
+                        var v = stack.pop(); //現在注目しているノード
+                        stack.push(v);
+                        var isConnectNonvisitedNode = false; //まだ訪問していないノードが接続先にある場合trueを返す変数
                         for (var i = 0; i < arrayField.length; i++) {
                             var u = graph.getField(v, arrayField[i]);
                             if (!sameT_InArray(u, usedIDs)) {
+                                isConnectNonvisitedNode = true;
                                 usedIDs.push(u);
                                 stack.push(u);
                             }
+                            else if (u == ID) {
+                                isConnectNonvisitedNode = false;
+                                cycleIDs.push(stack.returnArray());
+                                cycleIDs[cycleIDs.length - 1].push(ID);
+                            }
+                            else {
+                                isConnectNonvisitedNode = false;
+                            }
+                        }
+                        if (!isConnectNonvisitedNode) {
+                            stack.pop();
+                        }
+                        if (stack.isZero()) {
+                            break;
                         }
                     }
                     return cycleIDs;
