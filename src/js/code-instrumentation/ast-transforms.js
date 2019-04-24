@@ -1452,7 +1452,7 @@ __$__.ASTTransforms = {
                             b.BinaryExpression(
                                 b.Identifier(loopCount),
                                 ">",
-                                b.Literal(100)
+                                b.Literal(10000)
                             ),
                             b.BlockStatement([
                                 b.ExpressionStatement(
