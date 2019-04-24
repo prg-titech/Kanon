@@ -66,6 +66,7 @@ __$__.Layout = {
         }
         //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
         function edgeListInit(graph, edgelist, drawcircle) {
+
             //オブジェクトのIDの配列
             var ObjectIDs = graph.getObjectIDs();
             //プリミティブ型の値を除いたオブジェクトID配列
@@ -88,14 +89,17 @@ __$__.Layout = {
                     return graph.getClass(value) == allObjectClassExceptDuplication[i];
                 });
             }
+
             //同じ型のオブジェクトを結ぶエッジの角度を決定
             for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
                 if (isPrimitiveString(allObjectClassExceptDuplication[i])) {
                     decisionEdgeAngleConnectingSameClass(graph, edgelist, allObjectClassExceptDuplication[i], IDsSeparateClass[i], drawcircle);
                 }
             }
+
             //異なる型を参照するエッジの角度を決定
             decisonEdgeAngleConnectingDifferentClass(graph, edgelist, ObjectIDs, allObjectClass, ObjectIDsExceptPrimitiveValue);
+
         }
         //引数がプリミティブ型を表す文字列でないかどうかを調べる、そうでなければtrueを返す
         function isPrimitiveString(str) {
@@ -103,12 +107,26 @@ __$__.Layout = {
         }
         //同じ型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
         function decisionEdgeAngleConnectingSameClass(graph, edgelist, cls, IDs, drawcircle) {
+            console.log("class = " + cls);
+
+            var necessaryFieldStartTime = performance.now();
             //必要なフィールド名の配列
             var arrayField = necessaryField(graph, cls, IDs);
+            var necessaryFieldEndTime = performance.now();
+            console.log("  necessaryField Time = " + (necessaryFieldEndTime - necessaryFieldStartTime) + " ms");
+
+            var makeEdgeStartTime = performance.now();
             //オブジェクトを辿りながらエッジリストを作る
             makeEdgeListConnectingSameClass(graph, edgelist, cls, IDs, arrayField);
+            var makeEdgeEndTime = performance.now();
+            console.log("  makeEdge Time = " + (makeEdgeEndTime - makeEdgeStartTime) + " ms");
+
+            var searchCycleStartTime = performance.now();
             //閉路があるか探索し、閉路があった場合は閉路上のエッジの角度を全て無しにする
             searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle);
+            var searchCycleEndTime = performance.now();
+            console.log("  searchCycle Time = " + (searchCycleEndTime - searchCycleStartTime) + " ms");
+
             /*
              * 必要なフィールド名の配列を返す関数
              */
@@ -262,6 +280,7 @@ __$__.Layout = {
             function searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle) {
                 //閉路上のIDの配列
                 var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
+
                 if (drawcircle) { //閉路上のエッジの角度を全て無効にする
                     for (var i = 0; i < cycleIDs.length; i++) {
                         for (var j = 0; j < cycleIDs[i].length - 1; j++) {
@@ -278,7 +297,7 @@ __$__.Layout = {
                      * アルゴリズムが思い浮かばなかったので後回し
                      */
                 }
-                //補助関数、閉路を探索し、閉路上のIDの配列を返す（問題あり）
+                //補助関数、閉路を探索し、閉路上のIDの配列を返す
                 function cycleGraphIDs(graph, cls, IDs, arrayField) {
                     var cycleIDs = new Array();
                     for (var i = 0; i < IDs.length; i++) {
@@ -719,14 +738,18 @@ __$__.Layout = {
         //オブジェクトがグラフ構造か木構造かを判別して描画するか否な
         //falseにすると、すべてを循環の無い木構造と見なして描画する
         var DrawCircle = true;
-        console.log(graph);
         //角度付きエッジリストを用意し、参照関係を元に初期化する
         var edgeWithAngleList = new Array();
+        var edgeListInitStartTime = performance.now();
         edgeListInit(graph, edgeWithAngleList, DrawCircle);
-        console.log(edgeWithAngleList);
+        var edgeListInitEndTime = performance.now();
+        console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
         //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
         //graphオブジェクト内のノード座標を破壊的に書き替える
+        var forceDirectedMethodStartTime = performance.now();
         calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
+        var forceDirectedMethodEndTime = performance.now();
+        console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
     },
 
 

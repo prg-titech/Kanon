@@ -189,30 +189,30 @@ class Dot {
  * cycle list
  */
 
-var dot1: Dot = new Dot("id1", "Node");
-var dot2: Dot = new Dot("id2", "Node");
-var dot3: Dot = new Dot("id3", "Node");
-var dot4: Dot = new Dot("id4", "Node");
-var dot5: Dot = new Dot("id5", "number");
-var dot6: Dot = new Dot("id6", "number");
-var dot7: Dot = new Dot("id7", "number");
-var dot8: Dot = new Dot("id8", "number");
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "number");
+//var dot6: Dot = new Dot("id6", "number");
+//var dot7: Dot = new Dot("id7", "number");
+//var dot8: Dot = new Dot("id8", "number");
 
-dot1.addfield("next", dot2);
-dot1.addfield("prev", dot4);
-dot1.addfield("val", dot5);
-dot2.addfield("next", dot3);
-dot2.addfield("prev", dot1);
-dot2.addfield("val", dot6);
-dot3.addfield("next", dot4);
-dot3.addfield("prev", dot2);
-dot3.addfield("val", dot7);
-dot4.addfield("next", dot1);
-dot4.addfield("prev", dot3);
-dot4.addfield("val", dot8);
+//dot1.addfield("next", dot2);
+//dot1.addfield("prev", dot4);
+//dot1.addfield("val", dot5);
+//dot2.addfield("next", dot3);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("val", dot6);
+//dot3.addfield("next", dot4);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("val", dot7);
+//dot4.addfield("next", dot1);
+//dot4.addfield("prev", dot3);
+//dot4.addfield("val", dot8);
 
-var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
-var grp: Graph = new Graph(nodes);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
+//var grp: Graph = new Graph(nodes);
 
 /*
  * Example and Test 3
@@ -246,3 +246,27 @@ var grp: Graph = new Graph(nodes);
 
 //var nodes: Dot[] = [dot0, dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9];
 //var grp: Graph = new Graph(nodes);
+
+/*
+ * Example and Test 5
+ * complex cycle
+ */
+
+var dot1: Dot = new Dot("id1", "Node");
+var dot2: Dot = new Dot("id2", "Node");
+var dot3: Dot = new Dot("id3", "Node");
+var dot4: Dot = new Dot("id4", "Node");
+var dot5: Dot = new Dot("id5", "Node");
+var dot6: Dot = new Dot("id6", "Node");
+
+dot1.addfield("next", dot2);
+dot2.addfield("next", dot5);
+dot2.addfield("next2", dot6);
+dot3.addfield("next", dot2);
+dot4.addfield("next", dot3);
+dot4.addfield("next2", dot1);
+dot5.addfield("next", dot4);
+dot6.addfield("next", dot4);
+
+var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+var grp: Graph = new Graph(nodes);

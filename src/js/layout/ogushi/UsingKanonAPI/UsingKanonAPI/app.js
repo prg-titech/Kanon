@@ -156,28 +156,28 @@ var Dot = /** @class */ (function () {
  * Example and Test 3
  * cycle list
  */
-var dot1 = new Dot("id1", "Node");
-var dot2 = new Dot("id2", "Node");
-var dot3 = new Dot("id3", "Node");
-var dot4 = new Dot("id4", "Node");
-var dot5 = new Dot("id5", "number");
-var dot6 = new Dot("id6", "number");
-var dot7 = new Dot("id7", "number");
-var dot8 = new Dot("id8", "number");
-dot1.addfield("next", dot2);
-dot1.addfield("prev", dot4);
-dot1.addfield("val", dot5);
-dot2.addfield("next", dot3);
-dot2.addfield("prev", dot1);
-dot2.addfield("val", dot6);
-dot3.addfield("next", dot4);
-dot3.addfield("prev", dot2);
-dot3.addfield("val", dot7);
-dot4.addfield("next", dot1);
-dot4.addfield("prev", dot3);
-dot4.addfield("val", dot8);
-var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
-var grp = new Graph(nodes);
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "number");
+//var dot6: Dot = new Dot("id6", "number");
+//var dot7: Dot = new Dot("id7", "number");
+//var dot8: Dot = new Dot("id8", "number");
+//dot1.addfield("next", dot2);
+//dot1.addfield("prev", dot4);
+//dot1.addfield("val", dot5);
+//dot2.addfield("next", dot3);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("val", dot6);
+//dot3.addfield("next", dot4);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("val", dot7);
+//dot4.addfield("next", dot1);
+//dot4.addfield("prev", dot3);
+//dot4.addfield("val", dot8);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
+//var grp: Graph = new Graph(nodes);
 /*
  * Example and Test 3
  * simple tree
@@ -207,6 +207,26 @@ var grp = new Graph(nodes);
 //dot4.addfield("val", dot9);
 //var nodes: Dot[] = [dot0, dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9];
 //var grp: Graph = new Graph(nodes);
+/*
+ * Example and Test 5
+ * complex cycle
+ */
+var dot1 = new Dot("id1", "Node");
+var dot2 = new Dot("id2", "Node");
+var dot3 = new Dot("id3", "Node");
+var dot4 = new Dot("id4", "Node");
+var dot5 = new Dot("id5", "Node");
+var dot6 = new Dot("id6", "Node");
+dot1.addfield("next", dot2);
+dot2.addfield("next", dot5);
+dot2.addfield("next2", dot6);
+dot3.addfield("next", dot2);
+dot4.addfield("next", dot3);
+dot4.addfield("next2", dot1);
+dot5.addfield("next", dot4);
+dot6.addfield("next", dot4);
+var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
+var grp = new Graph(nodes);
 ///<reference path="example.ts" />
 //import sgl = require('./app');
 //sgl.setGraphLocation(grp);
@@ -244,11 +264,7 @@ function setGraphLocation(graph) {
         };
         //スタックされている値を配列として返す
         Stack.prototype.returnArray = function () {
-            var array = new Array(this.stack.length);
-            for (var i = 0; i < this.stack.length; i++) {
-                array[i] = this.stack[i];
-            }
-            return array;
+            return copyArray(this.stack);
         };
         return Stack;
     }());
@@ -279,6 +295,27 @@ function setGraphLocation(graph) {
             bool = bool || (arrayT[i] == t);
         }
         return bool;
+    }
+    //配列を別の配列にコピーする
+    function copyArray(origin) {
+        var array = new Array(origin.length);
+        for (var i = 0; i < origin.length; i++) {
+            array[i] = origin[i];
+        }
+        return array;
+    }
+    //配列同士が同じものであるかどうかを調べる
+    function arrayEqual(a1, a2) {
+        var bool = true;
+        if (a1.length != a2.length) {
+            return false;
+        }
+        else {
+            for (var i = 0; i < a1.length; i++) {
+                bool = bool && (a1[i] === a2[i]);
+            }
+            return bool;
+        }
     }
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
     function edgeListInit(graph, edgelist, drawcircle) {
@@ -494,7 +531,7 @@ function setGraphLocation(graph) {
                  * アルゴリズムが思い浮かばなかったので後回し
                  */
             }
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す（問題あり）
+            //補助関数、閉路を探索し、閉路上のIDの配列を返す
             function cycleGraphIDs(graph, cls, IDs, arrayField) {
                 var cycleIDs = new Array();
                 for (var i = 0; i < IDs.length; i++) {
@@ -511,34 +548,23 @@ function setGraphLocation(graph) {
                     var cycleIDs = new Array();
                     var stack = new Stack(); //経路を記録するためのスタック
                     var usedIDs = new Array(); //訪問したノードのIDを記録するための配列
-                    usedIDs.push(ID);
-                    stack.push(ID);
-                    while (true) {
-                        var v = stack.pop(); //現在注目しているノード
-                        stack.push(v);
-                        var isConnectNonvisitedNode = false; //まだ訪問していないノードが接続先にある場合trueを返す変数
+                    deep_first_search(graph, stack, cycleIDs, arrayField, ID, ID);
+                    //補助関数、深さ優先探索的に（厳密には違う）ノードを辿っていく
+                    function deep_first_search(graph, stack, cycleIDs, arrayField, nowID, ID) {
+                        stack.push(nowID);
                         for (var i = 0; i < arrayField.length; i++) {
-                            var u = graph.getField(v, arrayField[i]);
-                            if (!sameT_InArray(u, usedIDs)) {
-                                isConnectNonvisitedNode = true;
-                                usedIDs.push(u);
-                                stack.push(u);
-                            }
-                            else if (u == ID) {
-                                isConnectNonvisitedNode = false;
-                                cycleIDs.push(stack.returnArray());
-                                cycleIDs[cycleIDs.length - 1].push(ID);
-                            }
-                            else {
-                                isConnectNonvisitedNode = false;
+                            var u = graph.getField(nowID, arrayField[i]);
+                            if (u != undefined) {
+                                if (!sameT_InArray(u, stack.stack)) {
+                                    deep_first_search(graph, stack, cycleIDs, arrayField, u, ID);
+                                }
+                                else if (u == ID) {
+                                    cycleIDs.push(stack.returnArray());
+                                    cycleIDs[cycleIDs.length - 1].push(ID);
+                                }
                             }
                         }
-                        if (!isConnectNonvisitedNode) {
-                            stack.pop();
-                        }
-                        if (stack.isZero()) {
-                            break;
-                        }
+                        stack.pop();
                     }
                     return cycleIDs;
                 }
@@ -550,17 +576,16 @@ function setGraphLocation(graph) {
                             bool = bool || false;
                         }
                         else { //配列の長さが同じならば
-                            var a1 = onecycle;
-                            var a2 = cycles[i];
+                            var a1 = copyArray(onecycle);
+                            var a2 = copyArray(cycles[i]);
                             a1.pop(); //末尾を削除
                             a2.pop(); //末尾を削除
-                            for (var j = 0; j < a2.length; j++) {
-                                var car = a2[0];
-                                a2.shift();
-                                a2.push(car);
-                                if (a2 === a1) {
+                            for (var j = 0; j < a1.length; j++) {
+                                if (arrayEqual(a1, a2)) {
                                     bool = bool || true;
                                 }
+                                var car = a2.shift();
+                                a2.push(car);
                             }
                         }
                     }
