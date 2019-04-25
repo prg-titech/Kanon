@@ -28,11 +28,7 @@ __$__.Layout = {
             };
             //スタックされている値を配列として返す
             Stack.prototype.returnArray = function () {
-                var array = new Array(this.stack.length);
-                for (var i = 0; i < this.stack.length; i++) {
-                    array[i] = this.stack[i];
-                }
-                return array;
+                return copyArray(this.stack);
             };
             return Stack;
         }());
@@ -64,9 +60,29 @@ __$__.Layout = {
             }
             return bool;
         }
+        //配列を別の配列にコピーする
+        function copyArray(origin) {
+            var array = new Array(origin.length);
+            for (var i = 0; i < origin.length; i++) {
+                array[i] = origin[i];
+            }
+            return array;
+        }
+        //配列同士が同じものであるかどうかを調べる
+        function arrayEqual(a1, a2) {
+            var bool = true;
+            if (a1.length != a2.length) {
+                return false;
+            }
+            else {
+                for (var i = 0; i < a1.length; i++) {
+                    bool = bool && (a1[i] === a2[i]);
+                }
+                return bool;
+            }
+        }
         //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
         function edgeListInit(graph, edgelist, drawcircle) {
-
             //オブジェクトのIDの配列
             var ObjectIDs = graph.getObjectIDs();
             //プリミティブ型の値を除いたオブジェクトID配列
@@ -89,17 +105,14 @@ __$__.Layout = {
                     return graph.getClass(value) == allObjectClassExceptDuplication[i];
                 });
             }
-
             //同じ型のオブジェクトを結ぶエッジの角度を決定
             for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
                 if (isPrimitiveString(allObjectClassExceptDuplication[i])) {
                     decisionEdgeAngleConnectingSameClass(graph, edgelist, allObjectClassExceptDuplication[i], IDsSeparateClass[i], drawcircle);
                 }
             }
-
             //異なる型を参照するエッジの角度を決定
             decisonEdgeAngleConnectingDifferentClass(graph, edgelist, ObjectIDs, allObjectClass, ObjectIDsExceptPrimitiveValue);
-
         }
         //引数がプリミティブ型を表す文字列でないかどうかを調べる、そうでなければtrueを返す
         function isPrimitiveString(str) {
@@ -107,26 +120,12 @@ __$__.Layout = {
         }
         //同じ型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
         function decisionEdgeAngleConnectingSameClass(graph, edgelist, cls, IDs, drawcircle) {
-            console.log("class = " + cls);
-
-            var necessaryFieldStartTime = performance.now();
             //必要なフィールド名の配列
             var arrayField = necessaryField(graph, cls, IDs);
-            var necessaryFieldEndTime = performance.now();
-            console.log("  necessaryField Time = " + (necessaryFieldEndTime - necessaryFieldStartTime) + " ms");
-
-            var makeEdgeStartTime = performance.now();
             //オブジェクトを辿りながらエッジリストを作る
             makeEdgeListConnectingSameClass(graph, edgelist, cls, IDs, arrayField);
-            var makeEdgeEndTime = performance.now();
-            console.log("  makeEdge Time = " + (makeEdgeEndTime - makeEdgeStartTime) + " ms");
-
-            var searchCycleStartTime = performance.now();
             //閉路があるか探索し、閉路があった場合は閉路上のエッジの角度を全て無しにする
             searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle);
-            var searchCycleEndTime = performance.now();
-            console.log("  searchCycle Time = " + (searchCycleEndTime - searchCycleStartTime) + " ms");
-
             /*
              * 必要なフィールド名の配列を返す関数
              */
@@ -280,7 +279,7 @@ __$__.Layout = {
             function searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle) {
                 //閉路上のIDの配列
                 var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
-
+                //console.log(cycleIDs);
                 if (drawcircle) { //閉路上のエッジの角度を全て無効にする
                     for (var i = 0; i < cycleIDs.length; i++) {
                         for (var j = 0; j < cycleIDs[i].length - 1; j++) {
@@ -314,34 +313,23 @@ __$__.Layout = {
                         var cycleIDs = new Array();
                         var stack = new Stack(); //経路を記録するためのスタック
                         var usedIDs = new Array(); //訪問したノードのIDを記録するための配列
-                        usedIDs.push(ID);
-                        stack.push(ID);
-                        while (true) {
-                            var v = stack.pop(); //現在注目しているノード
-                            stack.push(v);
-                            var isConnectNonvisitedNode = false; //まだ訪問していないノードが接続先にある場合trueを返す変数
+                        deep_first_search(graph, stack, cycleIDs, arrayField, ID, ID);
+                        //補助関数、深さ優先探索的に（厳密には違う）ノードを辿っていく
+                        function deep_first_search(graph, stack, cycleIDs, arrayField, nowID, ID) {
+                            stack.push(nowID);
                             for (var i = 0; i < arrayField.length; i++) {
-                                var u = graph.getField(v, arrayField[i]);
-                                if (!sameT_InArray(u, usedIDs)) {
-                                    isConnectNonvisitedNode = true;
-                                    usedIDs.push(u);
-                                    stack.push(u);
-                                }
-                                else if (u == ID) {
-                                    isConnectNonvisitedNode = false;
-                                    cycleIDs.push(stack.returnArray());
-                                    cycleIDs[cycleIDs.length - 1].push(ID);
-                                }
-                                else {
-                                    isConnectNonvisitedNode = false;
+                                var u = graph.getField(nowID, arrayField[i]);
+                                if (u != undefined) {
+                                    if (!sameT_InArray(u, stack.stack)) {
+                                        deep_first_search(graph, stack, cycleIDs, arrayField, u, ID);
+                                    }
+                                    else if (u == ID) {
+                                        cycleIDs.push(stack.returnArray());
+                                        cycleIDs[cycleIDs.length - 1].push(ID);
+                                    }
                                 }
                             }
-                            if (!isConnectNonvisitedNode) {
-                                stack.pop();
-                            }
-                            if (stack.isZero()) {
-                                break;
-                            }
+                            stack.pop();
                         }
                         return cycleIDs;
                     }
@@ -353,17 +341,16 @@ __$__.Layout = {
                                 bool = bool || false;
                             }
                             else { //配列の長さが同じならば
-                                var a1 = onecycle;
-                                var a2 = cycles[i];
+                                var a1 = copyArray(onecycle);
+                                var a2 = copyArray(cycles[i]);
                                 a1.pop(); //末尾を削除
                                 a2.pop(); //末尾を削除
-                                for (var j = 0; j < a2.length; j++) {
-                                    var car = a2[0];
-                                    a2.shift();
-                                    a2.push(car);
-                                    if (a2 === a1) {
+                                for (var j = 0; j < a1.length; j++) {
+                                    if (arrayEqual(a1, a2)) {
                                         bool = bool || true;
                                     }
+                                    var car = a2.shift();
+                                    a2.push(car);
                                 }
                             }
                         }
@@ -738,18 +725,14 @@ __$__.Layout = {
         //オブジェクトがグラフ構造か木構造かを判別して描画するか否な
         //falseにすると、すべてを循環の無い木構造と見なして描画する
         var DrawCircle = true;
+        console.log(grp);
         //角度付きエッジリストを用意し、参照関係を元に初期化する
         var edgeWithAngleList = new Array();
-        var edgeListInitStartTime = performance.now();
         edgeListInit(graph, edgeWithAngleList, DrawCircle);
-        var edgeListInitEndTime = performance.now();
-        console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+        console.log(edgeWithAngleList);
         //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
         //graphオブジェクト内のノード座標を破壊的に書き替える
-        var forceDirectedMethodStartTime = performance.now();
         calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
-        var forceDirectedMethodEndTime = performance.now();
-        console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
     },
 
 

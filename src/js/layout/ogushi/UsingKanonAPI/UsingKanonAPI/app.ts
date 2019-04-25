@@ -364,6 +364,7 @@ function setGraphLocation(graph: Graph) {
 
             //閉路上のIDの配列
             var cycleIDs: string[][] = cycleGraphIDs(graph, cls, IDs, arrayField);
+            //console.log(cycleIDs);
 
             if (drawcircle) {       //閉路上のエッジの角度を全て無効にする
                 for (var i = 0; i < cycleIDs.length; i++) {

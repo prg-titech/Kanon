@@ -211,21 +211,56 @@ var Dot = /** @class */ (function () {
  * Example and Test 5
  * complex cycle
  */
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "Node");
+//var dot6: Dot = new Dot("id6", "Node");
+//dot1.addfield("next", dot2);
+//dot2.addfield("next", dot5);
+//dot2.addfield("next2", dot6);
+//dot3.addfield("next", dot2);
+//dot4.addfield("next", dot3);
+//dot4.addfield("next2", dot1);
+//dot5.addfield("next", dot4);
+//dot6.addfield("next", dot4);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+//var grp: Graph = new Graph(nodes);
+/*
+ * Example and Test 6
+ * complex cycle
+ */
 var dot1 = new Dot("id1", "Node");
 var dot2 = new Dot("id2", "Node");
 var dot3 = new Dot("id3", "Node");
 var dot4 = new Dot("id4", "Node");
 var dot5 = new Dot("id5", "Node");
 var dot6 = new Dot("id6", "Node");
-dot1.addfield("next", dot2);
-dot2.addfield("next", dot5);
-dot2.addfield("next2", dot6);
+var dot7 = new Dot("id7", "Node");
+var dot8 = new Dot("id8", "Node");
+var dot9 = new Dot("id9", "Node");
+var dot10 = new Dot("id10", "Node");
+var dot11 = new Dot("id11", "Node");
+var dot12 = new Dot("id12", "Node");
+dot1.addfield("next", dot7);
+dot1.addfield("next2", dot12);
+dot2.addfield("next", dot1);
+dot2.addfield("next2", dot10);
 dot3.addfield("next", dot2);
-dot4.addfield("next", dot3);
-dot4.addfield("next2", dot1);
-dot5.addfield("next", dot4);
-dot6.addfield("next", dot4);
-var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
+dot3.addfield("next2", dot4);
+dot3.addfield("next3", dot9);
+dot4.addfield("next", dot5);
+dot5.addfield("next", dot6);
+dot6.addfield("next", dot3);
+dot6.addfield("next2", dot8);
+dot7.addfield("next", dot6);
+dot8.addfield("next", dot5);
+dot9.addfield("next", dot6);
+dot11.addfield("next", dot1);
+dot11.addfield("next2", dot2);
+dot12.addfield("next", dot11);
+var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12];
 var grp = new Graph(nodes);
 ///<reference path="example.ts" />
 //import sgl = require('./app');
@@ -515,6 +550,7 @@ function setGraphLocation(graph) {
         function searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle) {
             //閉路上のIDの配列
             var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
+            //console.log(cycleIDs);
             if (drawcircle) { //閉路上のエッジの角度を全て無効にする
                 for (var i = 0; i < cycleIDs.length; i++) {
                     for (var j = 0; j < cycleIDs[i].length - 1; j++) {

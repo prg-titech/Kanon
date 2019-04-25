@@ -252,21 +252,60 @@ class Dot {
  * complex cycle
  */
 
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "Node");
+//var dot6: Dot = new Dot("id6", "Node");
+
+//dot1.addfield("next", dot2);
+//dot2.addfield("next", dot5);
+//dot2.addfield("next2", dot6);
+//dot3.addfield("next", dot2);
+//dot4.addfield("next", dot3);
+//dot4.addfield("next2", dot1);
+//dot5.addfield("next", dot4);
+//dot6.addfield("next", dot4);
+
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+//var grp: Graph = new Graph(nodes);
+
+/*
+ * Example and Test 6
+ * complex cycle
+ */
+
 var dot1: Dot = new Dot("id1", "Node");
 var dot2: Dot = new Dot("id2", "Node");
 var dot3: Dot = new Dot("id3", "Node");
 var dot4: Dot = new Dot("id4", "Node");
 var dot5: Dot = new Dot("id5", "Node");
 var dot6: Dot = new Dot("id6", "Node");
+var dot7: Dot = new Dot("id7", "Node");
+var dot8: Dot = new Dot("id8", "Node");
+var dot9: Dot = new Dot("id9", "Node");
+var dot10: Dot = new Dot("id10", "Node");
+var dot11: Dot = new Dot("id11", "Node");
+var dot12: Dot = new Dot("id12", "Node");
 
-dot1.addfield("next", dot2);
-dot2.addfield("next", dot5);
-dot2.addfield("next2", dot6);
+dot1.addfield("next", dot7);
+dot1.addfield("next2", dot12);
+dot2.addfield("next", dot1);
+dot2.addfield("next2", dot10);
 dot3.addfield("next", dot2);
-dot4.addfield("next", dot3);
-dot4.addfield("next2", dot1);
-dot5.addfield("next", dot4);
-dot6.addfield("next", dot4);
+dot3.addfield("next2", dot4);
+dot3.addfield("next3", dot9);
+dot4.addfield("next", dot5);
+dot5.addfield("next", dot6);
+dot6.addfield("next", dot3);
+dot6.addfield("next2", dot8);
+dot7.addfield("next", dot6);
+dot8.addfield("next", dot5);
+dot9.addfield("next", dot6);
+dot11.addfield("next", dot1);
+dot11.addfield("next2", dot2);
+dot12.addfield("next", dot11);
 
-var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12];
 var grp: Graph = new Graph(nodes);
