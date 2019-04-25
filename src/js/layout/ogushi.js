@@ -81,6 +81,13 @@ __$__.Layout = {
                 return bool;
             }
         }
+        //値から配列の最初のkeyを取得し、keyより前の要素を削除した配列を返す
+        function arraySpliceBoforeIndexOf(key, array) {
+            var carray = copyArray(array);
+            var index = carray.indexOf(key);
+            carray.splice(0, index);
+            return carray;
+        }
         //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
         function edgeListInit(graph, edgelist, drawcircle) {
             //オブジェクトのIDの配列
@@ -279,7 +286,6 @@ __$__.Layout = {
             function searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle) {
                 //閉路上のIDの配列
                 var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
-                //console.log(cycleIDs);
                 if (drawcircle) { //閉路上のエッジの角度を全て無効にする
                     for (var i = 0; i < cycleIDs.length; i++) {
                         for (var j = 0; j < cycleIDs[i].length - 1; j++) {
@@ -296,34 +302,43 @@ __$__.Layout = {
                      * アルゴリズムが思い浮かばなかったので後回し
                      */
                 }
-                //補助関数、閉路を探索し、閉路上のIDの配列を返す
-                function cycleGraphIDs(graph, cls, IDs, arrayField) {
-                    var cycleIDs = new Array();
+                /*
+                 *
+                //補助関数、閉路を探索し、閉路上のIDの配列を返す（旧）
+                function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
+                    var cycleIDs: string[][] = new Array();
+
                     for (var i = 0; i < IDs.length; i++) {
-                        var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, cls, IDs, arrayField, IDs[i]);
+                        var cycleIDsFromOneID: string[][] = cycleGraphIDsFromOneID(graph, cls, IDs, arrayField, IDs[i]);
                         for (var j = 0; j < cycleIDsFromOneID.length; j++) {
                             if (!sameCycleGraph(cycleIDsFromOneID[j], cycleIDs)) {
                                 cycleIDs.push(cycleIDsFromOneID[j]);
                             }
                         }
                     }
+
                     return cycleIDs;
+
                     //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
-                    function cycleGraphIDsFromOneID(graph, cls, IDs, arrayField, ID) {
-                        var cycleIDs = new Array();
-                        var stack = new Stack(); //経路を記録するためのスタック
-                        var usedIDs = new Array(); //訪問したノードのIDを記録するための配列
+                    function cycleGraphIDsFromOneID(graph: Graph, cls: string, IDs: string[], arrayField: string[], ID: string): string[][] {
+
+                        var cycleIDs: string[][] = new Array();
+
+                        var stack: Stack = new Stack();     //経路を記録するためのスタック
+                        var usedIDs: string[] = new Array();    //訪問したノードのIDを記録するための配列
+
                         deep_first_search(graph, stack, cycleIDs, arrayField, ID, ID);
-                        //補助関数、深さ優先探索的に（厳密には違う）ノードを辿っていく
-                        function deep_first_search(graph, stack, cycleIDs, arrayField, nowID, ID) {
+
+
+                        //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
+                        function deep_first_search(graph: Graph, stack: Stack, cycleIDs: string[][], arrayField: string[], nowID: string, ID: string) {
                             stack.push(nowID);
                             for (var i = 0; i < arrayField.length; i++) {
-                                var u = graph.getField(nowID, arrayField[i]);
+                                var u: string = graph.getField(nowID, arrayField[i]);
                                 if (u != undefined) {
-                                    if (!sameT_InArray(u, stack.stack)) {
+                                    if (!sameT_InArray<string>(u, stack.stack)) {
                                         deep_first_search(graph, stack, cycleIDs, arrayField, u, ID);
-                                    }
-                                    else if (u == ID) {
+                                    } else if (u == ID) {
                                         cycleIDs.push(stack.returnArray());
                                         cycleIDs[cycleIDs.length - 1].push(ID);
                                     }
@@ -331,30 +346,82 @@ __$__.Layout = {
                             }
                             stack.pop();
                         }
+
                         return cycleIDs;
+
                     }
+
                     //補助関数の補助関数、与えられた閉路と同じものが配列cycleIDs内にあるかどうかを判断する
-                    function sameCycleGraph(onecycle, cycles) {
-                        var bool = false;
+                    function sameCycleGraph(onecycle: string[], cycles: string[][]): boolean {
+                        var bool: boolean = false;
                         for (var i = 0; i < cycles.length; i++) {
-                            if (onecycle.length != cycles[i].length) { //配列の長さが同じでなければ
+                            if (onecycle.length != cycles[i].length) {  //配列の長さが同じでなければ
                                 bool = bool || false;
-                            }
-                            else { //配列の長さが同じならば
-                                var a1 = copyArray(onecycle);
-                                var a2 = copyArray(cycles[i]);
-                                a1.pop(); //末尾を削除
-                                a2.pop(); //末尾を削除
+                            } else {                                    //配列の長さが同じならば
+                                var a1: string[] = copyArray(onecycle);
+                                var a2: string[] = copyArray(cycles[i]);
+                                a1.pop();       //末尾を削除
+                                a2.pop();       //末尾を削除
+
                                 for (var j = 0; j < a1.length; j++) {
                                     if (arrayEqual(a1, a2)) {
                                         bool = bool || true;
                                     }
-                                    var car = a2.shift();
+                                    var car: string = a2.shift();
                                     a2.push(car);
                                 }
                             }
                         }
                         return bool;
+                    }
+                }
+                 *
+                 */
+                //補助関数、閉路を探索し、閉路上のIDの配列を返す（新）
+                function cycleGraphIDs(graph, cls, IDs, arrayField) {
+                    var cycleIDs = new Array();
+                    var usedIDs = new Array(); //訪れたことのあるIDを記録
+                    for (var i = 0; i < IDs.length; i++) {
+                        if (!sameT_InArray(IDs[i], usedIDs)) {
+                            var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, IDs[i]);
+                            for (var j = 0; j < cycleIDsFromOneID.length; j++) {
+                                cycleIDs.push(cycleIDsFromOneID[j]);
+                            }
+                        }
+                    }
+                    return cycleIDs;
+                    //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
+                    function cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, ID) {
+                        var cycleIDs = new Array();
+                        var stack = new Stack(); //経路を記録するためのスタック
+                        deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, ID);
+                        //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
+                        function deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, nowID) {
+                            stack.push(nowID);
+                            //alert("push " + nowID + " !!");
+                            //alert("stack length = " + stack.stack.length);
+                            if (!sameT_InArray(nowID, usedIDs)) { //今いるノードが未訪問ならば訪問した印をつける
+                                usedIDs.push(nowID);
+                            }
+                            for (var i = 0; i < arrayField.length; i++) {
+                                var u = graph.getField(nowID, arrayField[i]);
+                                if (u != undefined) {
+                                    if (!sameT_InArray(u, stack.stack)) {
+                                        deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, u);
+                                    }
+                                    else {
+                                        var cycleInStack = arraySpliceBoforeIndexOf(u, stack.stack);
+                                        cycleIDs.push(cycleInStack);
+                                        cycleIDs[cycleIDs.length - 1].push(u);
+                                        //alert("memory " + cycleInStack.length + " length array!!");
+                                    }
+                                }
+                            }
+                            stack.pop();
+                            //alert("pop!! now length = " + stack.stack.length);
+                        }
+                        //alert(ID + " end!!");
+                        return cycleIDs;
                     }
                 }
             }
@@ -725,14 +792,18 @@ __$__.Layout = {
         //オブジェクトがグラフ構造か木構造かを判別して描画するか否な
         //falseにすると、すべてを循環の無い木構造と見なして描画する
         var DrawCircle = true;
-        console.log(grp);
+        var edgeListInitStartTime = performance.now();
         //角度付きエッジリストを用意し、参照関係を元に初期化する
         var edgeWithAngleList = new Array();
         edgeListInit(graph, edgeWithAngleList, DrawCircle);
-        console.log(edgeWithAngleList);
+        var edgeListInitEndTime = performance.now();
+        console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+        var forceDirectedMethodStartTime = performance.now();
         //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
         //graphオブジェクト内のノード座標を破壊的に書き替える
         calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
+        var forceDirectedMethodEndTime = performance.now();
+        console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
     },
 
 

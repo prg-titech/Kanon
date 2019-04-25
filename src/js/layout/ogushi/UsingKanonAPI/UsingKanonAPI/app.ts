@@ -115,6 +115,19 @@ function setGraphLocation(graph: Graph) {
         }
     }
 
+    //値から配列の最初のkeyを取得し、keyより前の要素を削除した配列を返す
+    function arraySpliceBoforeIndexOf(key: string, array: string[]): string[] {
+        var carray: string[] = copyArray(array);
+        var index: number = carray.indexOf(key);
+        carray.splice(0, index);
+        return carray;
+    }
+
+
+
+
+
+
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
     function edgeListInit(graph: Graph, edgelist: EdgeWithAngle[], drawcircle: boolean) {
 
@@ -382,7 +395,10 @@ function setGraphLocation(graph: Graph) {
                  */
             }
 
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す
+
+            /*
+             * 
+            //補助関数、閉路を探索し、閉路上のIDの配列を返す（旧）
             function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
                 var cycleIDs: string[][] = new Array();
 
@@ -408,7 +424,7 @@ function setGraphLocation(graph: Graph) {
                     deep_first_search(graph, stack, cycleIDs, arrayField, ID, ID);
 
 
-                    //補助関数、深さ優先探索的に（厳密には違う）ノードを辿っていく
+                    //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
                     function deep_first_search(graph: Graph, stack: Stack, cycleIDs: string[][], arrayField: string[], nowID: string, ID: string) {
                         stack.push(nowID);
                         for (var i = 0; i < arrayField.length; i++) {
@@ -451,6 +467,71 @@ function setGraphLocation(graph: Graph) {
                         }
                     }
                     return bool;
+                }
+            }
+             *
+             */
+
+
+            //補助関数、閉路を探索し、閉路上のIDの配列を返す（新）
+            function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
+                var cycleIDs: string[][] = new Array();
+
+                var usedIDs: string[] = new Array();        //訪れたことのあるIDを記録
+
+                for (var i = 0; i < IDs.length; i++) {
+                    if (!sameT_InArray<string>(IDs[i], usedIDs)) {
+                        var cycleIDsFromOneID: string[][] = cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, IDs[i]);
+                        for (var j = 0; j < cycleIDsFromOneID.length; j++) {
+                            cycleIDs.push(cycleIDsFromOneID[j]);
+                        }
+                    }
+                }
+
+                return cycleIDs;
+
+                //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
+                function cycleGraphIDsFromOneID(graph: Graph, cls: string, usedIDs: string[], arrayField: string[], ID: string): string[][] {
+
+                    var cycleIDs: string[][] = new Array();
+
+                    var stack: Stack = new Stack();     //経路を記録するためのスタック
+
+                    deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, ID);
+
+
+                    //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
+                    function deep_first_search(graph: Graph, stack: Stack, cycleIDs: string[][], usedIDs: string[], arrayField: string[], nowID: string) {
+
+                        stack.push(nowID);
+                        //alert("push " + nowID + " !!");
+                        //alert("stack length = " + stack.stack.length);
+
+                        if (!sameT_InArray<string>(nowID, usedIDs)) {      //今いるノードが未訪問ならば訪問した印をつける
+                            usedIDs.push(nowID);
+                        }
+
+                        for (var i = 0; i < arrayField.length; i++) {
+                            var u: string = graph.getField(nowID, arrayField[i]);
+                            if (u != undefined) {
+                                if (!sameT_InArray<string>(u, stack.stack)) {
+                                    deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, u);
+                                } else {
+                                    var cycleInStack: string[] = arraySpliceBoforeIndexOf(u, stack.stack);
+                                    cycleIDs.push(cycleInStack);
+                                    cycleIDs[cycleIDs.length - 1].push(u);
+                                    //alert("memory " + cycleInStack.length + " length array!!");
+                                }
+                            }
+                        }
+
+                        stack.pop();
+                        //alert("pop!! now length = " + stack.stack.length);
+                    }
+                    //alert(ID + " end!!");
+
+                    return cycleIDs;
+
                 }
             }
         }
@@ -897,14 +978,18 @@ function setGraphLocation(graph: Graph) {
     //オブジェクトがグラフ構造か木構造かを判別して描画するか否な
     //falseにすると、すべてを循環の無い木構造と見なして描画する
     var DrawCircle: boolean = true;
-    console.log(grp);
 
+    var edgeListInitStartTime = performance.now();
     //角度付きエッジリストを用意し、参照関係を元に初期化する
     var edgeWithAngleList: EdgeWithAngle[] = new Array();
     edgeListInit(graph, edgeWithAngleList, DrawCircle);
-    console.log(edgeWithAngleList);
+    var edgeListInitEndTime = performance.now();
+    console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
 
+    var forceDirectedMethodStartTime = performance.now();
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
     calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
+    var forceDirectedMethodEndTime = performance.now();
+    console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
 }
