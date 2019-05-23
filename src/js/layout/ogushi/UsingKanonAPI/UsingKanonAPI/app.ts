@@ -86,8 +86,19 @@ function setGraphLocation(graph: Graph) {
     function sameT_InArray<T>(t: T, arrayT: T[]): boolean {
         var bool: boolean = false;
 
-        for (var i = 0; i < Object.keys(arrayT).length; i++) {
+        for (var i = 0; i < arrayT.length; i++) {
             bool = bool || (arrayT[i] == t);
+        }
+
+        return bool;
+    }
+
+    //ClassAndFieldの配列内に引数と同じ値があるかどうかを走査する
+    function sameClassAndField_InArray(caf: ClassAndField, arrayCaf: ClassAndField[]): boolean {
+        var bool: boolean = false;
+
+        for (var i = 0; i < arrayCaf.length; i++) {
+            bool = bool || (caf.cls == arrayCaf[i].cls && caf.field == arrayCaf[i].field);
         }
 
         return bool;
@@ -129,7 +140,7 @@ function setGraphLocation(graph: Graph) {
 
 
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
-    function edgeListInit(graph: Graph, edgelist: EdgeWithAngle[], drawcircle: boolean) {
+    function edgeListInit(graph: Graph, edgelist: EdgeWithAngle[], drawcircle: boolean, edgewithprimitivevalue: boolean) {
 
         //オブジェクトのIDの配列
         var ObjectIDs: string[] = graph.getObjectIDs();
@@ -166,7 +177,7 @@ function setGraphLocation(graph: Graph) {
         }
 
         //異なる型を参照するエッジの角度を決定
-        decisonEdgeAngleConnectingDifferentClass(graph, edgelist, ObjectIDs, allObjectClass, ObjectIDsExceptPrimitiveValue);
+        decisonEdgeAngleConnectingDifferentClass(graph, edgelist, ObjectIDs, allObjectClass, ObjectIDsExceptPrimitiveValue, edgewithprimitivevalue);
 
     }
 
@@ -538,10 +549,10 @@ function setGraphLocation(graph: Graph) {
     }
 
     //異なる型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
-    function decisonEdgeAngleConnectingDifferentClass(graph: Graph, edgelist: EdgeWithAngle[], IDs: string[], classes: string[], withoutPrimitiveIDs: string[]) {
+    function decisonEdgeAngleConnectingDifferentClass(graph: Graph, edgelist: EdgeWithAngle[], IDs: string[], classes: string[], withoutPrimitiveIDs: string[], edgewithprimitivevalue: boolean) {
 
         //必要なフィールド名の配列
-        var arrayField: ClassAndField[] = necessaryField(graph, IDs, classes, withoutPrimitiveIDs);
+        var arrayField: ClassAndField[] = necessaryField(graph, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue);
 
         //フィールドの角度を決定する
         decisionAngleClassAndField(arrayField);
@@ -550,7 +561,9 @@ function setGraphLocation(graph: Graph) {
         makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayField);
 
         //参照先がプリミティブ型のときには角度を決めずにエッジを作る
-        makeEdgeListConnectingPrimitiveValue(graph, edgelist, IDs, withoutPrimitiveIDs);
+        if (!edgewithprimitivevalue) {
+            makeEdgeListConnectingPrimitiveValue(graph, edgelist, IDs, withoutPrimitiveIDs);
+        }
 
 
 
@@ -595,7 +608,7 @@ function setGraphLocation(graph: Graph) {
         /*
          * 必要なフィールド名の配列を返す関数
          */
-        function necessaryField(graph: Graph, IDs: string[], classes: string[], withoutPrimitiveIDs: string[]): ClassAndField[] {
+        function necessaryField(graph: Graph, IDs: string[], classes: string[], withoutPrimitiveIDs: string[], edgewithprimitivevalue: boolean): ClassAndField[] {
             var necessaryfields: ClassAndField[] = new Array();
             for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
                 var fields: string[] = graph.getFields(withoutPrimitiveIDs[i]);     //フィールド名の配列
@@ -604,11 +617,34 @@ function setGraphLocation(graph: Graph) {
                     fieldIDs[j] = graph.getField(withoutPrimitiveIDs[i], fields[j]);
                 }
 
-                for (var j = 0; j < fieldIDs.length; j++) {
-                    if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i]) && sameT_InArray<string>(fieldIDs[j], withoutPrimitiveIDs)) {
-                        var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
-                        if (!sameT_InArray<ClassAndField>(caf, necessaryfields)) {
-                            necessaryfields.push(caf);
+                if (edgewithprimitivevalue) {
+                    /*
+                     * case 1
+                     * 参照先がprimitive型のときも角度を決定する
+                     * 
+                     */
+
+                    for (var j = 0; j < fieldIDs.length; j++) {
+                        if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i])) {
+                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
+                            if (!sameClassAndField_InArray(caf, necessaryfields)) {
+                                necessaryfields.push(caf);
+                            }
+                        }
+                    }
+                } else {
+                    /*
+                     * case 2
+                     * 参照先がprimitive型のときは角度を決定しない
+                     * 
+                     */
+
+                    for (var j = 0; j < fieldIDs.length; j++) {
+                        if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i]) && sameT_InArray<string>(fieldIDs[j], withoutPrimitiveIDs)) {
+                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
+                            if (!sameClassAndField_InArray(caf, necessaryfields)) {
+                                necessaryfields.push(caf);
+                            }
                         }
                     }
                 }
@@ -676,7 +712,7 @@ function setGraphLocation(graph: Graph) {
         var Knum: number = 8;       //斥力のKの次数
         var rnum: number = 3;       //斥力のrの次数
         var ravenum: number = (Knum + 1) / (rnum + 2);
-        var KRAD: number = 30000.0;             //角度に働く力の係数
+        var KRAD: number = 300000.0;             //角度に働く力の係数
         var ITERATION: number = 8000;        //反復回数
         var T: number = Math.max(WIDTH, HEIGHT);         //温度パラメータ
         var t: number = T;
@@ -979,10 +1015,13 @@ function setGraphLocation(graph: Graph) {
     //falseにすると、すべてを循環の無い木構造と見なして描画する
     var DrawCircle: boolean = true;
 
+    //参照先がprimitive型のときに角度を決定するかどうか
+    var EdgeWithPrimitiveValue: boolean = true;
+
     var edgeListInitStartTime = performance.now();
     //角度付きエッジリストを用意し、参照関係を元に初期化する
     var edgeWithAngleList: EdgeWithAngle[] = new Array();
-    edgeListInit(graph, edgeWithAngleList, DrawCircle);
+    edgeListInit(graph, edgeWithAngleList, DrawCircle, EdgeWithPrimitiveValue);
     var edgeListInitEndTime = performance.now();
     console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
 

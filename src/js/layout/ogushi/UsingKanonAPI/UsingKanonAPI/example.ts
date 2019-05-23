@@ -252,24 +252,24 @@ class Dot {
  * complex cycle
  */
 
-var dot1: Dot = new Dot("id1", "Node");
-var dot2: Dot = new Dot("id2", "Node");
-var dot3: Dot = new Dot("id3", "Node");
-var dot4: Dot = new Dot("id4", "Node");
-var dot5: Dot = new Dot("id5", "Node");
-var dot6: Dot = new Dot("id6", "Node");
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "Node");
+//var dot6: Dot = new Dot("id6", "Node");
 
-dot1.addfield("next", dot2);
-dot2.addfield("next", dot5);
-dot2.addfield("next2", dot6);
-dot3.addfield("next", dot2);
-dot4.addfield("next", dot3);
-dot4.addfield("next2", dot1);
-dot5.addfield("next", dot4);
-dot6.addfield("next", dot4);
+//dot1.addfield("next", dot2);
+//dot2.addfield("next", dot5);
+//dot2.addfield("next2", dot6);
+//dot3.addfield("next", dot2);
+//dot4.addfield("next", dot3);
+//dot4.addfield("next2", dot1);
+//dot5.addfield("next", dot4);
+//dot6.addfield("next", dot4);
 
-var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
-var grp: Graph = new Graph(nodes);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+//var grp: Graph = new Graph(nodes);
 
 /*
  * Example and Test 6
@@ -309,3 +309,23 @@ var grp: Graph = new Graph(nodes);
 
 //var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12];
 //var grp: Graph = new Graph(nodes);
+
+
+/*
+ * Example and Test 7
+ * complex cycle
+ */
+
+var dotn: number = 100;
+var nodes: Dot[] = new Array(dotn);
+var grp: Graph = new Graph(nodes);
+
+for (var i = 0; i < dotn; i++) {
+    nodes[i] = new Dot("id" + i, "Node");
+}
+
+for (var i = 0; i < dotn - 1; i++) {
+    var j: number = i + 1;
+    nodes[i].addfield("next", nodes[i + 1]);
+}
+nodes[dotn - 1].addfield("next", nodes[0]);
