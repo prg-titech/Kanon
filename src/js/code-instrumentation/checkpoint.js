@@ -1,3 +1,6 @@
+var checkCounter = 0;
+var checkTotalTime = 0;
+
 __$__.Checkpoint = {
     /**
      * @param {Array} objects: this equals __objs in transformed code
@@ -12,6 +15,10 @@ __$__.Checkpoint = {
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
     checkpoint(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo, contextSensitiveID) {
+
+        checkCounter += 1;
+        var checkPointStartTime = performance.now();
+
         __$__.Context.LastInfo = {
             CPID: checkPointId,
             loopLabel: loopLabel,
@@ -88,6 +95,10 @@ __$__.Checkpoint = {
         }
 
         __$__.Context.LastGraph = storedGraph;
+
+        var checkPointEndTime = performance.now();
+        var checkPointTime = checkPointEndTime - checkPointStartTime;
+        checkTotalTime += checkPointTime;
     },
 
 

@@ -53,17 +53,36 @@ function alphabetSort(a, b) {
     }
 }
 
-var num = 2;
-var trie3 = new Node(num.toString());
-num = 2461;
-trie3.add(num.toString());
-num = 18;
-trie3.add(num.toString());
-num = 12;
-trie3.add(num.toString());
-num = 71;
-trie3.add(num.toString());
-num = 93;
-trie3.add(num.toString());
-num = 91;
-trie3.add(num.toString());
+// var num = 2;
+// var trie3 = new Node(num.toString());
+// num = 2461;
+// trie3.add(num.toString());
+// num = 18;
+// trie3.add(num.toString());
+// num = 12;
+// trie3.add(num.toString());
+// num = 71;
+// trie3.add(num.toString());
+// num = 93;
+// trie3.add(num.toString());
+// num = 91;
+// trie3.add(num.toString());
+
+// var trie2 = new Node("t");
+// //trie2.add("ax");
+// trie2.add("take");
+// trie2.add("tail");
+// trie2.add("tall");
+// trie2.add("talk");
+// trie2.add("the");
+// trie2.add("that");
+// //trie2.add("then");
+// trie2.add("this");
+
+var trie = new Node("c");
+trie.add("cute");
+trie.add("at");
+trie.add("as");
+trie.add("he");
+trie.add("us");
+trie.add("i");

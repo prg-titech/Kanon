@@ -7,6 +7,9 @@ __$__.Update = {
 
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
+
+        var PositionUpdateStartTime = performance.now();
+
         try {
             window.localStorage.setItem('Kanon-Code', __$__.editor.getValue());
         } catch (e) {
@@ -36,13 +39,22 @@ __$__.Update = {
                 throw e;
             }
 
+            var duplicateObjectStructureGraphsStartTime = performance.now();
             let __objs = [];
+            console.log(__$__.Update.CodeWithCP);
             // execution of the converted program
             // here, we collect constructed objects in the program
             // and duplicate object structure graphs at each checkpoint
             // inserted before and after all statements.
             try {
-                (() => {eval(__$__.Update.CodeWithCP)})();
+                var evalCodeWithCPStartTime = performance.now();
+                (() => {eval(__$__.Update.CodeWithCP)})();              //ここにすごく時間がかかっている
+                var evalCodeWithCPEndTime = performance.now();
+                console.log("    evalCodeWithCP [" + (evalCodeWithCPEndTime - evalCodeWithCPStartTime) + " ms]");
+
+                console.log("check counter starts " + checkCounter + " times.");
+                console.log("checkpoint function takes " + checkTotalTime + " ms.");
+
                 __$__.Context.InfLoop = '';
                 if (__$__.Error.hasError && __$__.Context.SpecifiedContextWhenExecutable) {
                     Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
@@ -66,6 +78,9 @@ __$__.Update = {
                     }
                 }
             }
+            var duplicateObjectStructureGraphsEndTime = performance.now();
+            console.log("  duplicateObjectStructureGraphs [" + (duplicateObjectStructureGraphsEndTime - duplicateObjectStructureGraphsStartTime) + " ms]");
+
 
             if (!__$__.Error.hasError) {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
@@ -115,6 +130,9 @@ __$__.Update = {
             }
             __$__.Update.waitForStabilized = true;
         }
+
+        var PositionUpdateEndTime = performance.now();
+        console.log("PositionUpdate [" + (PositionUpdateEndTime - PositionUpdateStartTime) + " ms]");
     },
     
 
@@ -123,6 +141,9 @@ __$__.Update = {
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
+
+        var ContextUpdateStartTime = performance.now();
+
         if (__$__.Update.waitForStabilized === false || e === 'changed') {
             try {
                 Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
@@ -143,6 +164,9 @@ __$__.Update = {
             }
             __$__.ObjectGraphNetwork.network.redraw();
         }
+
+        var ContextUpdateEndTime = performance.now();
+        console.log("ContextUpdate [" + (ContextUpdateEndTime - ContextUpdateStartTime) + " ms]");
     },
 
 

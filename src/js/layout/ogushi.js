@@ -573,7 +573,7 @@ __$__.Layout = {
             var Knum = 8; //斥力のKの次数
             var rnum = 3; //斥力のrの次数
             var ravenum = (Knum + 1) / (rnum + 2);
-            var KRAD = 300000.0; //角度に働く力の係数
+            var KRAD = 150000.0; //角度に働く力の係数
             var ITERATION = 8000; //反復回数
             var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
             var t = T;
@@ -832,13 +832,13 @@ __$__.Layout = {
         var edgeWithAngleList = new Array();
         edgeListInit(graph, edgeWithAngleList, DrawCircle, EdgeWithPrimitiveValue);
         var edgeListInitEndTime = performance.now();
-        console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+        console.log("edgeListInit [" + (edgeListInitEndTime - edgeListInitStartTime) + " ms]");
         var forceDirectedMethodStartTime = performance.now();
         //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
         //graphオブジェクト内のノード座標を破壊的に書き替える
         calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
         var forceDirectedMethodEndTime = performance.now();
-        console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
+        console.log("forceDirectedMethod [" + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms]");
     },
 
 
