@@ -7,6 +7,7 @@ var canvas = <HTMLCanvasElement>document.getElementById("cv");
 var context = canvas.getContext("2d");
 context.font = "italic 50px Arial";
 
+//context.clearRect(0, 0, 3200, 1800);
 //grp.draw(context);
 
 console.log(grp);
@@ -185,7 +186,6 @@ function setGraphLocation(graph: Graph) {
 
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
     function edgeListInit(graph: Graph, medgelist: MagneticNeedleEdge[], mfield: MagneticField[], drawcircle: boolean, edgewithprimitivevalue: boolean) {
-        console.log("start edgeListInit()");
 
         //オブジェクトのIDの配列
         var ObjectIDs: string[] = graph.getObjectIDs();
@@ -233,8 +233,7 @@ function setGraphLocation(graph: Graph) {
 
     //同じ型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
     function decisionEdgeAngleConnectingSameClass(graph: Graph, medgelist: MagneticNeedleEdge[], mfield: MagneticField[], cls: string, IDs: string[], drawcircle: boolean) {
-        console.log("start decisionEdgeAngleConnectingSameClass()");
-
+        
         //必要なフィールド名の配列
         var arrayField: string[] = necessaryField(graph, cls, IDs);
 
@@ -264,7 +263,6 @@ function setGraphLocation(graph: Graph) {
          * 必要なフィールド名の配列を返す関数
          */
         function necessaryField(graph: Graph, cls: string, IDs: string[]): string[] {
-            console.log("  start necessaryField()");
 
             //自身の型を再帰的に参照する全てのフィールド名
             var allRecursiveFields: string[] = identifyAllRecursiveField(graph, cls, IDs);
@@ -405,7 +403,6 @@ function setGraphLocation(graph: Graph) {
          * オブジェクトを辿りながらエッジリストを作る関数
          */
         function makeEdgeListConnectingSameClass(graph: Graph, medgelist: MagneticNeedleEdge[], cls: string, IDs: string[], arrayfield: string[]) {
-            console.log("  start makeEdgeListConnectingSameClass()");
 
             //辿ったオブジェクトのIDを記録する配列
             var usedObjectIDs: string[] = new Array();
@@ -438,7 +435,6 @@ function setGraphLocation(graph: Graph) {
          * drawcircleがfalseの場合、閉路上のエッジを一本削除する
          */
         function searchCycleGraph(graph: Graph, medgelist: MagneticNeedleEdge[], cls: string, IDs: string[], arrayField: string[], drawcircle: boolean) {
-            console.log("  start searchCycleGraph()");
 
             //閉路上のIDの配列
             var cycleIDs: string[][] = cycleGraphIDs(graph, cls, IDs, arrayField);
@@ -526,7 +522,6 @@ function setGraphLocation(graph: Graph) {
 
     //異なる型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
     function decisonEdgeAngleConnectingDifferentClass(graph: Graph, medgelist: MagneticNeedleEdge[], mfield: MagneticField[], IDs: string[], classes: string[], withoutPrimitiveIDs: string[], edgewithprimitivevalue: boolean) {
-        console.log("start decisionEdgeAngleConnectingDifferentClass()");
 
         //必要なフィールド名の配列
         var arrayField: ClassAndField[] = necessaryField(graph, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue);
@@ -641,7 +636,6 @@ function setGraphLocation(graph: Graph) {
          * オブジェクトを辿りながらエッジリストを作る関数
          */
         function makeEdgeListConnectingDifferentClass(graph: Graph, medgelist: MagneticNeedleEdge[], IDs: string[], classes: string[], withoutPrimitiveIDs: string[], arrayField: ClassAndField[]) {
-            console.log("  start makeEdgeListConnectingDifferentClass()");
 
             for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
                 var fields: string[] = graph.getFields(withoutPrimitiveIDs[i]);     //フィールド名の配列
@@ -697,24 +691,17 @@ function setGraphLocation(graph: Graph) {
 
         var WIDTH: number = 1280;    //表示する画面の横幅
         var HEIGHT: number = 720;     //表示する画面の縦幅
-        var D: number = Math.min(WIDTH, HEIGHT) / 4;   //スプリングの自然長
-        var cs: number = 200;         //スプリング力の係数
-        var cr: number = 10;         //斥力の係数
-        var cm: number = 0.1;         //磁力の係数
+        var WidthDot: number = 50;      //点の縦幅
+        var HeightDot: number = 50;     //点の横幅
+        var D: number = 0.3 * Math.sqrt(WIDTH * HEIGHT / DOTNUMBER);   //スプリングの自然長
+        var cs: number = 500;         //スプリング力の係数
+        var cr: number = 500000;         //斥力の係数
+        var cm: number = 10;         //磁力の係数
         var alpha: number = 1;      //辺の長さに影響を与えるパラメータ
         var beta: number = 1;       //辺の回転力に影響を与えるパラメータ
-        var M: number = 10;       //計算の繰り返し回数
+        var M: number = 5000;       //計算の繰り返し回数
         var T: number = Math.max(WIDTH, HEIGHT);        //温度パラメータ
-        var t: number = T;
-        var dt: number = T / M;
-        //var Knum: number = 8;       //斥力のKの次数
-        //var rnum: number = 3;       //斥力のrの次数
-        //var ravenum: number = (Knum + 1) / (rnum + 2);
-        //var KRAD: number = 300000.0;             //角度に働く力の係数
-        //var ITERATION: number = 8000;        //反復回数
-        //var T: number = Math.max(WIDTH, HEIGHT);         //温度パラメータ
-        //var t: number = T;
-        //var dt: number = T / (ITERATION);
+        var DrawVector: boolean = false;                //力ベクトルを表示するか否か
 
         //点のクラス
         class Dot_G {
@@ -785,39 +772,17 @@ function setGraphLocation(graph: Graph) {
                     context.fillText(this.nodeID, x, y + height);      //数字の描画
                 }
 
-                //if (this.nodecls != null) {
-                //    context.font = "italic 15px Arial";
-                //    context.fillText(this.nodecls, x, y);      //クラス名の描画
-                //}
-
-                //力のベクトルの描画
-                //if (DRAW_VECTOR) {
-                //    if (DRAW_THREE_VECTOR) {
-                //        context.strokeStyle = "rgba(255,0,0,0.5)";
-                //        context.fillStyle = "rgba(255,0,0,0.5)";
-                //        draw_vector(this.x, this.y, this.fax, this.fay);    //引力ベクトルは赤で表示
-                //        context.strokeStyle = "rgba(0,255,0,0.5)";
-                //        context.fillStyle = "rgba(0,255,0,0.5)";
-                //        draw_vector(this.x, this.y, this.frx, this.fry);    //斥力ベクトルは緑で表示
-                //        context.strokeStyle = "rgba(0,0,255,0.5)";
-                //        context.fillStyle = "rgba(0,0,255,0.5)";
-                //        draw_vector(this.x, this.y, this.fmx, this.fmy);    //モーメントベクトルは青で表示
-                //    } else {
-                //        context.strokeStyle = "rgba(255,0,0,0.5)";
-                //        context.fillStyle = "rgba(255,0,0,0.5)";
-                //        draw_vector(this.x, this.y, this.dx, this.dy);
-                //    }
-                //}
-
-                context.strokeStyle = "rgba(255,0,0,0.5)";
-                context.fillStyle = "rgba(255,0,0,0.5)";
-                draw_vector(this.x, this.y, this.fsx, this.fsy);    //引力ベクトルは赤で表示
-                context.strokeStyle = "rgba(0,255,0,0.5)";
-                context.fillStyle = "rgba(0,255,0,0.5)";
-                draw_vector(this.x, this.y, this.frx, this.fry);    //斥力ベクトルは緑で表示
-                context.strokeStyle = "rgba(0,0,255,0.5)";
-                context.fillStyle = "rgba(0,0,255,0.5)";
-                draw_vector(this.x, this.y, this.fmx, this.fmy);    //モーメントベクトルは青で表示
+                if (DrawVector) {
+                    context.strokeStyle = "rgba(255,0,0,0.5)";
+                    context.fillStyle = "rgba(255,0,0,0.5)";
+                    draw_vector(this.x, this.y, this.fsx, this.fsy);    //スプリング力ベクトルは赤で表示
+                    context.strokeStyle = "rgba(0,255,0,0.5)";
+                    context.fillStyle = "rgba(0,255,0,0.5)";
+                    draw_vector(this.x, this.y, this.frx, this.fry);    //斥力ベクトルは緑で表示
+                    context.strokeStyle = "rgba(0,0,255,0.5)";
+                    context.fillStyle = "rgba(0,0,255,0.5)";
+                    draw_vector(this.x, this.y, this.fmx, this.fmy);    //磁力ベクトルは青で表示
+                }
             }
         }
 
@@ -884,7 +849,7 @@ function setGraphLocation(graph: Graph) {
             //グラフの描画
             draw(context) {
                 for (var i = 0; i < this.dots.length; i++) {
-                    this.dots[i].draw(context, 50, 50);
+                    this.dots[i].draw(context, WidthDot, HeightDot);
                 }
                 for (var i = 0; i < this.edges.length; i++) {
                     this.edges[i].draw(context);
@@ -916,44 +881,6 @@ function setGraphLocation(graph: Graph) {
             context.fill();
         }
 
-
-        ////fruchterman-Reingold法でエネルギーを最小化し、グラフを描画する
-        //function draw() {
-
-        //    //各点に働く力を計算
-        //    focus_calculate(dots);
-
-        //    //各点の速度から、次の座標を計算する
-        //    for (var i = 0; i < DOTNUMBER; i++) {
-        //        var dx: number = dots[i].dx;
-        //        var dy: number = dots[i].dy;
-        //        var disp: number = Math.sqrt(dx * dx + dy * dy);
-
-        //        if (disp != 0) {
-        //            var d: number = Math.min(disp, t) / disp;
-        //            dots[i].x += dx * d;
-        //            dots[i].y += dy * d;
-        //        }
-        //    }
-
-        //    //重心が画面の中央になるように調整する
-        //    center_of_gravity(dots, WIDTH, HEIGHT);
-
-        //    //温度パラメータを下げていく、0を下回ったら終了
-        //    t -= dt;
-        //    if (t <= 0) stopCalculate();
-        //}
-
-        ////計算を終了し、graphに座標情報を書きこんでいく
-        //function stopCalculate() {
-        //    for (var i = 0; i < ObjectIDs.length; i++) {
-        //        graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
-        //    }
-        //}
-
-
-
-
         //点の初期配置に重なりが無いかを確かめる
         function sameDot_exists(dots: Dot_G[], dn: number): boolean {
             var bool: boolean = false;
@@ -981,33 +908,12 @@ function setGraphLocation(graph: Graph) {
             return cm * b * Math.pow(d, alpha) * Math.pow(Math.abs(t), beta);
         }
 
-        //2点間の距離を計算する
-        function length_dots(dot1: Dot_G, dot2: Dot_G): number {
-            var xl: number = dot1.x - dot2.x;
-            var yl: number = dot1.y - dot2.y;
-
-            return Math.sqrt(xl * xl + yl * yl);
-        }
-
-        //2点を結ぶ辺があればtrue、無ければfalseを返す
-        function isEdgeConnectingTwoDots(dot1: Dot_G, dot2: Dot_G, edges: Edge_G[]): boolean {
-            var bool: boolean = false;
-
-            for (var i = 0; i < edges.length; i++) {
-                if ((edges[i].dot1.nodeID == dot1.nodeID && edges[i].dot2.nodeID == dot2.nodeID)
-                    || (edges[i].dot2.nodeID == dot1.nodeID && edges[i].dot1.nodeID == dot2.nodeID)) {
-                    bool = true;
-                }
-            }
-            return bool;
-        }
-
         //2点を結ぶ辺がある場合にその辺を返す
         function edgeConnectingTwoDots(dot1: Dot_G, dot2: Dot_G, edges: Edge_G[]): Edge_G {
             var edge: Edge_G = null;
 
             for (var i = 0; i < edges.length; i++) {
-                if ((edges[i].dot1 == dot1 && edges[i].dot2 == dot2) || (edges[i].dot2 == dot1 && edges[i].dot1 == dot2)) {
+                if ((edges[i].dot1 === dot1 && edges[i].dot2 === dot2) || (edges[i].dot2 === dot1 && edges[i].dot1 === dot2)) {
                     edge = edges[i];
                 }
             }
@@ -1029,109 +935,117 @@ function setGraphLocation(graph: Graph) {
         //辺の基準点における磁場の北からの終点のずれの角
         //磁場の向きと辺の向きのずれの角度を返す(-π～π)
         function dispartyAngle(mfr: number, ep: number): number {
-
-            //補助関数、与えられた入力tが-π＜t≦πになるまで繰り返し計算する
-            function sub_dispartyAngle(t: number): number {
-                if (t <= Math.PI && t > -Math.PI) {
-                    return t;
-                } else if (t > Math.PI) {
-                    return sub_dispartyAngle(t - 2 * Math.PI);
-                } else if (t <= -Math.PI) {
-                    return sub_dispartyAngle(t + 2 * Math.PI);
-                }
-            }
-
-            return sub_dispartyAngle(ep - mfr);
+            return correctionAngle(ep - mfr);
         }
 
+        //与えられた入力が-π＜t≦πになるまで繰り返し計算する
+        function correctionAngle(t: number): number {
+            if (t <= Math.PI && t > -Math.PI) {
+                return t;
+            } else if (t > Math.PI) {
+                return correctionAngle(t - 2 * Math.PI);
+            } else if (t <= -Math.PI) {
+                return correctionAngle(t + 2 * Math.PI);
+            }
+        }
 
+        //各点のスプリング力・斥力・磁力を計算し、Dot_G[]に代入していく
+        function focus_calculate(dots: Dot_G[]) {
 
-        ////各点の引力・斥力を計算し、Dot[]に代入していく
-        //function focus_calculate(dots: Dot_G[]) {
+            //始めに各点の力を初期化する
+            for (var i = 0; i < DOTNUMBER; i++) {
+                dots[i].reset_force();
+            }
 
-        //    //各点の速度・力ベクトルを0に初期化
-        //    for (var i = 0; i < DOTNUMBER; i++) {
-        //        dots[i].dx = 0;
-        //        dots[i].dy = 0;
-        //        dots[i].fax = 0;
-        //        dots[i].fay = 0;
-        //        dots[i].frx = 0;
-        //        dots[i].fry = 0;
-        //        dots[i].fmx = 0;
-        //        dots[i].fmy = 0;
-        //    }
+            for (var i = 0; i < DOTNUMBER; i++) {
+                for (var j = 0; j < DOTNUMBER; j++) {
+                    if (i != j) {
+                        var dot1: Dot_G = dots[i];
+                        var dot2: Dot_G = dots[j];
 
-        //    //各点の斥力を計算
-        //    for (var i = 0; i < DOTNUMBER; i++) {
-        //        for (var j = 0; j < DOTNUMBER; j++) {
-        //            if (j != i) {
-        //                var dx: number = dots[i].x - dots[j].x;
-        //                var dy: number = dots[i].y - dots[j].y;
-        //                var delta = Math.sqrt(dx * dx + dy * dy);
-        //                if (delta != 0) {
-        //                    var d: number = f_r(delta, K) / delta;
-        //                    dots[i].frx += dx * d;
-        //                    dots[i].fry += dy * d;
-        //                }
-        //            }
-        //        }
-        //    }
+                        var dx: number = dot2.x - dot1.x;
+                        var dy: number = dot2.y - dot1.y;
+                        var length: number = Math.sqrt(dx * dx + dy * dy);
 
-        //    //各点の引力を計算
-        //    for (var i = 0; i < EDGENUMBER; i++) {
-        //        var dx: number = edges[i].dot1.x - edges[i].dot2.x;
-        //        var dy: number = edges[i].dot1.y - edges[i].dot2.y;
-        //        var delta: number = Math.sqrt(dx * dx + dy * dy);
-        //        if (delta != 0) {
-        //            var d: number = f_a(delta, K) / delta;
-        //            var ddx: number = dx * d;
-        //            var ddy: number = dy * d;
-        //            edges[i].dot1.fax += -ddx;
-        //            edges[i].dot2.fax += +ddx;
-        //            edges[i].dot1.fay += -ddy;
-        //            edges[i].dot2.fay += +ddy;
-        //        }
-        //    }
+                        if (length != 0) {
+                            if (edgeConnectingTwoDots(dot1, dot2, edges) == null) {
 
-        //    //各点の角度に基づいて働く力を計算
-        //    for (var i = 0; i < EDGENUMBER; i++) {
-        //        if (edgeWithAngleList[i].angle != 9973) {
-        //            var dx: number = edges[i].dot2.x - edges[i].dot1.x;
-        //            var dy: number = edges[i].dot2.y - edges[i].dot1.y;
-        //            var delta: number = Math.sqrt(dx * dx + dy * dy);
-        //            var rad: number = Math.atan2(dy, dx);
-        //            if (delta != 0) {
-        //                var d: number = rad - edgeWithAngleList[i].angle;
-        //                var ddx: number;
-        //                var ddy: number;
-        //                var ex: number = KRAD * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-        //                var ey: number = - KRAD * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-        //                if (Math.abs(d) <= Math.PI) {
-        //                    ddx = d * Math.abs(d) * ex;
-        //                    ddy = d * Math.abs(d) * ey;
-        //                } else {
-        //                    var dd: number = d + 2 * Math.PI;
-        //                    if (d < 0) {
-        //                        ddx = dd * Math.abs(dd) * ex;
-        //                        ddy = dd * Math.abs(dd) * ey;
-        //                    } else {
-        //                        ddx = -dd * Math.abs(dd) * ex;
-        //                        ddy = -dd * Math.abs(dd) * ey;
-        //                    }
-        //                }
-        //                edges[i].dot1.fmx += -ddx;
-        //                edges[i].dot1.fmy += -ddy;
-        //                edges[i].dot2.fmx += ddx;
-        //                edges[i].dot2.fmy += ddy;
-        //            }
-        //        }
-        //    }
+                                //斥力を計算
+                                dots[i].frx += -f_r(length) * dx / length;
+                                dots[i].fry += -f_r(length) * dy / length;
 
-        //    //力ベクトルから速度を求める
-        //    for (var i = 0; i < DOTNUMBER; i++) {
-        //        dots[i].init_velocity();
-        //    }
-        //}
+                                dots[i].vx += dots[i].frx;
+                                dots[i].vy += dots[i].fry;
+
+                            } else {
+
+                                //スプリング力を計算
+                                dots[i].fsx += f_s(length) * dx / length;
+                                dots[i].fsy += f_s(length) * dy / length;
+
+                                //磁力を計算
+                                var e: Edge_G = edgeConnectingTwoDots(dot1, dot2, edges);
+                                var rad: number = Math.atan2(dy, dx);
+                                if (e.type == 0) {
+                                    var mf: MagneticField = magneticFieldEffectingEdge(e, mfields);
+                                    var mvec: Vector = mf.vector;
+                                    var mvecangle: number;
+                                    if (dot1 === e.dot1) {
+                                        mvecangle = mvec.angle;
+                                    } else {
+                                        mvecangle = correctionAngle(mvec.angle - Math.PI);
+                                    }
+                                    var trad: number = dispartyAngle(mvecangle, rad);
+
+                                    if (trad >= 0) {
+                                        dots[i].fmx += -f_m(mvec.size, trad, length) * dy / length;
+                                        dots[i].fmy += f_m(mvec.size, trad, length) * dx / length;
+                                    } else {
+                                        dots[i].fmx += f_m(mvec.size, trad, length) * dy / length;
+                                        dots[i].fmy += -f_m(mvec.size, trad, length) * dx / length;
+                                    }
+                                } else if (e.type == 1) {
+                                    dots[i].fmx += 0;
+                                    dots[i].fmy += 0;
+                                } else if (e.type == 2) {
+                                    dots[i].fmx += 0;
+                                    dots[i].fmy += 0;
+                                }
+
+                                dots[i].vx += dots[i].fsx + dots[i].fmx;
+                                dots[i].vy += dots[i].fsy + dots[i].fmy;
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //各点に働く力を計算し、座標を動かしていく
+        function move_dots(dots: Dot_G[]) {
+            var t: number = T;
+            var dt: number = T / (M + 1);
+
+            //力の計算をM回繰り返し計算
+            for (var i = 0; i < M; i++) {
+                focus_calculate(dots);
+                for (var j = 0; j < DOTNUMBER; j++) {
+                    var velocity: number = Math.sqrt(dots[j].vx * dots[j].vx + dots[j].vy * dots[j].vy);
+                    if (velocity < t) {
+                        dots[j].x += dots[j].vx;
+                        dots[j].y += dots[j].vy;
+                    } else {
+                        dots[j].x += dots[j].vx * t / velocity;
+                        dots[j].y += dots[j].vy * t / velocity;
+                    }
+                }
+                t -= dt;
+            }
+
+            //重心を画面の中央に合わせる
+            center_of_gravity(dots, WIDTH, HEIGHT);
+        }
 
         //グラフの点集合の重心を求め、重心が画面の中心になるように点移動させる
         function center_of_gravity(dots: Dot_G[], width: number, height: number) {
@@ -1153,24 +1067,12 @@ function setGraphLocation(graph: Graph) {
             }
         }
 
-        //引数にはミリ秒を指定します。（例：5秒の場合は5000）
-        function sleep(a: number) {
-            var dt1 = new Date().getTime();
-            var dt2 = new Date().getTime();
-            while (dt2 < dt1 + a) {
-                dt2 = new Date().getTime();
-            }
-            return;
-        }
-
 
 
 
         /********************
          * 各点の座標の計算
          * ******************/
-
-        console.log("start dot_init()");
 
         //各点の用意、座標は適切に初期化し、同じ座標の点同士が存在しないようにする
         var dots: Dot_G[] = new Array(DOTNUMBER);
@@ -1201,18 +1103,6 @@ function setGraphLocation(graph: Graph) {
         var graph_g = new Graph_G();
         graph_g.init(DOTNUMBER, EDGENUMBER, edges, dots);
 
-        //初期配置の点の重心を画面の中央に合わせる
-        center_of_gravity(dots, WIDTH, HEIGHT);
-
-        console.log("dot0 - dot1 = " + edgeConnectingTwoDots(dots[0], dots[1], edges));
-        console.log(edgeConnectingTwoDots(dots[3], dots[1], edges));
-
-        console.log("  init_graph = ");
-        console.log(graph_g);
-
-
-        console.log("start calculate_dot_coodinate()");
-
         //グラフの描画をするための変数
         var canvas = <HTMLCanvasElement>document.getElementById("cv");
         var context = canvas.getContext("2d");
@@ -1220,192 +1110,23 @@ function setGraphLocation(graph: Graph) {
 
         graph_g.draw(context);
 
-        var id = setInterval(MagneticSpringModel, 1);
+        move_dots(dots);
+        focus_calculate(dots);
 
-        function MagneticSpringModel() {
-            M -= 1;
-            for (var j = 0; j < DOTNUMBER; j++) {
-                dots[j].reset_force();
-                for (var k = 0; k < DOTNUMBER; k++) {
-                    if (j != k) {
-                        var dot1: Dot_G = dots[j];
-                        var dot2: Dot_G = dots[k];
+        //画面に描画
+        context.clearRect(0, 0, 3200, 1800);
+        graph_g.draw(context);
 
-                        var dx: number = dot1.x - dot2.x;
-                        var dy: number = dot1.y - dot2.y;
-                        var length: number = Math.sqrt(dx * dx + dy * dy);
-
-                        if (length != 0) {
-                            if (edgeConnectingTwoDots(dot1, dot2, edges) == null) {
-
-                                //斥力を計算
-                                dots[j].frx = f_r(length) * dx / length;
-                                dots[j].fry = f_r(length) * dy / length;
-
-                                dots[j].vx += dots[j].frx;
-                                dots[j].vy += dots[j].fry;
-
-                            } else {
-
-                                //スプリング力を計算
-                                dots[j].fsx = -f_s(length) * dx / length;
-                                dots[j].fsy = -f_s(length) * dy / length;
-
-                                //磁力を計算
-                                var e: Edge_G = edgeConnectingTwoDots(dot1, dot2, edges);
-                                var rad: number = Math.atan2(dy, dx);
-                                if (e.type == 0) {
-                                    var mf: MagneticField = magneticFieldEffectingEdge(e, mfields);
-                                    var mvec: Vector = mf.vector;
-                                    var trad: number = dispartyAngle(mvec.angle, rad);
-
-                                    if (trad >= 0) {
-                                        dots[j].fmx = -f_m(mvec.size, trad, length) * dy / length;
-                                        dots[j].fmy = f_m(mvec.size, trad, length) * dx / length;
-                                    } else {
-                                        dots[j].fmx = f_m(mvec.size, trad, length) * dy / length;
-                                        dots[j].fmy = -f_m(mvec.size, trad, length) * dx / length;
-                                    }
-                                } else if (e.type == 1) {
-                                    dots[j].fmx = 0;
-                                    dots[j].fmy = 0;
-                                } else if (e.type == 2) {
-                                    dots[j].fmx = 0;
-                                    dots[j].fmy = 0;
-                                }
-
-                                dots[j].vx += dots[j].fsx + dots[j].fmx;
-                                dots[j].vy += dots[j].fsy + dots[j].fmy;
-
-                                console.log("dots[" + j + "].fmx = " + dots[j].fmx);
-                                console.log("dots[" + j + "].fmy = " + dots[j].fmy);
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (var j = 0; j < DOTNUMBER; j++) {
-                dots[j].x += t * dots[j].vx;
-                dots[j].y += t * dots[j].vy;
-            }
-
-            t -= dt;
-            center_of_gravity(dots, WIDTH, HEIGHT);
-
-            alert("draw!");
-            context.clearRect(0, 0, WIDTH, HEIGHT); 
-            graph_g.draw(context);
-
-            if (M <= 0) {
-                stopCalculate();
-            }
-        }
-
-        //計算終了のアラートを表示し、draw関数をストップさせる
-        function stopCalculate() {
-
-            clearInterval(id);
-            alert("stop!");
-
-            //グラフの描画
-            context.clearRect(0, 0, WIDTH, HEIGHT);
-            graph_g.draw(context);
-
-            //計算した座標をgraphに書きこんでいく
-            for (var i = 0; i < ObjectIDs.length; i++) {
-                graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
-            }
-
-            ////運動エネルギーの合計を表示する
-            //context.strokeStyle = "rgba(0,0,0,1.0)";
-            //context.fillStyle = "rgba(0,0,0,1.0)";
-            //context.font = "italic 20px Arial";
-            //context.fillText("K = " + String(Math.pow(K, ravenum)), 100, 50);
-            //context.fillText("l.ave = " + String(graph.sum_length() / EDGENUMBER), 100, 100);
-        }
-
-        //Magnetic-Spring-Modelでエネルギーを最小化し、グラフを描画する
-        //for (var i = 0; i < M; i++) {
-        //    for (var j = 0; j < DOTNUMBER; j++) {
-        //        dots[j].reset_force();
-        //        for (var k = 0; k < DOTNUMBER; k++) {
-        //            if (j != k) {
-        //                var dot1: Dot_G = dots[j];
-        //                var dot2: Dot_G = dots[k];
-
-        //                var dx: number = dot1.x - dot2.x;
-        //                var dy: number = dot1.y - dot2.y;
-        //                var length: number = Math.sqrt(dx * dx + dy * dy);
-
-        //                if (length != 0) {
-        //                    if (edgeConnectingTwoDots(dot1, dot2, edges) == null) {
-
-        //                        //斥力を計算
-        //                        dots[j].frx = f_r(length) * dx / length;
-        //                        dots[j].fry = f_r(length) * dy / length;
-
-        //                        dots[j].vx += dots[j].frx;
-        //                        dots[j].vy += dots[j].fry;
-
-        //                    } else {
-
-        //                        //スプリング力を計算
-        //                        dots[j].fsx = -f_s(length) * dx / length;
-        //                        dots[j].fsy = -f_s(length) * dy / length;
-
-        //                        //磁力を計算
-        //                        //var e: Edge_G = edgeConnectingTwoDots(dot1, dot2, edges);
-        //                        //var rad: number = Math.atan2(dy, dx);
-        //                        //if (e.type == 0) {
-        //                        //    var mf: MagneticField = magneticFieldEffectingEdge(e, mfields);
-        //                        //    var mvec: Vector = mf.vector;
-        //                        //    var trad: number = dispartyAngle(mvec.angle, rad);
-
-        //                        //    if (trad >= 0) {
-        //                        //        dots[j].fmx = -f_m(mvec.size, trad, length) * dy / length;
-        //                        //        dots[j].fmy = f_m(mvec.size, trad, length) * dx / length;
-        //                        //    } else {
-        //                        //        dots[j].fmx = f_m(mvec.size, trad, length) * dy / length;
-        //                        //        dots[j].fmy = -f_m(mvec.size, trad, length) * dx / length;
-        //                        //    }
-        //                        //} else if (e.type == 1) {
-        //                        //    dots[j].fmx = 0;
-        //                        //    dots[j].fmy = 0;
-        //                        //} else if (e.type == 2) {
-        //                        //    dots[j].fmx = 0;
-        //                        //    dots[j].fmy = 0;
-        //                        //}
-
-        //                        dots[j].vx += dots[j].fsx + dots[j].fmx;
-        //                        dots[j].vy += dots[j].fsy + dots[j].fmy;
-
-        //                        console.log("dots[" + j + "].fmx = " + dots[j].fmx);
-        //                        console.log("dots[" + j + "].fmy = " + dots[j].fmy);
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    for (var j = 0; j < DOTNUMBER; j++) {
-        //        dots[j].x += t * dots[j].vx;
-        //        dots[j].y += t * dots[j].vy;
-        //    }
-
-        //    t -= dt;
-        //    center_of_gravity(dots, WIDTH, HEIGHT);
-
-        //    graph_g.draw(context, WIDTH, HEIGHT);
-        //    sleep(100);
-        //}
-
-        console.log("start set_graph_location()");
+        //コンソール画面に表示
+        console.log("graph_g = ");
+        console.log(graph_g);
 
         //計算した座標をgraphに書きこんでいく
         //for (var i = 0; i < ObjectIDs.length; i++) {
         //    graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
         //}
+
+
     }
 
 
@@ -1442,8 +1163,6 @@ function setGraphLocation(graph: Graph) {
 
     var edgeListInitEndTime = performance.now();
     console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
-
-    console.log(graph);
 
 
     var forceDirectedMethodStartTime = performance.now();

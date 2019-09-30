@@ -108,23 +108,23 @@ class Dot {
  * simple list
  */
 
-var dot1: Dot = new Dot("id1", "Node");
-var dot2: Dot = new Dot("id2", "Node");
-var dot3: Dot = new Dot("id3", "Node");
-var dot4: Dot = new Dot("id4", "number");
-var dot5: Dot = new Dot("id5", "number");
-var dot6: Dot = new Dot("id6", "number");
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "number");
+//var dot5: Dot = new Dot("id5", "number");
+//var dot6: Dot = new Dot("id6", "number");
 
-dot1.addfield("next", dot2);
-dot1.addfield("val", dot4);
-dot2.addfield("next", dot3);
-dot2.addfield("prev", dot1);
-dot2.addfield("val", dot5);
-dot3.addfield("prev", dot2);
-dot3.addfield("val", dot6);
+//dot1.addfield("next", dot2);
+//dot1.addfield("val", dot4);
+//dot2.addfield("next", dot3);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("val", dot5);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("val", dot6);
 
-var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
-var grp: Graph = new Graph(nodes);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
+//var grp: Graph = new Graph(nodes);
 
 //console.log(grp.getObjectIDs());
 //console.log(grp.getClass("id2"));
@@ -329,3 +329,80 @@ var grp: Graph = new Graph(nodes);
 //    nodes[i].addfield("next", nodes[i + 1]);
 //}
 //nodes[dotn - 1].addfield("next", nodes[0]);
+
+
+/*
+ * Example and Test 7
+ * super simple list
+ */
+
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+
+//dot1.addfield("next", dot2);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("next", dot3);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("next", dot4);
+//dot4.addfield("prev", dot3);
+
+//var nodes: Dot[] = [dot1, dot2];
+////var nodes: Dot[] = [dot1, dot2, dot3];
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4];
+//var grp: Graph = new Graph(nodes);
+
+
+/*
+ * Example and Test 8
+ * super simple tree
+ */
+
+//var dot1: Dot = new Dot("id1", "Node");
+//var dot2: Dot = new Dot("id2", "Node");
+//var dot3: Dot = new Dot("id3", "Node");
+//var dot4: Dot = new Dot("id4", "Node");
+//var dot5: Dot = new Dot("id5", "Node");
+//var dot6: Dot = new Dot("id6", "Node");
+//var dot7: Dot = new Dot("id7", "Node");
+
+//dot1.addfield("left", dot2);
+//dot2.addfield("parent", dot1);
+//dot1.addfield("right", dot3);
+//dot3.addfield("parent", dot1);
+//dot2.addfield("left", dot4);
+//dot4.addfield("parent", dot2);
+//dot2.addfield("right", dot5);
+//dot5.addfield("parent", dot2);
+//dot3.addfield("left", dot6);
+//dot6.addfield("parent", dot3);
+//dot3.addfield("right", dot7);
+//dot7.addfield("parent", dot3);
+
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7];
+//var grp: Graph = new Graph(nodes);
+
+
+/*
+ * Example and Test 8
+ * n tree
+ */
+
+function makeNTree(n: number): Dot[] {
+    var nodes: Dot[] = new Array();
+    for (var i = 0; i < Math.pow(2, n) - 1; i++) {
+        var dot: Dot = new Dot("id" + i, "Node");
+        nodes.push(dot);
+    }
+    for (var i = 0; i < Math.pow(2, n) / 2 - 1; i++) {
+        nodes[i].addfield("left", nodes[i * 2 + 1]);
+        nodes[i * 2 + 1].addfield("parent", nodes[i]);
+        nodes[i].addfield("right", nodes[i * 2 + 2]);
+        nodes[i * 2 + 2].addfield("parent", nodes[i]);
+    }
+
+    return nodes;
+}
+
+var grp: Graph = new Graph(makeNTree(4));

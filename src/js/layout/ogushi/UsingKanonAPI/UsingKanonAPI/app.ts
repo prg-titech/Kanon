@@ -58,12 +58,14 @@ function setGraphLocation(graph: Graph) {
      * クラス名とフィールド名をまとめてクラス定義する
      */
     class ClassAndField {
-        cls: string;
+        parentcls: string;
+        childcls: string;
         field: string;
         angle: number;
 
-        constructor(cls: string, field: string) {
-            this.cls = cls;
+        constructor(pcls: string, ccls: string, field: string) {
+            this.parentcls = pcls;
+            this.childcls = ccls;
             this.field = field;
             this.angle = 0;
         }
@@ -98,7 +100,7 @@ function setGraphLocation(graph: Graph) {
         var bool: boolean = false;
 
         for (var i = 0; i < arrayCaf.length; i++) {
-            bool = bool || (caf.cls == arrayCaf[i].cls && caf.field == arrayCaf[i].field);
+            bool = bool || (caf.parentcls == arrayCaf[i].parentcls && caf.childcls == arrayCaf[i].childcls && caf.field == arrayCaf[i].field);
         }
 
         return bool;
@@ -407,83 +409,6 @@ function setGraphLocation(graph: Graph) {
             }
 
 
-            /*
-             * 
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す（旧）
-            function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
-                var cycleIDs: string[][] = new Array();
-
-                for (var i = 0; i < IDs.length; i++) {
-                    var cycleIDsFromOneID: string[][] = cycleGraphIDsFromOneID(graph, cls, IDs, arrayField, IDs[i]);
-                    for (var j = 0; j < cycleIDsFromOneID.length; j++) {
-                        if (!sameCycleGraph(cycleIDsFromOneID[j], cycleIDs)) {
-                            cycleIDs.push(cycleIDsFromOneID[j]);
-                        }
-                    }
-                }
-
-                return cycleIDs;
-
-                //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
-                function cycleGraphIDsFromOneID(graph: Graph, cls: string, IDs: string[], arrayField: string[], ID: string): string[][] {
-
-                    var cycleIDs: string[][] = new Array();
-
-                    var stack: Stack = new Stack();     //経路を記録するためのスタック
-                    var usedIDs: string[] = new Array();    //訪問したノードのIDを記録するための配列
-
-                    deep_first_search(graph, stack, cycleIDs, arrayField, ID, ID);
-
-
-                    //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
-                    function deep_first_search(graph: Graph, stack: Stack, cycleIDs: string[][], arrayField: string[], nowID: string, ID: string) {
-                        stack.push(nowID);
-                        for (var i = 0; i < arrayField.length; i++) {
-                            var u: string = graph.getField(nowID, arrayField[i]);
-                            if (u != undefined) {
-                                if (!sameT_InArray<string>(u, stack.stack)) {
-                                    deep_first_search(graph, stack, cycleIDs, arrayField, u, ID);
-                                } else if (u == ID) {
-                                    cycleIDs.push(stack.returnArray());
-                                    cycleIDs[cycleIDs.length - 1].push(ID);
-                                }
-                            }
-                        }
-                        stack.pop();
-                    }
-
-                    return cycleIDs;
-
-                }
-
-                //補助関数の補助関数、与えられた閉路と同じものが配列cycleIDs内にあるかどうかを判断する
-                function sameCycleGraph(onecycle: string[], cycles: string[][]): boolean {
-                    var bool: boolean = false;
-                    for (var i = 0; i < cycles.length; i++) {
-                        if (onecycle.length != cycles[i].length) {  //配列の長さが同じでなければ
-                            bool = bool || false;
-                        } else {                                    //配列の長さが同じならば
-                            var a1: string[] = copyArray(onecycle);
-                            var a2: string[] = copyArray(cycles[i]);
-                            a1.pop();       //末尾を削除
-                            a2.pop();       //末尾を削除
-
-                            for (var j = 0; j < a1.length; j++) {
-                                if (arrayEqual(a1, a2)) {
-                                    bool = bool || true;
-                                }
-                                var car: string = a2.shift();
-                                a2.push(car);
-                            }
-                        }
-                    }
-                    return bool;
-                }
-            }
-             *
-             */
-
-
             //補助関数、閉路を探索し、閉路上のIDの配列を返す（新）
             function cycleGraphIDs(graph: Graph, cls: string, IDs: string[], arrayField: string[]): string[][] {
                 var cycleIDs: string[][] = new Array();
@@ -515,8 +440,6 @@ function setGraphLocation(graph: Graph) {
                     function deep_first_search(graph: Graph, stack: Stack, cycleIDs: string[][], usedIDs: string[], arrayField: string[], nowID: string) {
 
                         stack.push(nowID);
-                        //alert("push " + nowID + " !!");
-                        //alert("stack length = " + stack.stack.length);
 
                         if (!sameT_InArray<string>(nowID, usedIDs)) {      //今いるノードが未訪問ならば訪問した印をつける
                             usedIDs.push(nowID);
@@ -531,15 +454,12 @@ function setGraphLocation(graph: Graph) {
                                     var cycleInStack: string[] = arraySpliceBoforeIndexOf(u, stack.stack);
                                     cycleIDs.push(cycleInStack);
                                     cycleIDs[cycleIDs.length - 1].push(u);
-                                    //alert("memory " + cycleInStack.length + " length array!!");
                                 }
                             }
                         }
 
                         stack.pop();
-                        //alert("pop!! now length = " + stack.stack.length);
                     }
-                    //alert(ID + " end!!");
 
                     return cycleIDs;
 
@@ -554,11 +474,24 @@ function setGraphLocation(graph: Graph) {
         //必要なフィールド名の配列
         var arrayField: ClassAndField[] = necessaryField(graph, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue);
 
+        //参照先がプリミティブ型であるようなフィールドの配列とそうでない配列に分ける
+        var arrayFieldToNode: ClassAndField[] = arrayField.filter(function (value, index, array) {
+            return isPrimitiveString(value.childcls);
+        })
+        var arrayFieldToPrimitive: ClassAndField[] = arrayField.filter(function (value, index, array) {
+            return !isPrimitiveString(value.childcls);
+        })
+
         //フィールドの角度を決定する
-        decisionAngleClassAndField(arrayField);
+        decisionAngleClassAndField(arrayFieldToNode);
+        decisionAngleClassAndField(arrayFieldToPrimitive);
+
+        //重なってしまっているようなフィールド（⇄のような関係）を走査し、あった場合は片方を消去する
+        var arrayFieldToNodeWithoutOverlapping: ClassAndField[] = FindOvelappingFieldAndDelete(graph, arrayFieldToNode, withoutPrimitiveIDs);
 
         //オブジェクトを辿りながらエッジリストを作る
-        makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayField);
+        makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayFieldToNodeWithoutOverlapping);
+        makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayFieldToPrimitive);
 
         //参照先がプリミティブ型のときには角度を決めずにエッジを作る
         if (!edgewithprimitivevalue) {
@@ -573,8 +506,8 @@ function setGraphLocation(graph: Graph) {
         function decisionAngleClassAndField(cafs: ClassAndField[]) {
             var allCls: string[] = new Array();
             for (var i = 0; i < cafs.length; i++) {
-                if (!sameT_InArray<string>(cafs[i].cls, allCls)) {
-                    allCls.push(cafs[i].cls);
+                if (!sameT_InArray<string>(cafs[i].parentcls, allCls)) {
+                    allCls.push(cafs[i].parentcls);
                 }
             }
 
@@ -582,7 +515,7 @@ function setGraphLocation(graph: Graph) {
             for (var i = 0; i < clsnumber.length; i++) {
                 var cnt: number = 0;
                 for (var j = 0; j < cafs.length; j++) {
-                    if (allCls[i] == cafs[j].cls) {
+                    if (allCls[i] == cafs[j].parentcls) {
                         cnt += 1;
                     }
                 }
@@ -596,7 +529,7 @@ function setGraphLocation(graph: Graph) {
 
             for (var i = 0; i < cafs.length; i++) {
                 for (var j = 0; j < allCls.length; j++) {
-                    if (cafs[i].cls == allCls[j]) {
+                    if (cafs[i].parentcls == allCls[j]) {
                         cafs[i].angle = Math.PI * (clsnumber[j] * 2 - cntnumber[j] * 2 - 1) / (clsnumber[j] * 2);
                         cntnumber[j] += 1;
                     }
@@ -626,7 +559,7 @@ function setGraphLocation(graph: Graph) {
 
                     for (var j = 0; j < fieldIDs.length; j++) {
                         if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i])) {
-                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
+                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), graph.getClass(fieldIDs[j]), fields[j]);
                             if (!sameClassAndField_InArray(caf, necessaryfields)) {
                                 necessaryfields.push(caf);
                             }
@@ -641,7 +574,7 @@ function setGraphLocation(graph: Graph) {
 
                     for (var j = 0; j < fieldIDs.length; j++) {
                         if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i]) && sameT_InArray<string>(fieldIDs[j], withoutPrimitiveIDs)) {
-                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), fields[j]);
+                            var caf: ClassAndField = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), graph.getClass(fieldIDs[j]), fields[j]);
                             if (!sameClassAndField_InArray(caf, necessaryfields)) {
                                 necessaryfields.push(caf);
                             }
@@ -667,7 +600,7 @@ function setGraphLocation(graph: Graph) {
 
                 for (var j = 0; j < fieldIDs.length; j++) {
                     for (var k = 0; k < arrayField.length; k++) {
-                        if (arrayField[k].cls == graph.getClass(withoutPrimitiveIDs[i]) && arrayField[k].field == fields[j]) {
+                        if (arrayField[k].parentcls == graph.getClass(withoutPrimitiveIDs[i]) && arrayField[k].field == fields[j]) {
                             var newedge: EdgeWithAngle = new EdgeWithAngle(withoutPrimitiveIDs[i], fieldIDs[j], arrayField[k].angle);
                             edgelist.push(newedge);
                         }
@@ -689,6 +622,62 @@ function setGraphLocation(graph: Graph) {
                         edgelist.push(newedge);
                     }
                 }
+            }
+        }
+
+        /*
+         * 交互参照しているフィールドを発見し、削除する
+         */
+        function FindOvelappingFieldAndDelete(graph: Graph, arrayFieldToNode: ClassAndField[], withoutPrimitiveIDs: string[]): ClassAndField[] {
+            var overlappingcafs: ClassAndField[] = new Array();
+
+            for (var i = 0; i < arrayFieldToNode.length; i++) {
+                var caf: ClassAndField = arrayFieldToNode[i];
+                for (var j = i + 1; j < arrayFieldToNode.length; j++) {
+                    var caf2: ClassAndField = arrayFieldToNode[j];
+                    if (caf.parentcls == caf2.childcls && caf.childcls == caf2.parentcls) {
+                        overlappingcafs.push(caf);
+                        overlappingcafs.push(caf2);
+                    }
+                }
+            }
+
+            var withoutoverlapping: ClassAndField[] = new Array();
+
+            for (var i = 0; i < overlappingcafs.length / 2; i++) {
+                if (isOverlapping(graph, overlappingcafs[2 * i], overlappingcafs[2 * i + 1], withoutPrimitiveIDs)) {
+                    withoutoverlapping.push(overlappingcafs[2 * i]);
+                } else if (isOverlapping(graph, overlappingcafs[2 * i + 1], overlappingcafs[2 * i], withoutPrimitiveIDs)) {
+                    withoutoverlapping.push(overlappingcafs[2 * i + 1]);
+                } else {
+                    withoutoverlapping.push(overlappingcafs[2 * i]);
+                    withoutoverlapping.push(overlappingcafs[2 * i + 1]);
+                }
+            }
+
+            for (var i = 0; i < arrayFieldToNode.length; i++) {
+                if (!sameT_InArray<ClassAndField>(arrayFieldToNode[i], overlappingcafs)) {
+                    withoutoverlapping.push(arrayFieldToNode[i]);
+                }
+            }
+
+            return withoutoverlapping;
+
+            //補助関数
+            //二つのClassAndFieldのx,yを受け取り、yに該当するエッジを全探索する
+            //yのエッジが全てxのエッジの逆向きエッジであるならばtrueを返り値として返す
+            function isOverlapping(graph: Graph, cafx: ClassAndField, cafy: ClassAndField, withoutPrimitiveIDs: string[]): boolean {
+                var bool: boolean = true;
+                for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
+                    if (graph.getClass(withoutPrimitiveIDs[i]) == cafy.parentcls) {
+                        var parentID: string = graph.getField(withoutPrimitiveIDs[i], cafy.field);
+                        if (parentID != undefined && graph.getClass(parentID) == cafy.childcls) {
+                            var nextID: string = graph.getField(parentID, cafx.field);
+                            bool = bool && nextID == withoutPrimitiveIDs[i];            
+                        }
+                    }
+                }
+                return bool;
             }
         }
     }
