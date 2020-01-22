@@ -701,7 +701,7 @@ function setGraphLocation(graph: Graph) {
         var Knum: number = 8;       //斥力のKの次数
         var rnum: number = 3;       //斥力のrの次数
         var ravenum: number = (Knum + 1) / (rnum + 2);
-        var KRAD: number = 300000.0;             //角度に働く力の係数
+        var KRAD: number = 300000.0 * Math.PI * Math.PI / (180 * 180);      //角度に働く力の係数(弧度法から度数法に変更)
         var ITERATION: number = 8000;        //反復回数
         var T: number = Math.max(WIDTH, HEIGHT);         //温度パラメータ
         var t: number = T;
@@ -940,16 +940,16 @@ function setGraphLocation(graph: Graph) {
                     var delta: number = Math.sqrt(dx * dx + dy * dy);
                     var rad: number = Math.atan2(dy, dx);
                     if (delta != 0) {
-                        var d: number = rad - edgeWithAngleList[i].angle;
+                        var d: number = (rad - edgeWithAngleList[i].angle) * 180 / Math.PI; //弧度法から度数法に変更
                         var ddx: number;
                         var ddy: number;
                         var ex: number = KRAD * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                         var ey: number = - KRAD * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                        if (Math.abs(d) <= Math.PI) {
+                        if (Math.abs(d) <= 180) { //変更部分
                             ddx = d * Math.abs(d) * ex;
                             ddy = d * Math.abs(d) * ey;
                         } else {
-                            var dd: number = d + 2 * Math.PI;
+                            var dd: number = d + 2 * 180; //変更部分
                             if (d < 0) {
                                 ddx = dd * Math.abs(dd) * ex;
                                 ddy = dd * Math.abs(dd) * ey;

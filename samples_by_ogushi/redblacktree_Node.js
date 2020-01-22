@@ -64,7 +64,7 @@ function insert(tree, val) {
         return newtree;
     } else if (val < tree.val) {
         if (tree.left == null) {
-            var newtree = new Node("R", val, null, null, tree);
+            var newtree = new Node("B", val, null, null, tree);     //ミス
             tree.left = newtree;
             return balance(tree);
         } else {

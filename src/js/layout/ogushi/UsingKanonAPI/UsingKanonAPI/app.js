@@ -110,52 +110,52 @@ var Dot = /** @class */ (function () {
  * Example and Test 2
  * list having tree
  */
-var dot1 = new Dot("id1", "List");
-var dot2 = new Dot("id2", "List");
-var dot3 = new Dot("id3", "List");
-var dot4 = new Dot("id4", "Tree");
-var dot5 = new Dot("id5", "Tree");
-var dot6 = new Dot("id6", "Tree");
-var dot7 = new Dot("id7", "Tree");
-var dot8 = new Dot("id8", "Tree");
-var dot9 = new Dot("id9", "Tree");
-var dot10 = new Dot("id10", "number");
-var dot11 = new Dot("id11", "number");
-var dot12 = new Dot("id12", "number");
-var dot13 = new Dot("id13", "number");
-var dot14 = new Dot("id14", "number");
-var dot15 = new Dot("id15", "number");
-var dot16 = new Dot("id16", "number");
-var dot17 = new Dot("id17", "number");
-var dot18 = new Dot("id18", "number");
-dot1.addfield("next", dot2);
-dot1.addfield("in", dot4);
-dot1.addfield("num", dot10);
-dot2.addfield("next", dot3);
-dot2.addfield("prev", dot1);
-dot2.addfield("in", dot6);
-dot2.addfield("num", dot11);
-dot3.addfield("prev", dot2);
-dot3.addfield("in", dot9);
-dot3.addfield("num", dot12);
-dot4.addfield("right", dot5);
-dot4.addfield("val", dot13);
-dot5.addfield("parent", dot4);
-dot5.addfield("val", dot14);
-dot6.addfield("left", dot7);
-dot6.addfield("right", dot8);
-dot6.addfield("val", dot16);
-dot7.addfield("parent", dot6);
-dot7.addfield("val", dot15);
-dot8.addfield("parent", dot6);
-dot8.addfield("val", dot17);
-dot9.addfield("val", dot18);
-//追加のフィールド
-dot4.addfield("parent", dot1);
-dot6.addfield("parent", dot2);
-dot9.addfield("parent", dot3);
-var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
-var grp = new Graph(nodes);
+//var dot1: Dot = new Dot("id1", "List");
+//var dot2: Dot = new Dot("id2", "List");
+//var dot3: Dot = new Dot("id3", "List");
+//var dot4: Dot = new Dot("id4", "Tree");
+//var dot5: Dot = new Dot("id5", "Tree");
+//var dot6: Dot = new Dot("id6", "Tree");
+//var dot7: Dot = new Dot("id7", "Tree");
+//var dot8: Dot = new Dot("id8", "Tree");
+//var dot9: Dot = new Dot("id9", "Tree");
+//var dot10: Dot = new Dot("id10", "number");
+//var dot11: Dot = new Dot("id11", "number");
+//var dot12: Dot = new Dot("id12", "number");
+//var dot13: Dot = new Dot("id13", "number");
+//var dot14: Dot = new Dot("id14", "number");
+//var dot15: Dot = new Dot("id15", "number");
+//var dot16: Dot = new Dot("id16", "number");
+//var dot17: Dot = new Dot("id17", "number");
+//var dot18: Dot = new Dot("id18", "number");
+//dot1.addfield("next", dot2);
+//dot1.addfield("in", dot4);
+//dot1.addfield("num", dot10);
+//dot2.addfield("next", dot3);
+//dot2.addfield("prev", dot1);
+//dot2.addfield("in", dot6);
+//dot2.addfield("num", dot11);
+//dot3.addfield("prev", dot2);
+//dot3.addfield("in", dot9);
+//dot3.addfield("num", dot12);
+//dot4.addfield("right", dot5);
+//dot4.addfield("val", dot13);
+//dot5.addfield("parent", dot4);
+//dot5.addfield("val", dot14);
+//dot6.addfield("left", dot7);
+//dot6.addfield("right", dot8);
+//dot6.addfield("val", dot16);
+//dot7.addfield("parent", dot6);
+//dot7.addfield("val", dot15);
+//dot8.addfield("parent", dot6);
+//dot8.addfield("val", dot17);
+//dot9.addfield("val", dot18);
+////追加のフィールド
+//dot4.addfield("parent", dot1);
+//dot6.addfield("parent", dot2);
+//dot9.addfield("parent", dot3);
+//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
+//var grp: Graph = new Graph(nodes);
 /*
  * Example and Test 3
  * cycle list
@@ -293,6 +293,19 @@ var grp = new Graph(nodes);
 //dot2.addfield("parent", dot1);
 //var nodes: Dot[] = [dot1, dot2, dot3];
 //var grp: Graph = new Graph(nodes);
+/*
+ * Example and Test 9
+ * hybrid data structure
+ */
+var dot1 = new Dot("id1", "Parent");
+var dot2 = new Dot("id2", "Parent");
+var dot3 = new Dot("id3", "Child");
+dot1.addfield("child", dot3);
+dot2.addfield("child", dot3);
+dot1.addfield("wife", dot2);
+dot2.addfield("husband", dot1);
+var nodes = [dot1, dot2, dot3];
+var grp = new Graph(nodes);
 ///<reference path="example.ts" />
 //import sgl = require('./app');
 //sgl.setGraphLocation(grp);
@@ -858,7 +871,7 @@ function setGraphLocation(graph) {
         var Knum = 8; //斥力のKの次数
         var rnum = 3; //斥力のrの次数
         var ravenum = (Knum + 1) / (rnum + 2);
-        var KRAD = 300000.0; //角度に働く力の係数
+        var KRAD = 300000.0 * Math.PI * Math.PI / (180 * 180); //角度に働く力の係数(弧度法から度数法に変更)
         var ITERATION = 8000; //反復回数
         var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
         var t = T;
@@ -1053,17 +1066,17 @@ function setGraphLocation(graph) {
                     var delta = Math.sqrt(dx * dx + dy * dy);
                     var rad = Math.atan2(dy, dx);
                     if (delta != 0) {
-                        var d = rad - edgeWithAngleList[i].angle;
+                        var d = (rad - edgeWithAngleList[i].angle) * 180 / Math.PI; //弧度法から度数法に変更
                         var ddx;
                         var ddy;
                         var ex = KRAD * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                         var ey = -KRAD * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                        if (Math.abs(d) <= Math.PI) {
+                        if (Math.abs(d) <= 180) { //変更部分
                             ddx = d * Math.abs(d) * ex;
                             ddy = d * Math.abs(d) * ey;
                         }
                         else {
-                            var dd = d + 2 * Math.PI;
+                            var dd = d + 2 * 180; //変更部分
                             if (d < 0) {
                                 ddx = dd * Math.abs(dd) * ex;
                                 ddy = dd * Math.abs(dd) * ey;

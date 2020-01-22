@@ -558,7 +558,7 @@ __$__.Layout = {
                 var Knum = 8; //斥力のKの次数
                 var rnum = 3; //斥力のrの次数
                 var ravenum = (Knum + 1) / (rnum + 2);
-                var KRAD = 300000.0 * Math.PI * Math.PI / (180 * 180); //角度に働く力の係数(弧度法から度数法に変更)
+                var KRAD = 300000.0; //角度に働く力の係数
                 var ITERATION = 8000; //反復回数
                 var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
                 var t = T;
@@ -753,17 +753,17 @@ __$__.Layout = {
                             var delta = Math.sqrt(dx * dx + dy * dy);
                             var rad = Math.atan2(dy, dx);
                             if (delta != 0) {
-                                var d = (rad - edgeWithAngleList[i].angle) * 180 / Math.PI; //弧度法から度数法に変更
+                                var d = rad - edgeWithAngleList[i].angle;
                                 var ddx;
                                 var ddy;
                                 var ex = KRAD * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 var ey = -KRAD * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                                if (Math.abs(d) <= 180) { //変更部分
+                                if (Math.abs(d) <= Math.PI) {
                                     ddx = d * Math.abs(d) * ex;
                                     ddy = d * Math.abs(d) * ey;
                                 }
                                 else {
-                                    var dd = d + 2 * 180; //変更部分
+                                    var dd = d + 2 * Math.PI;
                                     if (d < 0) {
                                         ddx = dd * Math.abs(dd) * ex;
                                         ddy = dd * Math.abs(dd) * ey;

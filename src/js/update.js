@@ -41,7 +41,6 @@ __$__.Update = {
 
             var duplicateObjectStructureGraphsStartTime = performance.now();
             let __objs = [];
-            console.log(__$__.Update.CodeWithCP);
             // execution of the converted program
             // here, we collect constructed objects in the program
             // and duplicate object structure graphs at each checkpoint
