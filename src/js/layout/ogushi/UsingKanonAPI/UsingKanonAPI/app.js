@@ -82,230 +82,256 @@ var Dot = /** @class */ (function () {
     };
     return Dot;
 }());
-/*
- * Example and Test 1
- * simple list
- */
-//var dot1: Dot = new Dot("id1", "Node");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "Node");
-//var dot4: Dot = new Dot("id4", "number");
-//var dot5: Dot = new Dot("id5", "number");
-//var dot6: Dot = new Dot("id6", "number");
-//dot1.addfield("next", dot2);
-//dot1.addfield("val", dot4);
-//dot2.addfield("next", dot3);
-//dot2.addfield("prev", dot1);
-//dot2.addfield("val", dot5);
-//dot3.addfield("prev", dot2);
-//dot3.addfield("val", dot6);
-//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
-//var grp: Graph = new Graph(nodes);
-//console.log(grp.getObjectIDs());
-//console.log(grp.getClass("id2"));
-//console.log(grp.getClass("id4"));
-//console.log(grp.getFields("id2"));
-//console.log(grp.getField("id1", "next"));
-/*
- * Example and Test 2
- * list having tree
- */
-//var dot1: Dot = new Dot("id1", "List");
-//var dot2: Dot = new Dot("id2", "List");
-//var dot3: Dot = new Dot("id3", "List");
-//var dot4: Dot = new Dot("id4", "Tree");
-//var dot5: Dot = new Dot("id5", "Tree");
-//var dot6: Dot = new Dot("id6", "Tree");
-//var dot7: Dot = new Dot("id7", "Tree");
-//var dot8: Dot = new Dot("id8", "Tree");
-//var dot9: Dot = new Dot("id9", "Tree");
-//var dot10: Dot = new Dot("id10", "number");
-//var dot11: Dot = new Dot("id11", "number");
-//var dot12: Dot = new Dot("id12", "number");
-//var dot13: Dot = new Dot("id13", "number");
-//var dot14: Dot = new Dot("id14", "number");
-//var dot15: Dot = new Dot("id15", "number");
-//var dot16: Dot = new Dot("id16", "number");
-//var dot17: Dot = new Dot("id17", "number");
-//var dot18: Dot = new Dot("id18", "number");
-//dot1.addfield("next", dot2);
-//dot1.addfield("in", dot4);
-//dot1.addfield("num", dot10);
-//dot2.addfield("next", dot3);
-//dot2.addfield("prev", dot1);
-//dot2.addfield("in", dot6);
-//dot2.addfield("num", dot11);
-//dot3.addfield("prev", dot2);
-//dot3.addfield("in", dot9);
-//dot3.addfield("num", dot12);
-//dot4.addfield("right", dot5);
-//dot4.addfield("val", dot13);
-//dot5.addfield("parent", dot4);
-//dot5.addfield("val", dot14);
-//dot6.addfield("left", dot7);
-//dot6.addfield("right", dot8);
-//dot6.addfield("val", dot16);
-//dot7.addfield("parent", dot6);
-//dot7.addfield("val", dot15);
-//dot8.addfield("parent", dot6);
-//dot8.addfield("val", dot17);
-//dot9.addfield("val", dot18);
-////追加のフィールド
-//dot4.addfield("parent", dot1);
-//dot6.addfield("parent", dot2);
-//dot9.addfield("parent", dot3);
-//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 3
- * cycle list
- */
-//var dot1: Dot = new Dot("id1", "Node");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "Node");
-//var dot4: Dot = new Dot("id4", "Node");
-//var dot5: Dot = new Dot("id5", "number");
-//var dot6: Dot = new Dot("id6", "number");
-//var dot7: Dot = new Dot("id7", "number");
-//var dot8: Dot = new Dot("id8", "number");
-//dot1.addfield("next", dot2);
-//dot1.addfield("prev", dot4);
-//dot1.addfield("val", dot5);
-//dot2.addfield("next", dot3);
-//dot2.addfield("prev", dot1);
-//dot2.addfield("val", dot6);
-//dot3.addfield("next", dot4);
-//dot3.addfield("prev", dot2);
-//dot3.addfield("val", dot7);
-//dot4.addfield("next", dot1);
-//dot4.addfield("prev", dot3);
-//dot4.addfield("val", dot8);
-//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 3
- * simple tree
- */
-//var dot0: Dot = new Dot("id0", "Node");
-//var dot1: Dot = new Dot("id1", "Node");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "Node");
-//var dot4: Dot = new Dot("id4", "Node");
-//var dot5: Dot = new Dot("id5", "number");
-//var dot6: Dot = new Dot("id6", "number");
-//var dot7: Dot = new Dot("id7", "number");
-//var dot8: Dot = new Dot("id8", "number");
-//var dot9: Dot = new Dot("id9", "number");
-//dot0.addfield("left", dot1);
-//dot0.addfield("right", dot4);
-//dot0.addfield("val", dot5);
-//dot1.addfield("left", dot2);
-//dot1.addfield("right", dot3);
-//dot1.addfield("parent", dot0);
-//dot1.addfield("val", dot6);
-//dot2.addfield("parent", dot1);
-//dot2.addfield("val", dot7);
-//dot3.addfield("parent", dot1);
-//dot3.addfield("val", dot8);
-//dot4.addfield("parent", dot0);
-//dot4.addfield("val", dot9);
-//var nodes: Dot[] = [dot0, dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 5
- * complex cycle
- */
-//var dot1: Dot = new Dot("id1", "Node");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "Node");
-//var dot4: Dot = new Dot("id4", "Node");
-//var dot5: Dot = new Dot("id5", "Node");
-//var dot6: Dot = new Dot("id6", "Node");
-//dot1.addfield("next", dot2);
-//dot2.addfield("next", dot5);
-//dot2.addfield("next2", dot6);
-//dot3.addfield("next", dot2);
-//dot4.addfield("next", dot3);
-//dot4.addfield("next2", dot1);
-//dot5.addfield("next", dot4);
-//dot6.addfield("next", dot4);
-//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 6
- * complex cycle
- */
-//var dot1: Dot = new Dot("id1", "Node");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "Node");
-//var dot4: Dot = new Dot("id4", "Node");
-//var dot5: Dot = new Dot("id5", "Node");
-//var dot6: Dot = new Dot("id6", "Node");
-//var dot7: Dot = new Dot("id7", "Node");
-//var dot8: Dot = new Dot("id8", "Node");
-//var dot9: Dot = new Dot("id9", "Node");
-//var dot10: Dot = new Dot("id10", "Node");
-//var dot11: Dot = new Dot("id11", "Node");
-//var dot12: Dot = new Dot("id12", "Node");
-//dot1.addfield("next", dot7);
-//dot1.addfield("next2", dot12);
-//dot2.addfield("next", dot1);
-//dot2.addfield("next2", dot10);
-//dot3.addfield("next", dot2);
-//dot3.addfield("next2", dot4);
-//dot3.addfield("next3", dot9);
-//dot4.addfield("next", dot5);
-//dot5.addfield("next", dot6);
-//dot6.addfield("next", dot3);
-//dot6.addfield("next2", dot8);
-//dot7.addfield("next", dot6);
-//dot8.addfield("next", dot5);
-//dot9.addfield("next", dot6);
-//dot11.addfield("next", dot1);
-//dot11.addfield("next2", dot2);
-//dot12.addfield("next", dot11);
-//var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 7
- * complex cycle
- */
-//var dotn: number = 10;
-//var nodes: Dot[] = new Array(dotn);
-//var grp: Graph = new Graph(nodes);
-//for (var i = 0; i < dotn; i++) {
-//    nodes[i] = new Dot("id" + i, "Node");
-//}
-//for (var i = 0; i < dotn - 1; i++) {
-//    var j: number = i + 1;
-//    nodes[i].addfield("next", nodes[i + 1]);
-//}
-//nodes[dotn - 1].addfield("next", nodes[0]);
-/*
- * Example and Test 8
- * hybrid data structure
- */
-//var dot1: Dot = new Dot("id1", "List");
-//var dot2: Dot = new Dot("id2", "Node");
-//var dot3: Dot = new Dot("id3", "number");
-//dot1.addfield("child", dot2);
-//dot1.addfield("val", dot3);
-//dot2.addfield("parent", dot1);
-//var nodes: Dot[] = [dot1, dot2, dot3];
-//var grp: Graph = new Graph(nodes);
-/*
- * Example and Test 9
- * hybrid data structure
- */
-var dot1 = new Dot("id1", "Parent");
-var dot2 = new Dot("id2", "Parent");
-var dot3 = new Dot("id3", "Child");
-dot1.addfield("child", dot3);
-dot2.addfield("child", dot3);
-dot1.addfield("wife", dot2);
-dot2.addfield("husband", dot1);
-var nodes = [dot1, dot2, dot3];
-var grp = new Graph(nodes);
+/**
+ * test1：シンプルなリスト
+ * test2：ツリーの入ったリスト
+ * test3：循環リスト
+ * test4：シンプルなツリー
+ * test5：複雑な循環を持った構造①
+ * test6：複雑な循環を持った構造②
+ * test7：任意長の循環リスト
+ * test8：複数のクラスのオブジェクトからなる例
+ * test9：同一のフィールドが同一のオブジェクトを参照している例*/
+var testNumber = 9;
+switch (testNumber) {
+    case 1:
+        /*
+         * Example and Test 1
+         * simple list
+         */
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "number");
+        var dot5 = new Dot("id5", "number");
+        var dot6 = new Dot("id6", "number");
+        dot1.addfield("next", dot2);
+        dot1.addfield("val", dot4);
+        dot2.addfield("next", dot3);
+        dot2.addfield("prev", dot1);
+        dot2.addfield("val", dot5);
+        dot3.addfield("prev", dot2);
+        dot3.addfield("val", dot6);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
+        var grp = new Graph(nodes);
+        break;
+    case 2:
+        /*
+         * Example and Test 2
+         * list having tree
+         */
+        var dot1 = new Dot("id1", "List");
+        var dot2 = new Dot("id2", "List");
+        var dot3 = new Dot("id3", "List");
+        var dot4 = new Dot("id4", "Tree");
+        var dot5 = new Dot("id5", "Tree");
+        var dot6 = new Dot("id6", "Tree");
+        var dot7 = new Dot("id7", "Tree");
+        var dot8 = new Dot("id8", "Tree");
+        var dot9 = new Dot("id9", "Tree");
+        var dot10 = new Dot("id10", "number");
+        var dot11 = new Dot("id11", "number");
+        var dot12 = new Dot("id12", "number");
+        var dot13 = new Dot("id13", "number");
+        var dot14 = new Dot("id14", "number");
+        var dot15 = new Dot("id15", "number");
+        var dot16 = new Dot("id16", "number");
+        var dot17 = new Dot("id17", "number");
+        var dot18 = new Dot("id18", "number");
+        dot1.addfield("next", dot2);
+        dot1.addfield("in", dot4);
+        dot1.addfield("num", dot10);
+        dot2.addfield("next", dot3);
+        dot2.addfield("prev", dot1);
+        dot2.addfield("in", dot6);
+        dot2.addfield("num", dot11);
+        dot3.addfield("prev", dot2);
+        dot3.addfield("in", dot9);
+        dot3.addfield("num", dot12);
+        dot4.addfield("right", dot5);
+        dot4.addfield("val", dot13);
+        dot5.addfield("parent", dot4);
+        dot5.addfield("val", dot14);
+        dot6.addfield("left", dot7);
+        dot6.addfield("right", dot8);
+        dot6.addfield("val", dot16);
+        dot7.addfield("parent", dot6);
+        dot7.addfield("val", dot15);
+        dot8.addfield("parent", dot6);
+        dot8.addfield("val", dot17);
+        dot9.addfield("val", dot18);
+        //追加のフィールド
+        dot4.addfield("parent", dot1);
+        dot6.addfield("parent", dot2);
+        dot9.addfield("parent", dot3);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12, dot13, dot14, dot15, dot16, dot17, dot18];
+        var grp = new Graph(nodes);
+        break;
+    case 3:
+        /*
+         * Example and Test 3
+         * cycle list
+         */
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "Node");
+        var dot5 = new Dot("id5", "number");
+        var dot6 = new Dot("id6", "number");
+        var dot7 = new Dot("id7", "number");
+        var dot8 = new Dot("id8", "number");
+        dot1.addfield("next", dot2);
+        dot1.addfield("prev", dot4);
+        dot1.addfield("val", dot5);
+        dot2.addfield("next", dot3);
+        dot2.addfield("prev", dot1);
+        dot2.addfield("val", dot6);
+        dot3.addfield("next", dot4);
+        dot3.addfield("prev", dot2);
+        dot3.addfield("val", dot7);
+        dot4.addfield("next", dot1);
+        dot4.addfield("prev", dot3);
+        dot4.addfield("val", dot8);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8];
+        var grp = new Graph(nodes);
+        break;
+    case 4:
+        /*
+         * Example and Test 4
+         * simple tree
+         */
+        var dot0 = new Dot("id0", "Node");
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "Node");
+        var dot5 = new Dot("id5", "number");
+        var dot6 = new Dot("id6", "number");
+        var dot7 = new Dot("id7", "number");
+        var dot8 = new Dot("id8", "number");
+        var dot9 = new Dot("id9", "number");
+        dot0.addfield("left", dot1);
+        dot0.addfield("right", dot4);
+        dot0.addfield("val", dot5);
+        dot1.addfield("left", dot2);
+        dot1.addfield("right", dot3);
+        dot1.addfield("parent", dot0);
+        dot1.addfield("val", dot6);
+        dot2.addfield("parent", dot1);
+        dot2.addfield("val", dot7);
+        dot3.addfield("parent", dot1);
+        dot3.addfield("val", dot8);
+        dot4.addfield("parent", dot0);
+        dot4.addfield("val", dot9);
+        var nodes = [dot0, dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9];
+        var grp = new Graph(nodes);
+        break;
+    case 5:
+        /*
+         * Example and Test 5
+         * complex cycle
+         */
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "Node");
+        var dot5 = new Dot("id5", "Node");
+        var dot6 = new Dot("id6", "Node");
+        dot1.addfield("next", dot2);
+        dot2.addfield("next", dot5);
+        dot2.addfield("next2", dot6);
+        dot3.addfield("next", dot2);
+        dot4.addfield("next", dot3);
+        dot4.addfield("next2", dot1);
+        dot5.addfield("next", dot4);
+        dot6.addfield("next", dot4);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
+        var grp = new Graph(nodes);
+        break;
+    case 6:
+        /*
+         * Example and Test 6
+         * complex cycle
+         */
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "Node");
+        var dot5 = new Dot("id5", "Node");
+        var dot6 = new Dot("id6", "Node");
+        var dot7 = new Dot("id7", "Node");
+        var dot8 = new Dot("id8", "Node");
+        var dot9 = new Dot("id9", "Node");
+        var dot10 = new Dot("id10", "Node");
+        var dot11 = new Dot("id11", "Node");
+        var dot12 = new Dot("id12", "Node");
+        dot1.addfield("next", dot7);
+        dot1.addfield("next2", dot12);
+        dot2.addfield("next", dot1);
+        dot2.addfield("next2", dot10);
+        dot3.addfield("next", dot2);
+        dot3.addfield("next2", dot4);
+        dot3.addfield("next3", dot9);
+        dot4.addfield("next", dot5);
+        dot5.addfield("next", dot6);
+        dot6.addfield("next", dot3);
+        dot6.addfield("next2", dot8);
+        dot7.addfield("next", dot6);
+        dot8.addfield("next", dot5);
+        dot9.addfield("next", dot6);
+        dot11.addfield("next", dot1);
+        dot11.addfield("next2", dot2);
+        dot12.addfield("next", dot11);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6, dot7, dot8, dot9, dot10, dot11, dot12];
+        var grp = new Graph(nodes);
+        break;
+    case 7:
+        /*
+         * Example and Test 7
+         * complex cycle
+         */
+        var dotn = 10;
+        var nodes = new Array(dotn);
+        var grp = new Graph(nodes);
+        for (var i = 0; i < dotn; i++) {
+            nodes[i] = new Dot("id" + i, "Node");
+        }
+        for (var i = 0; i < dotn - 1; i++) {
+            var j = i + 1;
+            nodes[i].addfield("next", nodes[i + 1]);
+        }
+        nodes[dotn - 1].addfield("next", nodes[0]);
+        break;
+    case 8:
+        /*
+         * Example and Test 8
+         * hybrid data structure
+         */
+        var dot1 = new Dot("id1", "List");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "number");
+        dot1.addfield("child", dot2);
+        dot1.addfield("val", dot3);
+        dot2.addfield("parent", dot1);
+        var nodes = [dot1, dot2, dot3];
+        var grp = new Graph(nodes);
+        break;
+    case 9:
+        /*
+         * Example and Test 9
+         * hybrid data structure
+         */
+        var dot1 = new Dot("id1", "Parent");
+        var dot2 = new Dot("id2", "Parent");
+        var dot3 = new Dot("id3", "Child");
+        dot1.addfield("child", dot3);
+        dot2.addfield("child", dot3);
+        dot1.addfield("wife", dot2);
+        dot2.addfield("husband", dot1);
+        var nodes = [dot1, dot2, dot3];
+        var grp = new Graph(nodes);
+        break;
+}
 ///<reference path="example.ts" />
 //import sgl = require('./app');
 //sgl.setGraphLocation(grp);
@@ -867,15 +893,23 @@ function setGraphLocation(graph) {
         var EDGENUMBER = edgeWithAngleList.length;
         var WIDTH = 1280; //表示する画面の横幅
         var HEIGHT = 720; //表示する画面の縦幅
-        var K = Math.min(WIDTH, HEIGHT) / 50; //クーロン力に係る係数
-        var Knum = 8; //斥力のKの次数
-        var rnum = 3; //斥力のrの次数
+        //var K: number = Math.min(WIDTH, HEIGHT) / 50;   //クーロン力に係る係数
+        var K = 100; //クーロン力に係る係数
+        //var Knum: number = 8;       //斥力のKの次数
+        //var rnum: number = 3;       //斥力のrの次数
         var ravenum = (Knum + 1) / (rnum + 2);
-        var KRAD = 300000.0 * Math.PI * Math.PI / (180 * 180); //角度に働く力の係数(弧度法から度数法に変更)
+        //var KRAD: number = 300000.0 * Math.PI * Math.PI / (180 * 180);      //角度に働く力の係数(弧度法から度数法に変更)
         var ITERATION = 8000; //反復回数
         var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
         var t = T;
         var dt = T / (ITERATION);
+        var K = 150; //クーロン力に係る係数
+        var Knum = 5; //斥力のKの次数
+        var rnum = 4; //斥力のrの次数
+        var KRAD = 0.5; //角度に働く力の係数(弧度法から度数法に変更)
+        //フロイドワーシャル法で各点同士の最短経路長を求める
+        var dddd = new Array(DOTNUMBER * DOTNUMBER);
+        FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
         //点のクラス
         var Dot_G = /** @class */ (function () {
             function Dot_G() {
@@ -993,6 +1027,7 @@ function setGraphLocation(graph) {
         }
         //計算を終了し、graphに座標情報を書きこんでいく
         function stopCalculate() {
+            move_near_center(dots);
             for (var i = 0; i < ObjectIDs.length; i++) {
                 graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
             }
@@ -1039,6 +1074,14 @@ function setGraphLocation(graph) {
                             var d = f_r(delta, K) / delta;
                             dots[i].frx += dx * d;
                             dots[i].fry += dy * d;
+                            //if (dddd[i * DOTNUMBER + j] < DOTNUMBER) {  //連結していれば
+                            //    dots[i].frx += dx * d;
+                            //    dots[i].fry += dy * d;
+                            //} else {        //連結していなければ
+                            //    var rate: number = delta < K * 3 ? K : -1;    //距離がK*3以上なら引力、未満なら斥力を発生させる
+                            //    dots[i].frx += dx * rate / delta;
+                            //    dots[i].fry += dy * rate / delta;
+                            //}
                         }
                     }
                 }
@@ -1114,6 +1157,80 @@ function setGraphLocation(graph) {
             for (var i = 0; i < DOTNUMBER; i++) {
                 dots[i].x += dx;
                 dots[i].y += dy;
+            }
+        }
+        //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
+        function move_near_center(dots) {
+            var cx = 0;
+            var cy = 0;
+            for (var i = 0; i < DOTNUMBER; i++) {
+                cx += dots[i].x;
+                cy += dots[i].y;
+            }
+            cx = cx / DOTNUMBER; //重心のx座標
+            cy = cy / DOTNUMBER; //重心のy座標
+            var darray = new Array(DOTNUMBER);
+            for (var i = 0; i < DOTNUMBER; i++) {
+                darray[i] = 1; //初期化
+            }
+            var groupArray = new Array();
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (darray[i] != -1) {
+                    var ary = new Array();
+                    ary.push(i);
+                    darray[i] = -1;
+                    for (j = i + 1; j < DOTNUMBER; j++) {
+                        if (dddd[i * DOTNUMBER + j] != DOTNUMBER) {
+                            ary.push(j);
+                            darray[j] = -1;
+                        }
+                    }
+                    groupArray.push(ary);
+                }
+            }
+            var groupCenter = new Array(groupArray.length);
+            for (var i = 0; i < groupArray.length; i++) {
+                var cnx = 0;
+                var cny = 0;
+                for (var j = 0; j < groupArray[i].length; j++) {
+                    cnx += dots[groupArray[i][j]].x;
+                    cny += dots[groupArray[i][j]].y;
+                }
+                cnx = cnx / groupArray[i].length; //連結しているグループの重心
+                cny = cny / groupArray[i].length;
+                var defx = cnx - cx; //全体の重心とグループの重心の差
+                var defy = cny - cy;
+                var def = Math.sqrt(defx * defx + defy * defy);
+                var movex = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+                var movey = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+                for (var j = 0; j < groupArray[i].length; j++) {
+                    dots[groupArray[i][j]].x -= movex;
+                    dots[groupArray[i][j]].y -= movey;
+                }
+            }
+        }
+        //各点同士の最短経路長を求める
+        function FloydWarshall(dotnumber, edgenumber, d) {
+            for (var i = 0; i < dotnumber; i++) {
+                for (var j = 0; j < dotnumber; j++) {
+                    d[i * dotnumber + j] = dotnumber;
+                }
+                d[i * dotnumber + i] = 0;
+            }
+            for (var i = 0; i < edgenumber; i++) {
+                var one = ObjectIDs.indexOf(edgeWithAngleList[i].ID1);
+                var two = ObjectIDs.indexOf(edgeWithAngleList[i].ID2);
+                d[one * dotnumber + two] = 1;
+                d[two * dotnumber + one] = 1;
+            }
+            for (var k = 0; k < dotnumber; k++) {
+                for (var i = 0; i < dotnumber; i++) {
+                    for (var j = 0; j < dotnumber; j++) {
+                        if (d[i * dotnumber + j] > d[i * dotnumber + k] + d[k * dotnumber + j]) {
+                            d[i * dotnumber + j] = d[i * dotnumber + k] + d[k * dotnumber + j];
+                        }
+                    }
+                }
             }
         }
     }

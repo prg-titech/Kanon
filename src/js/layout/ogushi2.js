@@ -554,15 +554,22 @@ __$__.Layout = {
                 var EDGENUMBER = edgeWithAngleList.length;
                 var WIDTH = 1280; //表示する画面の横幅
                 var HEIGHT = 720; //表示する画面の縦幅
-                var K = Math.min(WIDTH, HEIGHT) / 50; //クーロン力に係る係数
-                var Knum = 8; //斥力のKの次数
-                var rnum = 3; //斥力のrの次数
+                //var K = Math.min(WIDTH, HEIGHT) / 50; //クーロン力に係る係数
+                //var Knum = 8; //斥力のKの次数
+                //var rnum = 3; //斥力のrの次数
                 var ravenum = (Knum + 1) / (rnum + 2);
-                var KRAD = 300000.0; //角度に働く力の係数
+                //var KRAD = 300000.0 * Math.PI * Math.PI / (180 * 180); //角度に働く力の係数(弧度法から度数法に変更)
                 var ITERATION = 8000; //反復回数
                 var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
                 var t = T;
                 var dt = T / (ITERATION);
+                var K = 150; //クーロン力に係る係数
+                var Knum = 5; //斥力のKの次数
+                var rnum = 4; //斥力のrの次数
+                var KRAD = 1; //角度に働く力の係数(弧度法から度数法に変更)
+                //フロイドワーシャル法で各点同士の最短経路長を求める
+                var dddd = new Array(DOTNUMBER * DOTNUMBER);
+                FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
                 //点のクラス
                 var Dot_G = /** @class */ (function () {
                     function Dot_G() {
@@ -680,6 +687,7 @@ __$__.Layout = {
                 }
                 //計算を終了し、graphに座標情報を書きこんでいく
                 function stopCalculate() {
+                    move_near_center(dots);
                     for (var i = 0; i < ObjectIDs.length; i++) {
                         graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
                     }
@@ -726,6 +734,15 @@ __$__.Layout = {
                                     var d = f_r(delta, K) / delta;
                                     dots[i].frx += dx * d;
                                     dots[i].fry += dy * d;
+                                    // if (dddd[i * DOTNUMBER + j] < DOTNUMBER) { //連結していれば
+                                    //     dots[i].frx += dx * d;
+                                    //     dots[i].fry += dy * d;
+                                    // }
+                                    // else { //連結していなければ
+                                    //     var rate = delta < K * 3 ? K / 10 : -K / 10; //距離がK*3以上なら引力、未満なら斥力を発生させる
+                                    //     dots[i].frx += dx * rate / delta;
+                                    //     dots[i].fry += dy * rate / delta;
+                                    // }
                                 }
                             }
                         }
@@ -753,17 +770,17 @@ __$__.Layout = {
                             var delta = Math.sqrt(dx * dx + dy * dy);
                             var rad = Math.atan2(dy, dx);
                             if (delta != 0) {
-                                var d = rad - edgeWithAngleList[i].angle;
+                                var d = (rad - edgeWithAngleList[i].angle) * 180 / Math.PI; //弧度法から度数法に変更
                                 var ddx;
                                 var ddy;
                                 var ex = KRAD * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 var ey = -KRAD * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                                if (Math.abs(d) <= Math.PI) {
+                                if (Math.abs(d) <= 180) { //変更部分
                                     ddx = d * Math.abs(d) * ex;
                                     ddy = d * Math.abs(d) * ey;
                                 }
                                 else {
-                                    var dd = d + 2 * Math.PI;
+                                    var dd = d + 2 * 180; //変更部分
                                     if (d < 0) {
                                         ddx = dd * Math.abs(dd) * ex;
                                         ddy = dd * Math.abs(dd) * ey;
@@ -801,6 +818,80 @@ __$__.Layout = {
                     for (var i = 0; i < DOTNUMBER; i++) {
                         dots[i].x += dx;
                         dots[i].y += dy;
+                    }
+                }
+                //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
+                function move_near_center(dots) {
+                    var cx = 0;
+                    var cy = 0;
+                    for (var i = 0; i < DOTNUMBER; i++) {
+                        cx += dots[i].x;
+                        cy += dots[i].y;
+                    }
+                    cx = cx / DOTNUMBER; //重心のx座標
+                    cy = cy / DOTNUMBER; //重心のy座標
+                    var darray = new Array(DOTNUMBER);
+                    for (var i = 0; i < DOTNUMBER; i++) {
+                        darray[i] = 1; //初期化
+                    }
+                    var groupArray = new Array();
+                    for (var i = 0; i < DOTNUMBER; i++) {
+                        if (darray[i] != -1) {
+                            var ary = new Array();
+                            ary.push(i);
+                            darray[i] = -1;
+                            for (j = i + 1; j < DOTNUMBER; j++) {
+                                if (dddd[i * DOTNUMBER + j] != DOTNUMBER) {
+                                    ary.push(j);
+                                    darray[j] = -1;
+                                }
+                            }
+                            groupArray.push(ary);
+                        }
+                    }
+                    var groupCenter = new Array(groupArray.length);
+                    for (var i = 0; i < groupArray.length; i++) {
+                        var cnx = 0;
+                        var cny = 0;
+                        for (var j = 0; j < groupArray[i].length; j++) {
+                            cnx += dots[groupArray[i][j]].x;
+                            cny += dots[groupArray[i][j]].y;
+                        }
+                        cnx = cnx / groupArray[i].length; //連結しているグループの重心
+                        cny = cny / groupArray[i].length;
+                        var defx = cnx - cx; //全体の重心とグループの重心の差
+                        var defy = cny - cy;
+                        var def = Math.sqrt(defx * defx + defy * defy);
+                        var movex = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+                        var movey = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+                        for (var j = 0; j < groupArray[i].length; j++) {
+                            dots[groupArray[i][j]].x -= movex;
+                            dots[groupArray[i][j]].y -= movey;
+                        }
+                    }
+                }
+                //各点同士の最短経路長を求める
+                function FloydWarshall(dotnumber, edgenumber, d) {
+                    for (var i = 0; i < dotnumber; i++) {
+                        for (var j = 0; j < dotnumber; j++) {
+                            d[i * dotnumber + j] = dotnumber;
+                        }
+                        d[i * dotnumber + i] = 0;
+                    }
+                    for (var i = 0; i < edgenumber; i++) {
+                        var one = ObjectIDs.indexOf(edgeWithAngleList[i].ID1);
+                        var two = ObjectIDs.indexOf(edgeWithAngleList[i].ID2);
+                        d[one * dotnumber + two] = 1;
+                        d[two * dotnumber + one] = 1;
+                    }
+                    for (var k = 0; k < dotnumber; k++) {
+                        for (var i = 0; i < dotnumber; i++) {
+                            for (var j = 0; j < dotnumber; j++) {
+                                if (d[i * dotnumber + j] > d[i * dotnumber + k] + d[k * dotnumber + j]) {
+                                    d[i * dotnumber + j] = d[i * dotnumber + k] + d[k * dotnumber + j];
+                                }
+                            }
+                        }
                     }
                 }
             }

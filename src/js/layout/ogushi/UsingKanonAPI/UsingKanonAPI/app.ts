@@ -697,15 +697,25 @@ function setGraphLocation(graph: Graph) {
 
         var WIDTH: number = 1280;    //表示する画面の横幅
         var HEIGHT: number = 720;     //表示する画面の縦幅
-        var K: number = Math.min(WIDTH, HEIGHT) / 50;   //クーロン力に係る係数
-        var Knum: number = 8;       //斥力のKの次数
-        var rnum: number = 3;       //斥力のrの次数
+        //var K: number = Math.min(WIDTH, HEIGHT) / 50;   //クーロン力に係る係数
+        var K: number = 100;   //クーロン力に係る係数
+        //var Knum: number = 8;       //斥力のKの次数
+        //var rnum: number = 3;       //斥力のrの次数
         var ravenum: number = (Knum + 1) / (rnum + 2);
-        var KRAD: number = 300000.0 * Math.PI * Math.PI / (180 * 180);      //角度に働く力の係数(弧度法から度数法に変更)
+        //var KRAD: number = 300000.0 * Math.PI * Math.PI / (180 * 180);      //角度に働く力の係数(弧度法から度数法に変更)
         var ITERATION: number = 8000;        //反復回数
         var T: number = Math.max(WIDTH, HEIGHT);         //温度パラメータ
         var t: number = T;
         var dt: number = T / (ITERATION);
+
+        var K: number = 150;   //クーロン力に係る係数
+        var Knum: number = 5;       //斥力のKの次数
+        var rnum: number = 4;       //斥力のrの次数
+        var KRAD: number = 0.5;      //角度に働く力の係数(弧度法から度数法に変更)
+
+        //フロイドワーシャル法で各点同士の最短経路長を求める
+        var dddd: number[] = new Array(DOTNUMBER * DOTNUMBER);
+        FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
 
         //点のクラス
         class Dot_G {
@@ -855,6 +865,7 @@ function setGraphLocation(graph: Graph) {
 
         //計算を終了し、graphに座標情報を書きこんでいく
         function stopCalculate() {
+            move_near_center(dots);
             for (var i = 0; i < ObjectIDs.length; i++) {
                 graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
             }
@@ -911,6 +922,14 @@ function setGraphLocation(graph: Graph) {
                             var d: number = f_r(delta, K) / delta;
                             dots[i].frx += dx * d;
                             dots[i].fry += dy * d;
+                            //if (dddd[i * DOTNUMBER + j] < DOTNUMBER) {  //連結していれば
+                            //    dots[i].frx += dx * d;
+                            //    dots[i].fry += dy * d;
+                            //} else {        //連結していなければ
+                            //    var rate: number = delta < K * 3 ? K : -1;    //距離がK*3以上なら引力、未満なら斥力を発生させる
+                            //    dots[i].frx += dx * rate / delta;
+                            //    dots[i].fry += dy * rate / delta;
+                            //}
                         }
                     }
                 }
@@ -991,7 +1010,91 @@ function setGraphLocation(graph: Graph) {
                 dots[i].y += dy;
             }
         }
+
+        //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
+        function move_near_center(dots: Dot_G[]) {
+            var cx: number = 0;
+            var cy: number = 0;
+            for (var i = 0; i < DOTNUMBER; i++) {
+                cx += dots[i].x;
+                cy += dots[i].y;
+            }
+            cx = cx / DOTNUMBER;        //重心のx座標
+            cy = cy / DOTNUMBER;        //重心のy座標
+
+            var darray: number[] = new Array(DOTNUMBER);
+            for (var i = 0; i < DOTNUMBER; i++) {
+                darray[i] = 1;      //初期化
+            }
+
+            var groupArray: number[][] = new Array();
+
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (darray[i] != -1) {
+                    var ary: number[] = new Array();
+                    ary.push(i);
+                    darray[i] = -1;
+                    for (j = i + 1; j < DOTNUMBER; j++) {
+                        if (dddd[i * DOTNUMBER + j] != DOTNUMBER) {
+                            ary.push(j);
+                            darray[j] = -1;
+                        }
+                    }
+                    groupArray.push(ary);
+                }
+            }
+
+            var groupCenter: number[] = new Array(groupArray.length);
+            for (var i = 0; i < groupArray.length; i++) {
+                var cnx: number = 0;
+                var cny: number = 0;
+                for (var j = 0; j < groupArray[i].length; j++) {
+                    cnx += dots[groupArray[i][j]].x;
+                    cny += dots[groupArray[i][j]].y;
+                }
+                cnx = cnx / groupArray[i].length;       //連結しているグループの重心
+                cny = cny / groupArray[i].length;
+
+                var defx: number = cnx - cx;        //全体の重心とグループの重心の差
+                var defy: number = cny - cy;
+                var def: number = Math.sqrt(defx * defx + defy * defy);
+
+                var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+                var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+
+                for (var j = 0; j < groupArray[i].length; j++) {
+                    dots[groupArray[i][j]].x -= movex;
+                    dots[groupArray[i][j]].y -= movey;
+                }
+            }
+        }
+
+        //各点同士の最短経路長を求める
+        function FloydWarshall(dotnumber: number, edgenumber: number, d:number[]) {
+            for (var i = 0; i < dotnumber; i++) {
+                for (var j = 0; j < dotnumber; j++) {
+                    d[i * dotnumber + j] = dotnumber;
+                }
+                d[i * dotnumber + i] = 0;
+            }
+            for (var i = 0; i < edgenumber; i++) {
+                var one: number = ObjectIDs.indexOf(edgeWithAngleList[i].ID1);
+                var two: number = ObjectIDs.indexOf(edgeWithAngleList[i].ID2);
+                d[one * dotnumber + two] = 1;
+                d[two * dotnumber + one] = 1;
+            }
+            for (var k = 0; k < dotnumber; k++) {
+                for (var i = 0; i < dotnumber; i++) {
+                    for (var j = 0; j < dotnumber; j++) {
+                        if (d[i * dotnumber + j] > d[i * dotnumber + k] + d[k * dotnumber + j]) {
+                            d[i * dotnumber + j] = d[i * dotnumber + k] + d[k * dotnumber + j];
+                        }
+                    }
+                }
+            }
+        }
     }
+
 
 
 

@@ -124,6 +124,3 @@ var rbt = null;
 for (var i = 1; i <= 10; i++) {
     rbt = insert(rbt, i);
 }
-
-
-
