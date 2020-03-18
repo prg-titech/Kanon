@@ -92,7 +92,7 @@ var Dot = /** @class */ (function () {
  * test7：任意長の循環リスト
  * test8：複数のクラスのオブジェクトからなる例
  * test9：同一のフィールドが同一のオブジェクトを参照している例*/
-var testNumber = 9;
+var testNumber = 1;
 switch (testNumber) {
     case 1:
         /*
@@ -102,17 +102,17 @@ switch (testNumber) {
         var dot1 = new Dot("id1", "Node");
         var dot2 = new Dot("id2", "Node");
         var dot3 = new Dot("id3", "Node");
-        var dot4 = new Dot("id4", "number");
-        var dot5 = new Dot("id5", "number");
-        var dot6 = new Dot("id6", "number");
+        //var dot4: Dot = new Dot("id4", "number");
+        //var dot5: Dot = new Dot("id5", "number");
+        //var dot6: Dot = new Dot("id6", "number");
         dot1.addfield("next", dot2);
-        dot1.addfield("val", dot4);
         dot2.addfield("next", dot3);
         dot2.addfield("prev", dot1);
-        dot2.addfield("val", dot5);
         dot3.addfield("prev", dot2);
-        dot3.addfield("val", dot6);
-        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
+        //dot1.addfield("val", dot4);
+        //dot2.addfield("val", dot5);
+        //dot3.addfield("val", dot6);
+        var nodes = [dot1, dot2, dot3 /*, dot4, dot5, dot6*/];
         var grp = new Graph(nodes);
         break;
     case 2:
@@ -387,10 +387,13 @@ function setGraphLocation(graph) {
     }());
     //角度付きエッジのクラス
     var EdgeWithAngle = /** @class */ (function () {
-        function EdgeWithAngle(ID1, ID2, angle) {
+        function EdgeWithAngle(ID1, ID2, fromtype, totype, fieldname) {
             this.ID1 = ID1;
             this.ID2 = ID2;
-            this.angle = angle;
+            this.fromtype = fromtype;
+            this.totype = totype;
+            this.fieldname = fieldname;
+            this.underforce = true;
         }
         return EdgeWithAngle;
     }());
@@ -438,453 +441,159 @@ function setGraphLocation(graph) {
         carray.splice(0, index);
         return carray;
     }
+    //与えられたエッジオブジェクトが与えられたクラスフィールドに属しているかを判定する
+    function edgeIncludeCaF(edge, caf) {
+        return edge.fromtype == caf.parentcls && edge.totype == caf.childcls && edge.fieldname == caf.field;
+    }
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
-    function edgeListInit(graph, edgelist, drawcircle, edgewithprimitivevalue) {
+    function edgeListInit(graph, edgelist, caflist, drawcircle, edgewithprimitivevalue) {
         //オブジェクトのIDの配列
         var ObjectIDs = graph.getObjectIDs();
-        //プリミティブ型の値を除いたオブジェクトID配列
-        var ObjectIDsExceptPrimitiveValue = ObjectIDs.filter(function (value, index, array) {
-            return isPrimitiveString(graph.getClass(value));
-        });
-        //グラフ内で使われているオブジェクトのクラス名の配列
-        var allObjectClass = new Array(ObjectIDs.length);
         for (var i = 0; i < ObjectIDs.length; i++) {
-            allObjectClass[i] = graph.getClass(ObjectIDs[i]);
-        }
-        //重複を除いたクラス名の配列
-        var allObjectClassExceptDuplication = allObjectClass.filter(function (value, index, array) {
-            return array.indexOf(value) === index;
-        });
-        //クラス名ごとに所属するIDを配列にする、IDsSeparateClassは配列の配列
-        var IDsSeparateClass = new Array(allObjectClassExceptDuplication.length);
-        for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
-            IDsSeparateClass[i] = ObjectIDs.filter(function (value, index, array) {
-                return graph.getClass(value) == allObjectClassExceptDuplication[i];
-            });
-        }
-        //同じ型のオブジェクトを結ぶエッジの角度を決定
-        for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
-            if (isPrimitiveString(allObjectClassExceptDuplication[i])) {
-                decisionEdgeAngleConnectingSameClass(graph, edgelist, allObjectClassExceptDuplication[i], IDsSeparateClass[i], drawcircle);
+            //ID1(始点ノード)のIDとクラス
+            var ID1 = ObjectIDs[i];
+            var ID1type = graph.getClass(ID1);
+            //ID1の持つフィールドの列
+            var fields = graph.getFields(ID1);
+            for (var j = 0; j < fields.length; j++) {
+                var fieldname = fields[j];
+                var ID2 = graph.getField(ID1, fieldname);
+                var ID2type = graph.getClass(ID2);
+                edgelist.push(new EdgeWithAngle(ID1, ID2, ID1type, ID2type, fieldname));
+                if (edgewithprimitivevalue == false) { //プリミティブ型を指すフィールドエッジに角度力を働かせない
+                    edgelist[edgelist.length - 1].underforce = false;
+                }
             }
         }
-        //異なる型を参照するエッジの角度を決定
-        decisonEdgeAngleConnectingDifferentClass(graph, edgelist, ObjectIDs, allObjectClass, ObjectIDsExceptPrimitiveValue, edgewithprimitivevalue);
-    }
-    //引数がプリミティブ型を表す文字列でないかどうかを調べる、そうでなければtrueを返す
-    function isPrimitiveString(str) {
-        return (str != "number") && (str != "string") && (str != "boolean") && (str != "symbol") && (str != "undefined") && (str != "function");
-    }
-    //同じ型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
-    function decisionEdgeAngleConnectingSameClass(graph, edgelist, cls, IDs, drawcircle) {
-        //必要なフィールド名の配列
-        var arrayField = necessaryField(graph, cls, IDs);
-        //オブジェクトを辿りながらエッジリストを作る
-        makeEdgeListConnectingSameClass(graph, edgelist, cls, IDs, arrayField);
-        //閉路があるか探索し、閉路があった場合は閉路上のエッジの角度を全て無しにする
-        searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle);
-        /*
-         * 必要なフィールド名の配列を返す関数
-         */
-        function necessaryField(graph, cls, IDs) {
-            //自身の型を再帰的に参照する全てのフィールド名
-            var allRecursiveFields = identifyAllRecursiveField(graph, cls, IDs);
-            //不必要なフィールド名
-            var unnecessaryFields = identifyUnnecessaryField(graph, cls, IDs);
-            //全ての再帰的なフィールド名から不必要なフィールド名を除いた配列
-            var necessaryFields = allRecursiveFields.filter(function (value, index, array) {
-                return !sameT_InArray(value, unnecessaryFields);
-            });
-            return necessaryFields;
-            //補助関数、自身の型を再規定に参照する全てのフィールド名を返す
-            function identifyAllRecursiveField(graph, cls, IDs) {
-                var fieldArray = new Array();
-                for (var i = 0; i < IDs.length; i++) {
-                    var getFields = graph.getFields(IDs[i]);
-                    for (var j = 0; j < getFields.length; j++) {
-                        if (graph.getClass(graph.getField(IDs[i], getFields[j])) == cls && !sameT_InArray(getFields[j], fieldArray)) {
-                            fieldArray.push(getFields[j]);
-                        }
-                    }
-                }
-                return fieldArray;
+        //必要なフィールド名
+        for (var i = 0; i < edgelist.length; i++) {
+            var caf = new ClassAndField(edgelist[i].fromtype, edgelist[i].totype, edgelist[i].fieldname);
+            if (!sameClassAndField_InArray(caf, caflist)) {
+                caflist.push(caf);
             }
-            //補助関数、不必要なフィールド名を返す
-            function identifyUnnecessaryField(graph, cls, IDs) {
-                var unnecessaryFields = new Array();
-                //⇄の関係となっているフィールド名のペアを列挙
-                var setFields = identifySetField(graph, cls, IDs);
-                identifyUnnecessaryField_sub(setFields, unnecessaryFields);
-                return unnecessaryFields;
-                //⇄の関係となっているフィールド名のペアを列挙する補助関数
-                function identifySetField(graph, cls, IDs) {
-                    var usedObjectIDs = new Array();
-                    var pairFields = new Array();
-                    for (var i = 0; i < IDs.length; i++) {
-                        identifySetField_sub(graph, cls, IDs[i]);
-                    }
-                    return pairFields;
-                    //補助関数の補助関数
-                    function identifySetField_sub(graph, cls, ID) {
-                        if (!sameT_InArray(ID, usedObjectIDs)) {
-                            usedObjectIDs.push(ID); //今見ているオブジェクトのID
-                            var getFields = graph.getFields(ID);
-                            for (var j = 0; j < getFields.length; j++) {
-                                if (graph.getClass(graph.getField(ID, getFields[j])) == cls && !sameT_InArray(graph.getField(ID, getFields[j]), usedObjectIDs)) {
-                                    var nextID = graph.getField(ID, getFields[j]); //次のオブジェクトのID
-                                    var getFields2 = graph.getFields(nextID);
-                                    for (var k = 0; k < getFields2.length; k++) {
-                                        if (graph.getField(nextID, getFields2[k]) == ID) {
-                                            pairFields.push(getFields[j]);
-                                            pairFields.push(getFields2[k]);
-                                        }
-                                    }
-                                    identifySetField_sub(graph, cls, nextID);
-                                }
-                            }
-                        }
-                    }
+        }
+        necessaryCaFList(graph, caflist, ObjectIDs);
+        //必要なフィールド名以外のエッジを削除する
+        for (var i = edgelist.length - 1; i >= 0; i--) {
+            var bool = false;
+            for (var j = 0; j < caflist.length; j++) {
+                bool = bool || edgeIncludeCaF(edgelist[i], caflist[j]);
+            }
+            if (bool == false) {
+                edgelist.splice(i, 1);
+            }
+        }
+        //閉路上のエッジに働かせる角度力を無くす
+        if (drawcircle) {
+            for (var i = 0; i < caflist.length; i++) {
+                if (caflist[i].parentcls == caflist[i].childcls) {
+                    searchCycleGraph(graph, edgelist, caflist[i].parentcls, ObjectIDs, caflist);
                 }
-                //補助関数、不必要なフィールド名を列挙する
-                function identifyUnnecessaryField_sub(setField, unnecessaryField) {
-                    if (setField.length != 0) {
-                        var str = mode_inArray(setField);
-                        unnecessaryField.push(str);
-                        var numArray = new Array();
-                        for (var i = 0; i < setField.length / 2; i++) {
-                            if (setField[2 * i] == str || setField[2 * i + 1] == str) {
-                                numArray.push(i);
-                            }
-                        }
-                        for (var i = 0; i < numArray.length; i++) {
-                            numArray[i] = numArray[i] - i;
-                            setField.splice(2 * numArray[i], 2);
-                        }
-                        identifyUnnecessaryField_sub(setField, unnecessaryField);
-                    }
-                    //補助関数の補助関数、配列の中の最頻値を求める
-                    function mode_inArray(array) {
-                        var strArray = new Array();
-                        for (var i = 0; i < array.length; i++) {
-                            if (!sameT_InArray(array[i], strArray)) {
-                                strArray.push(array[i]);
-                            }
-                        }
-                        var length = strArray.length;
-                        var numArray = new Array(length);
-                        for (var i = 0; i < length; i++) {
-                            numArray[i] = 0;
-                        }
-                        for (var i = 0; i < array.length; i++) {
-                            for (var j = 0; j < length; j++) {
-                                if (array[i] == strArray[j]) {
-                                    numArray[j] += 1;
-                                }
-                            }
-                        }
-                        var max = numArray[0];
-                        var id = 0;
-                        for (var i = 0; i < length; i++) {
-                            if (max <= numArray[i]) {
-                                max = numArray[i];
-                                id = i;
-                            }
-                        }
-                        return strArray[id];
-                    }
+            }
+        }
+    }
+    //交互参照しているフィールドを発見し、削除する
+    function necessaryCaFList(graph, caflist, ObjectIDs) {
+        for (var i = caflist.length - 1; i >= 0; i--) {
+            var caf1 = caflist[i];
+            var near_caf1 = new Array(); //caf1と逆の（型）→（型）を持つフィールド名の集合
+            for (var j = 0; j < caflist.length; j++) {
+                if (caflist[j] != caf1 && caflist[j].parentcls == caf1.childcls && caflist[j].childcls == caf1.parentcls) {
+                    near_caf1.push(caflist[j]);
                 }
+            }
+            var bool = true;
+            for (var j = 0; j < near_caf1.length; j++) {
+                bool = bool && isOverlapping(graph, caf1, near_caf1[j]);
+            }
+            if (bool && near_caf1.length != 0) {
+                caflist.splice(i, 1);
             }
         }
         /*
-         * オブジェクトを辿りながらエッジリストを作る関数
+         * 補助関数
+         * 二つのClassAndFieldのx,yを受け取り、yに該当するエッジを全探索する
+         * yのエッジが全てxのエッジの逆向きエッジであるならばtrueを返り値として返す
          */
-        function makeEdgeListConnectingSameClass(graph, edgelist, cls, IDs, arrayfield) {
-            //辿ったオブジェクトのIDを記録する配列
-            var usedObjectIDs = new Array();
-            //ID順にオブジェクトを辿りながらエッジリストを作る
+        function isOverlapping(graph, cafx, cafy) {
+            var bool = true;
+            for (var i = 0; i < ObjectIDs.length; i++) {
+                var ID1 = ObjectIDs[i];
+                if (graph.getClass(ID1) == cafy.parentcls) {
+                    var ID2 = graph.getField(ID1, cafy.field);
+                    if (ID2 != undefined && graph.getClass(ID2) == cafy.childcls) {
+                        var nextID = graph.getField(ID2, cafx.field);
+                        bool = bool && nextID == ID1;
+                    }
+                }
+            }
+            return bool;
+        }
+    }
+    /*
+     * 閉路を探索する
+     * drawcircleがtrueの場合、閉路上のエッジの角度を全て無効にする
+     * drawcircleがfalseの場合、閉路上のエッジを一本削除する
+     */
+    function searchCycleGraph(graph, edgelist, cls, IDs, arrayField) {
+        //閉路上のIDの配列
+        var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
+        //console.log(cycleIDs);
+        for (var i = 0; i < cycleIDs.length; i++) {
+            for (var j = 0; j < cycleIDs[i].length - 1; j++) {
+                for (var k = 0; k < edgelist.length; k++) {
+                    if (cycleIDs[i][j] == edgelist[k].ID1 && cycleIDs[i][j + 1] == edgelist[k].ID2) {
+                        edgelist[k].underforce = false;
+                    }
+                }
+            }
+        }
+        //補助関数、閉路を探索し、閉路上のIDの配列を返す
+        function cycleGraphIDs(graph, cls, IDs, arrayField) {
+            var cycleIDs = new Array();
+            var usedIDs = new Array(); //訪れたことのあるIDを記録
             for (var i = 0; i < IDs.length; i++) {
-                makeEdgeListConnectingSameClass_sub(graph, edgelist, cls, IDs[i], arrayfield);
-            }
-            //補助関数
-            function makeEdgeListConnectingSameClass_sub(graph, edgelist, cls, ID, arrayField) {
-                if (!sameT_InArray(ID, usedObjectIDs)) { //引数のオブジェクトIDがまだ見たことのないものならば
-                    usedObjectIDs.push(ID); //見ているオブジェクトのIDを記録
-                    for (var j = 0; j < arrayField.length; j++) {
-                        var nextID = graph.getField(ID, arrayField[j]); //次のオブジェクトのID
-                        if (graph.getClass(nextID) == cls) {
-                            switch (arrayField.length) {
-                                case 0:
-                                    edgelist.push(new EdgeWithAngle(ID, nextID, 9973));
-                                    break;
-                                case 1:
-                                    edgelist.push(new EdgeWithAngle(ID, nextID, 0));
-                                    break;
-                                default:
-                                    edgelist.push(new EdgeWithAngle(ID, nextID, Math.PI * (arrayField.length * 2 - j * 2 - 1) / (arrayField.length * 2)));
-                            }
-                            makeEdgeListConnectingSameClass_sub(graph, edgelist, cls, nextID, arrayField);
-                        }
+                if (!sameT_InArray(IDs[i], usedIDs)) {
+                    var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, IDs[i]);
+                    for (var j = 0; j < cycleIDsFromOneID.length; j++) {
+                        cycleIDs.push(cycleIDsFromOneID[j]);
                     }
                 }
             }
-        }
-        /*
-         * 閉路を探索する
-         * drawcircleがtrueの場合、閉路上のエッジの角度を全て無効にする
-         * drawcircleがfalseの場合、閉路上のエッジを一本削除する
-         */
-        function searchCycleGraph(graph, edgelist, cls, IDs, arrayField, drawcircle) {
-            //閉路上のIDの配列
-            var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
-            //console.log(cycleIDs);
-            if (drawcircle) { //閉路上のエッジの角度を全て無効にする
-                for (var i = 0; i < cycleIDs.length; i++) {
-                    for (var j = 0; j < cycleIDs[i].length - 1; j++) {
-                        for (var k = 0; k < edgelist.length; k++) {
-                            if (cycleIDs[i][j] == edgelist[k].ID1 && cycleIDs[i][j + 1] == edgelist[k].ID2) {
-                                edgelist[k].angle = 9973; //角度を無効にするためには、角度に9973を代入する
-                            }
-                        }
-                    }
-                }
-            }
-            else { //閉路上のエッジを一本削除する
-                /*
-                 * アルゴリズムが思い浮かばなかったので後回し
-                 */
-            }
-            //補助関数、閉路を探索し、閉路上のIDの配列を返す（新）
-            function cycleGraphIDs(graph, cls, IDs, arrayField) {
+            return cycleIDs;
+            //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
+            function cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, ID) {
                 var cycleIDs = new Array();
-                var usedIDs = new Array(); //訪れたことのあるIDを記録
-                for (var i = 0; i < IDs.length; i++) {
-                    if (!sameT_InArray(IDs[i], usedIDs)) {
-                        var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, IDs[i]);
-                        for (var j = 0; j < cycleIDsFromOneID.length; j++) {
-                            cycleIDs.push(cycleIDsFromOneID[j]);
+                var stack = new Stack(); //経路を記録するためのスタック
+                deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, ID);
+                //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
+                function deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, nowID) {
+                    stack.push(nowID);
+                    if (!sameT_InArray(nowID, usedIDs)) { //今いるノードが未訪問ならば訪問した印をつける
+                        usedIDs.push(nowID);
+                    }
+                    for (var i = 0; i < arrayField.length; i++) {
+                        var u = graph.getField(nowID, arrayField[i].field);
+                        if (u != undefined) {
+                            if (!sameT_InArray(u, stack.stack)) {
+                                deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, u);
+                            }
+                            else {
+                                var cycleInStack = arraySpliceBoforeIndexOf(u, stack.stack);
+                                cycleIDs.push(cycleInStack);
+                                cycleIDs[cycleIDs.length - 1].push(u);
+                            }
                         }
                     }
+                    stack.pop();
                 }
                 return cycleIDs;
-                //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
-                function cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, ID) {
-                    var cycleIDs = new Array();
-                    var stack = new Stack(); //経路を記録するためのスタック
-                    deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, ID);
-                    //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
-                    function deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, nowID) {
-                        stack.push(nowID);
-                        if (!sameT_InArray(nowID, usedIDs)) { //今いるノードが未訪問ならば訪問した印をつける
-                            usedIDs.push(nowID);
-                        }
-                        for (var i = 0; i < arrayField.length; i++) {
-                            var u = graph.getField(nowID, arrayField[i]);
-                            if (u != undefined) {
-                                if (!sameT_InArray(u, stack.stack)) {
-                                    deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, u);
-                                }
-                                else {
-                                    var cycleInStack = arraySpliceBoforeIndexOf(u, stack.stack);
-                                    cycleIDs.push(cycleInStack);
-                                    cycleIDs[cycleIDs.length - 1].push(u);
-                                }
-                            }
-                        }
-                        stack.pop();
-                    }
-                    return cycleIDs;
-                }
-            }
-        }
-    }
-    //異なる型のオブジェクトを結ぶエッジの角度を決定し、edgelistに書きこむ
-    function decisonEdgeAngleConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue) {
-        //必要なフィールド名の配列
-        var arrayField = necessaryField(graph, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue);
-        //参照先がプリミティブ型であるようなフィールドの配列とそうでない配列に分ける
-        var arrayFieldToNode = arrayField.filter(function (value, index, array) {
-            return isPrimitiveString(value.childcls);
-        });
-        var arrayFieldToPrimitive = arrayField.filter(function (value, index, array) {
-            return !isPrimitiveString(value.childcls);
-        });
-        //フィールドの角度を決定する
-        decisionAngleClassAndField(arrayFieldToNode);
-        decisionAngleClassAndField(arrayFieldToPrimitive);
-        //重なってしまっているようなフィールド（⇄のような関係）を走査し、あった場合は片方を消去する
-        var arrayFieldToNodeWithoutOverlapping = FindOvelappingFieldAndDelete(graph, arrayFieldToNode, withoutPrimitiveIDs);
-        //オブジェクトを辿りながらエッジリストを作る
-        makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayFieldToNodeWithoutOverlapping);
-        makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayFieldToPrimitive);
-        //参照先がプリミティブ型のときには角度を決めずにエッジを作る
-        if (!edgewithprimitivevalue) {
-            makeEdgeListConnectingPrimitiveValue(graph, edgelist, IDs, withoutPrimitiveIDs);
-        }
-        //補助関数、ClassAndFieldの配列からそれぞれのエッジの角度を決定して書きこむ
-        function decisionAngleClassAndField(cafs) {
-            var allCls = new Array();
-            for (var i = 0; i < cafs.length; i++) {
-                if (!sameT_InArray(cafs[i].parentcls, allCls)) {
-                    allCls.push(cafs[i].parentcls);
-                }
-            }
-            var clsnumber = new Array(allCls.length);
-            for (var i = 0; i < clsnumber.length; i++) {
-                var cnt = 0;
-                for (var j = 0; j < cafs.length; j++) {
-                    if (allCls[i] == cafs[j].parentcls) {
-                        cnt += 1;
-                    }
-                }
-                clsnumber[i] = cnt;
-            }
-            var cntnumber = new Array(clsnumber.length);
-            for (var i = 0; i < cntnumber.length; i++) {
-                cntnumber[i] = 0;
-            }
-            for (var i = 0; i < cafs.length; i++) {
-                for (var j = 0; j < allCls.length; j++) {
-                    if (cafs[i].parentcls == allCls[j]) {
-                        cafs[i].angle = Math.PI * (clsnumber[j] * 2 - cntnumber[j] * 2 - 1) / (clsnumber[j] * 2);
-                        cntnumber[j] += 1;
-                    }
-                }
-            }
-        }
-        /*
-         * 必要なフィールド名の配列を返す関数
-         */
-        function necessaryField(graph, IDs, classes, withoutPrimitiveIDs, edgewithprimitivevalue) {
-            var necessaryfields = new Array();
-            for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
-                var fields = graph.getFields(withoutPrimitiveIDs[i]); //フィールド名の配列
-                var fieldIDs = new Array(fields.length); //フィールドのIDの配列
-                for (var j = 0; j < fieldIDs.length; j++) { //初期化
-                    fieldIDs[j] = graph.getField(withoutPrimitiveIDs[i], fields[j]);
-                }
-                if (edgewithprimitivevalue) {
-                    /*
-                     * case 1
-                     * 参照先がprimitive型のときも角度を決定する
-                     *
-                     */
-                    for (var j = 0; j < fieldIDs.length; j++) {
-                        if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i])) {
-                            var caf = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), graph.getClass(fieldIDs[j]), fields[j]);
-                            if (!sameClassAndField_InArray(caf, necessaryfields)) {
-                                necessaryfields.push(caf);
-                            }
-                        }
-                    }
-                }
-                else {
-                    /*
-                     * case 2
-                     * 参照先がprimitive型のときは角度を決定しない
-                     *
-                     */
-                    for (var j = 0; j < fieldIDs.length; j++) {
-                        if (graph.getClass(fieldIDs[j]) != graph.getClass(withoutPrimitiveIDs[i]) && sameT_InArray(fieldIDs[j], withoutPrimitiveIDs)) {
-                            var caf = new ClassAndField(graph.getClass(withoutPrimitiveIDs[i]), graph.getClass(fieldIDs[j]), fields[j]);
-                            if (!sameClassAndField_InArray(caf, necessaryfields)) {
-                                necessaryfields.push(caf);
-                            }
-                        }
-                    }
-                }
-            }
-            return necessaryfields;
-        }
-        /*
-         * オブジェクトを辿りながらエッジリストを作る関数
-         */
-        function makeEdgeListConnectingDifferentClass(graph, edgelist, IDs, classes, withoutPrimitiveIDs, arrayField) {
-            for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
-                var fields = graph.getFields(withoutPrimitiveIDs[i]); //フィールド名の配列
-                var fieldIDs = new Array(fields.length); //フィールドのIDの配列
-                for (var j = 0; j < fieldIDs.length; j++) { //初期化
-                    fieldIDs[j] = graph.getField(withoutPrimitiveIDs[i], fields[j]);
-                }
-                for (var j = 0; j < fieldIDs.length; j++) {
-                    for (var k = 0; k < arrayField.length; k++) {
-                        if (arrayField[k].parentcls == graph.getClass(withoutPrimitiveIDs[i]) && arrayField[k].field == fields[j]) {
-                            var newedge = new EdgeWithAngle(withoutPrimitiveIDs[i], fieldIDs[j], arrayField[k].angle);
-                            edgelist.push(newedge);
-                        }
-                    }
-                }
-            }
-        }
-        /*
-         * 参照先がプリミティブ型のときには角度を決めずにエッジを作る
-         */
-        function makeEdgeListConnectingPrimitiveValue(graph, edgelist, IDs, withoutPrimitiveIDs) {
-            for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
-                var fields = graph.getFields(withoutPrimitiveIDs[i]);
-                for (var j = 0; j < fields.length; j++) {
-                    var nextID = graph.getField(withoutPrimitiveIDs[i], fields[j]);
-                    if (!sameT_InArray(nextID, withoutPrimitiveIDs)) {
-                        var newedge = new EdgeWithAngle(withoutPrimitiveIDs[i], nextID, 9973);
-                        edgelist.push(newedge);
-                    }
-                }
-            }
-        }
-        /*
-         * 交互参照しているフィールドを発見し、削除する
-         */
-        function FindOvelappingFieldAndDelete(graph, arrayFieldToNode, withoutPrimitiveIDs) {
-            var overlappingcafs = new Array();
-            for (var i = 0; i < arrayFieldToNode.length; i++) {
-                var caf = arrayFieldToNode[i];
-                for (var j = i + 1; j < arrayFieldToNode.length; j++) {
-                    var caf2 = arrayFieldToNode[j];
-                    if (caf.parentcls == caf2.childcls && caf.childcls == caf2.parentcls) {
-                        overlappingcafs.push(caf);
-                        overlappingcafs.push(caf2);
-                    }
-                }
-            }
-            var withoutoverlapping = new Array();
-            for (var i = 0; i < overlappingcafs.length / 2; i++) {
-                if (isOverlapping(graph, overlappingcafs[2 * i], overlappingcafs[2 * i + 1], withoutPrimitiveIDs)) {
-                    withoutoverlapping.push(overlappingcafs[2 * i]);
-                }
-                else if (isOverlapping(graph, overlappingcafs[2 * i + 1], overlappingcafs[2 * i], withoutPrimitiveIDs)) {
-                    withoutoverlapping.push(overlappingcafs[2 * i + 1]);
-                }
-                else {
-                    withoutoverlapping.push(overlappingcafs[2 * i]);
-                    withoutoverlapping.push(overlappingcafs[2 * i + 1]);
-                }
-            }
-            for (var i = 0; i < arrayFieldToNode.length; i++) {
-                if (!sameT_InArray(arrayFieldToNode[i], overlappingcafs)) {
-                    withoutoverlapping.push(arrayFieldToNode[i]);
-                }
-            }
-            return withoutoverlapping;
-            //補助関数
-            //二つのClassAndFieldのx,yを受け取り、yに該当するエッジを全探索する
-            //yのエッジが全てxのエッジの逆向きエッジであるならばtrueを返り値として返す
-            function isOverlapping(graph, cafx, cafy, withoutPrimitiveIDs) {
-                var bool = true;
-                for (var i = 0; i < withoutPrimitiveIDs.length; i++) {
-                    if (graph.getClass(withoutPrimitiveIDs[i]) == cafy.parentcls) {
-                        var parentID = graph.getField(withoutPrimitiveIDs[i], cafy.field);
-                        if (parentID != undefined && graph.getClass(parentID) == cafy.childcls) {
-                            var nextID = graph.getField(parentID, cafx.field);
-                            bool = bool && nextID == withoutPrimitiveIDs[i];
-                        }
-                    }
-                }
-                return bool;
             }
         }
     }
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
-    function calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList) {
+    function calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList, caflist) {
         //オブジェクトのIDの配列
         var ObjectIDs = graph.getObjectIDs();
         //ノード数
@@ -915,7 +624,7 @@ function setGraphLocation(graph) {
             function Dot_G() {
             }
             //点の初期化
-            Dot_G.prototype.init = function (x, y) {
+            Dot_G.prototype.init = function (x, y, cls) {
                 this.x = x;
                 this.y = y;
                 this.dx = 0;
@@ -926,6 +635,7 @@ function setGraphLocation(graph) {
                 this.fry = 0;
                 this.fmx = 0;
                 this.fmy = 0;
+                this.nodecls = cls;
             };
             //点に働く力から速度を求める
             Dot_G.prototype.init_velocity = function () {
@@ -943,16 +653,26 @@ function setGraphLocation(graph) {
             function Edge_G() {
             }
             //辺の初期化
-            Edge_G.prototype.init = function (dot1, dot2, angle) {
+            Edge_G.prototype.init = function (dot1, dot2, edgename) {
                 this.dot1 = dot1;
                 this.dot2 = dot2;
-                this.angle = angle;
+                this.dot1cls = dot1.nodecls;
+                this.dot2cls = dot2.nodecls;
+                this.edgename = edgename;
             };
             //エッジの長さ（2点間の距離）を求める
             Edge_G.prototype.length = function () {
                 var xl = this.dot1.x - this.dot2.x;
                 var yl = this.dot1.y - this.dot2.y;
                 return Math.sqrt(xl * xl + yl * yl);
+            };
+            //エッジの角度を計算する
+            Edge_G.prototype.angle = function () {
+                var dx = this.dot2.x - this.dot1.x;
+                var dy = this.dot2.y - this.dot1.y;
+                var delta = Math.sqrt(dx * dx + dy * dy);
+                var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                return angle;
             };
             return Edge_G;
         }());
@@ -984,14 +704,14 @@ function setGraphLocation(graph) {
         }
         do {
             for (var i = 0; i < DOTNUMBER; i++) {
-                dots[i].init(Math.floor(Math.random() * WIDTH), Math.floor(Math.random() * HEIGHT));
+                dots[i].init(Math.floor(Math.random() * WIDTH), Math.floor(Math.random() * HEIGHT), graph.getClass(ObjectIDs[i]));
             }
         } while (sameDot_exists(dots, DOTNUMBER));
         //各辺の用意
         var edges = new Array(EDGENUMBER);
         for (var i = 0; i < EDGENUMBER; i++) {
             edges[i] = new Edge_G();
-            edges[i].init(dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID1)], dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID2)], edgeWithAngleList[i].angle);
+            edges[i].init(dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID1)], dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID2)], edgeWithAngleList[i].fieldname);
         }
         //グラフの用意
         var graph_g = new Graph_G();
@@ -1005,6 +725,19 @@ function setGraphLocation(graph) {
         }
         //fruchterman-Reingold法でエネルギーを最小化し、グラフを描画する
         function draw() {
+            //各エッジの平均角度を求める
+            for (var i = 0; i < caflist.length; i++) {
+                var angleSum = 0;
+                var edgeNum = 0;
+                for (var j = 0; j < EDGENUMBER; j++) {
+                    if (edgeIncludeCaF(edgeWithAngleList[j], caflist[i])) {
+                        angleSum += edges[j].angle();
+                        edgeNum += 1;
+                    }
+                }
+                caflist[i].angle = angleSum / edgeNum;
+                console.log("caflist[" + i + "] = field : " + caflist[i].field + ", num : " + edgeNum + ", aveAngle : " + caflist[i].angle);
+            }
             //各点に働く力を計算
             focus_calculate(dots);
             //各点の速度から、次の座標を計算する
@@ -1103,36 +836,37 @@ function setGraphLocation(graph) {
             }
             //各点の角度に基づいて働く力を計算
             for (var i = 0; i < EDGENUMBER; i++) {
-                if (edgeWithAngleList[i].angle != 9973) {
-                    var dx = edges[i].dot2.x - edges[i].dot1.x;
-                    var dy = edges[i].dot2.y - edges[i].dot1.y;
-                    var delta = Math.sqrt(dx * dx + dy * dy);
-                    var rad = Math.atan2(dy, dx);
-                    if (delta != 0) {
-                        var d = (rad - edgeWithAngleList[i].angle) * 180 / Math.PI; //弧度法から度数法に変更
-                        var ddx;
-                        var ddy;
-                        var ex = KRAD * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                        var ey = -KRAD * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                        if (Math.abs(d) <= 180) { //変更部分
-                            ddx = d * Math.abs(d) * ex;
-                            ddy = d * Math.abs(d) * ey;
-                        }
-                        else {
-                            var dd = d + 2 * 180; //変更部分
-                            if (d < 0) {
-                                ddx = dd * Math.abs(dd) * ex;
-                                ddy = dd * Math.abs(dd) * ey;
+                if (edgeWithAngleList[i].underforce == true) {
+                    var angle = edges[i].angle();
+                    for (var j = 0; j < caflist.length; j++) {
+                        if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
+                            if (delta != 0) {
+                                var d = angle - caflist[j].angle; //弧度法から度数法に変更
+                                var ddx;
+                                var ddy;
+                                var ex = KRAD * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                                var ey = -KRAD * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                                if (Math.abs(d) <= 180) {
+                                    ddx = d * Math.abs(d) * ex;
+                                    ddy = d * Math.abs(d) * ey;
+                                }
+                                else {
+                                    var dd = d + 2 * 180;
+                                    if (d < 0) {
+                                        ddx = dd * Math.abs(dd) * ex;
+                                        ddy = dd * Math.abs(dd) * ey;
+                                    }
+                                    else {
+                                        ddx = -dd * Math.abs(dd) * ex;
+                                        ddy = -dd * Math.abs(dd) * ey;
+                                    }
+                                }
+                                edges[i].dot1.fmx += -ddx;
+                                edges[i].dot1.fmy += -ddy;
+                                edges[i].dot2.fmx += ddx;
+                                edges[i].dot2.fmy += ddy;
                             }
-                            else {
-                                ddx = -dd * Math.abs(dd) * ex;
-                                ddy = -dd * Math.abs(dd) * ey;
-                            }
                         }
-                        edges[i].dot1.fmx += -ddx;
-                        edges[i].dot1.fmy += -ddy;
-                        edges[i].dot2.fmx += ddx;
-                        edges[i].dot2.fmy += ddy;
                     }
                 }
             }
@@ -1247,13 +981,18 @@ function setGraphLocation(graph) {
     var edgeListInitStartTime = performance.now();
     //角度付きエッジリストを用意し、参照関係を元に初期化する
     var edgeWithAngleList = new Array();
-    edgeListInit(graph, edgeWithAngleList, DrawCircle, EdgeWithPrimitiveValue);
+    var classAndFieldList = new Array();
+    edgeListInit(graph, edgeWithAngleList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue);
     var edgeListInitEndTime = performance.now();
     console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+    console.log("edgeList = ");
+    console.log(edgeWithAngleList);
+    console.log("cafList = ");
+    console.log(classAndFieldList);
     var forceDirectedMethodStartTime = performance.now();
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
-    calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
+    calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList, classAndFieldList);
     var forceDirectedMethodEndTime = performance.now();
     console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
 }

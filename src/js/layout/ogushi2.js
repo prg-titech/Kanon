@@ -566,7 +566,7 @@ __$__.Layout = {
                 var K = 150; //クーロン力に係る係数
                 var Knum = 5; //斥力のKの次数
                 var rnum = 4; //斥力のrの次数
-                var KRAD = 1; //角度に働く力の係数(弧度法から度数法に変更)
+                var KRAD = 2.5; //角度に働く力の係数(弧度法から度数法に変更)
                 //フロイドワーシャル法で各点同士の最短経路長を求める
                 var dddd = new Array(DOTNUMBER * DOTNUMBER);
                 FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
@@ -862,11 +862,13 @@ __$__.Layout = {
                         var defx = cnx - cx; //全体の重心とグループの重心の差
                         var defy = cny - cy;
                         var def = Math.sqrt(defx * defx + defy * defy);
-                        var movex = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
-                        var movey = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
-                        for (var j = 0; j < groupArray[i].length; j++) {
-                            dots[groupArray[i][j]].x -= movex;
-                            dots[groupArray[i][j]].y -= movey;
+                        if (def != 0) {
+                            var movex = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+                            var movey = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+                            for (var j = 0; j < groupArray[i].length; j++) {
+                                dots[groupArray[i][j]].x -= movex;
+                                dots[groupArray[i][j]].y -= movey;
+                            }
                         }
                     }
                 }
@@ -909,13 +911,17 @@ __$__.Layout = {
             edgeListInit(graph, edgeWithAngleList, DrawCircle, EdgeWithPrimitiveValue);
             var edgeListInitEndTime = performance.now();
             console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+            // console.log("edgelist = ");
+            // console.log(edgeWithAngleList);
             var forceDirectedMethodStartTime = performance.now();
             //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
             //graphオブジェクト内のノード座標を破壊的に書き替える
             calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList);
             var forceDirectedMethodEndTime = performance.now();
             console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
-
+            // console.log("graph = ");
+            // console.log(graph);
+            
             // var req = new XMLHttpRequest();
             // req.open("GET", "src/js/layout/ogushi/UsingKanonAPI/UsingKanonAPI/app.js");
             // req.send("");

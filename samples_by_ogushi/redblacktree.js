@@ -121,6 +121,7 @@ function isRootBlack(tree) {
 }
 
 var rbt = null;
-for (var i = 1; i <= 10; i++) {
+for (var i = 1; i <= 15; i++) {
     rbt = insert(rbt, i);
 }
+debugger;

@@ -1059,12 +1059,14 @@ function setGraphLocation(graph: Graph) {
                 var defy: number = cny - cy;
                 var def: number = Math.sqrt(defx * defx + defy * defy);
 
-                var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
-                var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+                if (def != 0) {
+                    var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+                    var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
 
-                for (var j = 0; j < groupArray[i].length; j++) {
-                    dots[groupArray[i][j]].x -= movex;
-                    dots[groupArray[i][j]].y -= movey;
+                    for (var j = 0; j < groupArray[i].length; j++) {
+                        dots[groupArray[i][j]].x -= movex;
+                        dots[groupArray[i][j]].y -= movey;
+                    }
                 }
             }
         }
