@@ -49,10 +49,10 @@ __$__.Update = {
                 var evalCodeWithCPStartTime = performance.now();
                 (() => {eval(__$__.Update.CodeWithCP)})();              //ここにすごく時間がかかっている
                 var evalCodeWithCPEndTime = performance.now();
-                console.log("    evalCodeWithCP [" + (evalCodeWithCPEndTime - evalCodeWithCPStartTime) + " ms]");
+                console.log("evalCodeWithCP\n   " + (evalCodeWithCPEndTime - evalCodeWithCPStartTime) + " ms");
 
-                console.log("check counter starts " + checkCounter + " times.");
-                console.log("checkpoint function takes " + checkTotalTime + " ms.");
+                console.log("check counter starts " + checkCounter + " times");
+                console.log("checkpoint function\n   " + checkTotalTime + " ms");
 
                 __$__.Context.InfLoop = '';
                 if (__$__.Error.hasError && __$__.Context.SpecifiedContextWhenExecutable) {
@@ -78,7 +78,7 @@ __$__.Update = {
                 }
             }
             var duplicateObjectStructureGraphsEndTime = performance.now();
-            console.log("  duplicateObjectStructureGraphs [" + (duplicateObjectStructureGraphsEndTime - duplicateObjectStructureGraphsStartTime) + " ms]");
+            //console.log("duplicateObjectStructureGraphs\n   " + (duplicateObjectStructureGraphsEndTime - duplicateObjectStructureGraphsStartTime) + " ms");
 
 
             if (!__$__.Error.hasError) {
@@ -131,7 +131,7 @@ __$__.Update = {
         }
 
         var PositionUpdateEndTime = performance.now();
-        console.log("PositionUpdate [" + (PositionUpdateEndTime - PositionUpdateStartTime) + " ms]");
+        console.log("PositionUpdate\n   " + (PositionUpdateEndTime - PositionUpdateStartTime) + " ms");
     },
     
 
@@ -153,7 +153,7 @@ __$__.Update = {
                     }
                 });
 
-                __$__.Context.Draw(e);
+                __$__.Context.Draw(e);      //ここでsetLocation()が呼ばれる
                 __$__.CallTreeNetwork.updateHighlightCircles();
 
             } catch (e) {
@@ -165,7 +165,7 @@ __$__.Update = {
         }
 
         var ContextUpdateEndTime = performance.now();
-        console.log("ContextUpdate [" + (ContextUpdateEndTime - ContextUpdateStartTime) + " ms]");
+        console.log("ContextUpdate\n   " + (ContextUpdateEndTime - ContextUpdateStartTime) + " ms");
     },
 
 

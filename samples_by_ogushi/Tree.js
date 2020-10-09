@@ -10,7 +10,8 @@ class Node{
         let temp = new Node(val);
         let current = this;
         
-        while((current.val <= val && current.right != null) || (current.val > val && current.left != null)){
+        while((current.val <= val && current.right != null) || 
+        (current.val > val && current.left != null)){
             if(current.val <= val){
                 current = current.right;
             } else {
@@ -27,6 +28,11 @@ class Node{
         }
     }
 }
+
+// var tree = new Node(2);
+// tree.add(1);
+// tree.add(3);
+
 
 var tree = new Node(4);
 tree.add(2);

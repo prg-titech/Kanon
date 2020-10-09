@@ -110,8 +110,9 @@ class Dot {
  * test6：複雑な循環を持った構造②
  * test7：任意長の循環リスト
  * test8：複数のクラスのオブジェクトからなる例
- * test9：同一のフィールドが同一のオブジェクトを参照している例*/
-var testNumber = 1;
+ * test9：同一のフィールドが同一のオブジェクトを参照している例
+ * test10：プリミティブ型を持たないシンプルなツリー*/
+var testNumber = 3;
 
 switch (testNumber) {
     case 1:
@@ -122,19 +123,19 @@ switch (testNumber) {
         var dot1: Dot = new Dot("id1", "Node");
         var dot2: Dot = new Dot("id2", "Node");
         var dot3: Dot = new Dot("id3", "Node");
-        //var dot4: Dot = new Dot("id4", "number");
-        //var dot5: Dot = new Dot("id5", "number");
-        //var dot6: Dot = new Dot("id6", "number");
+        var dot4: Dot = new Dot("id4", "number");
+        var dot5: Dot = new Dot("id5", "number");
+        var dot6: Dot = new Dot("id6", "number");
 
         dot1.addfield("next", dot2);
-        dot2.addfield("next", dot3);
         dot2.addfield("prev", dot1);
+        dot2.addfield("next", dot3);
         dot3.addfield("prev", dot2);
-        //dot1.addfield("val", dot4);
-        //dot2.addfield("val", dot5);
-        //dot3.addfield("val", dot6);
+        dot1.addfield("val", dot4);
+        dot2.addfield("val", dot5);
+        dot3.addfield("val", dot6);
 
-        var nodes: Dot[] = [dot1, dot2, dot3/*, dot4, dot5, dot6*/];
+        var nodes: Dot[] = [dot1, dot2, dot3, dot4, dot5, dot6];
         var grp: Graph = new Graph(nodes);
         break;
 
@@ -376,6 +377,36 @@ switch (testNumber) {
         dot2.addfield("husband", dot1);
 
         var nodes: Dot[] = [dot1, dot2, dot3];
+        var grp: Graph = new Graph(nodes);
+        break;
+
+    case 10:
+        /*
+         * Example and Test 10
+         * simple tree
+         */
+        var dot0: Dot = new Dot("id0", "Node");
+        var dot1: Dot = new Dot("id1", "Node");
+        var dot2: Dot = new Dot("id2", "Node");
+        var dot3: Dot = new Dot("id3", "Node");
+        var dot4: Dot = new Dot("id4", "Node");
+        var dot5: Dot = new Dot("id5", "Node");
+        var dot6: Dot = new Dot("id6", "Node");
+
+        dot0.addfield("left", dot1);
+        dot0.addfield("right", dot4);
+        dot1.addfield("left", dot2);
+        dot1.addfield("right", dot3);
+        dot1.addfield("parent", dot0);
+        dot2.addfield("parent", dot1);
+        dot3.addfield("parent", dot1);
+        dot4.addfield("parent", dot0);
+        dot4.addfield("left", dot5);
+        dot4.addfield("right", dot6);
+        dot5.addfield("parent", dot4);
+        dot6.addfield("parent", dot4);
+
+        var nodes: Dot[] = [dot0, dot1, dot2, dot3, dot4, dot5, dot6];
         var grp: Graph = new Graph(nodes);
         break;
 }

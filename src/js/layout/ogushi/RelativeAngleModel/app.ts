@@ -3,13 +3,12 @@
 //import sgl = require('./app');
 //sgl.setGraphLocation(grp);
 
-setGraphLocation(grp);
-
 ////グラフの描画をするための変数
 var canvas = <HTMLCanvasElement>document.getElementById("cv");
 var context = canvas.getContext("2d");
 context.font = "italic 50px Arial";
 
+setGraphLocation(grp);
 grp.draw(context);
 
 console.log(grp);
@@ -402,6 +401,41 @@ function setGraphLocation(graph: Graph) {
             velocity(): number {
                 return Math.sqrt(this.dx * this.dx + this.dy * this.dy);
             }
+
+            //力のベクトルの描画
+            //drawForceVector() {
+            //    context.strokeStyle = "rgba(255, 0, 0, 0.5)";
+            //    context.fillStyle = "rgba(255, 0, 0, 0.5)";
+            //    draw_vector(this.x, this.y, this.fax, this.fay);    //引力ベクトルは赤で表示
+            //    context.strokeStyle = "rgba(0, 255, 0, 0.5)";
+            //    context.fillStyle = "rgba(0, 255, 0, 0.5)";
+            //    draw_vector(this.x, this.y, this.frx, this.fry);    //斥力ベクトルは緑で表示
+            //    context.strokeStyle = "rgba(0, 0, 255, 0.5)";
+            //    context.fillStyle = "rgba(0, 0, 255, 0.5)";
+            //    draw_vector(this.x, this.y, this.fmx, this.fmy);    //角度力ベクトルは青で表示
+            //}
+        }
+
+        //補助クラス、ベクトルのクラス
+        class Vector_G {
+            x: number;
+            y: number;
+
+            constructor(x: number, y: number) {
+                this.x = x;
+                this.y = y;
+            }
+
+            //２ベクトルの加算
+            sum(vec2: Vector_G): Vector_G {
+                return new Vector_G(this.x + vec2.x, this.y + vec2.y);
+            }
+
+            //ベクトルの角度を計算する
+            angle(): number {
+                var angle: number = Math.atan2(this.y, this.x) * 180 / Math.PI;
+                return angle;
+            }
         }
 
         //辺のクラス
@@ -437,6 +471,18 @@ function setGraphLocation(graph: Graph) {
                 var angle: number = Math.atan2(dy, dx) * 180 / Math.PI;
                 return angle;
             }
+
+            //エッジと同じ角度の単位ベクトルを返す
+            unitVector(): Vector_G {
+                var dx: number = this.dot2.x - this.dot1.x;
+                var dy: number = this.dot2.y - this.dot1.y;
+                var delta: number = Math.sqrt(dx * dx + dy * dy);
+                if (delta != 0) {
+                    return new Vector_G(dx / delta, dy / delta);
+                } else {
+                    return new Vector_G(0, 0);
+                }
+            }
         }
 
         //グラフのクラス
@@ -463,6 +509,13 @@ function setGraphLocation(graph: Graph) {
 
                 return gl;
             }
+
+            //力のベクトルの描画
+            //drawForceVector() {
+            //    for (var i = 0; i < this.dots.length; i++) {
+            //        this.dots[i].drawForceVector();
+            //    }
+            //}
         }
 
         //各点の用意、座標は適切に初期化し、同じ座標の点同士が存在しないようにする
@@ -500,16 +553,15 @@ function setGraphLocation(graph: Graph) {
 
             //各エッジの平均角度を求める
             for (var i = 0; i < caflist.length; i++) {
-                var angleSum: number = 0;
+                var vectorSum: Vector_G = new Vector_G(0, 0);
                 var edgeNum: number = 0;
                 for (var j = 0; j < EDGENUMBER; j++) {
                     if (edgeIncludeCaF(edgeWithAngleList[j], caflist[i])) {
-                        angleSum += edges[j].angle();
+                        vectorSum = vectorSum.sum(edges[j].unitVector());
                         edgeNum += 1;
                     }
                 }
-                caflist[i].angle = angleSum / edgeNum;
-                console.log("caflist[" + i + "] = field : " + caflist[i].field + ", num : " + edgeNum + ", aveAngle : " + caflist[i].angle);
+                caflist[i].angle = vectorSum.angle();
             }
 
             //各点に働く力を計算
@@ -539,6 +591,7 @@ function setGraphLocation(graph: Graph) {
         //計算を終了し、graphに座標情報を書きこんでいく
         function stopCalculate() {
             move_near_center(dots);
+            //graph_g.drawForceVector();
             for (var i = 0; i < ObjectIDs.length; i++) {
                 graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
             }
@@ -630,6 +683,9 @@ function setGraphLocation(graph: Graph) {
                     var angle: number = edges[i].angle();
                     for (var j = 0; j < caflist.length; j++) {
                         if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
+                            var dx: number = edges[i].dot2.x - edges[i].dot1.x;
+                            var dy: number = edges[i].dot2.y - edges[i].dot1.y;
+                            var delta: number = Math.sqrt(dx * dx + dy * dy);
                             if (delta != 0) {
                                 var d: number = angle - caflist[j].angle; //弧度法から度数法に変更
                                 var ddx: number;
@@ -663,6 +719,30 @@ function setGraphLocation(graph: Graph) {
             for (var i = 0; i < DOTNUMBER; i++) {
                 dots[i].init_velocity();
             }
+        }
+
+        //ベクトルを画面に表示する
+        function draw_vector(x: number, y: number, dx: number, dy: number) {
+            var x1: number = x;
+            var y1: number = y;
+            var x2: number = x1 + dx;
+            var y2: number = y1 + dy;
+            var x3: number = x2 + (-dx - dy) / 12;
+            var y3: number = y2 + (dx - dy) / 12;
+            var x4: number = x2 + (-dx + dy) / 12;
+            var y4: number = y2 + (-dx - dy) / 12;
+
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+
+            context.beginPath();
+            context.moveTo(x2, y2);
+            context.lineTo(x3, y3);
+            context.lineTo(x4, y4);
+            context.closePath();
+            context.fill();
         }
 
         //グラフの点集合の重心を求め、重心が画面の中心になるように点移動させる
@@ -793,10 +873,10 @@ function setGraphLocation(graph: Graph) {
     edgeListInit(graph, edgeWithAngleList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue);
     var edgeListInitEndTime = performance.now();
     console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
-    console.log("edgeList = ");
-    console.log(edgeWithAngleList);
-    console.log("cafList = ");
-    console.log(classAndFieldList);
+    //console.log("edgeList = ");
+    //console.log(edgeWithAngleList);
+    //console.log("cafList = ");
+    //console.log(classAndFieldList);
 
     var forceDirectedMethodStartTime = performance.now();
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算

@@ -6,6 +6,8 @@ __$__.StoredGraphFormat = {
             this.label = label + '';
             this.isLiteral = isLiteral;
             this.type = type;
+            this.distance = -1;     //追加部分
+            this.size = -1;         //追加部分
             if (color) {
                 this.color = color;
             } else if (isLiteral) {
@@ -27,6 +29,7 @@ __$__.StoredGraphFormat = {
         generateVisjsNode(fixed = false) {
             let node;
             if (this.isLiteral) {
+                let nodeSize = (this.size == -1) ? 10 : this.size;
                 node = {
                     color: this.color,
                     id: this.id,
@@ -36,14 +39,50 @@ __$__.StoredGraphFormat = {
                     scaling: {
                         min: 10
                     },
-                    fixed: fixed
+                    fixed: fixed,
+                    value: nodeSize,
+                    scaling: {
+                        label: {
+                            enable: true,
+                            max: nodeSize
+                        }
+                    }
                 };
             } else {
-                node = {
-                    id: this.id,
-                    label: "" + this.label,
-                    fixed: fixed
-                };
+                let nodeSize = (this.size == -1) ? 15 : this.size;
+                if(this.color == "hotpink") {
+                    node = {
+                        color: this.color,
+                        id: this.id,
+                        label: "" + this.label,
+                        fixed: fixed,
+                        value: nodeSize,
+                        scaling: {
+                            label: {
+                                enable: true,
+                                max: nodeSize
+                            }
+                        }
+                    };
+                } else {
+                    node = {
+                        id: this.id,
+                        label: "" + this.label,
+                        fixed: fixed,
+                        value: nodeSize,
+                        scaling: {
+                            label: {
+                                enable: true,
+                                max: nodeSize
+                            }
+                        }
+                    };
+                }
+                // node = {
+                //     id: this.id,
+                //     label: "" + this.label,
+                //     fixed: fixed
+                // };
             }
             if (this.x !== undefined) node.x = this.x;
             if (this.y !== undefined) node.y = this.y;
@@ -201,6 +240,42 @@ __$__.StoredGraphFormat = {
             let node = this.nodes[ID];
             if (node) {
                 node.setLocation(x, y);
+            }
+        }
+
+        /**
+         * 追加部分：ノードのカラーを変更する
+         * @param {string} ID
+         * @param {string} color
+         */
+        setColor(ID, color) {
+            let node = this.nodes[ID];
+            if (node) {
+                node.color = color;
+            }
+        }
+
+        /**
+         * 追加部分：ノードの距離を変更する
+         * @param {string} ID
+         * @param {number} distance
+         */
+        setDistance(ID, distance) {
+            let node = this.nodes[ID];
+            if (node) {
+                node.distance = distance;
+            }
+        }
+
+        /**
+         * 追加部分：ノードのサイズを変更する
+         * @param {string} ID
+         * @param {number} size
+         */
+        setSize(ID, size) {
+            let node = this.nodes[ID];
+            if (node) {
+                node.size = size;
             }
         }
 

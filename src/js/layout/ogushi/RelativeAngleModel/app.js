@@ -91,8 +91,9 @@ var Dot = /** @class */ (function () {
  * test6：複雑な循環を持った構造②
  * test7：任意長の循環リスト
  * test8：複数のクラスのオブジェクトからなる例
- * test9：同一のフィールドが同一のオブジェクトを参照している例*/
-var testNumber = 1;
+ * test9：同一のフィールドが同一のオブジェクトを参照している例
+ * test10：プリミティブ型を持たないシンプルなツリー*/
+var testNumber = 3;
 switch (testNumber) {
     case 1:
         /*
@@ -102,17 +103,17 @@ switch (testNumber) {
         var dot1 = new Dot("id1", "Node");
         var dot2 = new Dot("id2", "Node");
         var dot3 = new Dot("id3", "Node");
-        //var dot4: Dot = new Dot("id4", "number");
-        //var dot5: Dot = new Dot("id5", "number");
-        //var dot6: Dot = new Dot("id6", "number");
+        var dot4 = new Dot("id4", "number");
+        var dot5 = new Dot("id5", "number");
+        var dot6 = new Dot("id6", "number");
         dot1.addfield("next", dot2);
-        dot2.addfield("next", dot3);
         dot2.addfield("prev", dot1);
+        dot2.addfield("next", dot3);
         dot3.addfield("prev", dot2);
-        //dot1.addfield("val", dot4);
-        //dot2.addfield("val", dot5);
-        //dot3.addfield("val", dot6);
-        var nodes = [dot1, dot2, dot3 /*, dot4, dot5, dot6*/];
+        dot1.addfield("val", dot4);
+        dot2.addfield("val", dot5);
+        dot3.addfield("val", dot6);
+        var nodes = [dot1, dot2, dot3, dot4, dot5, dot6];
         var grp = new Graph(nodes);
         break;
     case 2:
@@ -331,15 +332,42 @@ switch (testNumber) {
         var nodes = [dot1, dot2, dot3];
         var grp = new Graph(nodes);
         break;
+    case 10:
+        /*
+         * Example and Test 10
+         * simple tree
+         */
+        var dot0 = new Dot("id0", "Node");
+        var dot1 = new Dot("id1", "Node");
+        var dot2 = new Dot("id2", "Node");
+        var dot3 = new Dot("id3", "Node");
+        var dot4 = new Dot("id4", "Node");
+        var dot5 = new Dot("id5", "Node");
+        var dot6 = new Dot("id6", "Node");
+        dot0.addfield("left", dot1);
+        dot0.addfield("right", dot4);
+        dot1.addfield("left", dot2);
+        dot1.addfield("right", dot3);
+        dot1.addfield("parent", dot0);
+        dot2.addfield("parent", dot1);
+        dot3.addfield("parent", dot1);
+        dot4.addfield("parent", dot0);
+        dot4.addfield("left", dot5);
+        dot4.addfield("right", dot6);
+        dot5.addfield("parent", dot4);
+        dot6.addfield("parent", dot4);
+        var nodes = [dot0, dot1, dot2, dot3, dot4, dot5, dot6];
+        var grp = new Graph(nodes);
+        break;
 }
 ///<reference path="example.ts" />
 //import sgl = require('./app');
 //sgl.setGraphLocation(grp);
-setGraphLocation(grp);
 ////グラフの描画をするための変数
 var canvas = document.getElementById("cv");
 var context = canvas.getContext("2d");
 context.font = "italic 50px Arial";
+setGraphLocation(grp);
 grp.draw(context);
 console.log(grp);
 //Kanonからgraphオブジェクトを受け取り、graphオブジェクト内のノードの座標を更新する関する（メイン関数）
@@ -648,6 +676,23 @@ function setGraphLocation(graph) {
             };
             return Dot_G;
         }());
+        //補助クラス、ベクトルのクラス
+        var Vector_G = /** @class */ (function () {
+            function Vector_G(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            //２ベクトルの加算
+            Vector_G.prototype.sum = function (vec2) {
+                return new Vector_G(this.x + vec2.x, this.y + vec2.y);
+            };
+            //ベクトルの角度を計算する
+            Vector_G.prototype.angle = function () {
+                var angle = Math.atan2(this.y, this.x) * 180 / Math.PI;
+                return angle;
+            };
+            return Vector_G;
+        }());
         //辺のクラス
         var Edge_G = /** @class */ (function () {
             function Edge_G() {
@@ -673,6 +718,18 @@ function setGraphLocation(graph) {
                 var delta = Math.sqrt(dx * dx + dy * dy);
                 var angle = Math.atan2(dy, dx) * 180 / Math.PI;
                 return angle;
+            };
+            //エッジと同じ角度の単位ベクトルを返す
+            Edge_G.prototype.unitVector = function () {
+                var dx = this.dot2.x - this.dot1.x;
+                var dy = this.dot2.y - this.dot1.y;
+                var delta = Math.sqrt(dx * dx + dy * dy);
+                if (delta != 0) {
+                    return new Vector_G(dx / delta, dy / delta);
+                }
+                else {
+                    return new Vector_G(0, 0);
+                }
             };
             return Edge_G;
         }());
@@ -727,16 +784,15 @@ function setGraphLocation(graph) {
         function draw() {
             //各エッジの平均角度を求める
             for (var i = 0; i < caflist.length; i++) {
-                var angleSum = 0;
+                var vectorSum = new Vector_G(0, 0);
                 var edgeNum = 0;
                 for (var j = 0; j < EDGENUMBER; j++) {
                     if (edgeIncludeCaF(edgeWithAngleList[j], caflist[i])) {
-                        angleSum += edges[j].angle();
+                        vectorSum = vectorSum.sum(edges[j].unitVector());
                         edgeNum += 1;
                     }
                 }
-                caflist[i].angle = angleSum / edgeNum;
-                console.log("caflist[" + i + "] = field : " + caflist[i].field + ", num : " + edgeNum + ", aveAngle : " + caflist[i].angle);
+                caflist[i].angle = vectorSum.angle();
             }
             //各点に働く力を計算
             focus_calculate(dots);
@@ -761,6 +817,7 @@ function setGraphLocation(graph) {
         //計算を終了し、graphに座標情報を書きこんでいく
         function stopCalculate() {
             move_near_center(dots);
+            //graph_g.drawForceVector();
             for (var i = 0; i < ObjectIDs.length; i++) {
                 graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
             }
@@ -840,6 +897,9 @@ function setGraphLocation(graph) {
                     var angle = edges[i].angle();
                     for (var j = 0; j < caflist.length; j++) {
                         if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
+                            var dx = edges[i].dot2.x - edges[i].dot1.x;
+                            var dy = edges[i].dot2.y - edges[i].dot1.y;
+                            var delta = Math.sqrt(dx * dx + dy * dy);
                             if (delta != 0) {
                                 var d = angle - caflist[j].angle; //弧度法から度数法に変更
                                 var ddx;
@@ -874,6 +934,27 @@ function setGraphLocation(graph) {
             for (var i = 0; i < DOTNUMBER; i++) {
                 dots[i].init_velocity();
             }
+        }
+        //ベクトルを画面に表示する
+        function draw_vector(x, y, dx, dy) {
+            var x1 = x;
+            var y1 = y;
+            var x2 = x1 + dx;
+            var y2 = y1 + dy;
+            var x3 = x2 + (-dx - dy) / 12;
+            var y3 = y2 + (dx - dy) / 12;
+            var x4 = x2 + (-dx + dy) / 12;
+            var y4 = y2 + (-dx - dy) / 12;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(x2, y2);
+            context.lineTo(x3, y3);
+            context.lineTo(x4, y4);
+            context.closePath();
+            context.fill();
         }
         //グラフの点集合の重心を求め、重心が画面の中心になるように点移動させる
         function center_of_gravity(dots, width, height) {
@@ -985,10 +1066,10 @@ function setGraphLocation(graph) {
     edgeListInit(graph, edgeWithAngleList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue);
     var edgeListInitEndTime = performance.now();
     console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
-    console.log("edgeList = ");
-    console.log(edgeWithAngleList);
-    console.log("cafList = ");
-    console.log(classAndFieldList);
+    //console.log("edgeList = ");
+    //console.log(edgeWithAngleList);
+    //console.log("cafList = ");
+    //console.log(classAndFieldList);
     var forceDirectedMethodStartTime = performance.now();
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える

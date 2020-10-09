@@ -8,7 +8,7 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
-    <ToolsVersionPromptShown>2.1</ToolsVersionPromptShown>
+    <ToolsVersionPromptShown>2.9</ToolsVersionPromptShown>
     <LastActiveSolutionConfig>Debug|Any CPU</LastActiveSolutionConfig>
     <ProjectView>ProjectFiles</ProjectView>
   </PropertyGroup>

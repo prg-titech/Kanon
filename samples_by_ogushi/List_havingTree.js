@@ -60,6 +60,6 @@ class List_havingTree{
 }
 
 var listT = new List_havingTree(100, tree1);
-tree1.parent = listT;
+// tree1.parent = listT;
 listT.add(101, tree2);
 listT.add(102, tree3);
