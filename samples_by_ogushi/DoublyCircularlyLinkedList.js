@@ -20,4 +20,3 @@ var dcll = new DoublyCircularlyLinkedList(0);
 for (var i = 1; i < 7; i++) {
     dcll.add(i);
 }
-debugger;

@@ -251,7 +251,7 @@ function setGraphLocation(graph: Graph) {
         }
 
         var edgeListInitEndTime = performance.now();
-        console.log("edgeListInit Time = " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
+        console.log("edgeListInit\n   " + (edgeListInitEndTime - edgeListInitStartTime) + " ms");
     }
 
     //交互参照しているフィールドを発見し、削除する
@@ -562,16 +562,18 @@ function setGraphLocation(graph: Graph) {
 
         var WIDTH: number = 1280;    //表示する画面の横幅
         var HEIGHT: number = 720;     //表示する画面の縦幅
-        var K: number = 100;   //クーロン力に係る係数
-        var ITERATION: number = 8000;        //反復回数
+        var CS: number = 250;   //スプリング力に係る係数
+        var CR: number = 100000;   //斥力に係る係数
+        var ITERATION: number = 4000;        //反復回数
         var T: number = Math.max(WIDTH, HEIGHT);         //温度パラメータ
         var t: number = T;
         var dt: number = T / (ITERATION);
+        var DISTORTION: number = 1.0;     //歪み変数
 
         var K: number = 150;   //クーロン力に係る係数
         var Knum: number = 5;       //斥力のKの次数
         var rnum: number = 4;       //斥力のrの次数
-        var KRAD: number = 0.5;      //角度に働く力の係数(弧度法から度数法に変更)
+        var KRAD: number = 0.3;      //角度に働く力の係数(弧度法から度数法に変更)
 
         var NODEMAXSIZE: number = 35;   //ノードの大きさの最大値
         var NODEMINSIZE: number = 15;   //ノードの大きさの最小値
@@ -582,6 +584,7 @@ function setGraphLocation(graph: Graph) {
          *  クラスオブジェクト 15
          *  リテラルオブジェクト 10
          */
+        var STANDARD_EDGELENGTH: number = 150;
 
         //フロイドワーシャル法で各点同士の最短経路長を求める
         var dddd: number[] = new Array(DOTNUMBER * DOTNUMBER);
@@ -601,8 +604,9 @@ function setGraphLocation(graph: Graph) {
             fmy: number;    //モーメントのy成分
             nodenum: number | string;    //点をノードと見なした時の中身の変数
             nodecls: string;            //点をノードと見なした時のクラス名
-            distance: number;   //注目点との距離
+            route_length: number;   //注目点との距離
             size: number;       //ノードの大きさ
+            feye_distance: number;  //注目点との魚眼レイアウトでの理想距離
             isLiteral: boolean;     //プリミティブ型かどうか
 
             //点の初期化
@@ -618,8 +622,9 @@ function setGraphLocation(graph: Graph) {
                 this.fmx = 0;
                 this.fmy = 0;
                 this.nodecls = cls;
-                this.distance = -1;
+                this.route_length = -1;
                 this.size = -1;
+                this.feye_distance = -1;
                 this.isLiteral = !isPrimitiveString(cls);
             }
 
@@ -677,6 +682,7 @@ function setGraphLocation(graph: Graph) {
             dot1cls: string;
             dot2cls: string;
             edgename: string;   //エッジの名前（フィールド名）
+            ideal_length: number;   //エッジの理想長
 
             //辺の初期化
             init(dot1: Dot_G, dot2: Dot_G, edgename: string) {
@@ -685,6 +691,7 @@ function setGraphLocation(graph: Graph) {
                 this.dot1cls = dot1.nodecls;
                 this.dot2cls = dot2.nodecls;
                 this.edgename = edgename;
+                this.ideal_length = STANDARD_EDGELENGTH;
             }
 
             //エッジの長さ（2点間の距離）を求める
@@ -693,6 +700,16 @@ function setGraphLocation(graph: Graph) {
                 var yl: number = this.dot1.y - this.dot2.y;
 
                 return Math.sqrt(xl * xl + yl * yl);
+            }
+
+            //エッジの理想の長さを求め、ideal_lengthに上書きする
+            feye_length() {
+                var id1: number = this.dot1.feye_distance;
+                var id2: number = this.dot2.feye_distance;
+
+                if (id1 != id2) {
+                    this.ideal_length = Math.abs(id1 - id2) * STANDARD_EDGELENGTH;
+                }
             }
 
             //エッジの角度を計算する
@@ -762,32 +779,6 @@ function setGraphLocation(graph: Graph) {
             }
         } while (sameDot_exists(dots, DOTNUMBER));
 
-        //各点に注目点との距離を追加
-        var maxDistance: number = 0;
-        for (var i = 0; i < DOTNUMBER; i++) {
-            if (interestNodes.length > 0) {
-                var index: number = ObjectIDs.indexOf(interestNodes[0]);
-                if (dddd[index * DOTNUMBER + i] != DOTNUMBER) {
-                    dots[i].distance = dddd[index * DOTNUMBER + i];
-                    if (maxDistance < dots[i].distance) {
-                        maxDistance = dots[i].distance;
-                    }
-                }
-            }
-        }
-
-        //注目点との距離を元に各点のサイズを追加
-        for (var i = 0; i < DOTNUMBER; i++) {
-            if (dots[i].distance != -1 && maxDistance != 0) {
-                //if (dots[i].isLiteral) {
-                //    dots[i].size = NODEMAXSIZE_literal - (NODEMAXSIZE_literal - NODEMINSIZE_literal) * dots[i].distance / maxDistance;
-                //} else {
-                //    dots[i].size = NODEMAXSIZE - (NODEMAXSIZE - NODEMINSIZE) * dots[i].distance / maxDistance;
-                //}
-                dots[i].size = NODEMAXSIZE - (NODEMAXSIZE - NODEMINSIZE) * dots[i].distance / maxDistance;
-            }
-        }
-
         //各辺の用意
         var edges: Edge_G[] = new Array(EDGENUMBER);
         for (var i = 0; i < EDGENUMBER; i++) {
@@ -800,6 +791,59 @@ function setGraphLocation(graph: Graph) {
         graph_g.init(DOTNUMBER, EDGENUMBER, edges, dots);
 
         center_of_gravity(dots, WIDTH, HEIGHT);
+
+
+        //もし注目点があるのならば
+        if (interestNodes.length > 0) {
+
+            //各点に注目点との最短経路長を追加
+            var maxDistance: number = 0;
+            for (var i = 0; i < DOTNUMBER; i++) {
+                var index: number = ObjectIDs.indexOf(interestNodes[0]);
+                if (dddd[index * DOTNUMBER + i] != DOTNUMBER) {
+                    dots[i].route_length = dddd[index * DOTNUMBER + i];
+                    if (maxDistance < dots[i].route_length) {
+                        maxDistance = dots[i].route_length;
+                    }
+                }
+            }
+
+            //注目点との経路長を元に注目点との理想距離を計算
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (dots[i].route_length == 0) {
+                    dots[i].feye_distance = 0;
+                } else {
+                    dots[i].feye_distance = (DISTORTION + 1) * maxDistance /
+                        (DISTORTION + maxDistance / dots[i].route_length);
+                }
+            }
+            for (var i = 0; i < EDGENUMBER; i++) {
+                edges[i].feye_length();
+            }
+
+            //console.log("edges =");
+            //console.log(edges);
+
+            //注目点との距離を元に各点のサイズを追加
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (dots[i].route_length != -1 && maxDistance != 0) {
+                    //if (dots[i].isLiteral) {
+                    //    dots[i].size = NODEMAXSIZE_literal - (NODEMAXSIZE_literal - NODEMINSIZE_literal) * dots[i].distance / maxDistance;
+                    //} else {
+                    //    dots[i].size = NODEMAXSIZE - (NODEMAXSIZE - NODEMINSIZE) * dots[i].distance / maxDistance;
+                    //}
+                    dots[i].size = NODEMAXSIZE - (NODEMAXSIZE - NODEMINSIZE) * dots[i].feye_distance / maxDistance;
+                }
+            }
+        }
+
+        //プリミティブ型を参照しているエッジの理想長を短くする
+        for (var i = 0; i < EDGENUMBER; i++) {
+            if (edges[i].dot2.isLiteral) {
+                edges[i].ideal_length *= 0.7;
+            }
+        }
+
 
         //温度パラメータが0以下になるまで安定状態を探索する
         while (true) {
@@ -857,10 +901,23 @@ function setGraphLocation(graph: Graph) {
             center_of_gravity(dots, 0, 100);
             for (var i = 0; i < ObjectIDs.length; i++) {
                 graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
-                graph.setDistance(ObjectIDs[i], dots[i].distance);
+                graph.setDistance(ObjectIDs[i], dots[i].route_length);
                 graph.setSize(ObjectIDs[i], dots[i].size);
             }
             //console.log(dots);
+            for (var i = 0; i < EDGENUMBER; i++) {
+                var edge: Edge_G = edges[i];
+                var dot1ID: string = ObjectIDs[dots.indexOf(edge.dot1)];
+                var dot2ID: string = ObjectIDs[dots.indexOf(edge.dot2)];
+                var dotAvSize: number = (edge.dot1.size + edge.dot2.size) / 2;
+                var edgesize: number = Math.max((dotAvSize - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE), 0) + 14;
+                graph.setEdgeLabelSize(dot1ID, dot2ID, edgesize);
+                graph.setEdgeLabelSize(dot2ID, dot1ID, edgesize);
+            }
+
+            if (interestNodes.length > 0) {
+                graph.setVariableEdgeLabelSize(interestNodes[0], 24);
+            }
         }
 
 
@@ -878,14 +935,30 @@ function setGraphLocation(graph: Graph) {
             return bool;
         }
 
-        //２点間の引力を計算
-        function f_a(r: number, K: number): number {
-            return r * r / K;
+        //与えられた2点が辺で繋がっているかどうか
+        function isConnectEdge(dot1: Dot_G, dot2: Dot_G): Edge_G {
+            for (var i = 0; i < EDGENUMBER; i++) {
+                if (edges[i].dot1 == dot1 && edges[i].dot2 == dot2) {
+                    return edges[i];
+                } else if (edges[i].dot2 == dot1 && edges[i].dot1 == dot2) {
+                    return edges[i];
+                }
+            }
+
+            return null;
         }
 
-        //2点間の斥力を計算
-        function f_r(r: number, K: number): number {
-            return Math.pow(K, Knum) / Math.pow(r, rnum);
+        //ばねで繋がれた２点間のスプリング力を計算
+        //d:２点間の距離、c:係数、ideal_length:ばねの自然長
+        //斥力になる場合は符号がマイナス
+        function f_s(d: number, c: number, ideal_length: number): number {
+            return c * Math.log(d / ideal_length);
+        }
+
+        //非隣接2点間の斥力を計算
+        //d:２点間の距離、c:係数
+        function f_r(d: number, c: number): number {
+            return c / (d * d);
         }
 
         //各点の引力・斥力を計算し、Dot[]に代入していく
@@ -903,43 +976,34 @@ function setGraphLocation(graph: Graph) {
                 dots[i].fmy = 0;
             }
 
-            //各点の斥力を計算
+            //各点のスプリング力・斥力を計算
             for (var i = 0; i < DOTNUMBER; i++) {
                 for (var j = 0; j < DOTNUMBER; j++) {
                     if (j != i) {
                         var dx: number = dots[i].x - dots[j].x;
                         var dy: number = dots[i].y - dots[j].y;
-                        var delta = Math.sqrt(dx * dx + dy * dy);
-                        if (delta != 0) {
-                            var d: number = f_r(delta, K) / delta;
-                            dots[i].frx += dx * d;
-                            dots[i].fry += dy * d;
-                            //if (dddd[i * DOTNUMBER + j] < DOTNUMBER) {  //連結していれば
-                            //    dots[i].frx += dx * d;
-                            //    dots[i].fry += dy * d;
-                            //} else {        //連結していなければ
-                            //    var rate: number = delta < K * 3 ? K : -1;    //距離がK*3以上なら引力、未満なら斥力を発生させる
-                            //    dots[i].frx += dx * rate / delta;
-                            //    dots[i].fry += dy * rate / delta;
-                            //}
+                        var delta: number = Math.sqrt(dx * dx + dy * dy);
+                        var edge: Edge_G = isConnectEdge(dots[i], dots[j]);
+
+                        //２点が辺で繋がっている場合はスプリング力を計算
+                        if (edge != null) {
+                            if (delta != 0) {
+                                var cs: number = (interestNodes.length > 0) ? CS : CS * 0.6;
+                                var d: number = f_s(delta, cs, edge.ideal_length) / delta;
+                                var ddx: number = dx * d;
+                                var ddy: number = dy * d;
+                                dots[i].fax += -ddx;
+                                dots[i].fay += -ddy;
+                            }
+                        } else {    //繋がっていない場合は斥力を計算
+                            if (delta != 0) {
+                                var cr: number = (interestNodes.length > 0) ? CR * 0.5 : CR;
+                                var d: number = f_r(delta, cr) / delta;
+                                dots[i].frx += dx * d;
+                                dots[i].fry += dy * d;
+                            }
                         }
                     }
-                }
-            }
-
-            //各点の引力を計算
-            for (var i = 0; i < EDGENUMBER; i++) {
-                var dx: number = edges[i].dot1.x - edges[i].dot2.x;
-                var dy: number = edges[i].dot1.y - edges[i].dot2.y;
-                var delta: number = Math.sqrt(dx * dx + dy * dy);
-                if (delta != 0) {
-                    var d: number = f_a(delta, K) / delta;
-                    var ddx: number = dx * d;
-                    var ddy: number = dy * d;
-                    edges[i].dot1.fax += -ddx;
-                    edges[i].dot2.fax += +ddx;
-                    edges[i].dot1.fay += -ddy;
-                    edges[i].dot2.fay += +ddy;
                 }
             }
 
@@ -956,8 +1020,9 @@ function setGraphLocation(graph: Graph) {
                                 var d: number = angle - caflist[j].angle; //弧度法から度数法に変更
                                 var ddx: number;
                                 var ddy: number;
-                                var ex: number = KRAD * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                                var ey: number = - KRAD * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                                var krad: number = (interestNodes.length > 0) ? KRAD : KRAD;
+                                var ex: number = krad * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                                var ey: number = - krad * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 if (Math.abs(d) <= 180) {
                                     ddx = d * Math.abs(d) * ex;
                                     ddy = d * Math.abs(d) * ey;
@@ -1191,7 +1256,7 @@ function setGraphLocation(graph: Graph) {
         }
 
         var forceDirectedMethodEndTime = performance.now();
-        console.log("forceDirectedMethod Time = " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
+        console.log("forceDirectedMethod\n   " + (forceDirectedMethodEndTime - forceDirectedMethodStartTime) + " ms");
     }
 
 
@@ -1254,12 +1319,12 @@ function setGraphLocation(graph: Graph) {
     var interestNodes: string[] = new Array();
     edgeListInit(graph, edgeWithAngleList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue, interestNodes);
 
-    console.log("edgeList = ");
-    console.log(edgeWithAngleList);
-    console.log("cafList = ");
-    console.log(classAndFieldList);
-    console.log("interest Nodes = ");
-    console.log(interestNodes);
+    //console.log("edgeList = ");
+    //console.log(edgeWithAngleList);
+    //console.log("cafList = ");
+    //console.log(classAndFieldList);
+    //console.log("interest Nodes = ");
+    //console.log(interestNodes);
 
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える

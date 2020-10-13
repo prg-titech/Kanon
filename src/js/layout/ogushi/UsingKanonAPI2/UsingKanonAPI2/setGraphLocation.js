@@ -1050,8 +1050,8 @@ function setGraphLocation(graph) {
     var classAndFieldList = new Array();
     var interestNodes = new Array();
     edgeListInit(graph, edgeWithAngleList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue, interestNodes);
-    //console.log("edgeList = ");
-    //console.log(edgeWithAngleList);
+    console.log("edgeList = ");
+    console.log(edgeWithAngleList);
     console.log("cafList = ");
     console.log(classAndFieldList);
     console.log("interest Nodes = ");

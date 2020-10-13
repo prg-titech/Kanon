@@ -128,13 +128,18 @@ __$__.StoredGraphFormat = {
             this.from = from;
             this.to = to;
             this.label = label;
+            this.size = -1;
         }
 
         generateVisjsEdge() {
+            let edgeSize = (this.size == -1) ? 14 : this.size;
             let edge = {
                 from: this.from,
                 to: this.to,
-                label: this.label
+                label: this.label,
+                font: {
+                    size: edgeSize
+                }
             };
 
             if (this.from.slice(0, 11) === '__Variable-') {
@@ -276,6 +281,41 @@ __$__.StoredGraphFormat = {
             let node = this.nodes[ID];
             if (node) {
                 node.size = size;
+            }
+        }
+
+        /**
+         * 追加部分：エッジのラベルのサイズを変更する
+         * @param {string} fromID
+         * @param {string} toID
+         * @param {number} size
+         */
+        setEdgeLabelSize(fromID, toID, size) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.size = size;
+            }
+        }
+
+        /**
+         * 追加部分：緑エッジのラベルのサイズを変更する
+         * @param {string} toID
+         * @param {number} size
+         */
+        setVariableEdgeLabelSize(toID, size) {
+            let edge;
+            for(let i = 0; i < this.variableEdges.length; i++) {
+                if(this.variableEdges[i].to == toID) {
+                    edge = this.variableEdges[i];
+                }
+            }
+            if (edge) {
+                edge.size = size;
             }
         }
 

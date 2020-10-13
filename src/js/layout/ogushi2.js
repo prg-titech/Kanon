@@ -8,6 +8,7 @@ __$__.Layout = {
 
             setGraphLocation(graph);
             console.log(graph.nodes);
+            // console.log(graph.edges);
             
         } else {
 
