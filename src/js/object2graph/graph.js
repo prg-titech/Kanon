@@ -166,6 +166,7 @@ __$__.StoredGraphFormat = {
             this.edges = [];
             this.variableNodes = {};
             this.variableEdges = [];
+            this.addArrayNode = false;
         }
 
         pushNode(node) {
@@ -200,7 +201,7 @@ __$__.StoredGraphFormat = {
                 if (node.isLiteral) {
                     return node.type;
                 } else {
-                    return node.label;
+                    return node.value;
                 }
             }
         }

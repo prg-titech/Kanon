@@ -1174,6 +1174,7 @@ function setGraphLocation(graph: Graph) {
                     }
                 }
             }
+            console.log(groupRadius);
 
             ////力学的手法により近づけていく
             //var t = 500;    //温度パラメータ
@@ -1287,12 +1288,20 @@ function setGraphLocation(graph: Graph) {
         //var array: string[] = thisNodeIDs.concat(referencedNodeIDs);
         //return array;
 
-        //緑の矢印で指されているノードID
-        var greenEdges: Edge[] = graph.variableEdges;
+        var greenEdges: Edge[] = graph.variableEdges;   //緑の矢印の集合
+        var bool: boolean = false;
         for (var i = 0; i < greenEdges.length; i++) {
             if (greenEdges[i].label == "this") {
                 interestNodes.push(greenEdges[i].to);
+                bool = true;
                 break;
+            }
+        }
+        if (bool) {
+            for (var i = 0; i < greenEdges.length; i++) {
+                if (greenEdges[i].label != "this") {
+                    interestNodes.push(greenEdges[i].to);
+                }
             }
         }
     }

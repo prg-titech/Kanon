@@ -28,8 +28,10 @@ class Node{
         }
     }
     
-    remove(val){
-        
+    swap(){
+        let temp = this.left;
+        this.left = this.right;
+        this.right = temp;
     }
 }
 
@@ -46,4 +48,4 @@ tree.add(6);
 tree.add(5);
 tree.add(7);
 
-tree.remove(6);
+tree.swap();
