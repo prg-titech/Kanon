@@ -1,4 +1,4 @@
-class DoublyCircularlyLinkedList {
+class DCLL {
 
     constructor(val) {
         this.val = val;
@@ -7,7 +7,7 @@ class DoublyCircularlyLinkedList {
     }
 
     add(val) {
-        var newnode = new DoublyCircularlyLinkedList(val);
+        var newnode = new DCLL(val);
         var temp = this.next;
         this.next = newnode;
         newnode.prev = this;
@@ -16,7 +16,7 @@ class DoublyCircularlyLinkedList {
     }
 }
 
-var dcll = new DoublyCircularlyLinkedList(0);
+var dcll = new DCLL(0);
 for (var i = 1; i < 7; i++) {
     dcll.add(i);
 }

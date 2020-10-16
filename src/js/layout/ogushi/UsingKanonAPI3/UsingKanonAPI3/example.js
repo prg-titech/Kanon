@@ -113,6 +113,22 @@ var Edge = /** @class */ (function () {
     }
     return Edge;
 }());
+var KanonArrayNode = /** @class */ (function () {
+    function KanonArrayNode(reference, id) {
+        this.reference = reference;
+        this.next = null;
+        this.__id = id;
+    }
+    KanonArrayNode.prototype.add = function (next) {
+        if (this.next != null) {
+            this.next = next;
+        }
+        else {
+            this.next.add(next);
+        }
+    };
+    return KanonArrayNode;
+}());
 /**
  * test1：シンプルなリスト
  * test2：ツリーの入ったリスト

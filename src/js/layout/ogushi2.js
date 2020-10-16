@@ -6,9 +6,75 @@ __$__.Layout = {
         console.log("----" + document.getElementById("SelectDrawMethod").value + "----");
         if(document.getElementById("SelectDrawMethod").value == "Ogushi"){
 
-            setGraphLocation(graph);
-            console.log(graph.nodes);
-            // console.log(graph.edges);
+            //配列用のノードを用意するためにgraphに変更を加える
+            for(let nodeID of Object.keys(graph.nodes)){
+                if(graph.nodes[nodeID].label == "Array"){
+                    let arrayNode = graph.nodes[nodeID];    //配列を参照するノード
+                    let fields = graph.getFields(nodeID);
+                    let references = new Array(fields.length);
+                    let refNum = fields.length - 1;
+                    for(let i = graph.edges.length - 1; i >= 0; i--){
+                        if(graph.edges[i].from == nodeID){
+                            let toID = graph.edges[i].to;
+                            let newID = nodeID + "-array" + graph.edges[i].label;
+                            let newNode = new __$__.StoredGraphFormat.Node(
+                                newID, 
+                                "Kanon-ArrayNode", 
+                                false, 
+                                "object"
+                            );
+                            graph.pushNode(newNode);
+                            graph.setArrayNode(newID);
+                            references[refNum] = newID;
+                            let newEdge1 = new __$__.StoredGraphFormat.Edge(
+                                newID, 
+                                toID, 
+                                "ref"
+                            );
+                            graph.pushEdge(newEdge1);
+                            if(refNum != fields.length - 1){
+                                let newEdge2 = new __$__.StoredGraphFormat.Edge(
+                                    references[refNum], 
+                                    references[refNum + 1], 
+                                    "next"
+                                );
+                                graph.pushEdge(newEdge2);
+                            }
+                            if(refNum != 0){
+                                graph.edges.splice(i, 1);
+                            } else {
+                                graph.edges[i].label = "ref";
+                                graph.edges[i].to = references[0];
+                            }
+                            refNum--;
+                        }
+                    }
+                }
+            }
+
+            setGraphLocation(graph);    //TypeScriptで書いたコードが呼び出される
+
+            for(let i = 0; i < graph.edges.length; i++){
+                let edge = graph.edges[i];
+                let fromID = edge.from;
+                let toID = edge.to;
+                if(graph.nodes[fromID].value == "Kanon-ArrayNode" && 
+                graph.nodes[toID].value == "Kanon-ArrayNode" && 
+                edge.label == "next") {
+                    graph.setEdgeArrowOff(fromID, toID);
+                }
+                // else if(fromID.slice(fromID.length - 6, fromID.length - 1) == "array"){
+                //     graph.setEdgeLabel(fromID, toID, fromID.slice(fromID.length - 1, fromID.length));
+                // }
+            }
+            for(let nodeID of Object.keys(graph.nodes)) {
+                if(nodeID.slice(nodeID.length - 6, nodeID.length - 1) == "array") {
+                    graph.setLabel(nodeID, "Array [" + nodeID.slice(nodeID.length - 1, nodeID.length) + "]");
+                }
+            }
+
+            console.log("graph =");
+            console.log(graph);
             
         } else {
 

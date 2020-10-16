@@ -87,6 +87,9 @@ __$__.Update = {
 
             __$__.Testize.updateMarker();
 
+            // console.log("__objs = ");
+            // console.log(__objs);
+            // __$__.arrayConversion.conversion(__objs);       //追加部分
             let graph = __$__.Traverse.traverse(__objs);
 
             __$__.CallTreeNetwork.updateTestInfo();

@@ -236,11 +236,11 @@ function setGraphLocation(graph: Graph) {
         }
 
         //色のセット
-        for (var i = 0; i < ObjectIDs.length; i++) {
-            if (isPrimitiveString(graph.getClass(ObjectIDs[i]))) {
-                graph.setColor(ObjectIDs[i], "skyblue");
-            }
-        }
+        //for (var i = 0; i < ObjectIDs.length; i++) {
+        //    if (isPrimitiveString(graph.getClass(ObjectIDs[i]))) {
+        //        graph.setColor(ObjectIDs[i], "skyblue");
+        //    }
+        //}
 
         //注目ノードの特定
         interestNodesInit(graph, interestNodes, edgelist);
@@ -837,9 +837,9 @@ function setGraphLocation(graph: Graph) {
             }
         }
 
-        //プリミティブ型を参照しているエッジの理想長を短くする
+        //プリミティブ型や配列型を参照しているエッジの理想長を短くする
         for (var i = 0; i < EDGENUMBER; i++) {
-            if (edges[i].dot2.isLiteral) {
+            if (edges[i].dot2.isLiteral || (edges[i].dot1cls == "Array" && edges[i].edgename == "ref")) {
                 edges[i].ideal_length *= 0.7;
             }
         }

@@ -148,6 +148,26 @@ class Edge {
     }
 }
 
+class KanonArrayNode {
+    reference: any;
+    next: KanonArrayNode;
+    __id: number;
+
+    constructor(reference, id) {
+        this.reference = reference;
+        this.next = null;
+        this.__id = id;
+    }
+
+    add(next) {
+        if (this.next != null) {
+            this.next = next;
+        } else {
+            this.next.add(next);
+        }
+    }
+}
+
 /**
  * test1：シンプルなリスト
  * test2：ツリーの入ったリスト

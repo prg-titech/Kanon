@@ -8,6 +8,7 @@ __$__.StoredGraphFormat = {
             this.type = type;
             this.distance = -1;     //追加部分
             this.size = -1;         //追加部分
+            this.shape = 'ellipse';
             if (color) {
                 this.color = color;
             } else if (isLiteral) {
@@ -23,6 +24,8 @@ __$__.StoredGraphFormat = {
                         background: 'white'
                     }
                 };
+            } else {
+                this.color = 'skyblue';
             }
         }
 
@@ -50,34 +53,20 @@ __$__.StoredGraphFormat = {
                 };
             } else {
                 let nodeSize = (this.size == -1) ? 15 : this.size;
-                if(this.color == "hotpink") {
-                    node = {
-                        color: this.color,
-                        id: this.id,
-                        label: "" + this.label,
-                        fixed: fixed,
-                        value: nodeSize,
-                        scaling: {
-                            label: {
-                                enable: true,
-                                max: nodeSize
-                            }
+                node = {
+                    color: this.color,
+                    id: this.id,
+                    label: "" + this.label,
+                    shape: this.shape,
+                    fixed: fixed,
+                    value: nodeSize,
+                    scaling: {
+                        label: {
+                            enable: true,
+                            max: nodeSize
                         }
-                    };
-                } else {
-                    node = {
-                        id: this.id,
-                        label: "" + this.label,
-                        fixed: fixed,
-                        value: nodeSize,
-                        scaling: {
-                            label: {
-                                enable: true,
-                                max: nodeSize
-                            }
-                        }
-                    };
-                }
+                    }
+                };
                 // node = {
                 //     id: this.id,
                 //     label: "" + this.label,
@@ -129,18 +118,33 @@ __$__.StoredGraphFormat = {
             this.to = to;
             this.label = label;
             this.size = -1;
+            this.isArrow = true;
         }
 
         generateVisjsEdge() {
             let edgeSize = (this.size == -1) ? 14 : this.size;
-            let edge = {
-                from: this.from,
-                to: this.to,
-                label: this.label,
-                font: {
-                    size: edgeSize
-                }
-            };
+            let edge;
+            if(this.isArrow) {
+                edge = {
+                    arrows: 'to',
+                    from: this.from,
+                    to: this.to,
+                    label: this.label,
+                    font: {
+                        size: edgeSize
+                    }
+                };
+            } else {
+                edge = {
+                    from: this.from,
+                    to: this.to,
+                    label: this.label,
+                    font: {
+                        size: edgeSize
+                    }
+                };
+            }
+            
 
             if (this.from.slice(0, 11) === '__Variable-') {
                 edge.color = 'seagreen';
@@ -285,6 +289,41 @@ __$__.StoredGraphFormat = {
         }
 
         /**
+         * 追加部分：ノードのラベルを変更する
+         * @param {string} ID
+         * @param {string} label
+         */
+        setLabel(ID, label) {
+            let node = this.nodes[ID];
+            if (node) {
+                node.label = label;
+            }
+        }
+
+        /**
+         * 追加部分：配列を表すノードだけ仕様を変更する
+         * @param {string} ID
+         */
+        setArrayNode(ID) {
+            let node = this.nodes[ID];
+            if (node) {
+                node.shape = 'box';
+                node.color = {
+                    border: 'deepskyblue',
+                    background: 'lightcyan',
+                    highlight: {
+                        border: 'deepskyblue',
+                        background: 'lightcyan'
+                    },
+                    hover: {
+                        border: 'deepskyblue',
+                        background: 'lightcyan'
+                    }
+                };
+            }
+        }
+
+        /**
          * 追加部分：エッジのラベルのサイズを変更する
          * @param {string} fromID
          * @param {string} toID
@@ -316,6 +355,42 @@ __$__.StoredGraphFormat = {
             }
             if (edge) {
                 edge.size = size;
+            }
+        }
+
+        /**
+         * 追加部分：エッジのラベルを変更する
+         * @param {string} fromID
+         * @param {string} toID
+         * @param {string} label
+         */
+        setEdgeLabel(fromID, toID, label) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.label = label;
+            }
+        }
+
+        /**
+         * 追加部分：エッジの矢印をオフにし、ラベルを空にする
+         * @param {string} fromID
+         * @param {string} toID
+         */
+        setEdgeArrowOff(fromID, toID) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.isArrow = false;
+                edge.label = '';
             }
         }
 

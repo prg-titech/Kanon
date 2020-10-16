@@ -17,7 +17,7 @@ __$__.ObjectGraphNetwork = {
             //color: 'skyblue'
         },
         edges: {
-            arrows: 'to',
+            //arrows: 'to',
             color: {
                 color: 'skyblue',
                 opacity: 1.0,
