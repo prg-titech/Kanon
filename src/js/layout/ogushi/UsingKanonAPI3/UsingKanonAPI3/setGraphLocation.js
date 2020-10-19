@@ -749,7 +749,11 @@ function setGraphLocation(graph) {
                 graph.setEdgeLabelSize(dot2ID, dot1ID, edgesize);
             }
             if (interestNodes.length > 0) {
-                graph.setVariableEdgeLabelSize(interestNodes[0], 24);
+                for (var i = 0; i < interestNodes.length; i++) {
+                    var node = dots[ObjectIDs.indexOf(interestNodes[i])];
+                    var edgeSize = Math.max((node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE), 0) + 14;
+                    graph.setVariableEdgeLabelSize(interestNodes[i], edgeSize);
+                }
             }
         }
         //点の初期配置に重なりが無いかを確かめる
@@ -914,14 +918,14 @@ function setGraphLocation(graph) {
         }
         //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
         function move_near_center(dots) {
-            var cx = 0;
-            var cy = 0;
-            for (var i = 0; i < DOTNUMBER; i++) {
-                cx += dots[i].x;
-                cy += dots[i].y;
-            }
-            cx = cx / DOTNUMBER; //重心のx座標
-            cy = cy / DOTNUMBER; //重心のy座標
+            //var cx: number = 0;
+            //var cy: number = 0;
+            //for (var i = 0; i < DOTNUMBER; i++) {
+            //    cx += dots[i].x;
+            //    cy += dots[i].y;
+            //}
+            //cx = cx / DOTNUMBER;        //重心のx座標
+            //cy = cy / DOTNUMBER;        //重心のy座標
             var darray = new Array(DOTNUMBER);
             for (var i = 0; i < DOTNUMBER; i++) {
                 darray[i] = 1; //初期化
@@ -943,93 +947,145 @@ function setGraphLocation(graph) {
             }
             if (groupArray.length <= 1)
                 return;
-            var groupCenterX = new Array(groupArray.length);
-            var groupCenterY = new Array(groupArray.length);
-            var groupRadius = new Array(groupArray.length);
-            var groupWeight = new Array(groupArray.length);
+            var Rectangle_Nodes = /** @class */ (function () {
+                function Rectangle_Nodes(nodeArray) {
+                    this.nodeArray = nodeArray;
+                    this.nodeNumber = nodeArray.length;
+                    this.calculation();
+                    this.powerX = 0;
+                    this.powerY = 0;
+                }
+                Rectangle_Nodes.prototype.calculation = function () {
+                    var left = dots[this.nodeArray[0]].x;
+                    var right = dots[this.nodeArray[0]].x;
+                    var up = dots[this.nodeArray[0]].y;
+                    var down = dots[this.nodeArray[0]].y;
+                    for (var i = 1; i < this.nodeNumber; i++) {
+                        if (dots[this.nodeArray[i]].x < left) {
+                            left = dots[this.nodeArray[i]].x;
+                        }
+                        if (dots[this.nodeArray[i]].x > right) {
+                            right = dots[this.nodeArray[i]].x;
+                        }
+                        if (dots[this.nodeArray[i]].y < up) {
+                            up = dots[this.nodeArray[i]].y;
+                        }
+                        if (dots[this.nodeArray[i]].y > down) {
+                            down = dots[this.nodeArray[i]].y;
+                        }
+                    }
+                    this.leftX = left;
+                    this.rightX = right;
+                    this.upY = up;
+                    this.downY = down;
+                };
+                Rectangle_Nodes.prototype.centerX = function () {
+                    return (this.leftX + this.rightX) / 2;
+                };
+                Rectangle_Nodes.prototype.centerY = function () {
+                    return (this.upY + this.downY) / 2;
+                };
+                Rectangle_Nodes.prototype.diagonal_length = function () {
+                    var dx = this.rightX - this.leftX;
+                    var dy = this.downY - this.upY;
+                    return Math.sqrt(dx * dx + dy * dy) / 2;
+                };
+                Rectangle_Nodes.prototype.moveX = function (mx) {
+                    for (var i = 0; i < this.nodeNumber; i++) {
+                        dots[this.nodeArray[i]].x += mx;
+                    }
+                };
+                Rectangle_Nodes.prototype.moveY = function (my) {
+                    for (var i = 0; i < this.nodeNumber; i++) {
+                        dots[this.nodeArray[i]].y += my;
+                    }
+                };
+                Rectangle_Nodes.prototype.resetPower = function () {
+                    this.powerX = 0;
+                    this.powerY = 0;
+                };
+                return Rectangle_Nodes;
+            }());
+            var groupRectangle = new Array();
             for (var i = 0; i < groupArray.length; i++) {
-                var cnx = 0;
-                var cny = 0;
-                for (var j = 0; j < groupArray[i].length; j++) {
-                    cnx += dots[groupArray[i][j]].x;
-                    cny += dots[groupArray[i][j]].y;
-                }
-                cnx = cnx / groupArray[i].length; //連結しているグループの重心
-                cny = cny / groupArray[i].length;
-                var maxDistance = 0;
-                for (var j = 0; j < groupArray[i].length; j++) {
-                    var distanceX = dots[groupArray[i][j]].x - cnx;
-                    var distanceY = dots[groupArray[i][j]].y - cny;
-                    var distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-                    if (maxDistance < distance) {
-                        maxDistance = distance;
-                    }
-                }
-                groupCenterX[i] = cnx;
-                groupCenterY[i] = cny;
-                groupRadius[i] = maxDistance + 10;
-                groupWeight[i] = groupArray[i].length;
-                var defx = cnx - cx; //全体の重心とグループの重心の差
-                var defy = cny - cy;
-                var def = Math.sqrt(defx * defx + defy * defy);
-                if (def != 0) {
-                    var movex = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
-                    var movey = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
-                    for (var j = 0; j < groupArray[i].length; j++) {
-                        dots[groupArray[i][j]].x -= movex;
-                        dots[groupArray[i][j]].y -= movey;
-                    }
-                }
+                groupRectangle[i] = new Rectangle_Nodes(groupArray[i]);
             }
-            console.log(groupRadius);
-            ////力学的手法により近づけていく
-            //var t = 500;    //温度パラメータ
-            //var dt = t / 100;   //100回計算を繰り返す
-            //var groupPowerX: number[] = new Array(groupArray.length);
-            //var groupPowerY: number[] = new Array(groupArray.length);
-            //while (true) {
-            //    //初期化
-            //    for (var i = 0; i < groupArray.length; i++) {
-            //        groupPowerX[i] = 0;
-            //        groupPowerY[i] = 0;
+            var t = T;
+            var dt = T / 1000;
+            while (true) {
+                //グループにかかるスプリング力を計算
+                for (var i = 0; i < groupRectangle.length; i++) {
+                    groupRectangle[i].resetPower();
+                    for (var j = 0; j < groupRectangle.length; j++) {
+                        if (i != j) {
+                            var dx = groupRectangle[j].centerX() - groupRectangle[i].centerX();
+                            var dy = groupRectangle[j].centerY() - groupRectangle[i].centerY();
+                            var delta = Math.sqrt(dx * dx + dy * dy);
+                            var ideal_length = (groupRectangle[j].diagonal_length() + groupRectangle[i].diagonal_length()) * 1.1;
+                            var spower = f_s(delta, CS, ideal_length);
+                            if (delta != 0) {
+                                groupRectangle[i].powerX += dx * spower / delta;
+                                groupRectangle[i].powerY += dy * spower / delta;
+                            }
+                        }
+                    }
+                }
+                //計算した力を元にグループ単位で移動させていく
+                for (var i = 0; i < groupRectangle.length; i++) {
+                    var dx = groupRectangle[i].powerX;
+                    var dy = groupRectangle[i].powerY;
+                    var disp = Math.sqrt(dx * dx + dy * dy);
+                    if (disp != 0) {
+                        var d = Math.min(disp, t) / disp;
+                        groupRectangle[i].moveX(dx * d);
+                        groupRectangle[i].moveY(dy * d);
+                    }
+                    groupRectangle[i].calculation();
+                }
+                t -= dt;
+                if (t <= 0)
+                    break;
+            }
+            //console.log(groupRectangle);
+            //for (var i = 0; i < groupArray.length; i++) {
+            //    var cnx: number = 0;
+            //    var cny: number = 0;
+            //    for (var j = 0; j < groupArray[i].length; j++) {
+            //        cnx += dots[groupArray[i][j]].x;
+            //        cny += dots[groupArray[i][j]].y;
             //    }
-            //    //引力を計算
-            //    for (var i = 0; i < groupArray.length; i++) {
-            //        for (var j = i + 1; j < groupArray.length; j++) {
-            //            var dx: number = groupCenterX[i] - groupCenterX[j];
-            //            var dy: number = groupCenterY[i] - groupCenterY[j];
-            //            var sumRadius: number = groupRadius[i] + groupRadius[j];
-            //            var delta: number = Math.sqrt(dx * dx + dy * dy) - sumRadius;
-            //            if (delta != 0) {
-            //                var d: number = f_a(delta, 1) / delta;
-            //                var ddx: number = dx * d;
-            //                var ddy: number = dy * d;
-            //                groupPowerX[i] += -ddx;
-            //                groupPowerX[j] += +ddx;
-            //                groupPowerY[i] += -ddy;
-            //                groupPowerY[j] += +ddy;
-            //            }
-            //        }
-            //    }
-            //    //引力に従ってグループ単位で移動
-            //    for (var i = 0; i < groupArray.length; i++) {
-            //        var power: number = Math.sqrt(groupPowerX[i] * groupPowerX[i] + groupPowerY[i] * groupPowerY[i]);
-            //        var moveX: number = 0;
-            //        var moveY: number = 0;
-            //        if (power < t) {
-            //            moveX = groupPowerX[i];
-            //            moveY = groupPowerY[i];
-            //        } else if (power != 0) {
-            //            moveX = t * groupPowerX[i] / power;
-            //            moveY = t * groupPowerY[i] / power;
-            //        }
+            //    cnx = cnx / groupArray[i].length;       //連結しているグループの重心
+            //    cny = cny / groupArray[i].length;
+            //    var defx: number = cnx - cx;        //全体の重心とグループの重心の差
+            //    var defy: number = cny - cy;
+            //    var def: number = Math.sqrt(defx * defx + defy * defy);
+            //    if (def != 0) {
+            //        var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+            //        var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
             //        for (var j = 0; j < groupArray[i].length; j++) {
-            //            dots[groupArray[i][j]].x += moveX;
-            //            dots[groupArray[i][j]].y += moveY;
+            //            dots[groupArray[i][j]].x -= movex;
+            //            dots[groupArray[i][j]].y -= movey;
             //        }
             //    }
-            //    t -= dt;
-            //    if (t < 0) break;
+            //}
+            //for (var i = 0; i < groupRectangle.length; i++) {
+            //    var cnx: number = 0;
+            //    var cny: number = 0;
+            //    for (var j = 0; j < groupRectangle[i].nodeNumber; j++) {
+            //        cnx += dots[groupRectangle[i].nodeArray[j]].x;
+            //        cny += dots[groupRectangle[i].nodeArray[j]].y;
+            //    }
+            //    cnx = cnx / groupRectangle[i].nodeNumber;       //連結しているグループの重心
+            //    cny = cny / groupRectangle[i].nodeNumber;
+            //    var defx: number = cnx - cx;        //全体の重心とグループの重心の差
+            //    var defy: number = cny - cy;
+            //    var def: number = Math.sqrt(defx * defx + defy * defy);
+            //    if (def != 0) {
+            //        var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
+            //        var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
+            //        groupRectangle[i].moveX(-movex);
+            //        groupRectangle[i].moveY(-movey);
+            //    }
             //}
         }
         //各点同士の最短経路長を求める
