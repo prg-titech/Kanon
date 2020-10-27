@@ -111,7 +111,7 @@ function setGraphLocation(graph) {
     }
     //引数がプリミティブ型を表す文字列でないかどうかを調べる、そうでなければtrueを返す
     function isPrimitiveString(str) {
-        return (str != "number") && (str != "string") && (str != "boolean") && (str != "symbol") && (str != "undefined") && (str != "function");
+        return !((str != "number") && (str != "string") && (str != "boolean") && (str != "symbol") && (str != "undefined") && (str != "function"));
     }
     //角度付きエッジリストの情報をEdgeWithAngleとして書きこむ
     function edgeListInit(graph, edgelist, caflist, drawcircle, edgewithprimitivevalue, interestNodes) {
@@ -184,13 +184,13 @@ function setGraphLocation(graph) {
         }
         //ListInListに対応したアルゴリズム
         for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
-            if (isPrimitiveString(allObjectClassExceptDuplication[i])) {
+            if (!isPrimitiveString(allObjectClassExceptDuplication[i])) {
                 HierarchyAngleDecition(graph, edgelist, caflist, allObjectClassExceptDuplication[i], IDsSeparateClass[i]);
             }
         }
         //色のセット
         //for (var i = 0; i < ObjectIDs.length; i++) {
-        //    if (isPrimitiveString(graph.getClass(ObjectIDs[i]))) {
+        //    if (!isPrimitiveString(graph.getClass(ObjectIDs[i]))) {
         //        graph.setColor(ObjectIDs[i], "skyblue");
         //    }
         //}
@@ -336,9 +336,9 @@ function setGraphLocation(graph) {
                         }
                     }
                 }
-                else if (!isPrimitiveString(to)) { //異なるクラスを指している場合
+                else if (isPrimitiveString(to)) { //プリミティブ型を指している場合
                     for (var j = i + 1; j < caflist.length; j++) {
-                        if (caflist[j].parentcls == from && caflist[j].childcls == to) {
+                        if (caflist[j].parentcls == from && isPrimitiveString(caflist[j].childcls)) {
                             cafnumber++;
                             checklist[j] = 1;
                         }
@@ -346,13 +346,14 @@ function setGraphLocation(graph) {
                     var ii = 0;
                     for (var j = i; j < caflist.length; j++) {
                         if (checklist[j] == 1) {
-                            caflist[j].angle = 180 - 180 / (cafnumber * 2) * (2 * ii + 1);
+                            //caflist[j].angle = 180 - 180 / (cafnumber * 2) * (2 * ii + 1);
+                            caflist[j].angle = 120 - 60 / (cafnumber * 2) * (2 * ii + 1);
                             ii++;
                             checklist[j] = 0;
                         }
                     }
                 }
-                else { //プリミティブ型を指している場合
+                else { //異なるクラスを指している場合
                     for (var j = i + 1; j < caflist.length; j++) {
                         if (caflist[j].parentcls == from && caflist[j].childcls == to) {
                             cafnumber++;
@@ -467,26 +468,30 @@ function setGraphLocation(graph) {
     //graphオブジェクト内のノード座標を破壊的に書き替える
     function calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList, caflist, interestNodes) {
         var forceDirectedMethodStartTime = performance.now();
-        //オブジェクトのIDの配列
-        var ObjectIDs = graph.getObjectIDs();
-        //ノード数
-        var DOTNUMBER = ObjectIDs.length;
-        //エッジ数
-        var EDGENUMBER = edgeWithAngleList.length;
+        var ObjectIDs = graph.getObjectIDs(); //オブジェクトのIDの配列
+        var DOTNUMBER = ObjectIDs.length; //ノード数
+        var EDGENUMBER = edgeWithAngleList.length; //エッジ数
         var WIDTH = 1280; //表示する画面の横幅
         var HEIGHT = 720; //表示する画面の縦幅
         var CS = 250; //スプリング力に係る係数
-        var CR = 100000; //斥力に係る係数
+        var CR = 82000; //斥力に係る係数
         var ITERATION = 4000; //反復回数
         var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
         var t = T;
         var dt = T / (ITERATION);
-        var DISTORTION = 1.0; //歪み変数
         var K = 150; //クーロン力に係る係数
         var Knum = 5; //斥力のKの次数
         var rnum = 4; //斥力のrの次数
         var KRAD = 0.3; //角度に働く力の係数(弧度法から度数法に変更)
-        var NODEMAXSIZE = 35; //ノードの大きさの最大値
+        //フロイドワーシャル法で各点同士の最短経路長を求める
+        var dddd = new Array(DOTNUMBER * DOTNUMBER);
+        FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
+        var ddddMax = 0; //最短経路長の最大値
+        for (var i = 0; i < dddd.length; i++) {
+            if (dddd[i] != DOTNUMBER && dddd[i] > ddddMax)
+                ddddMax = dddd[i];
+        }
+        var NODEMAXSIZE = 15 + ddddMax * ddddMax / 3; //ノードの大きさの最大値
         var NODEMINSIZE = 15; //ノードの大きさの最小値
         var NODEMAXSIZE_literal = NODEMAXSIZE * 2 / 3;
         var NODEMINSIZE_literal = NODEMINSIZE * 2 / 3;
@@ -495,10 +500,8 @@ function setGraphLocation(graph) {
          *  クラスオブジェクト 15
          *  リテラルオブジェクト 10
          */
-        var STANDARD_EDGELENGTH = 150;
-        //フロイドワーシャル法で各点同士の最短経路長を求める
-        var dddd = new Array(DOTNUMBER * DOTNUMBER);
-        FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
+        var STANDARD_EDGELENGTH = 130;
+        var DISTORTION = 0 + ddddMax * 0.125; //歪み変数
         //点のクラス
         var Dot_G = /** @class */ (function () {
             function Dot_G() {
@@ -519,7 +522,7 @@ function setGraphLocation(graph) {
                 this.route_length = -1;
                 this.size = -1;
                 this.feye_distance = -1;
-                this.isLiteral = !isPrimitiveString(cls);
+                this.isLiteral = isPrimitiveString(cls);
             };
             //点に働く力から速度を求める
             Dot_G.prototype.init_velocity = function () {
@@ -642,12 +645,27 @@ function setGraphLocation(graph) {
         center_of_gravity(dots, WIDTH, HEIGHT);
         //もし注目点があるのならば
         if (interestNodes.length > 0) {
+            //注目点の番号
+            var indexes = new Array();
+            for (var i = 0; i < interestNodes.length; i++) {
+                indexes.push(ObjectIDs.indexOf(interestNodes[i]));
+            }
             //各点に注目点との最短経路長を追加
             var maxDistance = 0;
             for (var i = 0; i < DOTNUMBER; i++) {
-                var index = ObjectIDs.indexOf(interestNodes[0]);
-                if (dddd[index * DOTNUMBER + i] != DOTNUMBER) {
-                    dots[i].route_length = dddd[index * DOTNUMBER + i];
+                var minLength = DOTNUMBER;
+                for (var j = 0; j < indexes.length; j++) {
+                    if (minLength > dddd[indexes[j] * DOTNUMBER + i]) {
+                        minLength = dddd[indexes[j] * DOTNUMBER + i];
+                    }
+                }
+                //var arr: number[] = new Array();
+                //for (var j = 0; j < indexes.length; j++) {
+                //    arr.push(dddd[indexes[j] * DOTNUMBER + i]);
+                //}
+                //var minLength: number = Math.min(...arr);
+                if (minLength != DOTNUMBER) {
+                    dots[i].route_length = minLength;
                     if (maxDistance < dots[i].route_length) {
                         maxDistance = dots[i].route_length;
                     }
@@ -1047,46 +1065,6 @@ function setGraphLocation(graph) {
                     break;
             }
             //console.log(groupRectangle);
-            //for (var i = 0; i < groupArray.length; i++) {
-            //    var cnx: number = 0;
-            //    var cny: number = 0;
-            //    for (var j = 0; j < groupArray[i].length; j++) {
-            //        cnx += dots[groupArray[i][j]].x;
-            //        cny += dots[groupArray[i][j]].y;
-            //    }
-            //    cnx = cnx / groupArray[i].length;       //連結しているグループの重心
-            //    cny = cny / groupArray[i].length;
-            //    var defx: number = cnx - cx;        //全体の重心とグループの重心の差
-            //    var defy: number = cny - cy;
-            //    var def: number = Math.sqrt(defx * defx + defy * defy);
-            //    if (def != 0) {
-            //        var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
-            //        var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
-            //        for (var j = 0; j < groupArray[i].length; j++) {
-            //            dots[groupArray[i][j]].x -= movex;
-            //            dots[groupArray[i][j]].y -= movey;
-            //        }
-            //    }
-            //}
-            //for (var i = 0; i < groupRectangle.length; i++) {
-            //    var cnx: number = 0;
-            //    var cny: number = 0;
-            //    for (var j = 0; j < groupRectangle[i].nodeNumber; j++) {
-            //        cnx += dots[groupRectangle[i].nodeArray[j]].x;
-            //        cny += dots[groupRectangle[i].nodeArray[j]].y;
-            //    }
-            //    cnx = cnx / groupRectangle[i].nodeNumber;       //連結しているグループの重心
-            //    cny = cny / groupRectangle[i].nodeNumber;
-            //    var defx: number = cnx - cx;        //全体の重心とグループの重心の差
-            //    var defy: number = cny - cy;
-            //    var def: number = Math.sqrt(defx * defx + defy * defy);
-            //    if (def != 0) {
-            //        var movex: number = (def - K * Math.sqrt(groupArray[i].length)) * defx / def;
-            //        var movey: number = (def - K * Math.sqrt(groupArray[i].length)) * defy / def;
-            //        groupRectangle[i].moveX(-movex);
-            //        groupRectangle[i].moveY(-movey);
-            //    }
-            //}
         }
         //各点同士の最短経路長を求める
         function FloydWarshall(dotnumber, edgenumber, d) {
@@ -1147,9 +1125,11 @@ function setGraphLocation(graph) {
                 break;
             }
         }
-        if (bool) {
+        var global_variables = graph.getGlobalVariables(); //グローバル変数の集合
+        if ( /*bool*/true) {
             for (var i = 0; i < greenEdges.length; i++) {
-                if (greenEdges[i].label != "this") {
+                //ローカル変数の指すノードを拡大表示する
+                if (greenEdges[i].label != "this" && global_variables.indexOf(greenEdges[i].label) == -1) {
                     interestNodes.push(greenEdges[i].to);
                 }
             }

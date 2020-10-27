@@ -9,7 +9,19 @@ class Node {
     }
 
     remove(val){
+        var node = this.search(val);
         
+    }
+
+    search(val){
+        if(this.val == val) return this;
+        else if(this.val > val){
+            if(this.left == null) return;
+            else return this.left.search(val);
+        } else {
+            if(this.right == null) return;
+            else return this.right.search(val);
+        }
     }
 }
 
@@ -134,8 +146,8 @@ function insertNullatAllNode(tree) {
 }
 
 var rbt = null;
-for (var i = 1; i <= 15; i++) {
+for (var i = 1; i <= 31; i++) {
     rbt = insert(rbt, i);
 }
 insertNullatAllNode(rbt);
-rbt.remove(7);
+rbt.remove(12);

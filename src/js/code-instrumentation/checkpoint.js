@@ -15,7 +15,7 @@ __$__.Checkpoint = {
      * this function is checkPoint is located at the head and the tail of each Statement.
      */
     checkpoint(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo, contextSensitiveID) {
-
+        //console.log(probe);
         checkCounter += 1;
         var checkPointStartTime = performance.now();
 

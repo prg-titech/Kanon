@@ -19,9 +19,7 @@ document.write('<script type="text/javascript" src="src/js/object2graph/graph.js
 
 //document.write('<script type="text/javascript" src="src/js/layout/oka.js"></script>');
 //document.write('<script type="text/javascript" src="src/js/layout/simple.js"></script>');
-//document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
-document.write('<script type="text/javascript" src="src/js/layout/ogushi2.js"></script>');
-//document.write('<script type="text/javascript" src="src/js/layout/ogushi3.js"></script>');
+document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
 //document.write('<script type="text/javascript" src="src/js/layout/MSM.js"></script>');
 
 //参照するTypeScriptファイルの変更はここで

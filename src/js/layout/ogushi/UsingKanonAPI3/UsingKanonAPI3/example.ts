@@ -48,6 +48,14 @@ class Graph {
         }
     }
 
+    getGlobalVariables(): string[] {
+        return [];
+    }
+
+    getConnectNodes(ID: string): string[] {
+        return [];
+    }
+
     setLocation(ID: string, x: number, y: number) {
         for (var i = 0; i < this.nodes.length; i++) {
             if (ID == this.nodes[i].id) {

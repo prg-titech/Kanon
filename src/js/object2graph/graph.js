@@ -148,7 +148,7 @@ __$__.StoredGraphFormat = {
 
             if (this.from.slice(0, 11) === '__Variable-') {
                 edge.color = 'seagreen';
-                edge.length = 30;
+                edge.length = (this.size == -1)? 30 : edgeSize * 4;
             }
 
             return edge;
@@ -166,7 +166,7 @@ __$__.StoredGraphFormat = {
             this.edges = [];
             this.variableNodes = {};
             this.variableEdges = [];
-            this.addArrayNode = false;
+            this.makeChanges = false;
         }
 
         pushNode(node) {
@@ -239,6 +239,34 @@ __$__.StoredGraphFormat = {
                     }
                 }
             }
+        }
+
+        /**
+         * 追加部分：グローバル変数のstring配列を返す
+         * @return {Array of string}
+         */
+        getGlobalVariables() {
+            return __$__.ASTTransforms.varEnv.Variables();
+        }
+
+        /**
+         * 追加部分：入力のノードと隣接している全てのノードの配列を返す
+         * @param {string} ID
+         * @return {Array of string}
+         */
+        getConnectNodes(ID) {
+            let node = this.nodes[ID];
+            let ans = new Array();
+            if(node) {
+                for(let i = 0; i < this.edges.length; i++) {
+                    if(this.edges[i].from == ID && ans.indexOf(this.edges[i].to) == -1) {
+                        ans.push(this.edges[i].to);
+                    } else if(this.edges[i].to == ID && ans.indexOf(this.edges[i].from) == -1) {
+                        ans.push(this.edges[i].from);
+                    }
+                }
+            }
+            return ans;
         }
 
         /**

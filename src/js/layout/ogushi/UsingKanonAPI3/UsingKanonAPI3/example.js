@@ -40,6 +40,12 @@ var Graph = /** @class */ (function () {
             }
         }
     };
+    Graph.prototype.getGlobalVariables = function () {
+        return [];
+    };
+    Graph.prototype.getConnectNodes = function (ID) {
+        return [];
+    };
     Graph.prototype.setLocation = function (ID, x, y) {
         for (var i = 0; i < this.nodes.length; i++) {
             if (ID == this.nodes[i].id) {

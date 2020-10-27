@@ -47,6 +47,8 @@ __$__.Update = {
             // inserted before and after all statements.
             try {
                 var evalCodeWithCPStartTime = performance.now();
+                //console.log(__$__.Update.CodeWithCP);
+                //console.log(__$__.ASTTransforms.varEnv.Variables());    //ここで呼び出せばグローバル変数が得られる？
                 (() => {eval(__$__.Update.CodeWithCP)})();              //ここにすごく時間がかかっている
                 var evalCodeWithCPEndTime = performance.now();
                 console.log("evalCodeWithCP\n   " + (evalCodeWithCPEndTime - evalCodeWithCPStartTime) + " ms");

@@ -1,13 +1,20 @@
 let array = new Array(0);
 
-class Student {
-    constructor(name){
-        this.name = name;
+class Node{
+    constructor(val){
+        this.val = val;
     }
 }
 
-let st1 = new Student("takumi");
-let st2 = new Student("soujiro");
+for(let i = 0; i < 4; i++){
+    array.push(new Node(i));
+}
 
-array.push(st1);
-array.push(st2);
+swap(array, 1, 3);
+
+function swap(array, val1, val2){
+    let first = array[val1];
+    let second = array[val2];
+    array[val1] = second;
+    array[val2] = first;
+}
