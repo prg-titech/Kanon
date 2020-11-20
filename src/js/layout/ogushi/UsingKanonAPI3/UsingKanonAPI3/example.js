@@ -3,6 +3,7 @@ var Graph = /** @class */ (function () {
     function Graph(nodes) {
         this.nodes = nodes;
         this.variableEdges = new Array();
+        this.BetaMode = false;
     }
     Graph.prototype.getObjectIDs = function () {
         var IDs = new Array();
@@ -70,9 +71,13 @@ var Graph = /** @class */ (function () {
     };
     Graph.prototype.setColor = function (ID, color) {
     };
-    Graph.prototype.setEdgeLabelSize = function (fromID, toID, size) {
+    Graph.prototype.setEdgeLength = function (fromID, toID, length) {
     };
-    Graph.prototype.setVariableEdgeLabelSize = function (toID, size) {
+    Graph.prototype.setEdgeWidth = function (fromID, toID, width) {
+    };
+    Graph.prototype.setEdgeLabelSize = function (fromID, toID, fontSize) {
+    };
+    Graph.prototype.setVariableEdgeLabelSize = function (toID, fontSize) {
     };
     Graph.prototype.draw = function (context) {
         for (var i = 0; i < this.nodes.length; i++) {

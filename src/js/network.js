@@ -93,3 +93,10 @@ __$__.ObjectGraphNetwork.network.on('dragEnd', params => {
 __$__.ObjectGraphNetwork.network.on('dragging', __$__.Update.updateArrayPosition);
 __$__.ObjectGraphNetwork.network.on('dragEnd', __$__.Update.updateArrayPosition);
 __$__.ObjectGraphNetwork.network.on('dragEnd', __$__.StorePositions.registerPositions);
+__$__.ObjectGraphNetwork.network.on('hoverNode', params => {
+    let nodeId = params.node;
+    __$__.Layout.changeHoverNodeColor(nodeId);
+});
+__$__.ObjectGraphNetwork.network.on('blurNode', params => {
+    __$__.Layout.resetHoverNodeColor();
+});

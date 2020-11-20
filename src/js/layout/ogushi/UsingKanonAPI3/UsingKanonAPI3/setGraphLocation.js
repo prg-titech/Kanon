@@ -1,34 +1,5 @@
 //Kanonからgraphオブジェクトを受け取り、graphオブジェクト内のノードの座標を更新する関する（メイン関数）
 function setGraphLocation(graph) {
-    //スタックの実装
-    var Stack = /** @class */ (function () {
-        function Stack() {
-            this.stack = new Array();
-        }
-        //プッシュ
-        Stack.prototype.push = function (str) {
-            this.stack.push(str);
-        };
-        //ポップ
-        Stack.prototype.pop = function () {
-            if (this.stack.length == 0) {
-                return null;
-            }
-            else {
-                var p = this.stack.pop();
-                return p;
-            }
-        };
-        //スタックの中身が空の場合、trueを返す
-        Stack.prototype.isZero = function () {
-            return this.stack.length == 0;
-        };
-        //スタックされている値を配列として返す
-        Stack.prototype.returnArray = function () {
-            return copyArray(this.stack);
-        };
-        return Stack;
-    }());
     /*
      * クラス名とフィールド名をまとめてクラス定義する
      */
@@ -55,14 +26,6 @@ function setGraphLocation(graph) {
         }
         return EdgeWithAngle;
     }());
-    //配列内に引数と同じ値があるかどうかを走査する
-    function sameT_InArray(t, arrayT) {
-        var bool = false;
-        for (var i = 0; i < arrayT.length; i++) {
-            bool = bool || (arrayT[i] == t);
-        }
-        return bool;
-    }
     //ClassAndFieldの配列内に引数と同じ値があるかどうかを走査する
     //あった場合は最初の値のindexを、なければ-1を返す
     function sameClassAndField_InArray(caf, arrayCaf) {
@@ -84,19 +47,6 @@ function setGraphLocation(graph) {
             array[i] = origin[i];
         }
         return array;
-    }
-    //配列同士が同じものであるかどうかを調べる
-    function arrayEqual(a1, a2) {
-        var bool = true;
-        if (a1.length != a2.length) {
-            return false;
-        }
-        else {
-            for (var i = 0; i < a1.length; i++) {
-                bool = bool && (a1[i] === a2[i]);
-            }
-            return bool;
-        }
     }
     //値から配列の最初のkeyを取得し、keyより前の要素を削除した配列を返す
     function arraySpliceBoforeIndexOf(key, array) {
@@ -176,11 +126,12 @@ function setGraphLocation(graph) {
         decitionFieldAngle(caflist);
         //閉路上のエッジに働かせる角度力を無くす
         if (drawcircle) {
-            for (var i = 0; i < caflist.length; i++) {
-                if (caflist[i].parentcls == caflist[i].childcls) {
-                    searchCycleGraph(graph, edgelist, caflist[i].parentcls, ObjectIDs, caflist);
-                }
-            }
+            //for (var i = 0; i < caflist.length; i++) {
+            //    if (caflist[i].parentcls == caflist[i].childcls) {
+            //        searchCycleGraph(graph, edgelist, ObjectIDs, caflist);
+            //    }
+            //}
+            searchCycleGraph(graph, edgelist, ObjectIDs, caflist);
         }
         //ListInListに対応したアルゴリズム
         for (var i = 0; i < allObjectClassExceptDuplication.length; i++) {
@@ -246,10 +197,9 @@ function setGraphLocation(graph) {
      * drawcircleがtrueの場合、閉路上のエッジの角度を全て無効にする
      * drawcircleがfalseの場合、閉路上のエッジを一本削除する
      */
-    function searchCycleGraph(graph, edgelist, cls, IDs, arrayField) {
+    function searchCycleGraph(graph, edgelist, IDs, arrayField) {
         //閉路上のIDの配列
-        var cycleIDs = cycleGraphIDs(graph, cls, IDs, arrayField);
-        //console.log(cycleIDs);
+        var cycleIDs = cycleGraphIDs(graph, IDs, arrayField);
         for (var i = 0; i < cycleIDs.length; i++) {
             for (var j = 0; j < cycleIDs[i].length - 1; j++) {
                 for (var k = 0; k < edgelist.length; k++) {
@@ -260,12 +210,12 @@ function setGraphLocation(graph) {
             }
         }
         //補助関数、閉路を探索し、閉路上のIDの配列を返す
-        function cycleGraphIDs(graph, cls, IDs, arrayField) {
+        function cycleGraphIDs(graph, IDs, arrayField) {
             var cycleIDs = new Array();
             var usedIDs = new Array(); //訪れたことのあるIDを記録
             for (var i = 0; i < IDs.length; i++) {
-                if (!sameT_InArray(IDs[i], usedIDs)) {
-                    var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, IDs[i]);
+                if (usedIDs.indexOf(IDs[i]) == -1) {
+                    var cycleIDsFromOneID = cycleGraphIDsFromOneID(graph, usedIDs, arrayField, IDs[i]);
                     for (var j = 0; j < cycleIDsFromOneID.length; j++) {
                         cycleIDs.push(cycleIDsFromOneID[j]);
                     }
@@ -273,24 +223,25 @@ function setGraphLocation(graph) {
             }
             return cycleIDs;
             //補助関数の補助関数、一つのIDから探索していき、見つかった閉路上のIDの配列を返す（深さ優先探索）
-            function cycleGraphIDsFromOneID(graph, cls, usedIDs, arrayField, ID) {
+            function cycleGraphIDsFromOneID(graph, usedIDs, arrayField, ID) {
                 var cycleIDs = new Array();
-                var stack = new Stack(); //経路を記録するためのスタック
+                var stack = new Array(); //経路を記録するためのスタック
                 deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, ID);
+                return cycleIDs;
                 //補助関数、深さ優先探索的（厳密には違う）にノードを辿っていく
                 function deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, nowID) {
                     stack.push(nowID);
-                    if (!sameT_InArray(nowID, usedIDs)) { //今いるノードが未訪問ならば訪問した印をつける
+                    if (usedIDs.indexOf(nowID) == -1) { //今いるノードが未訪問ならば訪問した印をつける
                         usedIDs.push(nowID);
                     }
                     for (var i = 0; i < arrayField.length; i++) {
                         var u = graph.getField(nowID, arrayField[i].field);
                         if (u != undefined) {
-                            if (!sameT_InArray(u, stack.stack)) {
+                            if (stack.indexOf(u) == -1) {
                                 deep_first_search(graph, stack, cycleIDs, usedIDs, arrayField, u);
                             }
                             else {
-                                var cycleInStack = arraySpliceBoforeIndexOf(u, stack.stack);
+                                var cycleInStack = arraySpliceBoforeIndexOf(u, stack);
                                 cycleIDs.push(cycleInStack);
                                 cycleIDs[cycleIDs.length - 1].push(u);
                             }
@@ -298,7 +249,6 @@ function setGraphLocation(graph) {
                     }
                     stack.pop();
                 }
-                return cycleIDs;
             }
         }
     }
@@ -491,8 +441,9 @@ function setGraphLocation(graph) {
             if (dddd[i] != DOTNUMBER && dddd[i] > ddddMax)
                 ddddMax = dddd[i];
         }
-        var NODEMAXSIZE = 15 + ddddMax * ddddMax / 3; //ノードの大きさの最大値
-        var NODEMINSIZE = 15; //ノードの大きさの最小値
+        var NODESIZE = 15;
+        var NODEMAXSIZE = NODESIZE + ddddMax * ddddMax * ddddMax / 25; //ノードの大きさの最大値
+        var NODEMINSIZE = NODESIZE * 2 / 3 * Math.exp(-ddddMax / 30) + NODESIZE / 3; //ノードの大きさの最小値
         var NODEMAXSIZE_literal = NODEMAXSIZE * 2 / 3;
         var NODEMINSIZE_literal = NODEMINSIZE * 2 / 3;
         /*
@@ -501,7 +452,8 @@ function setGraphLocation(graph) {
          *  リテラルオブジェクト 10
          */
         var STANDARD_EDGELENGTH = 130;
-        var DISTORTION = 0 + ddddMax * 0.125; //歪み変数
+        var STANDARD_EDGEFONTSIZE = 14;
+        var DISTORTION = 0 + ddddMax * ddddMax / 48; //歪み変数
         //点のクラス
         var Dot_G = /** @class */ (function () {
             function Dot_G() {
@@ -520,7 +472,7 @@ function setGraphLocation(graph) {
                 this.fmy = 0;
                 this.nodecls = cls;
                 this.route_length = -1;
-                this.size = -1;
+                this.size = NODESIZE;
                 this.feye_distance = -1;
                 this.isLiteral = isPrimitiveString(cls);
             };
@@ -698,6 +650,22 @@ function setGraphLocation(graph) {
                 }
             }
         }
+        else if (graph.BetaMode) {
+            var unnecessaryClass = ["Edge"];
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (unnecessaryClass.indexOf(dots[i].nodecls) != -1) {
+                    dots[i].size = NODESIZE / 4;
+                }
+            }
+            for (var i = 0; i < EDGENUMBER; i++) {
+                if (unnecessaryClass.indexOf(edges[i].dot2cls) != -1) {
+                    edges[i].ideal_length = STANDARD_EDGELENGTH / 4;
+                }
+                if (unnecessaryClass.indexOf(edges[i].dot1cls) != -1 && unnecessaryClass.indexOf(edges[i].dot2cls) == -1) {
+                    edgeWithAngleList[i].underforce = false;
+                }
+            }
+        }
         //プリミティブ型や配列型を参照しているエッジの理想長を短くする
         for (var i = 0; i < EDGENUMBER; i++) {
             if (edges[i].dot2.isLiteral || (edges[i].dot1cls == "Array" && edges[i].edgename == "ref")) {
@@ -747,30 +715,43 @@ function setGraphLocation(graph) {
             if (t <= 0)
                 stopCalculate();
         }
-        //計算を終了し、graphに座標情報を書きこんでいく
+        //計算を終了し、graph変数に情報を書きこんでいく
         function stopCalculate() {
             move_near_center(dots);
             center_of_gravity(dots, 0, 100);
             for (var i = 0; i < ObjectIDs.length; i++) {
-                graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y);
-                graph.setDistance(ObjectIDs[i], dots[i].route_length);
-                graph.setSize(ObjectIDs[i], dots[i].size);
+                graph.setLocation(ObjectIDs[i], dots[i].x, dots[i].y); //ノードの座標
+                graph.setDistance(ObjectIDs[i], dots[i].route_length); //ノードの注目点からの距離（デバッグ用）
+                graph.setSize(ObjectIDs[i], dots[i].size); //ノードのサイズ
             }
             //console.log(dots);
             for (var i = 0; i < EDGENUMBER; i++) {
                 var edge = edges[i];
                 var dot1ID = ObjectIDs[dots.indexOf(edge.dot1)];
                 var dot2ID = ObjectIDs[dots.indexOf(edge.dot2)];
-                var dotAvSize = (edge.dot1.size + edge.dot2.size) / 2;
-                var edgesize = Math.max((dotAvSize - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE), 0) + 14;
-                graph.setEdgeLabelSize(dot1ID, dot2ID, edgesize);
-                graph.setEdgeLabelSize(dot2ID, dot1ID, edgesize);
+                //var edgefontSize: number = (edge.dot2.size - NODESIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE) + STANDARD_EDGEFONTSIZE;
+                var edgefontSize = edge.dot2.size * STANDARD_EDGEFONTSIZE / NODESIZE;
+                //エッジのラベルのサイズ
+                graph.setEdgeLabelSize(dot1ID, dot2ID, edgefontSize);
+                graph.setEdgeLabelSize(dot2ID, dot1ID, edgefontSize);
+                //エッジの太さ
+                if (edgefontSize < STANDARD_EDGEFONTSIZE && graph.BetaMode) {
+                    graph.setEdgeWidth(dot1ID, dot2ID, edgefontSize / STANDARD_EDGEFONTSIZE * 3);
+                    graph.setEdgeWidth(dot2ID, dot1ID, edgefontSize / STANDARD_EDGEFONTSIZE * 3);
+                }
+                else {
+                    graph.setEdgeWidth(dot1ID, dot2ID, 3);
+                    graph.setEdgeWidth(dot2ID, dot1ID, 3);
+                }
+                //エッジの長さ
+                graph.setEdgeLength(dot1ID, dot2ID, edge.ideal_length / 2);
+                graph.setEdgeLength(dot2ID, dot1ID, edge.ideal_length / 2);
             }
             if (interestNodes.length > 0) {
                 for (var i = 0; i < interestNodes.length; i++) {
                     var node = dots[ObjectIDs.indexOf(interestNodes[i])];
-                    var edgeSize = Math.max((node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE), 0) + 14;
-                    graph.setVariableEdgeLabelSize(interestNodes[i], edgeSize);
+                    var edgefontSize = (node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE) + STANDARD_EDGEFONTSIZE;
+                    graph.setVariableEdgeLabelSize(interestNodes[i], edgefontSize); //緑エッジのラベルのサイズ
                 }
             }
         }
@@ -1145,6 +1126,8 @@ function setGraphLocation(graph) {
     var EdgeWithPrimitiveValue = true;
     //相対角度で描画するかどうか
     var RelativeAngle = false;
+    //特定のクラスを極小表示するモード
+    //var BetaMode: boolean = true;
     //角度付きエッジリストを用意し、参照関係を元に初期化する
     var edgeWithAngleList = new Array();
     var classAndFieldList = new Array();
@@ -1159,5 +1142,7 @@ function setGraphLocation(graph) {
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
     calculateLocationWithForceDirectedMethod(graph, edgeWithAngleList, classAndFieldList, interestNodes);
+    //console.log("edgeList = ");
+    //console.log(edgeWithAngleList);
 }
 //# sourceMappingURL=setGraphLocation.js.map

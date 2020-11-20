@@ -23,7 +23,6 @@ document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></s
 //document.write('<script type="text/javascript" src="src/js/layout/MSM.js"></script>');
 
 //参照するTypeScriptファイルの変更はここで
-//document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI2/UsingKanonAPI2/setGraphLocation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI3/UsingKanonAPI3/setGraphLocation.js"></script>');
 
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');

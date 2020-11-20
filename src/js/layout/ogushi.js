@@ -1,10 +1,17 @@
 __$__.Layout = {
     enabled: true,
+    hoverNodes: [],
+    hoverNodesColor: [],
+    hoverEdges: [],
+    hoverEdgesColor: [],
 
 
     setLocation(graph) {
         console.log("----" + document.getElementById("SelectDrawMethod").value + "----");
-        if(document.getElementById("SelectDrawMethod").value == "Ogushi"){
+        if(document.getElementById("SelectDrawMethod").value == "Ogushi" ||
+        document.getElementById("SelectDrawMethod").value == "Customize"){
+
+            graph.BetaMode = document.getElementById("SelectDrawMethod").value == "Customize";
 
             //一度だけgraphに変更を加える（redrawしたときにはこの変更は加えられない）
             if(!graph.makeChanges){
@@ -12,52 +19,62 @@ __$__.Layout = {
                 //配列用のノードを追加する
                 for(let nodeID of Object.keys(graph.nodes)){
                     if(graph.nodes[nodeID].label == "Array"){
-                        let arrayNode = graph.nodes[nodeID];    //配列を参照するノード
                         let fields = graph.getFields(nodeID);
                         let references = new Array(fields.length);
                         let refNum = fields.length - 1;
-                        for(let i = graph.edges.length - 1; i >= 0; i--){
-                            if(graph.edges[i].from == nodeID && graph.edges[i].label != "ref"){
-                                let toID = graph.edges[i].to;
-                                let newID = nodeID + "-array" + graph.edges[i].label;
-                                let newNode = new __$__.StoredGraphFormat.Node(
-                                    newID, 
-                                    "Kanon-ArrayNode", 
-                                    false, 
-                                    "object"
-                                );
-                                graph.pushNode(newNode);
-                                graph.setArrayNode(newID);
-                                references[refNum] = newID;
-                                let newEdge1 = new __$__.StoredGraphFormat.Edge(
-                                    newID, 
-                                    toID, 
-                                    "ref"
-                                );
-                                graph.pushEdge(newEdge1);
-                                if(refNum != fields.length - 1){
-                                    let newEdge2 = new __$__.StoredGraphFormat.Edge(
-                                        references[refNum], 
-                                        references[refNum + 1], 
-                                        "next"
+                        if(fields.length != 0){
+                            for(let i = graph.edges.length - 1; i >= 0; i--){
+                                if(graph.edges[i].from == nodeID && graph.edges[i].label != "ref"){
+                                    let toID = graph.edges[i].to;
+                                    let newID = nodeID + "-array" + graph.edges[i].label;
+                                    let newNode = new __$__.StoredGraphFormat.Node(
+                                        newID, 
+                                        "Kanon-ArrayNode", 
+                                        false, 
+                                        "object"
                                     );
-                                    graph.pushEdge(newEdge2);
-                                }
-                                if(refNum != 0){
+                                    graph.pushNode(newNode);
+                                    graph.setArrayNode(newID);
+                                    references[refNum] = newID;
+                                    let newEdge1 = new __$__.StoredGraphFormat.Edge(
+                                        newID, 
+                                        toID, 
+                                        "ref"
+                                    );
+                                    graph.pushEdge(newEdge1);
+                                    if(refNum != fields.length - 1){
+                                        let newEdge2 = new __$__.StoredGraphFormat.Edge(
+                                            references[refNum], 
+                                            references[refNum + 1], 
+                                            "next"
+                                        );
+                                        graph.pushEdge(newEdge2);
+                                    }
+                                    // if(refNum != 0){
+                                    //     graph.edges.splice(i, 1);
+                                    // } else {
+                                    //     graph.edges[i].label = "ref";
+                                    //     graph.edges[i].to = references[0];
+                                    // }
                                     graph.edges.splice(i, 1);
-                                } else {
-                                    graph.edges[i].label = "ref";
+                                    refNum--;
+                                }
+                            }
+                            for(let i = graph.edges.length - 1; i >= 0; i--){
+                                if(graph.edges[i].to == nodeID){
                                     graph.edges[i].to = references[0];
                                 }
-                                refNum--;
+                            }
+                            for(let i = graph.variableEdges.length - 1; i >= 0; i--){
+                                if(graph.variableEdges[i].to == nodeID){
+                                    graph.variableEdges[i].to = references[0];
+                                }
                             }
                         }
                     }
                 }
 
                 //どこからも参照されていないノードは表示しないようにする
-
-
                 let greenEdges = graph.variableEdges;
                 let layoutNodeIDs = new Array();
                 for(let i = 0; i < greenEdges.length; i++){     //変数参照されているノードを追加
@@ -138,6 +155,81 @@ __$__.Layout = {
 
         }
         
+    },
+
+    //マウスをノード上に持ってきたとき、そのノードから辿れる全てのノードの色を一時的に変える
+    changeHoverNodeColor(nodeId) {
+        let connectedNodes = [nodeId];
+        let connectedEdges = new Array();
+        let num = 0;
+        while(true){
+            if(connectedNodes[num]){
+                let current = connectedNodes[num];
+                let currentConnectedEdges = __$__.ObjectGraphNetwork.network.getConnectedEdges(current);
+                for(let i = 0; i < currentConnectedEdges.length; i++){
+                    let fromto = __$__.ObjectGraphNetwork.network.getConnectedNodes(currentConnectedEdges[i]);
+                    if(fromto[0] == current && 
+                        fromto[1].slice(fromto[1].length - 6, fromto[1].length - 1) != "array" &&
+                        connectedNodes.indexOf(fromto[1]) == -1) {
+                        connectedNodes.push(fromto[1]);
+                        connectedEdges.push(currentConnectedEdges[i]);
+                    }
+                }
+            } else break;
+            num++;
+        }
+        __$__.Layout.hoverNodes = connectedNodes;
+        __$__.Layout.hoverEdges = connectedEdges;
+
+        for(let i = 0; i < connectedNodes.length; i++) {
+            __$__.Layout.hoverNodesColor.push(__$__.ObjectGraphNetwork.nodes.get(connectedNodes[i]).color);
+            let color;
+            if(connectedNodes[i].slice(connectedNodes[i].length - 6, connectedNodes[i].length - 1) != "array") {
+                color = 'orange';
+            } else {
+                color = {
+                    border: 'darkorange',
+                    background: 'lightgoldenrodyellow',
+                    highlight: {
+                        border: 'darkorange',
+                        background: 'lightgoldenrodyellow'
+                    },
+                    hover: {
+                        border: 'darkorange',
+                        background: 'lightgoldenrodyellow'
+                    }
+                };
+            }
+            __$__.ObjectGraphNetwork.nodes.update({id: connectedNodes[i], color: color});
+        }
+        for(let i = 0; i < connectedEdges.length; i++) {
+            __$__.Layout.hoverEdgesColor.push(__$__.ObjectGraphNetwork.edges.get(connectedEdges[i]).color);
+            __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'orange'});
+        }
+
+        __$__.ObjectGraphNetwork.network.redraw();
+    },
+
+    //マウスをノード上から離した時にノードの色を元に戻す
+    resetHoverNodeColor() {
+        let edgecolor = {
+            color: 'skyblue',
+            opacity: 1.0,
+            highlight: 'skyblue',
+            hover: 'skyblue'
+        };
+        for(let i = 0; i < __$__.Layout.hoverNodes.length; i++) {
+            __$__.ObjectGraphNetwork.nodes.update({id: __$__.Layout.hoverNodes[i], color: __$__.Layout.hoverNodesColor[i]});
+        }
+        for(let i = 0; i < __$__.Layout.hoverEdges.length; i++) {
+            __$__.ObjectGraphNetwork.edges.update({id: __$__.Layout.hoverEdges[i], color: edgecolor});
+        }
+        __$__.Layout.hoverNodes = [];
+        __$__.Layout.hoverNodesColor = [];
+        __$__.Layout.hoverEdges = [];
+        __$__.Layout.hoverEdgesColor = [];
+
+        __$__.ObjectGraphNetwork.network.redraw();
     },
 
 

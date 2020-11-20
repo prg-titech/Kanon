@@ -2,10 +2,12 @@
 class Graph {
     nodes: Dot[];
     variableEdges: Edge[];
+    BetaMode: boolean;
 
     constructor(nodes: Dot[]) {
         this.nodes = nodes;
         this.variableEdges = new Array();
+        this.BetaMode = false;
     }
 
     getObjectIDs(): string[] {
@@ -85,11 +87,19 @@ class Graph {
 
     }
 
-    setEdgeLabelSize(fromID: string, toID: string, size: number) {
+    setEdgeLength(fromID: string, toID: string, length: number) {
 
     }
 
-    setVariableEdgeLabelSize(toID: string, size: number) {
+    setEdgeWidth(fromID: string, toID: string, width: number) {
+
+    }
+
+    setEdgeLabelSize(fromID: string, toID: string, fontSize: number) {
+
+    }
+
+    setVariableEdgeLabelSize(toID: string, fontSize: number) {
 
     }
 

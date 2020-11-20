@@ -47,6 +47,7 @@ __$__.StoredGraphFormat = {
                     scaling: {
                         label: {
                             enable: true,
+                            min: nodeSize,
                             max: nodeSize
                         }
                     }
@@ -63,6 +64,7 @@ __$__.StoredGraphFormat = {
                     scaling: {
                         label: {
                             enable: true,
+                            min: nodeSize,
                             max: nodeSize
                         }
                     }
@@ -117,12 +119,13 @@ __$__.StoredGraphFormat = {
             this.from = from;
             this.to = to;
             this.label = label;
-            this.size = -1;
+            this.length = undefined;
+            this.width = 3;
+            this.fontSize = 14;
             this.isArrow = true;
         }
 
         generateVisjsEdge() {
-            let edgeSize = (this.size == -1) ? 14 : this.size;
             let edge;
             if(this.isArrow) {
                 edge = {
@@ -130,8 +133,10 @@ __$__.StoredGraphFormat = {
                     from: this.from,
                     to: this.to,
                     label: this.label,
+                    length: this.length,
+                    width: this.width,
                     font: {
-                        size: edgeSize
+                        size: this.fontSize
                     }
                 };
             } else {
@@ -139,8 +144,10 @@ __$__.StoredGraphFormat = {
                     from: this.from,
                     to: this.to,
                     label: this.label,
+                    length: this.length,
+                    width: this.width,
                     font: {
-                        size: edgeSize
+                        size: this.fontSize
                     }
                 };
             }
@@ -148,7 +155,7 @@ __$__.StoredGraphFormat = {
 
             if (this.from.slice(0, 11) === '__Variable-') {
                 edge.color = 'seagreen';
-                edge.length = (this.size == -1)? 30 : edgeSize * 4;
+                //edge.length = (this.fontSize == 14)? 30 : this.fontSize * 4;
             }
 
             return edge;
@@ -167,6 +174,7 @@ __$__.StoredGraphFormat = {
             this.variableNodes = {};
             this.variableEdges = [];
             this.makeChanges = false;
+            this.BetaMode = false;
         }
 
         pushNode(node) {
@@ -353,12 +361,12 @@ __$__.StoredGraphFormat = {
         }
 
         /**
-         * 追加部分：エッジのラベルのサイズを変更する
+         * 追加部分：エッジの長さを変更する
          * @param {string} fromID
          * @param {string} toID
-         * @param {number} size
+         * @param {number} length
          */
-        setEdgeLabelSize(fromID, toID, size) {
+        setEdgeLength(fromID, toID, length) {
             let edge;
             for(let i = 0; i < this.edges.length; i++) {
                 if(this.edges[i].from == fromID && this.edges[i].to == toID) {
@@ -366,16 +374,52 @@ __$__.StoredGraphFormat = {
                 }
             }
             if (edge) {
-                edge.size = size;
+                edge.length = length;
+            }
+        }
+
+        /**
+         * 追加部分：エッジの太さを変更する
+         * @param {string} fromID
+         * @param {string} toID
+         * @param {number} width
+         */
+        setEdgeWidth(fromID, toID, width) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.width = width;
+            }
+        }
+
+        /**
+         * 追加部分：エッジのラベルのサイズを変更する
+         * @param {string} fromID
+         * @param {string} toID
+         * @param {number} fontSize
+         */
+        setEdgeLabelSize(fromID, toID, fontSize) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.fontSize = fontSize;
             }
         }
 
         /**
          * 追加部分：緑エッジのラベルのサイズを変更する
          * @param {string} toID
-         * @param {number} size
+         * @param {number} fontSize
          */
-        setVariableEdgeLabelSize(toID, size) {
+        setVariableEdgeLabelSize(toID, fontSize) {
             let edge;
             for(let i = 0; i < this.variableEdges.length; i++) {
                 if(this.variableEdges[i].to == toID) {
@@ -383,7 +427,7 @@ __$__.StoredGraphFormat = {
                 }
             }
             if (edge) {
-                edge.size = size;
+                edge.fontSize = fontSize;
             }
         }
 
