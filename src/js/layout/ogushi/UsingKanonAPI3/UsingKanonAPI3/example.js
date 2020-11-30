@@ -3,7 +3,7 @@ var Graph = /** @class */ (function () {
     function Graph(nodes) {
         this.nodes = nodes;
         this.variableEdges = new Array();
-        this.BetaMode = false;
+        this.CustomMode = false;
     }
     Graph.prototype.getObjectIDs = function () {
         var IDs = new Array();
@@ -40,6 +40,9 @@ var Graph = /** @class */ (function () {
                 }
             }
         }
+    };
+    Graph.prototype.isLiteral = function (ID) {
+        return true;
     };
     Graph.prototype.getGlobalVariables = function () {
         return [];

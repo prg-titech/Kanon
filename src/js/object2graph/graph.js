@@ -126,10 +126,19 @@ __$__.StoredGraphFormat = {
         }
 
         generateVisjsEdge() {
-            let edge;
+            let edge, arrowheadSize = 1;
+            if(this.length != undefined){
+                arrowheadSize = Math.min(this.length / 130, 1);
+            }
+            
             if(this.isArrow) {
                 edge = {
-                    arrows: 'to',
+                    arrows: {
+                        to: {
+                            enabled: true,
+                            scaleFactor: arrowheadSize
+                        }
+                    },
                     from: this.from,
                     to: this.to,
                     label: this.label,
@@ -174,7 +183,8 @@ __$__.StoredGraphFormat = {
             this.variableNodes = {};
             this.variableEdges = [];
             this.makeChanges = false;
-            this.BetaMode = false;
+            this.CustomMode = false;
+            this.notInterestedClass = [];
         }
 
         pushNode(node) {
@@ -246,6 +256,18 @@ __$__.StoredGraphFormat = {
                         return edge.to;
                     }
                 }
+            }
+        }
+
+        /**
+         * 追加部分：ノードの値がリテラルかどうかを返す
+         * @param {string} ID
+         * @return {boolean}
+         */
+        isLiteral(ID) {
+            let node = this.nodes[ID];
+            if (node) {
+                return node.isLiteral;
             }
         }
 

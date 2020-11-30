@@ -46,9 +46,11 @@
 		<form id='fontSizeForm' name='fontSizeForm'>
 			font size: <input id="fontSize" name="fontSize" oninput="__$__.FontSizeUpdate();" placeholder="12">
 		</form>
+		
 		<div id="autoLayout">
 			<input type="checkbox" name="autoLayout" value="true" checked="checked">Auto Layout
 		</div>
+		
         <div id="fileOperation">
 			<input id="saveButton" type="button" value="Save file"
 				   onclick="__$__.saveFile()">
@@ -63,10 +65,11 @@
 			Draw Method:
         	<select name="SelectDrawMethod" id="SelectDrawMethod">
 				<option value="Original">Original</option>
-				<option value="Ogushi">Auto</option>
+				<option value="Automatic">Auto</option>
 				<option value="Customize">Custom</option>
 			</select>
 		</div>
+		<div id="selectClass"></div>
 		<input id="redrawButton" type="button" value="redraw"
 			onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 

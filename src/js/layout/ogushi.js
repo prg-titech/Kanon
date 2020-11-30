@@ -8,10 +8,11 @@ __$__.Layout = {
 
     setLocation(graph) {
         console.log("----" + document.getElementById("SelectDrawMethod").value + "----");
-        if(document.getElementById("SelectDrawMethod").value == "Ogushi" ||
-        document.getElementById("SelectDrawMethod").value == "Customize"){
 
-            graph.BetaMode = document.getElementById("SelectDrawMethod").value == "Customize";
+        if(document.getElementById("SelectDrawMethod").value == "Automatic" ||
+        document.getElementById("SelectDrawMethod").value == "Customize") {
+
+            graph.CustomMode = document.getElementById("SelectDrawMethod").value == "Customize";
 
             //一度だけgraphに変更を加える（redrawしたときにはこの変更は加えられない）
             if(!graph.makeChanges){
@@ -26,7 +27,7 @@ __$__.Layout = {
                             for(let i = graph.edges.length - 1; i >= 0; i--){
                                 if(graph.edges[i].from == nodeID && graph.edges[i].label != "ref"){
                                     let toID = graph.edges[i].to;
-                                    let newID = nodeID + "-array" + graph.edges[i].label;
+                                    let newID = nodeID + "-" + graph.edges[i].label + "-array";
                                     let newNode = new __$__.StoredGraphFormat.Node(
                                         newID, 
                                         "Kanon-ArrayNode", 
@@ -75,10 +76,10 @@ __$__.Layout = {
                 }
 
                 //どこからも参照されていないノードは表示しないようにする
-                let greenEdges = graph.variableEdges;
+                let limeEdges = graph.variableEdges;
                 let layoutNodeIDs = new Array();
-                for(let i = 0; i < greenEdges.length; i++){     //変数参照されているノードを追加
-                    if(layoutNodeIDs.indexOf(greenEdges[i].to) == -1) layoutNodeIDs.push(greenEdges[i].to);
+                for(let i = 0; i < limeEdges.length; i++){     //変数参照されているノードを追加
+                    if(layoutNodeIDs.indexOf(limeEdges[i].to) == -1) layoutNodeIDs.push(limeEdges[i].to);
                 }
                 let globalVar = graph.getGlobalVariables();
                 for(let i = 0; i < globalVar; i++){
@@ -111,6 +112,46 @@ __$__.Layout = {
                 // console.log(graph.getConnectNodes(layoutNodeIDs[0]));
             }
 
+            //カスタムモードのとき、クラス名のチェックボックスを表示し、チェックの入っていないクラスノードは縮小表示する
+            let selectClassDiv = document.getElementById("selectClass");
+            if(graph.CustomMode) {
+                if(selectClassDiv.innerHTML != '') {    //redraw時にチェックボックスに印のついていないクラス名を記憶しておく
+                    let checkClass = document.getElementById("checkClass");
+                    for(let i = 0; i < checkClass.elements.length; i++) {
+                        if(!checkClass.elements[i].checked) {
+                            graph.notInterestedClass.push(checkClass.elements[i].value);
+                        }
+                    }
+                    if(graph.notInterestedClass.indexOf("Array") != -1 && graph.notInterestedClass.indexOf("Kanon-ArrayNode") == -1) {
+                        graph.notInterestedClass.push("Kanon-ArrayNode");
+                    } else if(graph.notInterestedClass.indexOf("Array") == -1 && graph.notInterestedClass.indexOf("Kanon-ArrayNode") != -1) {
+                        graph.notInterestedClass.push("Array");
+                    }
+                    selectClassDiv.innerHTML = '';
+                }
+                
+                let allClass = new Array();     //リテラル以外の全クラス名
+                let IDs = graph.getObjectIDs();
+                for(let i = 0; i < IDs.length; i++) {
+                    if(allClass.indexOf(graph.getClass(IDs[i])) == -1 && !graph.isLiteral(IDs[i])) allClass.push(graph.getClass(IDs[i]));
+                }
+                let checkboxString = '<form id="checkClass">';  //チェックボックスのHTMLを動的に作る
+                let isArrayCheckBox = false;
+                for(let i = 0; i < allClass.length; i++) {
+                    if(allClass[i] == "Array" || allClass[i] == "Kanon-ArrayNode") {
+                        if(isArrayCheckBox) continue;
+                        else isArrayCheckBox = true;
+                    }
+                    let _checked = (graph.notInterestedClass.indexOf(allClass[i]) != -1) ? '"> ' : '" checked> ';
+                    let className = (allClass[i] == "Kanon-ArrayNode") ? "Array" : allClass[i];
+                    checkboxString = checkboxString + '<input type="checkbox" name="checkClass" value="' + allClass[i] + _checked + className;
+                }
+                checkboxString = checkboxString + '</form>';
+                selectClassDiv.innerHTML = checkboxString;
+            } else {
+                selectClassDiv.innerHTML = '';      //カスタムモード以外ではチェックボックスを表示しない
+            }
+
             setGraphLocation(graph);    //TypeScriptで書いたコードが呼び出される
 
             if(!graph.makeChanges){
@@ -123,17 +164,21 @@ __$__.Layout = {
                     edge.label == "next") {
                         graph.setEdgeArrowOff(fromID, toID);
                     }
-                    // else if(fromID.slice(fromID.length - 6, fromID.length - 1) == "array"){
+                    // else if(fromID.slice(fromID.length - 5, fromID.length) == "array"){
                     //     graph.setEdgeLabel(fromID, toID, fromID.slice(fromID.length - 1, fromID.length));
                     // }
                 }
                 for(let nodeID of Object.keys(graph.nodes)) {
-                    if(nodeID.slice(nodeID.length - 6, nodeID.length - 1) == "array") {
-                        graph.setLabel(nodeID, "Array [" + nodeID.slice(nodeID.length - 1, nodeID.length) + "]");
+                    if(nodeID.slice(nodeID.length - 5, nodeID.length) == "array") {
+                        let sliceID = nodeID.slice(0, nodeID.length - 6);
+                        let lastindex = sliceID.lastIndexOf("-");
+                        graph.setLabel(nodeID, "Array [" + nodeID.slice(lastindex + 1, nodeID.length - 6) + "]");
                     }
                 }
                 graph.makeChanges = true;
             }
+
+            graph.notInterestedClass = [];
 
             console.log("graph =");
             console.log(graph);
@@ -169,7 +214,7 @@ __$__.Layout = {
                 for(let i = 0; i < currentConnectedEdges.length; i++){
                     let fromto = __$__.ObjectGraphNetwork.network.getConnectedNodes(currentConnectedEdges[i]);
                     if(fromto[0] == current && 
-                        fromto[1].slice(fromto[1].length - 6, fromto[1].length - 1) != "array" &&
+                        !(fromto[1].slice(fromto[1].length - 5, fromto[1].length) == "array" && nodeId.slice(nodeId.length - 5, nodeId.length) == "array" && nodeId == current) && 
                         connectedNodes.indexOf(fromto[1]) == -1) {
                         connectedNodes.push(fromto[1]);
                         connectedEdges.push(currentConnectedEdges[i]);
@@ -184,19 +229,19 @@ __$__.Layout = {
         for(let i = 0; i < connectedNodes.length; i++) {
             __$__.Layout.hoverNodesColor.push(__$__.ObjectGraphNetwork.nodes.get(connectedNodes[i]).color);
             let color;
-            if(connectedNodes[i].slice(connectedNodes[i].length - 6, connectedNodes[i].length - 1) != "array") {
-                color = 'orange';
+            if(connectedNodes[i].slice(connectedNodes[i].length - 5, connectedNodes[i].length) != "array") {
+                color = (__$__.Layout.hoverNodesColor[i] == 'hotpink')? 'chocolate' : 'lime';
             } else {
                 color = {
-                    border: 'darkorange',
-                    background: 'lightgoldenrodyellow',
+                    border: 'lime',
+                    background: 'lightcyan',
                     highlight: {
-                        border: 'darkorange',
-                        background: 'lightgoldenrodyellow'
+                        border: 'lime',
+                        background: 'lightcyan'
                     },
                     hover: {
-                        border: 'darkorange',
-                        background: 'lightgoldenrodyellow'
+                        border: 'lime',
+                        background: 'lightcyan'
                     }
                 };
             }
@@ -204,7 +249,7 @@ __$__.Layout = {
         }
         for(let i = 0; i < connectedEdges.length; i++) {
             __$__.Layout.hoverEdgesColor.push(__$__.ObjectGraphNetwork.edges.get(connectedEdges[i]).color);
-            __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'orange'});
+            __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'lime'});
         }
 
         __$__.ObjectGraphNetwork.network.redraw();

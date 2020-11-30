@@ -264,8 +264,16 @@ function setGraphLocation(graph) {
                 checklist[i] = 1;
                 var from = caflist[i].parentcls;
                 var to = caflist[i].childcls;
-                //フィールドの指すクラスが元のクラスと同じ場合
-                if (from == to) {
+                if (from == "Kanon-ArrayNode" && to == "Kanon-ArrayNode") { //配列ノードの場合
+                    if (caflist[i].field == "next") {
+                        caflist[i].angle = 0;
+                    }
+                    else if (caflist[i].field == "ref") {
+                        caflist[i].angle = 90;
+                    }
+                    checklist[i] = 0;
+                }
+                else if (from == to) { //フィールドの指すクラスが元のクラスと同じ場合
                     for (var j = i + 1; j < caflist.length; j++) {
                         if (caflist[j].parentcls == from && caflist[j].childcls == to) {
                             cafnumber++;
@@ -423,16 +431,13 @@ function setGraphLocation(graph) {
         var EDGENUMBER = edgeWithAngleList.length; //エッジ数
         var WIDTH = 1280; //表示する画面の横幅
         var HEIGHT = 720; //表示する画面の縦幅
-        var CS = 250; //スプリング力に係る係数
-        var CR = 82000; //斥力に係る係数
-        var ITERATION = 4000; //反復回数
+        var CS = 75; //スプリング力に係る係数
+        var CR = 100000; //斥力に係る係数
+        var KRAD = 0.3; //角度に働く力の係数(弧度法から度数法に変更)
+        var ITERATION = 6000; //反復回数
         var T = Math.max(WIDTH, HEIGHT); //温度パラメータ
         var t = T;
         var dt = T / (ITERATION);
-        var K = 150; //クーロン力に係る係数
-        var Knum = 5; //斥力のKの次数
-        var rnum = 4; //斥力のrの次数
-        var KRAD = 0.3; //角度に働く力の係数(弧度法から度数法に変更)
         //フロイドワーシャル法で各点同士の最短経路長を求める
         var dddd = new Array(DOTNUMBER * DOTNUMBER);
         FloydWarshall(DOTNUMBER, EDGENUMBER, dddd);
@@ -475,6 +480,7 @@ function setGraphLocation(graph) {
                 this.size = NODESIZE;
                 this.feye_distance = -1;
                 this.isLiteral = isPrimitiveString(cls);
+                this.interested = true;
             };
             //点に働く力から速度を求める
             Dot_G.prototype.init_velocity = function () {
@@ -516,6 +522,7 @@ function setGraphLocation(graph) {
                 this.dot2cls = dot2.nodecls;
                 this.edgename = edgename;
                 this.ideal_length = STANDARD_EDGELENGTH;
+                this.krad = KRAD;
             };
             //エッジの長さ（2点間の距離）を求める
             Edge_G.prototype.length = function () {
@@ -650,19 +657,31 @@ function setGraphLocation(graph) {
                 }
             }
         }
-        else if (graph.BetaMode) {
-            var unnecessaryClass = ["Edge"];
+        else if (graph.CustomMode) { //カスタムモードのとき
             for (var i = 0; i < DOTNUMBER; i++) {
-                if (unnecessaryClass.indexOf(dots[i].nodecls) != -1) {
-                    dots[i].size = NODESIZE / 4;
+                if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) {
+                    dots[i].interested = false;
+                    dots[i].size = NODESIZE / 8;
                 }
             }
             for (var i = 0; i < EDGENUMBER; i++) {
-                if (unnecessaryClass.indexOf(edges[i].dot2cls) != -1) {
-                    edges[i].ideal_length = STANDARD_EDGELENGTH / 4;
+                if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) {
+                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) {
+                        edges[i].ideal_length = STANDARD_EDGELENGTH / 16;
+                    }
+                    else {
+                        edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
+                    }
                 }
-                if (unnecessaryClass.indexOf(edges[i].dot1cls) != -1 && unnecessaryClass.indexOf(edges[i].dot2cls) == -1) {
-                    edgeWithAngleList[i].underforce = false;
+                else {
+                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) {
+                        edges[i].krad = KRAD / 4;
+                        if (isPrimitiveString(edges[i].dot2cls)) {
+                            edges[i].dot2.interested = false;
+                            edges[i].dot2.size = NODESIZE / 8;
+                            edges[i].ideal_length = STANDARD_EDGELENGTH / 16;
+                        }
+                    }
                 }
             }
         }
@@ -724,7 +743,6 @@ function setGraphLocation(graph) {
                 graph.setDistance(ObjectIDs[i], dots[i].route_length); //ノードの注目点からの距離（デバッグ用）
                 graph.setSize(ObjectIDs[i], dots[i].size); //ノードのサイズ
             }
-            //console.log(dots);
             for (var i = 0; i < EDGENUMBER; i++) {
                 var edge = edges[i];
                 var dot1ID = ObjectIDs[dots.indexOf(edge.dot1)];
@@ -735,7 +753,7 @@ function setGraphLocation(graph) {
                 graph.setEdgeLabelSize(dot1ID, dot2ID, edgefontSize);
                 graph.setEdgeLabelSize(dot2ID, dot1ID, edgefontSize);
                 //エッジの太さ
-                if (edgefontSize < STANDARD_EDGEFONTSIZE && graph.BetaMode) {
+                if (edgefontSize < STANDARD_EDGEFONTSIZE && graph.CustomMode) {
                     graph.setEdgeWidth(dot1ID, dot2ID, edgefontSize / STANDARD_EDGEFONTSIZE * 3);
                     graph.setEdgeWidth(dot2ID, dot1ID, edgefontSize / STANDARD_EDGEFONTSIZE * 3);
                 }
@@ -781,7 +799,9 @@ function setGraphLocation(graph) {
         //d:２点間の距離、c:係数、ideal_length:ばねの自然長
         //斥力になる場合は符号がマイナス
         function f_s(d, c, ideal_length) {
-            return c * Math.log(d / ideal_length);
+            var ratio = d / ideal_length;
+            var p = (ratio < 1) ? Math.log(ratio) : ratio * Math.sqrt(ratio);
+            return c * p;
         }
         //非隣接2点間の斥力を計算
         //d:２点間の距離、c:係数
@@ -821,7 +841,9 @@ function setGraphLocation(graph) {
                             }
                         }
                         else { //繋がっていない場合は斥力を計算
-                            if (delta != 0) {
+                            var bool1 = dots[i].interested;
+                            var bool2 = dots[j].interested;
+                            if (delta != 0 && (bool1 && bool2)) {
                                 var cr = (interestNodes.length > 0) ? CR * 0.5 : CR;
                                 var d = f_r(delta, cr) / delta;
                                 dots[i].frx += dx * d;
@@ -844,7 +866,7 @@ function setGraphLocation(graph) {
                                 var d = angle - caflist[j].angle; //弧度法から度数法に変更
                                 var ddx;
                                 var ddy;
-                                var krad = (interestNodes.length > 0) ? KRAD : KRAD;
+                                var krad = (interestNodes.length > 0) ? edges[i].krad : edges[i].krad;
                                 var ex = krad * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 var ey = -krad * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 if (Math.abs(d) <= 180) {
@@ -1127,7 +1149,7 @@ function setGraphLocation(graph) {
     //相対角度で描画するかどうか
     var RelativeAngle = false;
     //特定のクラスを極小表示するモード
-    //var BetaMode: boolean = true;
+    //var CustomMode: boolean = true;
     //角度付きエッジリストを用意し、参照関係を元に初期化する
     var edgeWithAngleList = new Array();
     var classAndFieldList = new Array();

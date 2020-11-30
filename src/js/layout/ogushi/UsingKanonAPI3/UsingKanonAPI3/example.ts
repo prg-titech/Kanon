@@ -2,12 +2,13 @@
 class Graph {
     nodes: Dot[];
     variableEdges: Edge[];
-    BetaMode: boolean;
+    CustomMode: boolean;
+    notInterestedClass: string[];
 
     constructor(nodes: Dot[]) {
         this.nodes = nodes;
         this.variableEdges = new Array();
-        this.BetaMode = false;
+        this.CustomMode = false;
     }
 
     getObjectIDs(): string[] {
@@ -48,6 +49,10 @@ class Graph {
                 }
             }
         }
+    }
+
+    isLiteral(ID: string): boolean {
+        return true;
     }
 
     getGlobalVariables(): string[] {

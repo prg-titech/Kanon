@@ -1,1 +1,4 @@
-let array = [0,1,2,3,4];
+let array = new Array();
+for(let i = 0; i < 4; i++) {
+    array.push(i);
+}
