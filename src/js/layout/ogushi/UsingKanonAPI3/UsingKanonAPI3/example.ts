@@ -14,7 +14,15 @@ class Graph {
     getObjectIDs(): string[] {
         var IDs: string[] = new Array();
         for (var i = 0; i < this.nodes.length; i++) {
-            IDs[Object.keys(IDs).length] = this.nodes[i].id;
+            IDs.push(this.nodes[i].id);
+        }
+        return IDs;
+    }
+
+    getVariableObjectIDs(): string[] {
+        var IDs: string[] = new Array();
+        for (var i = 0; i < this.nodes.length; i++) {
+            IDs.push(this.nodes[i].id);
         }
         return IDs;
     }
@@ -72,6 +80,15 @@ class Graph {
         }
     }
 
+    setVariableLocation(ID: string, x: number, y: number) {
+        for (var i = 0; i < this.nodes.length; i++) {
+            if (ID == this.nodes[i].id) {
+                this.nodes[i].x = x;
+                this.nodes[i].y = y;
+            }
+        }
+    }
+
     setDistance(ID: string, distance: number) {
         for (var i = 0; i < this.nodes.length; i++) {
             if (ID == this.nodes[i].id) {
@@ -104,7 +121,27 @@ class Graph {
 
     }
 
+    setVariableEdgeLength(toID: string, length: number) {
+
+    }
+
+    setVariableEdgeWidth(toID: string, width: number) {
+
+    }
+
     setVariableEdgeLabelSize(toID: string, fontSize: number) {
+
+    }
+
+    setEdgeLabel(fromID: string, toID: string, label: string) {
+
+    }
+
+    setEdgeArrowOff(fromID: string, toID: string) {
+
+    }
+
+    setEdgeSmooth(fromID: string, toID: string, bool: boolean) {
 
     }
 

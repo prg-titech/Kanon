@@ -20,9 +20,9 @@ class Node{
     }
 }
 
-var list = new Node(5);
-list.add(1);
-list.add(7);
-list.add(8);
+var list = new Node(0);
+for(let i = 1; i < 4; i++) {
+    list.add(i);
+}
 
-list.remove(7);
+list.remove(2);

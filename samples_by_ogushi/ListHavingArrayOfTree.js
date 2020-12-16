@@ -1,4 +1,4 @@
-class haveParentTREE {
+class Tree {
 
     constructor(val) {
         this.val = val;
@@ -8,7 +8,7 @@ class haveParentTREE {
     }
 
     add(val) {
-        var temp = new haveParentTREE(val);
+        var temp = new Tree(val);
         var current = this;
 
         while ((current.val <= val && current.right != null) || (current.val > val && current.left != null)) {
@@ -35,7 +35,7 @@ class haveParentTREE {
     }
 }
 
-// var ptree = new haveParentTREE(8);
+// var ptree = new Tree(8);
 // ptree.add(4);
 // ptree.add(12);
 // ptree.add(2);
@@ -43,7 +43,7 @@ class haveParentTREE {
 // ptree.add(10);
 // ptree.add(14);
 
-class ListHavingArrayOfTree {
+class List {
 
     constructor(val, arraySize, treeSize) {
         this.val = val;
@@ -57,7 +57,7 @@ class ListHavingArrayOfTree {
 
     add(val) {
         if (this.next == null) {
-            var temp = new ListHavingArrayOfTree(val);
+            var temp = new List(val);
             this.next = temp;
             temp.prev = this;
         } else {
@@ -67,7 +67,7 @@ class ListHavingArrayOfTree {
     
     addNewArray(val, arraySize, treeSize) {
         if (this.next == null) {
-            var temp = new ListHavingArrayOfTree(val);
+            var temp = new List(val);
             this.next = temp;
             temp.prev = this;
             for(var i = 0; i < arraySize; i++) {
@@ -88,7 +88,7 @@ class ListHavingArrayOfTree {
     
     addNewTree(size) {
         if(this.next == null) {
-            var newTree = new haveParentTREE(Math.floor(Math.random() * 20));
+            var newTree = new Tree(Math.floor(Math.random() * 20));
             newTree.addRandom(size);
             this.array.push(newTree);
         } else {
@@ -97,7 +97,7 @@ class ListHavingArrayOfTree {
     }
 }
 
-var lat = new ListHavingArrayOfTree(3, 2, 4);
+var lat = new List(3, 2, 4);
 
 lat.addNewArray(1, 2, 4);
 

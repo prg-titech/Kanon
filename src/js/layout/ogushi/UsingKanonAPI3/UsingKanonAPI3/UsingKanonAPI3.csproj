@@ -21,7 +21,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
-    <TypeScriptToolsVersion>3.8</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>4.0</TypeScriptToolsVersion>
     <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

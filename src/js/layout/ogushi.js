@@ -32,7 +32,7 @@ __$__.Layout = {
                                         newID, 
                                         "Kanon-ArrayNode", 
                                         false, 
-                                        "object"
+                                        "Kanon-ArrayNode"
                                     );
                                     graph.pushNode(newNode);
                                     graph.setArrayNode(newID);
@@ -152,6 +152,9 @@ __$__.Layout = {
                 selectClassDiv.innerHTML = '';      //カスタムモード以外ではチェックボックスを表示しない
             }
 
+            /***********
+             * メイン部分
+             ***********/
             setGraphLocation(graph);    //TypeScriptで書いたコードが呼び出される
 
             if(!graph.makeChanges){
@@ -197,7 +200,6 @@ __$__.Layout = {
 
             console.log("graph =");
             console.log(graph);
-
         }
         
     },
@@ -214,8 +216,9 @@ __$__.Layout = {
                 for(let i = 0; i < currentConnectedEdges.length; i++){
                     let fromto = __$__.ObjectGraphNetwork.network.getConnectedNodes(currentConnectedEdges[i]);
                     if(fromto[0] == current && 
-                        !(fromto[1].slice(fromto[1].length - 5, fromto[1].length) == "array" && nodeId.slice(nodeId.length - 5, nodeId.length) == "array" && nodeId == current) && 
-                        connectedNodes.indexOf(fromto[1]) == -1) {
+                        !(fromto[1].slice(fromto[1].length - 5, fromto[1].length) == "array" && nodeId.slice(nodeId.length - 5, nodeId.length) == "array" && nodeId == current && !(__$__.ObjectGraphNetwork.edges.get(currentConnectedEdges[i]).label == "ref")) && 
+                        connectedNodes.indexOf(fromto[1]) == -1
+                        ) {
                         connectedNodes.push(fromto[1]);
                         connectedEdges.push(currentConnectedEdges[i]);
                     }
@@ -230,18 +233,29 @@ __$__.Layout = {
             __$__.Layout.hoverNodesColor.push(__$__.ObjectGraphNetwork.nodes.get(connectedNodes[i]).color);
             let color;
             if(connectedNodes[i].slice(connectedNodes[i].length - 5, connectedNodes[i].length) != "array") {
-                color = (__$__.Layout.hoverNodesColor[i] == 'hotpink')? 'chocolate' : 'lime';
+                // color = (__$__.Layout.hoverNodesColor[i] == 'hotpink')? 'chocolate' : 'lime';
+                switch(__$__.Layout.hoverNodesColor[i]) {
+                    case 'hotpink':
+                        color = 'chocolate';
+                        break;
+                    case 'skyblue':
+                        color = 'lime';
+                        break;
+                    default:
+                        color = 'honeydew';
+                        break;
+                }
             } else {
                 color = {
                     border: 'lime',
-                    background: 'lightcyan',
+                    background: 'honeydew',
                     highlight: {
                         border: 'lime',
-                        background: 'lightcyan'
+                        background: 'honeydew'
                     },
                     hover: {
                         border: 'lime',
-                        background: 'lightcyan'
+                        background: 'honeydew'
                     }
                 };
             }

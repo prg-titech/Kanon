@@ -1,132 +1,66 @@
-/**
- * ノード
- */
-class Node {
-    constructor(id) {
-        this.edgesTo      = [];
-        this.edgesCost    = [];
-        this.done         = false;
-        this.cost         = -1;
-        this.id           = id;
-        this.previousNode = null;
-    }
-
-    addNode(node, cost) {
-        this.edgesTo.push(node);
-        this.edgesCost.push(cost);
+class costedEdge {
+    constructor(from, to, cost) {
+        this.from = from;
+        this.to = to;
+        this.cost = cost;
     }
 }
 
-function createNodes() {
-    var node1 = new Node(1); // start
-    var node2 = new Node(2); // top
-    var node3 = new Node(3); // center
-    var node4 = new Node(4); // bottom-left
-    var node5 = new Node(5); // bottom-right
-    var node6 = new Node(6); // goal
+let V = 8, E = 12;
+let stations = [
+    "名古屋",
+    "国際センター",
+    "伏見",
+    "丸の内",
+    "浅間町",
+    "名城公園",
+    "市役所",
+    "久屋大通",
+    "栄"
+];
 
-    node1.addNode(node2, 5);
-    node1.addNode(node3, 4);
-    node1.addNode(node4, 2);
+let graph = new Array();
+graph.push(new costedEdge(stations[0], stations[1], 2));
+graph.push(new costedEdge(stations[0], stations[2], 3));
+graph.push(new costedEdge(stations[1], stations[3], 1));
+graph.push(new costedEdge(stations[2], stations[3], 2));
+graph.push(new costedEdge(stations[2], stations[8], 2));
+graph.push(new costedEdge(stations[8], stations[7], 1));
+graph.push(new costedEdge(stations[3], stations[7], 2));
+graph.push(new costedEdge(stations[3], stations[6], 5));
+graph.push(new costedEdge(stations[6], stations[7], 2));
+graph.push(new costedEdge(stations[3], stations[4], 2));
+graph.push(new costedEdge(stations[4], stations[5], 6));
+graph.push(new costedEdge(stations[6], stations[5], 2));
 
-    node2.addNode(node1, 5);
-    node2.addNode(node6, 6);
-    node2.addNode(node3, 2);
+function dijkstra(start, goal) {
+    let d = new Array(V);
+    let used = new Array(V);
+    d.fill(Number.MAX_VALUE);
+    used.fill(false);
 
-    node3.addNode(node2, 2);
-    node3.addNode(node1, 4);
-    node3.addNode(node4, 3);
-    node3.addNode(node5, 2);
-
-    node4.addNode(node1, 2);
-    node4.addNode(node3, 3);
-    node4.addNode(node5, 6);
-
-    node5.addNode(node4, 6);
-    node5.addNode(node3, 2);
-    node5.addNode(node6, 4);
-
-    node6.addNode(node2, 6);
-    node6.addNode(node5, 4);
-
-    return [
-        node1, node2, node3, node4, node5, node6
-    ];
-}
-
-
-function main() {
-
-    var nodes = createNodes();
-
-    // start node is first node
-    nodes[0].cost = 0;
-
-    while (true) {
-        var processNode = null;
-
-        for (var i = 0; i < nodes.length; i++) {
-            var node = nodes[i];
-
-            // 訪問済み or まだコストが未設定
-            if (node.done || node.cost < 0) {
-                continue;
-            }
-
-            if (!processNode) {
-                processNode = node;
-                continue;
-            }
-
-            // 一番小さいコストのノードを探す
-            if (node.cost < processNode.cost) {
-                processNode = node;
-            }
-        }
-
-        if (!processNode) {
-            break;
-        }
-
-        processNode.done = true;
-
-        for (var i = 0; i < processNode.edgesTo.length; i++) {
-            var node = processNode.edgesTo[i];
-            var cost = processNode.cost + processNode.edgesCost[i];
-
-            // コストが未設定 or コストの少ない経路がある場合はアップデート
-            var needsUpdate = (node.cost < 0) || (node.cost > cost);
-            if (needsUpdate) {
-                node.cost = cost;
-                node.previousNode = processNode;
-            }
-        }
-    }
-
-    console.log('Has been done to search path.');
-    console.log(nodes);
-
-    var goalNode = nodes[5];
-    console.log('Shoten cost is ' + goalNode.cost);
-
-    console.log('Shoten path');
-
-    console.log('=====================');
-    var path = 'Goal -> ';
-    var currentNode = goalNode;
+    d[stations.indexOf(start)] = 0;
     while(true) {
-        var nextNode = currentNode.previousNode;
-        if (!nextNode) {
-            path += ' Start';
-            break;
+        let v = -1;
+        for(let u = 0; u < V; u++) {
+            if(!used[u] && (v == -1 || d[u] < d[v])) v = u;
         }
-        path += nextNode.id + ' -> ';
-        currentNode = nextNode;
+        if(v == -1) break;
+        used[v] = true;
+        for(let u = 0; u < V; u++) {
+            let cost = Number.MAX_VALUE;
+            for(let i = 0; i < E; i++) {
+                if((stations.indexOf(graph[i].from) == u && stations.indexOf(graph[i].to) == v) ||
+                (stations.indexOf(graph[i].from) == v && stations.indexOf(graph[i].to) == u)) {
+                    cost = graph[i].cost;
+                    break;
+                }
+            }
+            d[u] = Math.min(d[u], d[v] + cost);
+        }
     }
 
-    console.log(path);
-    console.log('=====================');
+    return d[stations.indexOf(goal)];
 }
 
-// Start this program.
-main();
+alert(dijkstra("名古屋", "名城公園"));

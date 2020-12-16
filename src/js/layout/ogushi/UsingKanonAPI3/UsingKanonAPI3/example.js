@@ -8,7 +8,14 @@ var Graph = /** @class */ (function () {
     Graph.prototype.getObjectIDs = function () {
         var IDs = new Array();
         for (var i = 0; i < this.nodes.length; i++) {
-            IDs[Object.keys(IDs).length] = this.nodes[i].id;
+            IDs.push(this.nodes[i].id);
+        }
+        return IDs;
+    };
+    Graph.prototype.getVariableObjectIDs = function () {
+        var IDs = new Array();
+        for (var i = 0; i < this.nodes.length; i++) {
+            IDs.push(this.nodes[i].id);
         }
         return IDs;
     };
@@ -58,6 +65,14 @@ var Graph = /** @class */ (function () {
             }
         }
     };
+    Graph.prototype.setVariableLocation = function (ID, x, y) {
+        for (var i = 0; i < this.nodes.length; i++) {
+            if (ID == this.nodes[i].id) {
+                this.nodes[i].x = x;
+                this.nodes[i].y = y;
+            }
+        }
+    };
     Graph.prototype.setDistance = function (ID, distance) {
         for (var i = 0; i < this.nodes.length; i++) {
             if (ID == this.nodes[i].id) {
@@ -80,7 +95,17 @@ var Graph = /** @class */ (function () {
     };
     Graph.prototype.setEdgeLabelSize = function (fromID, toID, fontSize) {
     };
+    Graph.prototype.setVariableEdgeLength = function (toID, length) {
+    };
+    Graph.prototype.setVariableEdgeWidth = function (toID, width) {
+    };
     Graph.prototype.setVariableEdgeLabelSize = function (toID, fontSize) {
+    };
+    Graph.prototype.setEdgeLabel = function (fromID, toID, label) {
+    };
+    Graph.prototype.setEdgeArrowOff = function (fromID, toID) {
+    };
+    Graph.prototype.setEdgeSmooth = function (fromID, toID, bool) {
     };
     Graph.prototype.draw = function (context) {
         for (var i = 0; i < this.nodes.length; i++) {

@@ -194,7 +194,7 @@ class Record {
     }
 }
 
-var CircuitNumber = 15;
+var CircuitNumber = 7;
 var MostRecordsNumber = 4;
 var LeastRecordsNumber = 2;
 

@@ -101,11 +101,20 @@ __$__.StoredGraphFormat = {
         }
 
         generateVisjsNode() {
-            return {
+            let variableNode;
+            variableNode = {
                 hidden: true,
                 id: this.id,
                 label: this.label
             };
+            if (this.x !== undefined) variableNode.x = this.x;
+            if (this.y !== undefined) variableNode.y = this.y;
+            return variableNode;
+        }
+
+        setLocation(x, y) {
+            this.x = x;
+            this.y = y;
         }
 
         duplicate() {
@@ -123,6 +132,7 @@ __$__.StoredGraphFormat = {
             this.width = 3;
             this.fontSize = 14;
             this.isArrow = true;
+            this.smooth = true;
         }
 
         generateVisjsEdge() {
@@ -146,6 +156,9 @@ __$__.StoredGraphFormat = {
                     width: this.width,
                     font: {
                         size: this.fontSize
+                    },
+                    smooth: {
+                        enabled: this.smooth
                     }
                 };
             } else {
@@ -157,6 +170,9 @@ __$__.StoredGraphFormat = {
                     width: this.width,
                     font: {
                         size: this.fontSize
+                    },
+                    smooth: {
+                        enabled: this.smooth
                     }
                 };
             }
@@ -164,7 +180,6 @@ __$__.StoredGraphFormat = {
 
             if (this.from.slice(0, 11) === '__Variable-') {
                 edge.color = 'seagreen';
-                //edge.length = (this.fontSize == 14)? 30 : this.fontSize * 4;
             }
 
             return edge;
@@ -437,6 +452,40 @@ __$__.StoredGraphFormat = {
         }
 
         /**
+         * 追加部分：緑エッジの長さを変更する
+         * @param {string} toID
+         * @param {number} length
+         */
+        setVariableEdgeLength(toID, length) {
+            let edge;
+            for(let i = 0; i < this.variableEdges.length; i++) {
+                if(this.variableEdges[i].to == toID) {
+                    edge = this.variableEdges[i];
+                }
+            }
+            if (edge) {
+                edge.length = length;
+            }
+        }
+
+        /**
+         * 追加部分：緑エッジの太さを変更する
+         * @param {string} toID
+         * @param {number} length
+         */
+        setVariableEdgeWidth(toID, width) {
+            let edge;
+            for(let i = 0; i < this.variableEdges.length; i++) {
+                if(this.variableEdges[i].to == toID) {
+                    edge = this.variableEdges[i];
+                }
+            }
+            if (edge) {
+                edge.width = width;
+            }
+        }
+
+        /**
          * 追加部分：緑エッジのラベルのサイズを変更する
          * @param {string} toID
          * @param {number} fontSize
@@ -486,6 +535,24 @@ __$__.StoredGraphFormat = {
             if (edge) {
                 edge.isArrow = false;
                 edge.label = '';
+            }
+        }
+
+        /**
+         * 追加部分：エッジのベジェ曲線のオン・オフを指定する
+         * @param {string} fromID
+         * @param {string} toID
+         * @param {boolean} bool
+         */
+        setEdgeSmooth(fromID, toID, bool) {
+            let edge;
+            for(let i = 0; i < this.edges.length; i++) {
+                if(this.edges[i].from == fromID && this.edges[i].to == toID) {
+                    edge = this.edges[i];
+                }
+            }
+            if (edge) {
+                edge.smooth = bool;
             }
         }
 
