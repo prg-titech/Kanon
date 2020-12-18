@@ -229,6 +229,7 @@ __$__.Layout = {
         __$__.Layout.hoverNodes = connectedNodes;
         __$__.Layout.hoverEdges = connectedEdges;
 
+        let changeNodeColorStartTime = performance.now();
         for(let i = 0; i < connectedNodes.length; i++) {
             __$__.Layout.hoverNodesColor.push(__$__.ObjectGraphNetwork.nodes.get(connectedNodes[i]).color);
             let color;
@@ -259,14 +260,20 @@ __$__.Layout = {
                     }
                 };
             }
-            __$__.ObjectGraphNetwork.nodes.update({id: connectedNodes[i], color: color});
+            __$__.ObjectGraphNetwork.nodes.update({id: connectedNodes[i], color: color});   //updateの処理だけ時間が長い？
         }
         for(let i = 0; i < connectedEdges.length; i++) {
             __$__.Layout.hoverEdgesColor.push(__$__.ObjectGraphNetwork.edges.get(connectedEdges[i]).color);
-            __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'lime'});
+            __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'lime'});  //ここも時間がかかっている
         }
+        let changeNodeColorEndTime = performance.now();
+        console.log("changeNodeColor\n   " + (changeNodeColorEndTime - changeNodeColorStartTime) + "ms");
 
+        let redrawStartTime = performance.now();
         __$__.ObjectGraphNetwork.network.redraw();
+        let redrawEndTime = performance.now();
+        console.log("redraw\n   " + (redrawEndTime - redrawStartTime) + "ms");
+        
     },
 
     //マウスをノード上から離した時にノードの色を元に戻す

@@ -707,14 +707,14 @@ function setGraphLocation(graph) {
         var adjacency_matrix = new Array(DOTNUMBER);
         for (var i = 0; i < DOTNUMBER; i++) {
             adjacency_matrix[i] = new Array(DOTNUMBER);
-            adjacency_matrix[i].fill(-1);
-            adjacency_matrix[i][i] = 0;
+            adjacency_matrix[i].fill(false);
+            adjacency_matrix[i][i] = false;
         }
         for (var i = 0; i < EDGENUMBER; i++) {
             var d1 = dots.indexOf(edges[i].dot1);
             var d2 = dots.indexOf(edges[i].dot2);
-            adjacency_matrix[d1][d2] = 1;
-            adjacency_matrix[d2][d1] = 1;
+            adjacency_matrix[d1][d2] = true;
+            adjacency_matrix[d2][d1] = true;
         }
         var graphInitializationEndTime = performance.now();
         console.log("graphInitialization\n   " + (graphInitializationEndTime - graphInitializationStartTime) + " ms");
@@ -871,19 +871,21 @@ function setGraphLocation(graph) {
             var spring_angleCalcStartTime = performance.now();
             //エッジの端点に働く角度力とスプリング力を計算
             for (var i = 0; i < EDGENUMBER; i++) {
-                if (edgeWithAngleList[i].underforce == true) {
-                    var angle = edges[i].angle();
-                    for (var j = 0; j < caflist.length; j++) {
-                        if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
-                            var dx = edges[i].dot2.x - edges[i].dot1.x;
-                            var dy = edges[i].dot2.y - edges[i].dot1.y;
-                            var delta = Math.sqrt(dx * dx + dy * dy);
-                            if (delta != 0) {
+                var dx = edges[i].dot2.x - edges[i].dot1.x;
+                var dy = edges[i].dot2.y - edges[i].dot1.y;
+                var delta = Math.sqrt(dx * dx + dy * dy);
+                if (delta != 0) {
+                    if (edgeWithAngleList[i].underforce == true) {
+                        var angle = edges[i].angle();
+                        for (var j = 0; j < caflist.length; j++) {
+                            if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
                                 //各点の角度に基づいて働く力を計算
                                 var d = angle - caflist[j].angle; //弧度法から度数法に変更
                                 var ddx;
                                 var ddy;
-                                var krad = edges[i].krad * edges[i].dot2.size * edges[i].dot1.size / (NODESIZE * NODESIZE);
+                                var d1size = (edges[i].dot1.interested) ? edges[i].dot1.size : NODESIZE;
+                                var d2size = (edges[i].dot2.interested) ? edges[i].dot2.size : NODESIZE;
+                                var krad = edges[i].krad * d2size * d1size / (NODESIZE * NODESIZE);
                                 var ex = krad * dy / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 var ey = -krad * dx / delta; //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
                                 if (Math.abs(d) <= 180) {
@@ -905,17 +907,17 @@ function setGraphLocation(graph) {
                                 edges[i].dot1.fmy += -ddy;
                                 edges[i].dot2.fmx += ddx;
                                 edges[i].dot2.fmy += ddy;
-                                //２点が辺で繋がっている場合はスプリング力を計算
-                                var ds = f_s(delta, cs, edges[i].ideal_length) / delta * edges[i].dot2.size * edges[i].dot1.size / (NODESIZE * NODESIZE);
-                                var ddsx = dx * ds;
-                                var ddsy = dy * ds;
-                                edges[i].dot2.fax -= ddsx;
-                                edges[i].dot2.fay -= ddsy;
-                                edges[i].dot1.fax += ddsx;
-                                edges[i].dot1.fay += ddsy;
                             }
                         }
                     }
+                    //２点が辺で繋がっている場合はスプリング力を計算
+                    var ds = f_s(delta, cs, edges[i].ideal_length) / delta * edges[i].dot2.size * edges[i].dot1.size / (NODESIZE * NODESIZE);
+                    var ddsx = dx * ds;
+                    var ddsy = dy * ds;
+                    edges[i].dot2.fax -= ddsx;
+                    edges[i].dot2.fay -= ddsy;
+                    edges[i].dot1.fax += ddsx;
+                    edges[i].dot1.fay += ddsy;
                 }
             }
             var spring_angleCalcEndTime = performance.now();
@@ -924,7 +926,7 @@ function setGraphLocation(graph) {
             //各点の斥力を計算
             for (var i = 0; i < DOTNUMBER; i++) {
                 for (var j = i + 1; j < DOTNUMBER; j++) {
-                    if (adjacency_matrix[i][j] == -1) {
+                    if (adjacency_matrix[i][j] == false) {
                         var dx = dots[i].x - dots[j].x;
                         var dy = dots[i].y - dots[j].y;
                         var delta = Math.sqrt(dx * dx + dy * dy);
