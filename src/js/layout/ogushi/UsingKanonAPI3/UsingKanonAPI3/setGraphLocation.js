@@ -546,6 +546,9 @@ function setGraphLocation(graph) {
                 if (id1 != id2) {
                     this.ideal_length = Math.abs(id1 - id2) * STANDARD_EDGELENGTH;
                 }
+                else {
+                    this.ideal_length = (DISTORTION + 1) * maxDistance / (DISTORTION + maxDistance) * STANDARD_EDGELENGTH;
+                }
             };
             //エッジの角度を計算する
             Edge_G.prototype.angle = function () {
@@ -727,9 +730,9 @@ function setGraphLocation(graph) {
             if (t <= 0)
                 break;
         }
-        console.log("focusCalculation\n   " + focusCalculationTime + " ms");
-        console.log(" spring and angle\n   " + spring_angleCalcTime + " ms");
-        console.log(" repulsive\n   " + repulsiveCalcTime + " ms");
+        //console.log("focusCalculation\n   " + focusCalculationTime + " ms");
+        //console.log(" spring and angle\n   " + spring_angleCalcTime + " ms");
+        //console.log(" repulsive\n   " + repulsiveCalcTime + " ms");
         //fruchterman-Reingold法でエネルギーを最小化し、グラフを描画する
         function draw() {
             //相対角度で描画する場合

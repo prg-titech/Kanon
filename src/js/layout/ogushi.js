@@ -75,6 +75,9 @@ __$__.Layout = {
                     }
                 }
 
+                console.log("test graph =");
+                console.log(graph);
+
                 //どこからも参照されていないノードは表示しないようにする
                 let limeEdges = graph.variableEdges;
                 let layoutNodeIDs = new Array();
@@ -267,12 +270,12 @@ __$__.Layout = {
             __$__.ObjectGraphNetwork.edges.update({id: connectedEdges[i], color: 'lime'});  //ここも時間がかかっている
         }
         let changeNodeColorEndTime = performance.now();
-        console.log("changeNodeColor\n   " + (changeNodeColorEndTime - changeNodeColorStartTime) + "ms");
+        //console.log("changeNodeColor\n   " + (changeNodeColorEndTime - changeNodeColorStartTime) + "ms");
 
         let redrawStartTime = performance.now();
         __$__.ObjectGraphNetwork.network.redraw();
         let redrawEndTime = performance.now();
-        console.log("redraw\n   " + (redrawEndTime - redrawStartTime) + "ms");
+        //console.log("redraw\n   " + (redrawEndTime - redrawStartTime) + "ms");
         
     },
 
