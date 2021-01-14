@@ -9,10 +9,9 @@ __$__.Layout = {
     setLocation(graph) {
         console.log("----" + document.getElementById("SelectDrawMethod").value + "----");
 
-        if(document.getElementById("SelectDrawMethod").value == "Automatic" ||
-        document.getElementById("SelectDrawMethod").value == "Customize") {
+        if(document.getElementById("SelectDrawMethod").value == "FIFA") {
 
-            graph.CustomMode = document.getElementById("SelectDrawMethod").value == "Customize";
+            graph.CustomMode = true;
 
             //一度だけgraphに変更を加える（redrawしたときにはこの変更は加えられない）
             if(!graph.makeChanges){

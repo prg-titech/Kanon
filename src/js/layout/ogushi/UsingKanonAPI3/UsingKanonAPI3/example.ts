@@ -3,6 +3,7 @@ class Graph {
     nodes: Dot[];
     variableEdges: Edge[];
     CustomMode: boolean;
+    FisheyeView: boolean;
     notInterestedClass: string[];
 
     constructor(nodes: Dot[]) {

@@ -614,37 +614,7 @@ function setGraphLocation(graph) {
         var graph_g = new Graph_G();
         graph_g.init(DOTNUMBER, EDGENUMBER, edges, dots);
         center_of_gravity(dots, WIDTH, HEIGHT);
-        if (graph.CustomMode) { //カスタムモードのとき
-            for (var i = 0; i < DOTNUMBER; i++) {
-                if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) { //興味のないノードは
-                    dots[i].interested = false;
-                    dots[i].size = NODESIZE / 8; //大きさを小さくする
-                }
-            }
-            for (var i = 0; i < EDGENUMBER; i++) {
-                if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) { //エッジのtoノードが興味なしのとき
-                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) { //エッジのfromノードも興味ないとき
-                        edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
-                    }
-                    else {
-                        edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
-                    }
-                    edges[i].smooth = false;
-                }
-                else {
-                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) {
-                        edges[i].krad = KRAD / 4;
-                        if (isPrimitiveString(edges[i].dot2cls)) {
-                            edges[i].dot2.interested = false;
-                            edges[i].dot2.size = NODESIZE / 8;
-                            edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
-                            edges[i].smooth = false;
-                        }
-                    }
-                }
-            }
-        }
-        else if (interestNodes.length > 0) { //もし注目点があるのならば
+        if (interestNodes.length > 0) { //もし注目点があるのならば
             //注目点の番号
             var indexes = new Array();
             for (var i = 0; i < interestNodes.length; i++) {
@@ -700,6 +670,36 @@ function setGraphLocation(graph) {
         }
         var cs = (interestNodes.length > 0) ? CS : CS * 0.6;
         var cr = (interestNodes.length > 0) ? CR * 0.5 : CR;
+        if (graph.CustomMode) { //カスタムモードのとき
+            for (var i = 0; i < DOTNUMBER; i++) {
+                if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) { //興味のないノードは
+                    dots[i].interested = false;
+                    dots[i].size = NODESIZE / 8; //大きさを小さくする
+                }
+            }
+            for (var i = 0; i < EDGENUMBER; i++) {
+                if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) { //エッジのtoノードが興味なしのとき
+                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) { //エッジのfromノードも興味ないとき
+                        edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                    }
+                    else {
+                        edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
+                    }
+                    edges[i].smooth = false;
+                }
+                else {
+                    if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) {
+                        edges[i].krad = KRAD / 4;
+                        if (isPrimitiveString(edges[i].dot2cls)) {
+                            edges[i].dot2.interested = false;
+                            edges[i].dot2.size = NODESIZE / 8;
+                            edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                            edges[i].smooth = false;
+                        }
+                    }
+                }
+            }
+        }
         //プリミティブ型や配列型を参照しているエッジの理想長を短くする
         for (var i = 0; i < EDGENUMBER; i++) {
             if (edges[i].dot2.isLiteral || (edges[i].dot1cls == "Array" && edges[i].edgename == "ref")) {

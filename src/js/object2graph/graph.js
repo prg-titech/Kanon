@@ -199,6 +199,7 @@ __$__.StoredGraphFormat = {
             this.variableEdges = [];
             this.makeChanges = false;
             this.CustomMode = false;
+            this.FisheyeView = true;
             this.notInterestedClass = [];
         }
 
