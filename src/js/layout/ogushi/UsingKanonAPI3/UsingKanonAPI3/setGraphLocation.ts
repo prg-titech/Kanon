@@ -190,7 +190,24 @@ function setGraphLocation(graph: Graph) {
 
         //注目ノードの色を変更する
         for (var i = 0; i < interestNodes.length; i++) {
-            graph.setColor(interestNodes[i], "hotpink");
+            console.log(graph.getClass(interestNodes[i]));
+            let pink;
+            if (graph.getClass(interestNodes[i]) == "Kanon-ArrayNode") {
+                pink = {
+                    border: 'deeppink',
+                    background: 'mistyrose',
+                    highlight: {
+                        border: 'deeppink',
+                        background: 'mistyrose'
+                    },
+                    hover: {
+                        border: 'deeppink',
+                        background: 'mistyrose'
+                    }
+                };
+            } else pink = "hotpink";
+            console.log(pink);
+            graph.setColor(interestNodes[i], pink);
         }
 
         var edgeListInitEndTime = performance.now();
@@ -827,9 +844,11 @@ function setGraphLocation(graph: Graph) {
             for (var i = 0; i < EDGENUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) {     //エッジのtoノードが興味なしのとき
                     if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) { //エッジのfromノードも興味ないとき
-                        edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                        //edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                        edges[i].ideal_length = edges[i].ideal_length / 24;
                     } else {
-                        edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
+                        //edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
+                        edges[i].ideal_length = edges[i].ideal_length / 6;
                     }
                     edges[i].smooth = false;
                 } else {
@@ -838,7 +857,8 @@ function setGraphLocation(graph: Graph) {
                         if (isPrimitiveString(edges[i].dot2cls)) {
                             edges[i].dot2.interested = false;
                             edges[i].dot2.size = NODESIZE / 8;
-                            edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                            //edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
+                            edges[i].ideal_length = edges[i].ideal_length / 24;
                             edges[i].smooth = false;
                         }
                     }

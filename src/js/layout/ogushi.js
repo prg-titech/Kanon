@@ -9,7 +9,7 @@ __$__.Layout = {
     setLocation(graph) {
         console.log("----" + document.getElementById("SelectDrawMethod").value + "----");
 
-        if(document.getElementById("SelectDrawMethod").value == "FIFA") {
+        if(document.getElementById("SelectDrawMethod").value == "FiFA") {
 
             graph.CustomMode = true;
 
@@ -73,9 +73,6 @@ __$__.Layout = {
                         }
                     }
                 }
-
-                console.log("test graph =");
-                console.log(graph);
 
                 //どこからも参照されていないノードは表示しないようにする
                 let limeEdges = graph.variableEdges;
@@ -249,18 +246,33 @@ __$__.Layout = {
                         break;
                 }
             } else {
-                color = {
-                    border: 'lime',
-                    background: 'honeydew',
-                    highlight: {
+                if(__$__.Layout.hoverNodesColor[i].border == 'deeppink') {
+                    color = {
+                        border: 'darkred',
+                        background: 'wheat',
+                        highlight: {
+                            border: 'darkred',
+                            background: 'wheat'
+                        },
+                        hover: {
+                            border: 'darkred',
+                            background: 'wheat'
+                        }
+                    };
+                } else {
+                    color = {
                         border: 'lime',
-                        background: 'honeydew'
-                    },
-                    hover: {
-                        border: 'lime',
-                        background: 'honeydew'
-                    }
-                };
+                        background: 'honeydew',
+                        highlight: {
+                            border: 'lime',
+                            background: 'honeydew'
+                        },
+                        hover: {
+                            border: 'lime',
+                            background: 'honeydew'
+                        }
+                    };
+                }
             }
             __$__.ObjectGraphNetwork.nodes.update({id: connectedNodes[i], color: color});   //updateの処理だけ時間が長い？
         }
