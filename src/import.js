@@ -13,17 +13,14 @@ document.write('<script type="text/javascript" src="external/prototype_window/ja
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
 
-/*
- * layout algorithm can be changed here
- */
 
-//document.write('<script type="text/javascript" src="src/js/layout/oka.js"></script>');
-//document.write('<script type="text/javascript" src="src/js/layout/simple.js"></script>');
 document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
-//document.write('<script type="text/javascript" src="src/js/layout/MSM.js"></script>');
 
 //参照するTypeScriptファイルの変更はここで
 document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI3/UsingKanonAPI3/setGraphLocation.js"></script>');
+
+//旧Ogushiレイアウトアルゴリズム
+document.write('<script type="text/javascript" src="src/js/layout/old_ogushi_layout.js"></script>');
 
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree/callTree.js"></script>');

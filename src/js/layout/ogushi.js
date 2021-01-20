@@ -185,7 +185,17 @@ __$__.Layout = {
             console.log("graph =");
             console.log(graph);
             
+        } else if(document.getElementById("SelectDrawMethod").value == "Ogushi") {
+            let selectClassDiv = document.getElementById("selectClass");
+            selectClassDiv.innerHTML = '';
+
+            oldSetGraphLocation(graph);
+
+            console.log("graph =");
+            console.log(graph);
         } else {
+            let selectClassDiv = document.getElementById("selectClass");
+            selectClassDiv.innerHTML = '';
 
             let visGraph = graph.generateVisjsGraph(true);
             __$__.Layout.setLinkedList(visGraph);

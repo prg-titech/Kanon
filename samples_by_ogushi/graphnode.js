@@ -87,8 +87,11 @@ function makeGraphObject(edgelist){
 
 var EdgeList = new Array();
 addEdge("A", "B", EdgeList);
-addEdge("C", "A", EdgeList);
-addEdge("B", "C", EdgeList);
+addEdge("E", "A", EdgeList);
+addEdge("B", "E", EdgeList);
+addEdge("C", "B", EdgeList);
+addEdge("E", "C", EdgeList);
+addEdge("D", "E", EdgeList);
 
 var graphobject = makeGraphObject(EdgeList);
 EdgeList.length = 0;

@@ -15,6 +15,8 @@ class Node{
                         let temp = new Node(val.slice(1, 2));
                         this.mid = temp;
                         temp.add(val.slice(1));
+                    } else if(val.length == 1){
+                        this.mid = new End();
                     }
                 } else {
                     this.mid.add(val.slice(1));
@@ -39,6 +41,8 @@ class Node{
         }
     }
 }
+
+class End {}
 
 function alphabetSort(a, b) {
     var astr = a.slice(0, 1).toString().toLowerCase();
@@ -81,6 +85,7 @@ function alphabetSort(a, b) {
 
 var trie = new Node("c");
 trie.add("cute");
+trie.add("cup");
 trie.add("at");
 trie.add("as");
 trie.add("he");
