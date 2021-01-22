@@ -8,6 +8,7 @@ __$__.StoredGraphFormat = {
             this.type = type;
             this.distance = -1;     //追加部分
             this.size = -1;         //追加部分
+            this.index = -1;        //追加部分
             this.shape = 'ellipse';
             if (color) {
                 this.color = color;

@@ -27,6 +27,7 @@ function setGraphLocation(graph: Graph) {
         fromtype: string;
         totype: string;
         fieldname: string;
+        angle: number;
         underforce: boolean;
         NIpatternmatch: string;
 
@@ -36,6 +37,7 @@ function setGraphLocation(graph: Graph) {
             this.fromtype = fromtype;
             this.totype = totype;
             this.fieldname = fieldname;
+            this.angle = null;
             this.underforce = true;
             this.NIpatternmatch = "";
         }
@@ -178,12 +180,12 @@ function setGraphLocation(graph: Graph) {
             }
         }
 
-        //色のセット
-        //for (var i = 0; i < ObjectIDs.length; i++) {
-        //    if (!isPrimitiveString(graph.getClass(ObjectIDs[i]))) {
-        //        graph.setColor(ObjectIDs[i], "skyblue");
-        //    }
-        //}
+        //edgelistに理想角度を書き込んでいく
+        for (var i = 0; i < caflist.length; i++) {
+            for (var j = 0; j < caflist[i].EwithAs.length; j++) {
+                caflist[i].EwithAs[j].angle = caflist[i].angle;
+            }
+        }
 
         //注目ノードの特定
         interestNodesInit(graph, interestNodes, edgelist);
@@ -657,17 +659,19 @@ function setGraphLocation(graph: Graph) {
             dot2cls: string;
             edgename: string;   //エッジの名前（フィールド名）
             ideal_length: number;   //エッジの理想長
+            ideal_angle: number;    //エッジの理想角度
             krad: number;       //エッジの角度に対して働く力の係数
             smooth: boolean;    //ベジェ曲線で描くかどうか
 
             //辺の初期化
-            init(dot1: Dot_G, dot2: Dot_G, edgename: string) {
+            init(dot1: Dot_G, dot2: Dot_G, edgename: string, angle: number) {
                 this.dot1 = dot1;
                 this.dot2 = dot2;
                 this.dot1cls = dot1.nodecls;
                 this.dot2cls = dot2.nodecls;
                 this.edgename = edgename;
                 this.ideal_length = STANDARD_EDGELENGTH;
+                this.ideal_angle = angle;
                 this.krad = KRAD;
                 this.smooth = true;
             }
@@ -763,7 +767,7 @@ function setGraphLocation(graph: Graph) {
         var edges: Edge_G[] = new Array(EDGENUMBER);
         for (var i = 0; i < EDGENUMBER; i++) {
             edges[i] = new Edge_G();
-            edges[i].init(dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID1)], dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID2)], edgeWithAngleList[i].fieldname);
+            edges[i].init(dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID1)], dots[ObjectIDs.indexOf(edgeWithAngleList[i].ID2)], edgeWithAngleList[i].fieldname, edgeWithAngleList[i].angle);
         }
 
         //グラフの用意
@@ -771,6 +775,20 @@ function setGraphLocation(graph: Graph) {
         graph_g.init(DOTNUMBER, EDGENUMBER, edges, dots);
 
         center_of_gravity(dots, WIDTH, HEIGHT);
+
+        //隣接行列を用意する
+        var adjacency_matrix: boolean[][] = new Array(DOTNUMBER);
+        for (var i = 0; i < DOTNUMBER; i++) {
+            adjacency_matrix[i] = new Array(DOTNUMBER);
+            adjacency_matrix[i].fill(false);
+            adjacency_matrix[i][i] = false;
+        }
+        for (var i = 0; i < EDGENUMBER; i++) {
+            var d1: number = dots.indexOf(edges[i].dot1);
+            var d2: number = dots.indexOf(edges[i].dot2);
+            adjacency_matrix[d1][d2] = true;
+            adjacency_matrix[d2][d1] = true;
+        }
 
 
         if (interestNodes.length > 0) {  //もし注目点があるのならば
@@ -835,19 +853,23 @@ function setGraphLocation(graph: Graph) {
 
         if (graph.CustomMode) {    //カスタムモードのとき
 
+            var notInterestedNodes: Dot_G[] = new Array();      //興味なしのノード群
+            var notInterestedEdges: Edge_G[] = new Array();     //端点が２つとも興味なしのエッジ群
+
             for (var i = 0; i < DOTNUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) {  //興味のないノードは
                     dots[i].interested = false;
                     dots[i].size = NODESIZE / 8;    //大きさを小さくする
+                    notInterestedNodes.push(dots[i]);
                 }
             }
+
             for (var i = 0; i < EDGENUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) {     //エッジのtoノードが興味なしのとき
                     if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) { //エッジのfromノードも興味ないとき
-                        //edges[i].ideal_length = STANDARD_EDGELENGTH / 24;
                         edges[i].ideal_length = edges[i].ideal_length / 24;
+                        notInterestedEdges.push(edges[i]);
                     } else {
-                        //edges[i].ideal_length = STANDARD_EDGELENGTH / 6;
                         edges[i].ideal_length = edges[i].ideal_length / 6;
                     }
                     edges[i].smooth = false;
@@ -864,6 +886,131 @@ function setGraphLocation(graph: Graph) {
                     }
                 }
             }
+
+            var clusterNumber: number[] = new Array(notInterestedNodes.length);
+            var clusterEdgeNumber: number[] = new Array(notInterestedEdges.length);
+            clusterNumber.fill(-1);
+            clusterEdgeNumber.fill(-1);
+            let clusterNo: number = 0;
+            for (var i = 0; i < notInterestedNodes.length; i++) {
+                if (clusterNumber[i] == -1) {
+                    clusterNumber[i] = clusterNo;
+                    while (true) {
+                        var bool: boolean = false;
+                        for (var j = 0; j < notInterestedEdges.length; j++) {
+                            var dot1: Dot_G = notInterestedEdges[j].dot1;
+                            var dot2: Dot_G = notInterestedEdges[j].dot2;
+                            var cn1: number = clusterNumber[notInterestedNodes.indexOf(dot1)];
+                            var cn2: number = clusterNumber[notInterestedNodes.indexOf(dot2)];
+                            if (cn1 == clusterNo && cn2 != clusterNo) {
+                                clusterNumber[notInterestedNodes.indexOf(dot2)] = clusterNo;
+                                clusterEdgeNumber[j] = clusterNo;
+                                bool = true;
+                            } else if (cn2 == clusterNo && cn1 != clusterNo) {
+                                clusterNumber[notInterestedNodes.indexOf(dot1)] = clusterNo;
+                                clusterEdgeNumber[j] = clusterNo;
+                                bool = true;
+                            }
+                        }
+                        if (!bool) break;
+                    }
+                    clusterNo++;
+                }
+            }
+
+            var notInterestNodeCluster: Dot_G[][] = new Array();    //興味なしノードのクラスター
+            var notInterestEdgeCluster: Edge_G[][] = new Array();   //興味なしエッジのクラスター
+            for (var i = 0; i < clusterNo; i++) {
+                var clusterNodeArray = new Array();
+                for (var j = 0; j < clusterNumber.length; j++) {
+                    if (clusterNumber[j] == i) {
+                        clusterNodeArray.push(notInterestedNodes[j]);
+                    }
+                }
+                notInterestNodeCluster.push(clusterNodeArray);
+
+                var clusterEdgeArray = new Array();
+                for (var j = 0; j < clusterEdgeNumber.length; j++) {
+                    if (clusterEdgeNumber[j] == i) {
+                        clusterEdgeArray.push(notInterestedEdges[j]);
+                    }
+                }
+                notInterestEdgeCluster.push(clusterEdgeArray);
+            }
+
+            var notInterestNodeClusterSort: Dot_G[][] = new Array();        //各クラスター内のノードをx座標の小さい順に並べ替えたもの
+            for (var i = 0; i < notInterestEdgeCluster.length; i++) {
+                var notRootNode: boolean[] = new Array(notInterestNodeCluster[i].length);
+                notRootNode.fill(true);
+                for (var j = 0; j < notInterestEdgeCluster[i].length; j++) {
+                    var toNode: Dot_G = notInterestEdgeCluster[i][j].dot2;
+                    notRootNode[notInterestNodeCluster[i].indexOf(toNode)] = false;
+                }
+                if (notRootNode.indexOf(true) == -1) {      //根のノードがクラスターになかった場合
+                    notInterestNodeClusterSort.push(notInterestNodeCluster[i]);
+                } else {
+                    var root: Dot_G = notInterestNodeCluster[i][notRootNode.indexOf(true)];     //根のノード
+                    var sortCluster: Dot_G[] = new Array();
+                    edgeAngleSort(root, notInterestEdgeCluster[i], sortCluster);
+                    notInterestNodeClusterSort.push(sortCluster);
+
+
+                    function edgeAngleSort(node: Dot_G, edgeCluster: Edge_G[], sortCluster: Dot_G[]) {
+                        var edgeArray: Edge_G[] = new Array();
+                        for (var i = 0; i < edgeCluster.length; i++) {
+                            if (edgeCluster[i].dot1 == node) edgeArray.push(edgeCluster[i]);
+                        }
+
+                        if (edgeArray.length == 0) sortCluster.push(node);
+                        else {
+                            for (var i = 0; i < edgeArray.length; i++) {        //エッジを理想角度の大きさでバブルソートする
+                                for (var j = 1; j < edgeArray.length - i; j++) {
+                                    if (edgeArray[j].ideal_angle > edgeArray[j - 1].ideal_angle) {
+                                        var temp: Edge_G = edgeArray[j];
+                                        edgeArray[j] = edgeArray[j - 1];
+                                        edgeArray[j - 1] = temp;
+                                    }
+                                }
+                            }
+                            var flag: boolean = false;
+                            for (var i = 0; i < edgeArray.length; i++) {
+                                if (edgeArray[i].ideal_angle <= 90 && !flag) {
+                                    sortCluster.push(node);
+                                    flag = true;
+                                }
+                                edgeAngleSort(edgeArray[i].dot2, edgeCluster, sortCluster);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (var i = 0; i < notInterestNodeClusterSort.length; i++) {
+                var nodeCluster: Dot_G[] = notInterestNodeClusterSort[i];
+                var fromClusterEdges: Edge_G[] = new Array();
+                for (var j = 0; j < nodeCluster.length; j++) {
+                    var node: Dot_G = nodeCluster[j];
+                    var fromNodeEdges: Edge_G[] = new Array();
+                    for (var k = 0; k < EDGENUMBER; k++) {
+                        if (edges[k].dot1 == node && edges[k].dot2.interested == true) {
+                            fromNodeEdges.push(edges[k]);
+                        }
+                    }
+                    for (var k = 0; k < fromNodeEdges.length; k++) {        //バブルソートで並び替え
+                        for (var l = 1; l < fromNodeEdges.length - k; l++) {
+                            if (fromNodeEdges[l].ideal_angle > fromNodeEdges[l - 1].ideal_angle) {
+                                var temp: Edge_G = fromNodeEdges[l];
+                                fromNodeEdges[l] = fromNodeEdges[l - 1];
+                                fromNodeEdges[l - 1] = temp;
+                            }
+                        }
+                    }
+                    Array.prototype.push.apply(fromClusterEdges, fromNodeEdges);
+                }
+                for (var j = 0; j < fromClusterEdges.length; j++) {
+                    fromClusterEdges[j].ideal_angle = 120 - 60 / (fromClusterEdges.length * 2) * (2 * j + 1);
+                }
+            }
         }
 
         //プリミティブ型や配列型を参照しているエッジの理想長を短くする
@@ -872,21 +1019,7 @@ function setGraphLocation(graph: Graph) {
                 edges[i].ideal_length *= 0.7;
             }
         }
-
-        //隣接行列を用意する
-        var adjacency_matrix: boolean[][] = new Array(DOTNUMBER);
-        for (var i = 0; i < DOTNUMBER; i++) {
-            adjacency_matrix[i] = new Array(DOTNUMBER);
-            adjacency_matrix[i].fill(false);
-            adjacency_matrix[i][i] = false;
-        }
-        for (var i = 0; i < EDGENUMBER; i++) {
-            var d1: number = dots.indexOf(edges[i].dot1);
-            var d2: number = dots.indexOf(edges[i].dot2);
-            adjacency_matrix[d1][d2] = true;
-            adjacency_matrix[d2][d1] = true;
-        }
-
+        
         var graphInitializationEndTime = performance.now();
         console.log("graphInitialization\n   " + (graphInitializationEndTime - graphInitializationStartTime) + " ms");
 
@@ -1074,41 +1207,41 @@ function setGraphLocation(graph: Graph) {
                 var delta: number = Math.sqrt(dx * dx + dy * dy);
                 if (delta != 0) {
                     if (edgeWithAngleList[i].underforce == true) {
-                        var angle: number = edges[i].angle();
-                        for (var j = 0; j < caflist.length; j++) {
-                            if (edgeIncludeCaF(edgeWithAngleList[i], caflist[j])) {
-                                //各点の角度に基づいて働く力を計算
-                                var d: number = angle - caflist[j].angle; //弧度法から度数法に変更
-                                var ddx: number;
-                                var ddy: number;
-                                var d1size: number = (edges[i].dot1.interested) ? edges[i].dot1.size : NODESIZE;
-                                var d2size: number = (edges[i].dot2.interested) ? edges[i].dot2.size : NODESIZE;
-                                var krad: number = edges[i].krad * d2size * d1size / (NODESIZE * NODESIZE);
-                                var ex: number = krad * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                                var ey: number = - krad * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
-                                if (Math.abs(d) <= 180) {
-                                    ddx = d * Math.abs(d) * ex;
-                                    ddy = d * Math.abs(d) * ey;
-                                } else {
-                                    var dd: number = d + 2 * 180;
-                                    if (d < 0) {
-                                        ddx = dd * Math.abs(dd) * ex;
-                                        ddy = dd * Math.abs(dd) * ey;
-                                    } else {
-                                        ddx = -dd * Math.abs(dd) * ex;
-                                        ddy = -dd * Math.abs(dd) * ey;
-                                    }
-                                }
-                                edges[i].dot1.fmx += -ddx;
-                                edges[i].dot1.fmy += -ddy;
-                                edges[i].dot2.fmx += ddx;
-                                edges[i].dot2.fmy += ddy;
+                        //各点の角度に基づいて働く力を計算
+                        var d: number = edges[i].angle() - edges[i].ideal_angle; //弧度法から度数法に変更
+                        var ddx: number;
+                        var ddy: number;
+                        var d1size: number = (edges[i].dot1.interested) ? edges[i].dot1.size : NODESIZE;
+                        var d2size: number = (edges[i].dot2.interested) ? edges[i].dot2.size : NODESIZE;
+                        var krad: number = edges[i].krad * d2size * d1size / (NODESIZE * NODESIZE);
+                        var ex: number = krad * dy / delta;     //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                        var ey: number = - krad * dx / delta;   //角度に関する力の基本ベクトル（元のベクトルを負の方向に90度回転）
+                        if (Math.abs(d) <= 180) {
+                            ddx = d * Math.abs(d) * ex;
+                            ddy = d * Math.abs(d) * ey;
+                        } else {
+                            var dd: number = d + 2 * 180;
+                            if (d < 0) {
+                                ddx = dd * Math.abs(dd) * ex;
+                                ddy = dd * Math.abs(dd) * ey;
+                            } else {
+                                ddx = -dd * Math.abs(dd) * ex;
+                                ddy = -dd * Math.abs(dd) * ey;
                             }
                         }
+                        edges[i].dot1.fmx += -ddx;
+                        edges[i].dot1.fmy += -ddy;
+                        edges[i].dot2.fmx += ddx;
+                        edges[i].dot2.fmy += ddy;
                     }
 
                     //２点が辺で繋がっている場合はスプリング力を計算
-                    var ds: number = f_s(delta, cs, edges[i].ideal_length) / delta * edges[i].dot2.size * edges[i].dot1.size / (NODESIZE * NODESIZE);
+                    //var ds: number = f_s(delta, cs, edges[i].ideal_length) / delta * edges[i].dot2.size * edges[i].dot1.size / (NODESIZE * NODESIZE);
+                    var d1size: number = (!edges[i].dot1.interested && edges[i].dot2.interested) ? NODESIZE : edges[i].dot1.size;
+                    var ds: number = f_s(delta, cs, edges[i].ideal_length) / delta * edges[i].dot2.size * d1size / (NODESIZE * NODESIZE);
+                    //var d1size: number = (!edges[i].dot1.interested) ? NODESIZE : edges[i].dot1.size;
+                    //var d2size: number = (!edges[i].dot1.interested /*&& !edges[i].dot2.interested*/) ? NODESIZE : edges[i].dot2.size;
+                    //var ds: number = f_s(delta, cs, edges[i].ideal_length) / delta * d2size * d1size / (NODESIZE * NODESIZE);
                     var ddsx: number = dx * ds;
                     var ddsy: number = dy * ds;
                     edges[i].dot2.fax -= ddsx;
@@ -1132,7 +1265,10 @@ function setGraphLocation(graph: Graph) {
                         var bool2: boolean = dots[j].interested;
                         if (delta != 0 && (bool1 && bool2) && delta < 800) {
                             //var d: number = f_r(delta, cr) / delta;
-                            var d: number = f_r(delta, cr) / delta * dots[i].size * dots[j].size / (NODESIZE * NODESIZE);
+                            var d1size: number = (dots[i].interested) ? dots[i].size : dots[i].size / 10;
+                            var d2size: number = (dots[j].interested) ? dots[j].size : dots[j].size / 10;
+                            //var d: number = f_r(delta, cr) / delta * dots[i].size * dots[j].size / (NODESIZE * NODESIZE);
+                            var d: number = f_r(delta, cr) / delta * d1size * d2size / (NODESIZE * NODESIZE);
                             dots[i].frx += dx * d;
                             dots[i].fry += dy * d;
                             dots[j].frx -= dx * d;

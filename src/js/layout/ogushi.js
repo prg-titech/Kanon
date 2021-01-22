@@ -33,6 +33,7 @@ __$__.Layout = {
                                         false, 
                                         "Kanon-ArrayNode"
                                     );
+                                    newNode.index = refNum;
                                     graph.pushNode(newNode);
                                     graph.setArrayNode(newID);
                                     references[refNum] = newID;
@@ -171,10 +172,9 @@ __$__.Layout = {
                     // }
                 }
                 for(let nodeID of Object.keys(graph.nodes)) {
-                    if(nodeID.slice(nodeID.length - 5, nodeID.length) == "array") {
-                        let sliceID = nodeID.slice(0, nodeID.length - 6);
-                        let lastindex = sliceID.lastIndexOf("-");
-                        graph.setLabel(nodeID, "Array [" + nodeID.slice(lastindex + 1, nodeID.length - 6) + "]");
+                    let index = graph.nodes[nodeID].index
+                    if(index != -1) {
+                        graph.setLabel(nodeID, "Array [" + index + "]");
                     }
                 }
                 graph.makeChanges = true;
