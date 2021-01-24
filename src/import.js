@@ -17,7 +17,8 @@ document.write('<script type="text/javascript" src="src/js/object2graph/graph.js
 document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
 
 //参照するTypeScriptファイルの変更はここで
-document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI3/UsingKanonAPI3/setGraphLocation.js"></script>');
+//document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI3/UsingKanonAPI3/setGraphLocation.js"></script>');
+document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI4/UsingKanonAPI4/setGraphLocation.js"></script>');
 
 //旧Ogushiレイアウトアルゴリズム
 document.write('<script type="text/javascript" src="src/js/layout/old_ogushi_layout.js"></script>');

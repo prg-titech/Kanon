@@ -704,13 +704,14 @@ function setGraphLocation(graph) {
         }
         var cs = (interestNodes.length > 0) ? CS : CS * 0.6;
         var cr = (interestNodes.length > 0) ? CR * 0.5 : CR;
+        var notInterestNodeClusterSort = new Array(); //各クラスター内のノードをx座標の小さい順に並べ替えたもの
         if (graph.CustomMode) { //カスタムモードのとき
             var notInterestedNodes = new Array(); //興味なしのノード群
             var notInterestedEdges = new Array(); //端点が２つとも興味なしのエッジ群
             for (var i = 0; i < DOTNUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) { //興味のないノードは
                     dots[i].interested = false;
-                    dots[i].size = NODESIZE / 8; //大きさを小さくする
+                    dots[i].size = dots[i].size / 8; //大きさを小さくする
                     notInterestedNodes.push(dots[i]);
                 }
             }
@@ -738,6 +739,7 @@ function setGraphLocation(graph) {
                     }
                 }
             }
+            //極小ノードをクラスターに分類していく
             var clusterNumber = new Array(notInterestedNodes.length);
             var clusterEdgeNumber = new Array(notInterestedEdges.length);
             clusterNumber.fill(-1);
@@ -788,7 +790,6 @@ function setGraphLocation(graph) {
                 }
                 notInterestEdgeCluster.push(clusterEdgeArray);
             }
-            var notInterestNodeClusterSort = new Array(); //各クラスター内のノードをx座標の小さい順に並べ替えたもの
             for (var i = 0; i < notInterestEdgeCluster.length; i++) {
                 var notRootNode = new Array(notInterestNodeCluster[i].length);
                 notRootNode.fill(true);
@@ -859,6 +860,97 @@ function setGraphLocation(graph) {
                 for (var j = 0; j < fromClusterEdges.length; j++) {
                     fromClusterEdges[j].ideal_angle = 120 - 60 / (fromClusterEdges.length * 2) * (2 * j + 1);
                 }
+            }
+        }
+        console.log(notInterestNodeClusterSort);
+        //クラスタークラス
+        var Cluster_G = /** @class */ (function () {
+            function Cluster_G(main, sub) {
+                this.main = main;
+                this.sub = sub;
+            }
+            //クラスターの初期化
+            Cluster_G.prototype.init = function (x, y, cls) {
+                this.x = x;
+                this.y = y;
+                this.dx = 0;
+                this.dy = 0;
+                this.fax = 0;
+                this.fay = 0;
+                this.frx = 0;
+                this.fry = 0;
+                this.fmx = 0;
+                this.fmy = 0;
+                this.nodecls = cls;
+                this.route_length = -1;
+                this.size = NODESIZE;
+                this.feye_distance = -1;
+                this.isLiteral = isPrimitiveString(cls);
+                this.interested = true;
+            };
+            //点に働く力から速度を求める
+            Cluster_G.prototype.init_velocity = function () {
+                this.dx = this.fax + this.frx + this.fmx;
+                this.dy = this.fay + this.fry + this.fmy;
+            };
+            //点の速度
+            Cluster_G.prototype.velocity = function () {
+                return Math.sqrt(this.dx * this.dx + this.dy * this.dy);
+            };
+            //与えられたノードがクラスターに属しているかを判定する
+            Cluster_G.prototype.belong = function (dot) {
+                if (this.main == dot)
+                    return true;
+                else {
+                    if (this.sub.indexOf(dot) != -1)
+                        return true;
+                    else
+                        return false;
+                }
+            };
+            //クラスターを移動させるときは内部ノードを全て等しく移動させる
+            Cluster_G.prototype.move = function (dx, dy) {
+                if (this.main != null) {
+                    this.main.x += dx;
+                    this.main.y += dy;
+                }
+                for (var i = 0; i < this.sub.length; i++) {
+                    this.sub[i].x += dx;
+                    this.sub[i].y += dy;
+                }
+            };
+            return Cluster_G;
+        }());
+        var clusters = new Array();
+        var usedInterestNodes = new Array();
+        for (var i = 0; i < notInterestNodeClusterSort.length; i++) {
+            var toClusterEdges = new Array();
+            for (var j = 0; j < notInterestNodeClusterSort[i].length; j++) {
+                for (var k = 0; k < EDGENUMBER; k++) {
+                    if (edges[k].dot2 == notInterestNodeClusterSort[i][j] && edges[k].dot1.interested)
+                        toClusterEdges.push(edges[k]);
+                }
+            }
+            if (toClusterEdges.length == 0) {
+                var cluster = new Cluster_G(null, notInterestNodeClusterSort[i]);
+                var jnum = Math.floor((notInterestNodeClusterSort[i].length - 1) / 2);
+                var centerNode = notInterestNodeClusterSort[i][jnum];
+                cluster.init(centerNode.x, centerNode.y, centerNode.nodecls);
+                clusters.push(cluster);
+            }
+            else {
+                var mainDot = toClusterEdges[0].dot1;
+                var cluster = new Cluster_G(mainDot, notInterestNodeClusterSort[i]);
+                cluster.init(mainDot.x, mainDot.y, mainDot.nodecls);
+                clusters.push(cluster);
+                usedInterestNodes.push(mainDot);
+            }
+        }
+        for (var i = 0; i < DOTNUMBER; i++) {
+            if (usedInterestNodes.indexOf(dots[i]) == -1 && dots[i].interested) {
+                var cluster = new Cluster_G(dots[i], []);
+                cluster.init(dots[i].x, dots[i].y, dots[i].nodecls);
+                clusters.push(cluster);
             }
         }
         //プリミティブ型や配列型を参照しているエッジの理想長を短くする

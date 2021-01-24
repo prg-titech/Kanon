@@ -1,0 +1,7 @@
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\bin\TypeScriptHTMLApp1.dll.config
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\bin\TypeScriptHTMLApp1.dll
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\bin\TypeScriptHTMLApp1.pdb
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\obj\Debug\UsingKanonAPI4.csprojAssemblyReference.cache
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\obj\Debug\UsingKanonAPI4.csproj.CoreCompileInputs.cache
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\obj\Debug\TypeScriptHTMLApp1.dll
+C:\Users\oguto\Documents\Titech\Masuhara_Lab\DataStructureVisualization\Kanon\src\js\layout\ogushi\UsingKanonAPI4\UsingKanonAPI4\obj\Debug\TypeScriptHTMLApp1.pdb

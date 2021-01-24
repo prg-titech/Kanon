@@ -277,6 +277,18 @@ __$__.StoredGraphFormat = {
         }
 
         /**
+         * 追加部分：ノードのカラーを返す
+         * @param {string} ID
+         * @return {any}
+         */
+        getColor(ID) {
+            let node = this.nodes[ID];
+            if (node) {
+                return node.color;
+            }
+        }
+
+        /**
          * 追加部分：ノードの値がリテラルかどうかを返す
          * @param {string} ID
          * @return {boolean}
