@@ -704,22 +704,17 @@ function setGraphLocation(graph) {
         }
         var cs = (interestNodes.length > 0) ? CS : CS * 0.6;
         var cr = (interestNodes.length > 0) ? CR * 0.5 : CR;
-        var notInterestNodeClusterSort = new Array(); //各クラスター内のノードをx座標の小さい順に並べ替えたもの
         if (graph.CustomMode) { //カスタムモードのとき
-            var notInterestedNodes = new Array(); //興味なしのノード群
-            var notInterestedEdges = new Array(); //端点が２つとも興味なしのエッジ群
             for (var i = 0; i < DOTNUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(dots[i].nodecls) != -1) { //興味のないノードは
                     dots[i].interested = false;
                     dots[i].size = dots[i].size / 8; //大きさを小さくする
-                    notInterestedNodes.push(dots[i]);
                 }
             }
             for (var i = 0; i < EDGENUMBER; i++) {
                 if (graph.notInterestedClass.indexOf(edges[i].dot2cls) != -1) { //エッジのtoノードが興味なしのとき
                     if (graph.notInterestedClass.indexOf(edges[i].dot1cls) != -1) { //エッジのfromノードも興味ないとき
                         edges[i].ideal_length = edges[i].ideal_length / 24;
-                        notInterestedEdges.push(edges[i]);
                     }
                     else {
                         edges[i].ideal_length = edges[i].ideal_length / 6;
@@ -738,219 +733,6 @@ function setGraphLocation(graph) {
                         }
                     }
                 }
-            }
-            //極小ノードをクラスターに分類していく
-            var clusterNumber = new Array(notInterestedNodes.length);
-            var clusterEdgeNumber = new Array(notInterestedEdges.length);
-            clusterNumber.fill(-1);
-            clusterEdgeNumber.fill(-1);
-            var clusterNo = 0;
-            for (var i = 0; i < notInterestedNodes.length; i++) {
-                if (clusterNumber[i] == -1) {
-                    clusterNumber[i] = clusterNo;
-                    while (true) {
-                        var bool = false;
-                        for (var j = 0; j < notInterestedEdges.length; j++) {
-                            var dot1 = notInterestedEdges[j].dot1;
-                            var dot2 = notInterestedEdges[j].dot2;
-                            var cn1 = clusterNumber[notInterestedNodes.indexOf(dot1)];
-                            var cn2 = clusterNumber[notInterestedNodes.indexOf(dot2)];
-                            if (cn1 == clusterNo && cn2 != clusterNo) {
-                                clusterNumber[notInterestedNodes.indexOf(dot2)] = clusterNo;
-                                clusterEdgeNumber[j] = clusterNo;
-                                bool = true;
-                            }
-                            else if (cn2 == clusterNo && cn1 != clusterNo) {
-                                clusterNumber[notInterestedNodes.indexOf(dot1)] = clusterNo;
-                                clusterEdgeNumber[j] = clusterNo;
-                                bool = true;
-                            }
-                        }
-                        if (!bool)
-                            break;
-                    }
-                    clusterNo++;
-                }
-            }
-            var notInterestNodeCluster = new Array(); //興味なしノードのクラスター
-            var notInterestEdgeCluster = new Array(); //興味なしエッジのクラスター
-            for (var i = 0; i < clusterNo; i++) {
-                var clusterNodeArray = new Array();
-                for (var j = 0; j < clusterNumber.length; j++) {
-                    if (clusterNumber[j] == i) {
-                        clusterNodeArray.push(notInterestedNodes[j]);
-                    }
-                }
-                notInterestNodeCluster.push(clusterNodeArray);
-                var clusterEdgeArray = new Array();
-                for (var j = 0; j < clusterEdgeNumber.length; j++) {
-                    if (clusterEdgeNumber[j] == i) {
-                        clusterEdgeArray.push(notInterestedEdges[j]);
-                    }
-                }
-                notInterestEdgeCluster.push(clusterEdgeArray);
-            }
-            for (var i = 0; i < notInterestEdgeCluster.length; i++) {
-                var notRootNode = new Array(notInterestNodeCluster[i].length);
-                notRootNode.fill(true);
-                for (var j = 0; j < notInterestEdgeCluster[i].length; j++) {
-                    var toNode = notInterestEdgeCluster[i][j].dot2;
-                    notRootNode[notInterestNodeCluster[i].indexOf(toNode)] = false;
-                }
-                if (notRootNode.indexOf(true) == -1) { //根のノードがクラスターになかった場合
-                    notInterestNodeClusterSort.push(notInterestNodeCluster[i]);
-                }
-                else {
-                    var root = notInterestNodeCluster[i][notRootNode.indexOf(true)]; //根のノード
-                    var sortCluster = new Array();
-                    edgeAngleSort(root, notInterestEdgeCluster[i], sortCluster);
-                    notInterestNodeClusterSort.push(sortCluster);
-                    function edgeAngleSort(node, edgeCluster, sortCluster) {
-                        var edgeArray = new Array();
-                        for (var i = 0; i < edgeCluster.length; i++) {
-                            if (edgeCluster[i].dot1 == node)
-                                edgeArray.push(edgeCluster[i]);
-                        }
-                        if (edgeArray.length == 0)
-                            sortCluster.push(node);
-                        else {
-                            for (var i = 0; i < edgeArray.length; i++) { //エッジを理想角度の大きさでバブルソートする
-                                for (var j = 1; j < edgeArray.length - i; j++) {
-                                    if (edgeArray[j].ideal_angle > edgeArray[j - 1].ideal_angle) {
-                                        var temp = edgeArray[j];
-                                        edgeArray[j] = edgeArray[j - 1];
-                                        edgeArray[j - 1] = temp;
-                                    }
-                                }
-                            }
-                            var flag = false;
-                            for (var i = 0; i < edgeArray.length; i++) {
-                                if (edgeArray[i].ideal_angle <= 90 && !flag) {
-                                    sortCluster.push(node);
-                                    flag = true;
-                                }
-                                edgeAngleSort(edgeArray[i].dot2, edgeCluster, sortCluster);
-                            }
-                        }
-                    }
-                }
-            }
-            for (var i = 0; i < notInterestNodeClusterSort.length; i++) {
-                var nodeCluster = notInterestNodeClusterSort[i];
-                var fromClusterEdges = new Array();
-                for (var j = 0; j < nodeCluster.length; j++) {
-                    var node = nodeCluster[j];
-                    var fromNodeEdges = new Array();
-                    for (var k = 0; k < EDGENUMBER; k++) {
-                        if (edges[k].dot1 == node && edges[k].dot2.interested == true) {
-                            fromNodeEdges.push(edges[k]);
-                        }
-                    }
-                    for (var k = 0; k < fromNodeEdges.length; k++) { //バブルソートで並び替え
-                        for (var l = 1; l < fromNodeEdges.length - k; l++) {
-                            if (fromNodeEdges[l].ideal_angle > fromNodeEdges[l - 1].ideal_angle) {
-                                var temp = fromNodeEdges[l];
-                                fromNodeEdges[l] = fromNodeEdges[l - 1];
-                                fromNodeEdges[l - 1] = temp;
-                            }
-                        }
-                    }
-                    Array.prototype.push.apply(fromClusterEdges, fromNodeEdges);
-                }
-                for (var j = 0; j < fromClusterEdges.length; j++) {
-                    fromClusterEdges[j].ideal_angle = 120 - 60 / (fromClusterEdges.length * 2) * (2 * j + 1);
-                }
-            }
-        }
-        console.log(notInterestNodeClusterSort);
-        //クラスタークラス
-        var Cluster_G = /** @class */ (function () {
-            function Cluster_G(main, sub) {
-                this.main = main;
-                this.sub = sub;
-            }
-            //クラスターの初期化
-            Cluster_G.prototype.init = function (x, y, cls) {
-                this.x = x;
-                this.y = y;
-                this.dx = 0;
-                this.dy = 0;
-                this.fax = 0;
-                this.fay = 0;
-                this.frx = 0;
-                this.fry = 0;
-                this.fmx = 0;
-                this.fmy = 0;
-                this.nodecls = cls;
-                this.route_length = -1;
-                this.size = NODESIZE;
-                this.feye_distance = -1;
-                this.isLiteral = isPrimitiveString(cls);
-                this.interested = true;
-            };
-            //点に働く力から速度を求める
-            Cluster_G.prototype.init_velocity = function () {
-                this.dx = this.fax + this.frx + this.fmx;
-                this.dy = this.fay + this.fry + this.fmy;
-            };
-            //点の速度
-            Cluster_G.prototype.velocity = function () {
-                return Math.sqrt(this.dx * this.dx + this.dy * this.dy);
-            };
-            //与えられたノードがクラスターに属しているかを判定する
-            Cluster_G.prototype.belong = function (dot) {
-                if (this.main == dot)
-                    return true;
-                else {
-                    if (this.sub.indexOf(dot) != -1)
-                        return true;
-                    else
-                        return false;
-                }
-            };
-            //クラスターを移動させるときは内部ノードを全て等しく移動させる
-            Cluster_G.prototype.move = function (dx, dy) {
-                if (this.main != null) {
-                    this.main.x += dx;
-                    this.main.y += dy;
-                }
-                for (var i = 0; i < this.sub.length; i++) {
-                    this.sub[i].x += dx;
-                    this.sub[i].y += dy;
-                }
-            };
-            return Cluster_G;
-        }());
-        var clusters = new Array();
-        var usedInterestNodes = new Array();
-        for (var i = 0; i < notInterestNodeClusterSort.length; i++) {
-            var toClusterEdges = new Array();
-            for (var j = 0; j < notInterestNodeClusterSort[i].length; j++) {
-                for (var k = 0; k < EDGENUMBER; k++) {
-                    if (edges[k].dot2 == notInterestNodeClusterSort[i][j] && edges[k].dot1.interested)
-                        toClusterEdges.push(edges[k]);
-                }
-            }
-            if (toClusterEdges.length == 0) {
-                var cluster = new Cluster_G(null, notInterestNodeClusterSort[i]);
-                var jnum = Math.floor((notInterestNodeClusterSort[i].length - 1) / 2);
-                var centerNode = notInterestNodeClusterSort[i][jnum];
-                cluster.init(centerNode.x, centerNode.y, centerNode.nodecls);
-                clusters.push(cluster);
-            }
-            else {
-                var mainDot = toClusterEdges[0].dot1;
-                var cluster = new Cluster_G(mainDot, notInterestNodeClusterSort[i]);
-                cluster.init(mainDot.x, mainDot.y, mainDot.nodecls);
-                clusters.push(cluster);
-                usedInterestNodes.push(mainDot);
-            }
-        }
-        for (var i = 0; i < DOTNUMBER; i++) {
-            if (usedInterestNodes.indexOf(dots[i]) == -1 && dots[i].interested) {
-                var cluster = new Cluster_G(dots[i], []);
-                cluster.init(dots[i].x, dots[i].y, dots[i].nodecls);
-                clusters.push(cluster);
             }
         }
         //プリミティブ型や配列型を参照しているエッジの理想長を短くする

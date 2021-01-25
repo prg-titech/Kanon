@@ -1188,9 +1188,11 @@ function setGraphLocation(graph: Graph) {
         }
 
         //クラスター内のノードを力学モデルで座標移動させていく
-        while (true) {
-            force_move();
-            if (t <= 0) break;
+        if (graph.notInterestedClass.length > 0) {
+            while (true) {
+                force_move();
+                if (t <= 0) break;
+            }
         }
 
         //計算を終了し、graphに情報を書き込んでいく

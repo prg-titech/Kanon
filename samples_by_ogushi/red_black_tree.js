@@ -16,6 +16,7 @@ class RBT {
         if(this.tree == null){
             return;
         } else {
+            let node = this.tree.search(val);
             this.tree = this.tree.remove(val);
             deleteflag = false;
             if(isR(this.tree)) this.tree.color = "black";
@@ -109,6 +110,17 @@ class Node {
             this.right = this.right.remove(val);
             if(this.right != null) this.right.parent = this;
             return this.balanceR();
+        }
+    }
+
+    search(val) {
+        if(this.value == val) return this;
+        else if(this.value > val){
+            if(this.left == null) return;
+            else return this.left.search(val);
+        } else {
+            if(this.right == null) return;
+            else return this.right.search(val);
         }
     }
 
@@ -243,33 +255,10 @@ function rotateRL(tree){
     return rotateL(tree);
 }
 
-// let node1 = new Node(null, 1, null, null, null);
-// let node2 = new Node(null, 2, null, null, null);
-// let node3 = new Node(null, 3, null, null, null);
-// let node4 = new Node(null, 4, null, null, null);
-// let node5 = new Node(null, 5, null, null, null);
-// let node6 = new Node(null, 6, null, null, null);
-// let node7 = new Node(null, 7, null, null, null);
-
-// node1.parent = node2;
-// node2.left = node1;
-// node2.right = node6;
-// node6.parent = node2;
-// node6.left = node4;
-// node6.right = node7;
-// node4.parent = node6;
-// node7.parent = node6;
-// node4.left = node3;
-// node3.parent = node4;
-// node4.right = node5;
-// node5.parent = node4;
-
-// let node = rotateRL(node2);
-
 let rbt = new RBT();
 
-for(let i = 1; i <= 7; i++){
+for(let i = 1; i <= 31; i++){
     rbt.insert(i);
 }
 
-rbt.delete(4);
+rbt.delete(12);

@@ -10,23 +10,89 @@ class Tree {
         //child.parent = this;
     }
 
+    //parentValのノードの下に新しい子ノードを追加する
+    addTreeVal(val, parentVal) {
+        if(parentVal == this.val) this.addChild(new Tree(val));
+        else if(this.children.length == 0) return;
+        else {
+            for(let i = 0; i < this.children.length; i++) {
+                if(val < this.children[i].val) continue;
+                else this.children[i].addTreeVal(val, parentVal);
+            }
+        }
+    }
+
     removeChild(val) {
 
     }
 }
 
+class List {
+    constructor(tree) {
+        this.tree = tree;
+        this.next = this;
+        this.prev = this;
+        this.parent = null;
+    }
+
+    addTree(tree) {
+        var newnode = new List(tree);
+        var temp = this.prev;
+        this.prev = newnode;
+        newnode.next = this;
+        newnode.prev = temp;
+        temp.next = newnode;
+    }
+
+    //parentValのノードの下に新しい子ノードを追加する
+    addTreeVal(val, parentVal) {
+        this.tree.addTreeVal(val, parentVal);
+        if(this.next.parent == null) {
+            this.next.addTreeVal(val, parentVal);
+        }
+    }
+
+    remove() {
+        let prev = this.prev;
+        let next = this.next;
+        if(this.parent != null) {
+            this.parent.list = next;
+            next.parent = this.parent;
+            this.parent = null;
+        }
+        prev.next = next;
+        next.prev = prev;
+        this.next = this;
+        this.prev = this;
+        this.tree = null;
+    }
+}
+
 class Forest {
     constructor() {
-        this.treelist = null;
+        this.list = null;
+    }
+
+    makeTree(val) {
+        let tree = new Tree(val);
+        if(this.list == null) {
+            this.list = new List(tree);
+            this.list.parent = this;
+        }
+        else this.list.addTree(tree);
+    }
+
+    addVal(val, parentVal) {
+        this.list.addTreeVal(val, parentVal);
     }
 
     mintree() {
-        let tl = this.treelist;
+        let tl = this.list;
         let array = [tl];
         let array2 = [tl.tree.val];
         while(true) {
             tl = tl.next;
-            if(tl == this.treelist) break;
+            if(tl == this.list) break;
             else {
                 array.push(tl);
                 array2.push(tl.tree.val);
@@ -41,16 +107,16 @@ class Forest {
     removeMin() {
         let min = this.mintree();
         for(let i = 0; i < min.tree.children.length; i++) {
-            this.treelist.addTree(min.tree.children[i]);
+            this.list.addTree(min.tree.children[i]);
         }
         min.tree.children.length = 0;
         min.remove();
-        let current = this.treelist;
+        let current = this.list;
         let array = [current];
         let array2 = [current.tree.children.length];
         while(true) {
             current = current.next;
-            if(current == this.treelist) break;
+            if(current == this.list) break;
             else {
                 let length = current.tree.children.length;
                 if(array2.indexOf(length) != -1) {
@@ -64,7 +130,7 @@ class Forest {
                         another.tree.addChild(current.tree);
                         current.remove();
                     }
-                    current = this.treelist;
+                    current = this.list;
                     array.length = 0;
                     array.push(current);
                     array2 = [current.tree.children.length];
@@ -78,51 +144,15 @@ class Forest {
     }
 }
 
-class TreeList {
-    constructor(tree) {
-        this.tree = tree;
-        this.next = this;
-        this.prev = this;
-        this.parent = null;
-    }
-
-    addTree(tree) {
-        var newnode = new TreeList(tree);
-        var temp = this.prev;
-        this.prev = newnode;
-        newnode.next = this;
-        newnode.prev = temp;
-        temp.next = newnode;
-    }
-
-    remove() {
-        let prev = this.prev;
-        let next = this.next;
-        if(this.parent != null) {
-            this.parent.treelist = next;
-            next.parent = this.parent;
-            this.parent = null;
-        }
-        prev.next = next;
-        next.prev = prev;
-        this.next = this;
-        this.prev = this;
-    }
-}
-
 let forest = new Forest();
-let treelist = new TreeList(new Tree(6));
-forest.treelist = treelist;
-treelist.parent = forest;
-let two = new Tree(2);
-two.addChild(new Tree(5));
-treelist.addTree(two);
-let one = new Tree(1);
-one.addChild(new Tree(3));
-one.addChild(new Tree(4));
-one.addChild(new Tree(7));
-one.children[2].addChild(new Tree(8));
-one.children[2].children[0].addChild(new Tree(9));
-treelist.addTree(one);
+forest.makeTree(6);
+forest.makeTree(2);
+forest.addVal(5, 2);
+forest.makeTree(1);
+forest.addVal(3, 1);
+forest.addVal(4, 1);
+forest.addVal(7, 1);
+forest.addVal(8, 7);
+forest.addVal(9, 8);
 
 forest.removeMin();
