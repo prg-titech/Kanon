@@ -1,5 +1,5 @@
 //サーキット
-class Circuit {
+class Tree {
     constructor(left, right, parent, color, ID, rcd){
         this.left = left;
         this.right = right;
@@ -61,11 +61,11 @@ function rotateRL(tree) {
 //挿入操作
 function insert(tree, ID, rcd) {
     if (tree == null) {
-        var newtree = new Circuit(null, null, null, "B", ID, rcd);
+        var newtree = new Tree(null, null, null, "B", ID, rcd);
         return newtree;
     } else if (ID < tree.ID) {
         if (tree.left == null) {
-            var newtree = new Circuit();
+            var newtree = new Tree();
             tree.left = newtree;
             return balance(tree);
         } else {
@@ -74,7 +74,7 @@ function insert(tree, ID, rcd) {
         }
     } else if (ID > tree.ID) {
         if (tree.right == null) {
-            var newtree = new Circuit(null, null, tree, "R", ID, rcd);
+            var newtree = new Tree(null, null, tree, "R", ID, rcd);
             tree.right = newtree;
             return balance(tree);
         } else {
@@ -83,7 +83,7 @@ function insert(tree, ID, rcd) {
         }
     } else if (rcd < tree.rcd) {
         if (tree.left == null) {
-            var newtree = new Circuit(null, null, tree, "R", ID, rcd);
+            var newtree = new Tree(null, null, tree, "R", ID, rcd);
             tree.left = newtree;
             return balance(tree);
         } else {
@@ -92,7 +92,7 @@ function insert(tree, ID, rcd) {
         }
     } else {
         if (tree.right == null) {
-            var newtree = new Circuit(null, null, tree, "R", ID, rcd);
+            var newtree = new Tree(null, null, tree, "R", ID, rcd);
             tree.right = newtree;
             return balance(tree);
         } else {
@@ -158,7 +158,7 @@ function orgRound(value, base) {
 }
 
 //タイム記録
-class Record {
+class List {
     constructor(time){
         this.next = null;
         this.time = time;
@@ -167,77 +167,79 @@ class Record {
     add(newtime){
         if(this.time < newtime){
             if(this.next == null){
-                var newRecord = new Record(newtime);
-                this.next = newRecord;
+                var newList = new List(newtime);
+                this.next = newList;
                 return this;
             } else if(this.next.time > newtime){
-                var newRecord = new Record(newtime);
+                var newList = new List(newtime);
                 var temp = this.next;
-                newRecord.next = temp;
-                this.next = newRecord;
+                newList.next = temp;
+                this.next = newList;
                 return this;
             } else {
                 this.next.add(newtime);
                 return this;
             }
         } else if(this.time > newtime){
-            var newRecord = new Record(newtime);
-            newRecord.next = this;
-            return newRecord;
+            var newList = new List(newtime);
+            newList.next = this;
+            return newList;
         } else {
-            var newRecord = new Record(newtime);
+            var newList = new List(newtime);
             var temp = this.next;
-            newRecord.next = temp;
-            this.next = newRecord;
+            newList.next = temp;
+            this.next = newList;
             return this;
         }
     }
 }
 
-var CircuitNumber = 7;
-var MostRecordsNumber = 4;
-var LeastRecordsNumber = 2;
+var TreeNumber = 7;
+var MostListsNumber = 4;
+var LeastListsNumber = 2;
 
-var addCircuitID;
-var addCircuitNumber = Math.floor(Math.random() * CircuitNumber);
+var addTreeID;
+var addTreeNumber = Math.floor(Math.random() * TreeNumber);
 
-var circuits = null;
-var NumberOfCircuitHavingMostRecord = Math.floor(Math.random() * CircuitNumber);
-for(var i = 0; i < CircuitNumber; i++){
+var Trees = null;
+var NumberOfTreeHavingMostList = Math.floor(Math.random() * TreeNumber);
+for(var i = 0; i < TreeNumber; i++){
 
     //レコードオブジェクトをいくつ作るのかを決める、一つだけ最大値になる
-    var numberOfRecords;
-    if(i == NumberOfCircuitHavingMostRecord){
-        numberOfRecords = MostRecordsNumber;
+    var numberOfLists;
+    if(i == NumberOfTreeHavingMostList){
+        numberOfLists = MostListsNumber;
     } else {
-        numberOfRecords = LeastRecordsNumber + Math.floor(Math.random() * (MostRecordsNumber - LeastRecordsNumber));
+        numberOfLists = LeastListsNumber + Math.floor(Math.random() * (MostListsNumber - LeastListsNumber));
     }
 
     //決めた数だけレコードオブジェクトを生成する
-    var records = new Record(parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
-    for(var j = 1; j < numberOfRecords; j++){
-         records = records.add(parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
+    var Lists = new List(parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
+    for(var j = 1; j < numberOfLists; j++){
+         Lists = Lists.add(parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
     }
 
     var randamID = Math.floor(Math.random() * 10) + 1000 + 10 * i;
-    circuits = insert(circuits, randamID, records);
-    if(i == addCircuitNumber){
-        addCircuitID = randamID;
+    Trees = insert(Trees, randamID, Lists);
+    if(i == addTreeNumber){
+        addTreeID = randamID;
     }
 }
 
 //指定されたIDのサーキットにレコードタイムを追加する
-function addRecord(tree, ID, time) {
+function addList(tree, ID, time) {
     if(tree == null) {
         alert("ID is wrong!");
     } else if(tree.ID == ID) {
         tree.rcd = tree.rcd.add(time);
     } else if(tree.ID > ID) {
-        addRecord(tree.left, ID, time);
+        addList(tree.left, ID, time);
     } else {
-        addRecord(tree.right, ID, time);
+        addList(tree.right, ID, time);
     }
 }
 
-insertNullatAllNode(circuits);
-addRecord(circuits, addCircuitID, parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
+insertNullatAllNode(Trees);
+addList(Trees, addTreeID, parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
+
+Trees.remove()

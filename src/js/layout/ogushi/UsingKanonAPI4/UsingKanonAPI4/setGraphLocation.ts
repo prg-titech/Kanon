@@ -421,6 +421,8 @@ function setGraphLocation(graph: Graph) {
     //graphオブジェクト内のノード座標を破壊的に書き替える
     calculateLocationWithForceDirectedMethod(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, attentionNodes);
 
+    //console.log("nodelist = ");
+    //console.log(FiFA_NodeList);
     //console.log("clusternodelist = ");
     //console.log(FiFA_ClusterNodeList);
 
@@ -1180,13 +1182,13 @@ function setGraphLocation(graph: Graph) {
 
         let cs: number = (attentionNodes.length > 0) ? CS : CS * 0.6;
         let cr: number = (attentionNodes.length > 0) ? CR * 0.5 : CR;
-
+        
         //クラスターを力学モデルで座標移動させていく
         while (true) {
             cluster_force_move();
             if (ct <= 0) break;
         }
-
+        
         //クラスター内のノードを力学モデルで座標移動させていく
         if (graph.notInterestedClass.length > 0) {
             while (true) {
@@ -1194,7 +1196,7 @@ function setGraphLocation(graph: Graph) {
                 if (t <= 0) break;
             }
         }
-
+        
         //計算を終了し、graphに情報を書き込んでいく
         stopCalculate();
 
@@ -1520,7 +1522,7 @@ function setGraphLocation(graph: Graph) {
 
         //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
         function move_near_center(nodelist: FiFA_Node[], clusternodelist: FiFA_Cluster_Node[]) {
-
+            
             let darray: number[] = new Array(nodelist.length);
             darray.fill(1);
 
@@ -1544,7 +1546,7 @@ function setGraphLocation(graph: Graph) {
             }
 
             if (groupArray.length <= 1) return;
-
+            
             class Rectangle_Nodes {
                 leftX: number;
                 rightX: number;
@@ -1568,7 +1570,7 @@ function setGraphLocation(graph: Graph) {
                     let right: number = nodelist[this.nodeArray[0]].x;
                     let up: number = nodelist[this.nodeArray[0]].y;
                     let down: number = nodelist[this.nodeArray[0]].y;
-
+                    
                     for (let i = 1; i < this.nodeNumber; i++) {
                         if (nodelist[this.nodeArray[i]].x < left) {
                             left = nodelist[this.nodeArray[i]].x;
@@ -1601,7 +1603,7 @@ function setGraphLocation(graph: Graph) {
                 diagonal_length(): number {
                     let dx: number = this.rightX - this.leftX;
                     let dy: number = this.downY - this.upY;
-                    return Math.sqrt(dx * dx + dy * dy) / 2;
+                    return Math.max(Math.sqrt(dx * dx + dy * dy) / 2, NODESIZE * 5);
                 }
 
                 moveX(mx: number) {
@@ -1626,10 +1628,10 @@ function setGraphLocation(graph: Graph) {
             for (let i = 0; i < groupArray.length; i++) {
                 groupRectangle[i] = new Rectangle_Nodes(groupArray[i]);
             }
-
+            
             let t: number = T;
             let dt: number = T / 1000;
-
+            
             while (true) {
 
                 //グループにかかるスプリング力を計算
@@ -1668,7 +1670,7 @@ function setGraphLocation(graph: Graph) {
                 t -= dt;
                 if (t <= 0) break;
             }
-
+            
             for (let i = 0; i < clusternodelist.length; i++) {
                 if (clusternodelist[i].main != null) {
                     clusternodelist[i].x = clusternodelist[i].main.x;

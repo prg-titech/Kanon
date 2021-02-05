@@ -313,6 +313,8 @@ function setGraphLocation(graph) {
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
     calculateLocationWithForceDirectedMethod(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, attentionNodes);
+    //console.log("nodelist = ");
+    //console.log(FiFA_NodeList);
     //console.log("clusternodelist = ");
     //console.log(FiFA_ClusterNodeList);
     /************
@@ -1364,7 +1366,7 @@ function setGraphLocation(graph) {
                 Rectangle_Nodes.prototype.diagonal_length = function () {
                     var dx = this.rightX - this.leftX;
                     var dy = this.downY - this.upY;
-                    return Math.sqrt(dx * dx + dy * dy) / 2;
+                    return Math.max(Math.sqrt(dx * dx + dy * dy) / 2, NODESIZE * 5);
                 };
                 Rectangle_Nodes.prototype.moveX = function (mx) {
                     for (var i_60 = 0; i_60 < this.nodeNumber; i_60++) {
