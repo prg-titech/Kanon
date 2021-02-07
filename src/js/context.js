@@ -118,6 +118,7 @@ __$__.Context = {
             let visGraph = (graph) ? graph.generateVisjsGraph(true) : {nodes: [], edges: []};
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(visGraph, true)) {
                 __$__.Animation.setData(visGraph);
+                //console.log(visGraph);
                 if (__$__.Update.useBoxToVisualizeArray) {
                     __$__.Context.Arrays.forEach(arr => {
                         __$__.Update.updateArrayPosition({nodes: [arr[0]]});
