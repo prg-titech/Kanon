@@ -1,12 +1,12 @@
 var kindvalue = 0;
 
 __$__.createSelectBox = function (kind) {
-  // The list of sample files on the server is kept in .json format.
+  // The list of example files on the server is kept in .json format.
 
   // If KIND is 0, then switch the select box options to BASIC EXAMPLES.
   // If KIND is 1, then switch the select box options to FIFA LAYOUT EXAMPLES.
-  const path_basics = 'json/samples_basics.json'
-  const path_FIFA = 'json/samples_for_FIFA_layout.json'
+  const path_basics = 'json/examples_basics.json'
+  const path_FIFA = 'json/examples_for_FIFA_layout.json'
 
   function jsonToArray(data) {
     var arr = [];
@@ -56,7 +56,7 @@ __$__.createSelectBox = function (kind) {
 __$__.pasteExample = function () {
   let selectedElement = jQuery("#selectExample").val();
   if (selectedElement) {
-    var path = 'samples/';
+    var path = 'examples/';
     if (kindvalue == 0) {
       path += 'basics/';
     } else if (kindvalue == 1) {
