@@ -1,44 +1,47 @@
 <!doctype html>
 <html>
-    <head>
-    	<title>Kanon</title>
 
-    	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css"/>
-    	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css"/>
-		<link rel="stylesheet" href="external/prototype_window/themes/default.css"/>
-		<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css"/>
-    	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css"/>
-    	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css"/>
-    	<link rel="stylesheet" type="text/css" href="src/css/style.css">
-    	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
-		<link rel="stylesheet" type="text/css" href="src/css/tooltip.css">
+<head>
+	<title>Kanon</title>
 
-		<script type="text/javascript" src="src/import.js"></script>
+	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css" />
+	<link rel="stylesheet" href="external/prototype_window/themes/default.css" />
+	<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css" />
+	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css" />
+	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css" />
+	<link rel="stylesheet" type="text/css" href="src/css/style.css">
+	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
+	<link rel="stylesheet" type="text/css" href="src/css/tooltip.css">
 
-		<style type="text/css">
-			html, body {
-				height: 100%;
-				min-height: 100%;
-				margin: 0;
-				padding: 0;
-                overflow: hidden;
-			}
-		</style>
-		<link rel="stylesheet" type="text/css" href="src/css/split-pane.css">
+	<script type="text/javascript" src="src/import.js"></script>
 
-		<script>
-            jQuery(function() {
-                jQuery('div.split-pane').splitPane();
-            });
-            __$__.d3 = d3;
-    	</script>
-    </head>
+	<style type="text/css">
+		html,
+		body {
+			height: 100%;
+			min-height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+	</style>
+	<link rel="stylesheet" type="text/css" href="src/css/split-pane.css">
+
+	<script>
+		jQuery(function () {
+			jQuery('div.split-pane').splitPane();
+		});
+		__$__.d3 = d3;
+	</script>
+</head>
+
 <body>
 
 	<div id="menu-bar">
-        <div id="viewMode">
+		<div id="viewMode">
 			View Mode:
-        	<select name="pullDownViewMode" id="pullDownViewMode">
+			<select name="pullDownViewMode" id="pullDownViewMode">
 				<option value="Snapshot">Snapshot</option>
 				<option value="Summarized">Summarized</option>
 			</select>
@@ -49,14 +52,19 @@
 		<div id="autoLayout">
 			<input type="checkbox" name="autoLayout" value="true" checked="checked">Auto Layout
 		</div>
-        <div id="fileOperation">
-			<input id="saveButton" type="button" value="Save file"
-				   onclick="__$__.saveFile()">
-			<input type="file" id="readInput"
-				   onclick="__$__.readFile()">
+		<div id="fileOperation">
+			<input id="saveButton" type="button" value="Save file" onclick="__$__.saveFile()">
+			<input id="readInput" type="file" onclick="__$__.readFile()">
+			<!-- Load Examples -->
+			<script type="text/javascript" src="src/js/loadExamples.js"></script>
+			Select Examples: 
+			<input type="button" value="Basics" onclick="__$__.createSelectBox(0);">
+			<input type="button" value="FIFA layout" onclick="__$__.createSelectBox(1);">
+			<select id="selectExample"><option value="" disabled selected hidden>&lt;- Select one</option></select>
+			<input type="button" value="Paste" onclick="__$__.pasteExample();">
 		</div>
 		<input id="redrawButton" type="button" value="redraw"
-			   onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
+			onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 	</div>
 	<div class="pretty-split-pane-frame" id="split-pane-frame">
 		<div class="split-pane fixed-left" id="split-pane">
@@ -100,19 +108,23 @@
 		<input type="button" value="save" id="saveButtonForTestize" />
 		<input type="button" value="cancel" id="cancelButtonForTestize" />
 	</div>
-    <div id="tooltip_set" class="seecoderun_tooltip">set test</div>
-	<div id="tooltips" class="seecoderun_tooltip"><div id="tooltip_modify">modify</div><div id="tooltip_remove">remove</div></div>
+	<div id="tooltip_set" class="seecoderun_tooltip">set test</div>
+	<div id="tooltips" class="seecoderun_tooltip">
+		<div id="tooltip_modify">modify</div>
+		<div id="tooltip_remove">remove</div>
+	</div>
 
 	<script type="text/javascript" src="src/js/network.js"></script>
 	<script type="text/javascript" src="src/js/call-tree/network.js"></script>
 	<script>
 		jQuery.noConflict();
-        __$__.StorePositions.registerPositions();
-        __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.edges._data;
+		__$__.StorePositions.registerPositions();
+		__$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.edges._data;
 
-        __$__.editor.getSelection().clearSelection();
-        __$__.Update.PositionUpdate();
+		__$__.editor.getSelection().clearSelection();
+		__$__.Update.PositionUpdate();
 	</script>
 	<script type="text/javascript" src="src/js/eventHandler.js"></script>
 </body>
+
 </html>
