@@ -2,16 +2,16 @@
 rm -rf json/
 mkdir json
 
-function getSamples () {
+function getExamples () {
   ls -la -fd $(find $1) | grep '.js' | xargs -I{} basename {} .js | jo -pa
 }
 
 pathArr=()
 baseNameArr=()
-for path in $(find ./samples/* -maxdepth 0); do
+for path in $(find ./examples/* -maxdepth 0); do
   if [ -d $path ] ; then
     pathArr+=("$path")
     bn=$(basename $path)
-    getSamples $path > json/samples_$bn.json
+    getExamples $path > json/examples_$bn.json
   fi
 done
