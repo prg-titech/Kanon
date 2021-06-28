@@ -1,4 +1,6 @@
 node_modules/
 *-darwin-x64/
-.idea/
 package-lock.json
+**/.vs/
+*/obj/Debug
+**/Debug
