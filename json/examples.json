@@ -1,4 +1,9 @@
 [
+   "./examples/basics/linked-list-insertSort.js",
+   "./examples/basics/binary-search-tree.js",
+   "./examples/basics/singular-linked-list.js",
+   "./examples/basics/doubly-linked-list.js",
+   "./examples/basics/AVL.js",
    "./examples/for_FIFA_layout/ternary_tree.js",
    "./examples/for_FIFA_layout/fibonacci_heap.js",
    "./examples/for_FIFA_layout/circularly_list.js",
