@@ -1,0 +1,16 @@
+.problem-ball {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    color:#ffffff; 
+    background: #ff2424;
+    font-size:1.5em;
+    text-align: center;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    line-height: 30px;
+    border: none;
+    /* outline: none; */
+}

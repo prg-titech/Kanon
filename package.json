@@ -1,5 +1,5 @@
 {
-  "name": "Kanon",
+  "name": "kanon",
   "version": "1.0.0",
   "description": "A live programming environment specialized for data structure programming.",
   "main": "app.js",
