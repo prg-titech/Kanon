@@ -55,14 +55,9 @@
 		<div id="fileOperation">
 			<input id="saveButton" type="button" value="Save file" onclick="__$__.saveFile()">
 			<input id="readInput" type="file" onclick="__$__.readFile()">
-			<!-- Load Examples -->
-			<script type="text/javascript" src="src/js/loadExamples.js"></script>
-			Select Examples:
-			<input type="button" value="Basics" onclick="__$__.createSelectBox(0);">
-			<input type="button" value="FIFA layout" onclick="__$__.createSelectBox(1);">
-			<select id="selectExample">
-				<option value="" disabled selected hidden>&lt;- Select one</option>
-			</select>
+			<!-- Load examples -->
+			Select Examples: 
+			<select id="selectExample"><option value="" disabled selected hidden>Wait for loading Examples</option></select>
 			<input type="button" value="Paste" onclick="__$__.pasteExample();">
 		</div>
 		<input id="redrawButton" type="button" value="redraw"
