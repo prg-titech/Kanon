@@ -1,10 +1,10 @@
-window.onload = function () {
+window.addEventListener('DOMContentLoaded', function () {
   // Process to be evaluated when the page loads
   // If KIND == 0, then switch the options to ALL EXAMPLES.
   // If KIND == 1, then switch the options to BASIC EXAMPLES.
   // If KIND == 2, then switch the options to FIFA LAYOUT EXAMPLES.
   __$__.createSelectBox(0);
-}
+})
 
 __$__.createSelectBox = function (kind) {
   // The list of example files on the server is kept in .json format.
