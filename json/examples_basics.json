@@ -1,7 +1,7 @@
 [
-   "linked-list-insertSort",
-   "binary-search-tree",
-   "singular-linked-list",
-   "doubly-linked-list",
-   "AVL"
+   "./examples/basics/linked-list-insertSort.js",
+   "./examples/basics/binary-search-tree.js",
+   "./examples/basics/singular-linked-list.js",
+   "./examples/basics/doubly-linked-list.js",
+   "./examples/basics/AVL.js"
 ]
