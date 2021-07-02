@@ -7,6 +7,21 @@ __$__.Update = {
 
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
+        
+         //adding portion start
+        
+        window.onload = function(){
+             var cell_highlight = document.getElementsByClassName("ace_gutter-cell");
+             for(i=0;i<cell_highlight.length;i++)
+                  cell_highlight[i].style.backgroundColor = '#F0F0F0';
+             }
+        var cell_highlight = document.getElementsByClassName("ace_gutter-cell");
+        for(i=0;i<cell_highlight.length;i++){
+              cell_highlight[i].style.backgroundColor = '#F0F0F0';
+        }
+        
+        // adding portion end
+        
         try {
             window.localStorage.setItem('Kanon-Code', __$__.editor.getValue());
         } catch (e) {
@@ -62,7 +77,20 @@ __$__.Update = {
                     try {
                         eval(__$__.editor.getValue());
                     } catch (e) {
-                        document.getElementById('console').textContent = 'Runtime Error: ' + e.message;
+                        
+                        //adding portion start
+                        
+                        var lnum = e.line
+                        document.getElementById('console').textContent = 'Runtime Error: Line ' + lnum + ": " + e.message;
+                        window.onload = function(){
+                        var opinion = document.getElementsByClassName("ace_gutter-cell");
+                        opinion[lnum - 1].style.backgroundColor = 'yellow';
+                        }
+                        var opinion = document.getElementsByClassName("ace_gutter-cell");
+                        opinion[lnum - 1].style.backgroundColor = 'yellow';
+                        
+                        //adding portion end
+                        
                     }
                 }
             }
