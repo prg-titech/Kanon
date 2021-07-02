@@ -72,23 +72,10 @@
 			<div class="split-pane-component" id="left-component">
 				<div class="pretty-split-pane-component-inner">
 					<div id="editor">
-						<script type="text/javascript" src="src/js/editor.js">
-							window.onerror = 
-								function (msg, source, lineNo, columnNo, error) {
-									alert("Error: " + msg + 
-										"\nScript: " + source + 
-										"\nLine: " + lineNo + 
-										"\nColumn: " + columnNo + 
-										"\nStackTrace: " + error);
-									return true;
-								};
-					
-								var myalert = function () {
-									alert(gfg);
-								};
-						</script>
-						<button class="problem-ball">
-							3
+						<script type="text/javascript" src="src/js/editor.js"></script>
+						<script type="text/javascript" src="src/js/problem-pane.js" ></script>
+						<button class="problem-ball" onclick="openPanel()">
+							
 						</button>
 					</div>
 				</div>
@@ -104,6 +91,16 @@
 					<div class="split-pane-divider" id="horizontal-divider"></div>
 					<div class="split-pane-component" id="bottom-component">
 						<div class="pretty-split-pane-component-inner">
+							<div id="problem-panel">
+								<button id="close-button" onclick="closePanel()">
+									Close
+								</button>
+								<script type="text/javascript" src="src/js/problem-pane.js" >
+									<div id="problems-all">
+
+									</div>
+								</script>
+							</div>
 							<div id="callTree"></div>
 						</div>
 					</div>

@@ -7,6 +7,7 @@ document.write('<script type="text/javascript" src="node_modules/esprima/dist/es
 document.write('<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/split-pane/split-pane.js"></script>');
+document.write('<script type="text/javascript" src="node_modules/uncaught/lib/index.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/prototype.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
@@ -30,3 +31,4 @@ document.write('<script type="text/javascript" src="src/js/code-instrumentation/
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-builder.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-walker.js"></script>');
+document.write('<script type="text/javascript" src="src/js/problem-pane.js"></script>');

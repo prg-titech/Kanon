@@ -14,3 +14,37 @@
     border: none;
     /* outline: none; */
 }
+
+#probem-panel{
+    background-color: white;
+    width: inherit;
+    height: inherit;
+    top:0;
+    left: 0;
+    right:0;
+    bottom: 0;
+    position: absolute;
+}
+
+#close-button{
+    right: 0;
+    top: 0;
+    display: none;
+    border:none;
+    background-color: transparent;
+    color: grey;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    text-decoration: underline;
+}
+
+#problems{
+    top:0;
+    left:0;
+    display: none;
+    color:black;
+    font-size: 0.8rem;
+    height: auto;
+    overflow-y: scroll;
+}

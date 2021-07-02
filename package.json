@@ -30,6 +30,7 @@
     "jquery": "3.6.0",
     "jquery-ui-dist": "1.12.1",
     "split-pane": "0.5.1",
+    "uncaught": "0.0.5",
     "vis": "4.17.0"
   },
   "devDependencies": {
