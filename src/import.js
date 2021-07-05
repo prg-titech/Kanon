@@ -2,6 +2,8 @@ document.write('<script type="text/javascript" src="src/js/setup.js"></script>')
 document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ace.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ext-language_tools.js"></script>');
+document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ext-beautify.js"></script>')
+document.write('<script type="text/javascript" src="node_modules/ace-builds/src/ext-themelist.js"></script>')
 document.write('<script type="text/javascript" src="node_modules/d3/dist/d3.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/esprima/dist/esprima.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>');
@@ -32,3 +34,4 @@ document.write('<script type="text/javascript" src="src/js/code-instrumentation/
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-walker.js"></script>');
 document.write('<script type="text/javascript" src="src/js/problem-pane.js"></script>');
+document.write('<script type="text/javascript" src="src/js/loadThemes.js"></script>');

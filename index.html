@@ -63,6 +63,14 @@
 			<input type="button" value="FIFA layout" onclick="__$__.createSelectBox(1);">
 			<select id="selectExample"><option value="" disabled selected hidden>&lt;- Select one</option></select>
 			<input type="button" value="Paste" onclick="__$__.pasteExample();">
+
+			<!-- Load Themes -->
+			<script type="text/javascript" src="src/js/loadThemes.js"></script>
+			Select Themes: 
+			<input type="button" value="Themes" onclick="__$__.createSelectBoxTheme();">
+			<select id="selectTheme"><option value="" disabled selected hidden>&lt;- Select one</option></select>
+			<input type="button" value="Set" onclick="__$__.pasteTheme();">
+
 		</div>
 		<input id="redrawButton" type="button" value="redraw"
 			onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
@@ -74,7 +82,7 @@
 					<div id="editor">
 						<script type="text/javascript" src="src/js/editor.js"></script>
 						<script type="text/javascript" src="src/js/problem-pane.js" ></script>
-						<button class="problem-ball" onclick="openPanel()">
+						<button class="problem-ball" onclick="__$__.openPanel()">
 							
 						</button>
 					</div>
@@ -92,7 +100,7 @@
 					<div class="split-pane-component" id="bottom-component">
 						<div class="pretty-split-pane-component-inner">
 							<div id="problem-panel">
-								<button id="close-button" onclick="closePanel()">
+								<button id="close-button" onclick="__$__.closePanel()">
 									Close
 								</button>
 								<script type="text/javascript" src="src/js/problem-pane.js" >
