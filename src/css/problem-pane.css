@@ -1,4 +1,4 @@
-.problem-ball {
+#problem-ball {
     position: absolute;
     right: 20px;
     bottom: 20px;
@@ -24,10 +24,12 @@
     right:0;
     bottom: 0;
     position: absolute;
+    height: auto;
+    overflow-y: scroll;
 }
 
 #close-button{
-    right: 0;
+    left: 0;
     top: 0;
     display: none;
     border:none;
@@ -39,12 +41,7 @@
     text-decoration: underline;
 }
 
-#problems{
-    top:0;
-    left:0;
+#all-errors{
     display: none;
     color:black;
-    font-size: 0.8rem;
-    height: auto;
-    overflow-y: scroll;
 }

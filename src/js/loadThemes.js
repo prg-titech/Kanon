@@ -36,7 +36,7 @@ __$__.createSelectBoxTheme = function () {
   }
 
     getJSONFrom(path_themes, function (data) {
-      var arr = jsonToArray(data).reverse();
+      var arr = jsonToArray(data);
       makeNodes(arr);
     });
 
