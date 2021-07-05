@@ -8,8 +8,8 @@ __$__.Update = {
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
         
-         //adding portion start
-        
+         //adding portion start 
+         
         window.onload = function(){
              var cell_highlight = document.getElementsByClassName("ace_gutter-cell");
              for(i=0;i<cell_highlight.length;i++)
@@ -80,8 +80,18 @@ __$__.Update = {
                         
                         //adding portion start
                         
-                        var lnum = e.line
+                        if(e.lineNumber){
+                        var lnum = e.lineNumber   //firefox
+                        }
+                        else{
+                             if(e.line){
+                                 var lnum = e.line;  //safari
+                               }else{
+                                      lnum = e.stack.toString().split(/\n/)[1].split(/,/)[1].split(/:/)[1];  //chrome
+                                  }
+                        }
                         document.getElementById('console').textContent = 'Runtime Error: Line ' + lnum + ": " + e.message;
+                        
                         window.onload = function(){
                         var opinion = document.getElementsByClassName("ace_gutter-cell");
                         opinion[lnum - 1].style.backgroundColor = 'yellow';
