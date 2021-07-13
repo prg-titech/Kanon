@@ -1,38 +1,39 @@
 var errors_list = "";
+var annotations;
 
 window.addEventListener('load', 
-  function() { 
-    __$__.getErrors();
+  function(e) { 
+    setInterval(__$__.getErrors,100);
   }, false);
 
 
-__$__.goToLine = function(row,column){
-  __$__.editor.getSession().documentToScreenPosition(row,column);
-}
-
 if(__$__.editor){
   __$__.editor.on('change', function(e){
-    __$__.getErrors(e);
+    setInterval(__$__.getErrors,100);
   },false);
 }
 
-setInterval(__$__.getErrors,100);
 
-__$__.getErrors = function(){
+__$__.getErrors = function(e){
+      annotations = __$__.editor.getSession().getAnnotations();
+      document.getElementById("problem-ball").innerText = annotations.length;
 
-    var annotations = __$__.editor.getSession().getAnnotations();
-    document.getElementById("problem-ball").innerHTML = annotations.length;
-  
-    for(var i=0; i<annotations.length; i++){
-      errors_list +=
-      "<div>" + annotations[i].type.toUpperCase() + "<div style='color:#ff2424'>" + annotations[i].text + "</div>" + "<button style='background-color:#FFFFFF; border:1px solid #000000;margin-top:4px'> Line No:" + annotations[i].row + " Column No." + annotations[i].column +  "</button> <br></br>";
-    }
-  
-    document.getElementById("all-errors").innerHTML = errors_list;
+      for(var i=0; i<annotations.length; i++){
+        errors_list +=
+          "<div>" + annotations[i].type.toUpperCase() + "<div style='color:#ff2424'>" + annotations[i].text + "</div>" + 
+          `<button id=${`btn-${i}`} style='background-color:#FFFFFF; border:1px solid #000000;margin-top:4px'> Line No:` + 
+          annotations[i].row + 1 + " Column No." + annotations[i].column +  "</button> <br></br>";
+      }
     
-    errors_list = "";
+      document.getElementById("all-errors").innerHTML = errors_list;   
+      
+      
+      for(var i=0; i<annotations.length; i++){
+        document.getElementById(`btn-${i}`).onclick = function(){__$__.editor.moveCursorToPosition(annotations[i].row, annotations[i].column)};
+      }
+      
+      errors_list = "";
 }
-
 
 __$__.openPanel = function() {
     document.getElementById("problem-panel").style.display = "block";
