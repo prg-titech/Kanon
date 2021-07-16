@@ -1,5 +1,4 @@
 __$__.langTools = ace.require('ace/ext/language_tools');
-__$__.beautify = ace.require("ace/ext/beautify");
 __$__.themes = ace.require("ace/ext/themelist");
 __$__.Range = ace.require('ace/range').Range;
 __$__.editor = ace.edit("editor");
@@ -7,7 +6,6 @@ __$__.editor.setOption('enableBasicAutocompletion', true);
 __$__.editor.setOption('enableSnippets', true);
 __$__.editor.setOption('enableLiveAutocompletion', false);
 __$__.startAutocomplete = __$__.editor.keyBinding.$handlers[0].commands.startAutocomplete.exec;
-// __$__.beautify.beautify(__$__editor.getSession());
 
 try {
     let code = window.localStorage.getItem('Kanon-Code');
