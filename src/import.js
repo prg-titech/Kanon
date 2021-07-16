@@ -10,6 +10,7 @@ document.write('<script type="text/javascript" src="node_modules/jquery/dist/jqu
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/split-pane/split-pane.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/uncaught/lib/index.js"></script>');
+document.write('<script type="text/javascript" src="node_modules/js-beautify"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/prototype.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
