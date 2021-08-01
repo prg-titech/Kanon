@@ -11,33 +11,11 @@ document.write('<script type="text/javascript" src="external/prototype_window/ja
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 
-//versionによるimportファイルの変更はここから
-// let layoutversion = 4;
-let layoutversion = 5;
-switch(layoutversion) {
-    case 3:
-        document.write('<script type="text/javascript" src="node_modules/old_vis/dist/vis.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI3/UsingKanonAPI3/setGraphLocation.js"></script>');
-        break;
-    case 4:
-        document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI4/UsingKanonAPI4/setGraphLocation.js"></script>');
-        break;
-    case 5:
-        document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/object2graph/graph2.js"></script>');
-        document.write('<script type="text/javascript" src="src/js/layout/ogushi/UsingKanonAPI5/UsingKanonAPI5/setGraphLocation.js"></script>');
-    default:
-        break;
-}
-
+document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
+document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
+document.write('<script type="text/javascript" src="src/js/layout/setGraphLocation.js"></script>');
 
 document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
-
-//旧Ogushiレイアウトアルゴリズム
-document.write('<script type="text/javascript" src="src/js/layout/old_ogushi_layout.js"></script>');
 
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree/callTree.js"></script>');
