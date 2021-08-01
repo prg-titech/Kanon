@@ -31,7 +31,7 @@
     "jquery-ui-dist": "1.12.1",
     "npm": "^6.9.0",
     "split-pane": "0.5.1",
-    "vis": "4.17.0",
+    "vis": "4.21.0-EOL",
     "with": "^6.0.0"
   },
   "devDependencies": {
