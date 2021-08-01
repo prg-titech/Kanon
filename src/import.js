@@ -9,7 +9,14 @@ document.write('<script type="text/javascript" src="external/split-pane/split-pa
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/prototype.js"></script>');
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
-document.write('<script type="text/javascript" src="src/js/layout/oka.js"></script>');
+document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
+
+document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
+document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
+document.write('<script type="text/javascript" src="src/js/layout/setGraphLocation.js"></script>');
+
+document.write('<script type="text/javascript" src="src/js/layout/ogushi.js"></script>');
+
 document.write('<script type="text/javascript" src="src/js/animation.js"></script>');
 document.write('<script type="text/javascript" src="src/js/call-tree/callTree.js"></script>');
 document.write('<script type="text/javascript" src="src/js/error.js"></script>');
@@ -21,11 +28,10 @@ document.write('<script type="text/javascript" src="src/js/readFile.js"></script
 document.write('<script type="text/javascript" src="src/js/saveFile.js"></script>');
 document.write('<script type="text/javascript" src="src/js/storePositions.js"></script>');
 document.write('<script type="text/javascript" src="src/js/testize.js"></script>');
-document.write('<script type="text/javascript" src="src/js/toVisjs.js"></script>');
-document.write('<script type="text/javascript" src="src/js/traverse.js"></script>');
 document.write('<script type="text/javascript" src="src/js/update.js"></script>');
 document.write('<script type="text/javascript" src="src/js/updateLabelPos.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/instrument.js"></script>');
+document.write('<script type="text/javascript" src="src/js/code-instrumentation/checkpoint.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-builder.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-walker.js"></script>');

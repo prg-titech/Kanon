@@ -43,7 +43,7 @@ __$__.Animation = {
 
 
     /**
-     * @param: graph {Object {nodes: Array, edges: Array}}
+     * @param: visGraph {Object {nodes: Array, edges: Array}}
      *
      * this function can set graph to network with animation.
      * we assume that some nodes of the graph that is a argument of this function
@@ -51,10 +51,10 @@ __$__.Animation = {
      * If the node have x and y property and the node ID already exist in the network,
      * we use animation to move the node.
      */
-    setData: function(graph) {
+    setData: function(visGraph) {
         let next_position = [];
         let node_positions = __$__.ObjectGraphNetwork.network.getPositions();
-        graph.nodes.forEach(node => {
+        visGraph.nodes.forEach(node => {
             if (node.id.slice(0, 2) !== '__' && node_positions[node.id] && node.x) {
                 next_position.push({
                     id: node.id,
@@ -65,8 +65,8 @@ __$__.Animation = {
                 node.y = node_positions[node.id].y;
             }
         });
-        __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
-        __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
+        __$__.ObjectGraphNetwork.nodes = new vis.DataSet(visGraph.nodes);
+        __$__.ObjectGraphNetwork.edges = new vis.DataSet(visGraph.edges);
         __$__.ObjectGraphNetwork.network.setData({
             nodes: __$__.ObjectGraphNetwork.nodes,
             edges: __$__.ObjectGraphNetwork.edges
