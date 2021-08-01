@@ -4,7 +4,8 @@ __$__.ObjectGraphNetwork = {
     edges: new vis.DataSet({}),
 
     colorRGB: {
-        skyblue: '135,206,235'
+        skyblue: '135,206,235',
+        pink: '200,0,200'   //追加部分
     },
     options: {
         autoResize: false,
@@ -13,10 +14,10 @@ __$__.ObjectGraphNetwork = {
             //     border: 'rgba(' + __$__.colorRGB.skyblue + ',1)',
             //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
             // }
-            color: 'skyblue'
+            //color: 'skyblue'
         },
         edges: {
-            arrows: 'to',
+            //arrows: 'to',
             color: {
                 color: 'skyblue',
                 opacity: 1.0,
@@ -28,6 +29,14 @@ __$__.ObjectGraphNetwork = {
                 enabled: true,
                 forceDirection: 'none',
                 roundness: 1.0
+            }
+        },
+        groups: {       //追加部分
+            pink: {
+                color: 'rgba(255, 0, 255, 1.0)'
+            },
+            skyblue: {
+                color: 'rgba(135, 206, 235, 1.0)'
             }
         },
         physics: {
@@ -54,6 +63,7 @@ __$__.ObjectGraphNetwork = {
         __$__.ObjectGraphNetwork.nodes.forEach(node => {
             if (node.id.slice(0, 11) !== '__Variable-')
                 __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true});
+                // __$__.ObjectGraphNetwork.nodes.update({id: node.id, fixed: true, group: node.color});
         });
 
         if (__$__.Update.updateValueOfArray)
@@ -83,3 +93,10 @@ __$__.ObjectGraphNetwork.network.on('dragEnd', params => {
 __$__.ObjectGraphNetwork.network.on('dragging', __$__.Update.updateArrayPosition);
 __$__.ObjectGraphNetwork.network.on('dragEnd', __$__.Update.updateArrayPosition);
 __$__.ObjectGraphNetwork.network.on('dragEnd', __$__.StorePositions.registerPositions);
+__$__.ObjectGraphNetwork.network.on('hoverNode', params => {
+    let nodeId = params.node;
+    __$__.Layout.changeHoverNodeColor(nodeId);
+});
+__$__.ObjectGraphNetwork.network.on('blurNode', params => {
+    __$__.Layout.resetHoverNodeColor();
+});

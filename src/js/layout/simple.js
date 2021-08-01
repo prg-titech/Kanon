@@ -3,14 +3,9 @@ __$__.Layout = {
 
 
     setLocation(graph) {
-        let visGraph = graph.generateVisjsGraph(true);
-        __$__.Layout.setLinkedList(visGraph);
-        __$__.Layout.setBinaryTree(visGraph);
-        for (let i = 0; i < visGraph.nodes.length; i++) {
-            let node = visGraph.nodes[i];
-            if (node.x !== undefined && node.y !== undefined) {
-                graph.setLocation(node.id, node.x, node.y);
-            }
+        var objectIDs = graph.getObjectIDs();
+        for(var i = 0; i < objectIDs.length; i++){
+            graph.setLocation(objectIDs[i], 100, 500*i/(objectIDs.length));
         }
     },
 

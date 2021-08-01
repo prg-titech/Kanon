@@ -2,11 +2,14 @@ __$__.Update = {
     CodeWithCP: '',
     waitForStabilized: false,
     useBoxToVisualizeArray: false,
-    updateValueOfArray: true,
+    updateValueOfArray: true, // this should be false because the array visualization
     onlyMoveCursor: false,
 
     // this function is called when ace editor is edited.
     PositionUpdate: function(__arg__) {
+
+        var PositionUpdateStartTime = performance.now();
+
         try {
             window.localStorage.setItem('Kanon-Code', __$__.editor.getValue());
         } catch (e) {
@@ -36,13 +39,23 @@ __$__.Update = {
                 throw e;
             }
 
+            var duplicateObjectStructureGraphsStartTime = performance.now();
             let __objs = [];
             // execution of the converted program
             // here, we collect constructed objects in the program
             // and duplicate object structure graphs at each checkpoint
             // inserted before and after all statements.
             try {
-                (() => {eval(__$__.Update.CodeWithCP)})();
+                var evalCodeWithCPStartTime = performance.now();
+                //console.log(__$__.Update.CodeWithCP);
+                //console.log(__$__.ASTTransforms.varEnv.Variables());    //ここで呼び出せばグローバル変数が得られる？
+                (() => {eval(__$__.Update.CodeWithCP)})();              //ここにすごく時間がかかっている
+                var evalCodeWithCPEndTime = performance.now();
+                console.log("evalCodeWithCP\n   " + (evalCodeWithCPEndTime - evalCodeWithCPStartTime) + " ms");
+
+                console.log("check counter starts " + checkCounter + " times");
+                console.log("checkpoint function\n   " + checkTotalTime + " ms");
+
                 __$__.Context.InfLoop = '';
                 if (__$__.Error.hasError && __$__.Context.SpecifiedContextWhenExecutable) {
                     Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
@@ -66,6 +79,9 @@ __$__.Update = {
                     }
                 }
             }
+            var duplicateObjectStructureGraphsEndTime = performance.now();
+            //console.log("duplicateObjectStructureGraphs\n   " + (duplicateObjectStructureGraphsEndTime - duplicateObjectStructureGraphsStartTime) + " ms");
+
 
             if (!__$__.Error.hasError) {
                 __$__.Context.SpecifiedContextWhenExecutable = Object.assign({}, __$__.Context.SpecifiedContext);
@@ -73,13 +89,15 @@ __$__.Update = {
 
             __$__.Testize.updateMarker();
 
-            let graph = __$__.ToVisjs.Translator(__$__.Traverse.traverse(__objs));
-
+            // console.log("__objs = ");
+            // console.log(__objs);
+            // __$__.arrayConversion.conversion(__objs);       //追加部分
+            let graph = __$__.Traverse.traverse(__objs);
 
             __$__.CallTreeNetwork.updateTestInfo();
             __$__.CallTreeNetwork.draw();
 
-            if (!__$__.Update.isChange(graph)) {
+            if (!__$__.Update.isChange(graph.generateVisjsGraph())) {
                 __$__.Update.waitForStabilized = false;
                 __$__.Update.ContextUpdate();
                 return;
@@ -89,12 +107,11 @@ __$__.Update = {
             __$__.ObjectGraphNetwork.options.nodes.hidden = true;
             __$__.ObjectGraphNetwork.options.edges.hidden = true;
             __$__.StorePositions.setPositions(graph, true);
+            let visGraph = graph.generateVisjsGraph(false);
             __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
-            __$__.ObjectGraphNetwork.nodes = new vis.DataSet(graph.nodes);
-            __$__.ObjectGraphNetwork.edges = new vis.DataSet(graph.edges);
             __$__.ObjectGraphNetwork.network.setData({
-                nodes: __$__.ObjectGraphNetwork.nodes,
-                edges: __$__.ObjectGraphNetwork.edges
+                nodes: __$__.ObjectGraphNetwork.nodes = new vis.DataSet(visGraph.nodes),
+                edges: __$__.ObjectGraphNetwork.edges = new vis.DataSet(visGraph.edges)
             });
             __$__.StorePositions.registerPositions(true);
             __$__.StorePositions.oldNetwork.edges = __$__.ObjectGraphNetwork.network.body.data.edges._data;
@@ -106,7 +123,7 @@ __$__.Update = {
                 });
 
             __$__.Update.waitForStabilized = true;
-            if (graph.nodes.length > 0 && graph.nodes.find(node => node.x === undefined))
+            if (visGraph.nodes.length > 0 && visGraph.nodes.find(node => node.x === undefined))
                 __$__.ObjectGraphNetwork.network.once('stabilized', __$__.ObjectGraphNetwork.stabilizedEvent);
             else
                 __$__.ObjectGraphNetwork.stabilizedEvent();
@@ -117,6 +134,9 @@ __$__.Update = {
             }
             __$__.Update.waitForStabilized = true;
         }
+
+        var PositionUpdateEndTime = performance.now();
+        console.log("PositionUpdate\n   " + (PositionUpdateEndTime - PositionUpdateStartTime) + " ms");
     },
     
 
@@ -125,6 +145,9 @@ __$__.Update = {
      * This update the network with the context at the cursor position.
      */
     ContextUpdate: function(e) {
+
+        var ContextUpdateStartTime = performance.now();
+
         if (__$__.Update.waitForStabilized === false || e === 'changed') {
             try {
                 Object.keys(__$__.Context.SpecifiedContext).forEach(loopLabel => {
@@ -135,7 +158,7 @@ __$__.Update = {
                     }
                 });
 
-                __$__.Context.Draw(e);
+                __$__.Context.Draw(e);      //ここでsetLocation()が呼ばれる
                 __$__.CallTreeNetwork.updateHighlightCircles();
 
             } catch (e) {
@@ -145,14 +168,17 @@ __$__.Update = {
             }
             __$__.ObjectGraphNetwork.network.redraw();
         }
+
+        var ContextUpdateEndTime = performance.now();
+        console.log("ContextUpdate\n   " + (ContextUpdateEndTime - ContextUpdateStartTime) + " ms");
     },
 
 
     /**
      * @param {Object} graph: graph has the property is nodes and edges
-     * @param {Boolean} snapshot
+     * @param {boolean} snapshot
      *
-     * This function compares old graph and new graph.
+     * This function compares currently displayed graph with new graph.
      * return true if new graph is different from old graph
      * return false otherwise
      */
@@ -187,7 +213,7 @@ __$__.Update = {
         temp = (snapshot) ? __$__.ObjectGraphNetwork.edges._data : __$__.StorePositions.oldNetwork._edgesData;
         // temp = __$__.ObjectGraphNetwork.edges._data;
 
-        Object.keys(temp).forEach(function(key){
+        Object.keys(temp).forEach(key => {
             if (snapshot)
                 networkEdges.push([temp[key].from, temp[key].to, temp[key].label, temp[key].color]);
             else if (temp[key].from.slice(0, 11) !== '__Variable-')

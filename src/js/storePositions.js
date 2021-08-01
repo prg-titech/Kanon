@@ -10,26 +10,21 @@ __$__.StorePositions = {
 
     // if nodePositions have the position of node.id, set the position at graph.node.
     setPositions: function(graph, positionUpdate = false) {
-        for (let i = 0; i < graph.nodes.length; i++) {
-            let node = graph.nodes[i];
-            let nodeData = __$__.StorePositions.oldNetwork.nodes[node.id];
+        Object.keys(graph.nodes).forEach(nodeID => {
+            let node = graph.nodes[nodeID];
+            let nodeData = __$__.StorePositions.oldNetwork.nodes[nodeID];
             let posOfExpStr = __$__.StorePositions.positionsOfExpectedStructure;
 
             if (!positionUpdate && posOfExpStr && posOfExpStr[node.id]){
-                node.x = posOfExpStr[node.id].x;
-                node.y = posOfExpStr[node.id].y;
-                if (node.id.slice(0, 11) !== '__Variable-')
-                    node.fixed = true;
+
+                graph.setLocation(nodeID, posOfExpStr[nodeID].x, posOfExpStr[nodeID].y);
             } else if (nodeData && nodeData.x !== undefined) {
-                node.x = nodeData.x;
-                node.y = nodeData.y;
-                if (node.id.slice(0, 11) !== '__Variable-')
-                    node.fixed = true;
+                graph.setLocation(nodeID, nodeData.x, nodeData.y);
             } else {
-                node.x = undefined;
-                node.y = undefined;
+                graph.setLocation(nodeID, undefined, undefined);
             }
-        }
+            if (!positionUpdate) node.fixed = true;
+        });
         // if (!positionUpdate)
         //     delete __$__.StorePositions.positionsOfExpectedStructure;
     },

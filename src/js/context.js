@@ -39,113 +39,7 @@ __$__.Context = {
         __$__.Context.TableTimeCounter = [];
     },
 
-    /**
-     * @param {Array} objects: this equals __objs in transformed code
-     * @param {string} loopLabel
-     * @param {int} count
-     * @param {int} timeCounter
-     * @param {int} checkPointId
-     * @param {Object} probe
-     * @param {Object} newExpInfo
-     * @param {string} contextSensitiveID
-     *
-     * this function is checkPoint is located at the head and the tail of each Statement.
-     */
-    CheckPoint: function(objects, loopLabel, count, timeCounter, checkPointId, probe, newExpInfo, contextSensitiveID) {
-        __$__.Context.LastInfo = {
-            CPID: checkPointId,
-            loopLabel: loopLabel,
-            loopCount: count,
-            contextSensitiveID: contextSensitiveID
-        };
 
-        let storedGraph = __$__.Context.StoreGraph(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID);
-    
-        __$__.Context.TableTimeCounter.push({loopLabel: loopLabel, loopCount: count});
-        __$__.Context.CheckPointID2LoopLabel[checkPointId] = loopLabel;
-
-    
-        if (__$__.Context.ChangedGraph) {
-            // the node of storedGraph is whether first appearing or not in this part
-            storedGraph.nodes.forEach(node => {
-                if (!__$__.JumpToConstruction.GraphData.nodes[node.id]) {
-                    if (newExpInfo) {
-                        __$__.JumpToConstruction.GraphData.nodes[node.id] = {
-                            id: node.id,
-                            loopLabel: newExpInfo.loopLabel,
-                            count: newExpInfo.loopCount,
-                            contextSensitiveID: newExpInfo.contextSensitiveID,
-                            pos: newExpInfo.pos
-                        };
-                    } else {
-                        __$__.JumpToConstruction.GraphData.nodes[node.id] = {
-                            id: node.id,
-                            loopLabel: loopLabel,
-                            count: count,
-                            contextSensitiveID: contextSensitiveID,
-                            pos: __$__.Context.CheckPointTable[checkPointId]
-                        };
-                    }
-                }
-            });
-    
-            // the edge of storedGraph is whether first appearing or not in this part
-            storedGraph.edges.forEach(edge => {
-                let flag = false;
-
-                __$__.JumpToConstruction.GraphData.edges.forEach(edgeData => {
-                    flag = flag || (edge.from === edgeData.from && edge.to === edgeData.to && edge.label === edgeData.label);
-                });
-    
-    
-                if (!flag) {
-                    if (newExpInfo) {
-                        __$__.JumpToConstruction.GraphData.edges.push({
-                            from: edge.from,
-                            to: edge.to,
-                            label: edge.label,
-                            loopLabel: newExpInfo.loopLabel,
-                            count: newExpInfo.loopCount,
-                            contextSensitiveID: contextSensitiveID,
-                            pos: newExpInfo.pos
-                        });
-                    } else {
-                        __$__.JumpToConstruction.GraphData.edges.push({
-                            from: edge.from,
-                            to: edge.to,
-                            label: edge.label,
-                            loopLabel: loopLabel,
-                            count: count,
-                            contextSensitiveID: contextSensitiveID,
-                            pos: __$__.Context.CheckPointTable[checkPointId]
-                        });
-                    }
-                }
-            });
-
-            __$__.Context.ChangedGraph = false;
-        }
-    
-        __$__.Context.LastGraph = storedGraph;
-    },
-    
-    
-    StoreGraph: function(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID) {
-        let graph = (__$__.Context.ChangedGraph)
-            ? __$__.ToVisjs.Translator(__$__.Traverse.traverse(objects, probe))
-            : __$__.Context.LastGraph;
-
-
-        if (!__$__.Context.StoredGraph[checkPointId])
-            __$__.Context.StoredGraph[checkPointId] = {};
-
-        __$__.Context.StoredGraph[checkPointId][contextSensitiveID] = graph;
-    
-    
-        return graph;
-    },
-    
-    
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
         let cursor_position = __$__.editor.getCursorPosition();
@@ -189,44 +83,42 @@ __$__.Context = {
                             __$__.Context.SnapshotContext.contextSensitiveID = tmp_contextSensitiveID;
                             showLightly = true;
                         } else {
-                            graph = {nodes: [], edges: []};
                         }
                     }
+                    __$__.StorePositions.setPositions(graph);
                 } catch (e) {
                 }
 
 
                 if (!graph) {
-                    graph = {nodes: [], edges: []};
                     delete __$__.Context.SnapshotContext.cpID;
                     delete __$__.Context.SnapshotContext.loopLabel;
                     delete __$__.Context.SnapshotContext.contextSensitiveID;
                 }
             } catch (e) {
-                graph = {nodes: [], edges: []};
                 delete __$__.Context.SnapshotContext.cpID;
                 delete __$__.Context.SnapshotContext.loopLabel;
                 delete __$__.Context.SnapshotContext.contextSensitiveID;
             }
 
-            __$__.StorePositions.setPositions(graph);
 
             __$__.ObjectGraphNetwork.options.nodes.color = 'rgba(' + __$__.ObjectGraphNetwork.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
             __$__.ObjectGraphNetwork.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
             __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
 
             let isChanged;
-            if (__$__.Layout.enabled) {
-                __$__.Layout.setLinkedList(graph);
-                __$__.Layout.setBinaryTree(graph);
-                isChanged = graph.nodes.some(node => {
+            if (__$__.Layout.enabled && graph) {
+                __$__.Layout.setLocation(graph);
+                isChanged = Object.values(graph.nodes).some(node => {
                     let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
                     return beforePos && (beforePos.x !== node.x || beforePos.y !== node.y);
                 });
             }
 
-            if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true)) {
-                __$__.Animation.setData(graph);
+            let visGraph = (graph) ? graph.generateVisjsGraph(true) : {nodes: [], edges: []};
+            if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(visGraph, true)) {
+                __$__.Animation.setData(visGraph);
+                //console.log(visGraph);
                 if (__$__.Update.useBoxToVisualizeArray) {
                     __$__.Context.Arrays.forEach(arr => {
                         __$__.Update.updateArrayPosition({nodes: [arr[0]]});
@@ -266,22 +158,21 @@ __$__.Context = {
                     // if there is 'node3' in before graph and after graph, changeNodeId[node3]: undefined
                     let changeNodeId = {};
 
-                    beforeGraph.nodes.forEach(node => {
+                    // initialize
+                    Object.values(beforeGraph.nodes).forEach(node => {
                         changeNodeId[node.id] = false;
                     });
 
-                    afterGraph.nodes.forEach(node => {
+                    Object.values(afterGraph.nodes).forEach(node => {
                         if (changeNodeId[node.id] === false)
                             delete changeNodeId[node.id];
-                        else if (changeNodeId[node.id] === undefined)
+                        else if (changeNodeId[node.id] === undefined) {
                             changeNodeId[node.id] = true;
+                            addedNodeId[node.id] = true;
+                        }
                     });
 
 
-                    Object.keys(changeNodeId).forEach(id => {
-                        if (changeNodeId[id])
-                            addedNodeId[id] = true;
-                    });
 
                     // this object checks whether each edge is added or removed or not
                     // if 'edge1' is added, changeEdgeData[edge1]: true.
@@ -290,17 +181,11 @@ __$__.Context = {
                     let changeEdgeData = {};
 
                     beforeGraph.edges.forEach(edge => {
-                        if (edge.from.slice(0, 11) === '__Variable-')
-                            return;
-
                         let edgeData = [edge.from, edge.to, edge.label].toString();
                         changeEdgeData[edgeData] = false;
                     });
 
                     afterGraph.edges.forEach(edge => {
-                        if (edge.from.slice(0, 11) === '__variable-')
-                            return;
-
                         let edgeData = [edge.from, edge.to, edge.label].toString();
     
                         if (changeEdgeData[edgeData] === false)
@@ -316,73 +201,68 @@ __$__.Context = {
                             removedEdgeData.push(data.split(','));
                     });
                 });
-
             }
     
-            let graph = {nodes: [], edges: []};
-
-            // copy __$__.Context.LastGraph to a abject named graph.
-            __$__.Context.LastGraph.nodes.forEach(node => {
-                graph.nodes.push(Object.assign({}, node));
-            });
-            __$__.Context.LastGraph.edges.forEach(edge => {
-                graph.edges.push(Object.assign({}, edge));
-            });
+            let graph = __$__.Context.LastGraph.duplicate();
 
             __$__.StorePositions.setPositions(graph);
 
             let isChanged;
             if (__$__.Layout.enabled) {
-                __$__.Layout.setLinkedList(graph);
-                __$__.Layout.setBinaryTree(graph);
-                isChanged = graph.nodes.some(node => {
+                __$__.Layout.setLocation(graph);
+                isChanged = Object.values(graph.nodes).some(node => {
                     let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
                     return beforePos && (beforePos.x !== node.x || beforePos.y !== node.y);
                 });
             }
-    
+
+            let visGraph = graph.generateVisjsGraph(true);
+
             // change color of added node to orange in this part
-            graph.nodes.forEach(node => {
+            visGraph.nodes.forEach(node => {
                 if (addedNodeId[node.id]) {
                     node.color = __$__.SummarizedViewColor.AddNode;
                     delete addedNodeId[node.id];
                 }
             });
             // change color of added edge to orange in this part
-            graph.edges.forEach(edge => {
+            visGraph.edges.forEach(edge => {
                 if (edge.from.slice(0, 11) === '__Variable-') edge.hidden = true;
     
-                addedEdgeData.forEach((edgeData, index) => {
+                addedEdgeData.some((edgeData, index) => {
                     if (edgeData[0] === edge.from && edgeData[1] === edge.to && edgeData[2] === edge.label) {
                         edge.color = __$__.SummarizedViewColor.AddEdge;
                         delete addedEdgeData[index];
+                        return true;
                     }
                 });
             });
 
-            Object.keys(addedNodeId).forEach(id => {
-                if (id && id.slice(0, 11) !== '__Variable-') {
-                    let label = '';
-
-                    Object.values(afterGraphs).forEach(graph => {
-                        graph.nodes.forEach(node => {
-                            if (node.id === id) label = node.label;
-                        })
-                    });
-
-                    graph.nodes.push({
-                        fixed: false,
-                        id: id,
-                        label: label,
-                        physics: false,
-                        color: __$__.SummarizedViewColor.AddNode
-                    });
-                }
-            });
+            // here might be not executed because the current implementation does not support GC.
+            // Object.keys(addedNodeId).forEach(id => {
+            //     if (id && id.slice(0, 11) !== '__Variable-') {
+            //         let label = '';
+            //
+            //         Object.values(afterGraphs).forEach(graph => {
+            //             graph.nodes.forEach(node => {
+            //                 if (node.id === id) label = node.label;
+            //             })
+            //         });
+            //
+            //         if (id)
+            //             visGraph.nodes.push({
+            //                 fixed: false,
+            //                 id: id,
+            //                 label: label,
+            //                 physics: false,
+            //                 color: __$__.SummarizedViewColor.AddNode
+            //             });
+            //     }
+            // });
     
             addedEdgeData.forEach(data => {
                 if (data && data[0].slice(0, 11) !== '__Variable-')
-                    graph.edges.push({
+                    visGraph.edges.push({
                         from: data[0],
                         to: data[1],
                         label: data[2],
@@ -393,7 +273,7 @@ __$__.Context = {
     
             removedEdgeData.forEach(data => {
                 if (data)
-                    graph.edges.push({
+                    visGraph.edges.push({
                         from: data[0],
                         to: data[1],
                         label: data[2],
@@ -403,8 +283,8 @@ __$__.Context = {
             });
     
     
-            if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(graph, true))
-                __$__.Animation.setData(graph);
+            if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(visGraph, true))
+                __$__.Animation.setData(visGraph);
     
             __$__.StorePositions.registerPositions();
         }
@@ -419,7 +299,7 @@ __$__.Context = {
             afterIds: []
         };
     
-        Object.keys(__$__.Context.CheckPointTable).forEach(function(key) {
+        Object.keys(__$__.Context.CheckPointTable).forEach(key => {
             let temp = __$__.Context.CheckPointTable[key];
     
             // the case that temp can become before
