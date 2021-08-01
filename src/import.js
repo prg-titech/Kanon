@@ -57,3 +57,4 @@ document.write('<script type="text/javascript" src="src/js/code-instrumentation/
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-builder.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-walker.js"></script>');
+document.write('<script type="text/javascript" src="src/js/loadExamples.js"></script>')
