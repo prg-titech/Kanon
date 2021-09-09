@@ -11,7 +11,6 @@ document.write('<script type="text/javascript" src="external/prototype_window/ja
 document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 
-document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');
 document.write('<script type="text/javascript" src="src/js/object2graph/graph.js"></script>');
 document.write('<script type="text/javascript" src="src/js/layout/setGraphLocation.js"></script>');
 
