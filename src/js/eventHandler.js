@@ -3,6 +3,7 @@ jQuery(window).on('resize' ,function() {
         __$__.ObjectGraphNetwork.network.redraw();
         __$__.CallTreeNetwork.redraw();
         __$__.editor.renderer.onGutterResize();
+        __$__.Testize.redraw();
     }
 });
 
@@ -35,6 +36,11 @@ document.getElementById('autoLayout').onchange = function() {
 
 __$__.Testize.popup_addTest = document.getElementById('tooltip_set');
 __$__.Testize.popup_removeTest = document.getElementById('tooltips');
+
+jQuery(window).on('load' ,function() {
+    let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
+    __$__.Testize.createWindow(split_pane_size.width/1.5, split_pane_size.height/1.5, '');
+});
 
 jQuery('#tooltip_set')
     .click(function () {

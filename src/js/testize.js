@@ -202,6 +202,16 @@ __$__.Testize = {
         __$__.Testize.callParenthesisPos = {};
     },
 
+    redraw() {
+        let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
+        __$__.Testize.window.testGraph.setWidth(split_pane_size.width / 1.5);
+        __$__.Testize.window.testGraph.setHeight(split_pane_size.height / 1.5);
+        __$__.Testize.window.runtimeGraph.setWidth(split_pane_size.width / 1.75);
+        __$__.Testize.window.runtimeGraph.setHeight(split_pane_size.height / 1.75);
+        __$__.Testize.network.network.redraw();
+        __$__.Testize.actualGraphNetwork.network.redraw();
+    },
+
 
     // ==================================================================================
     // ============== start: manipulation callback for constructing a test ==============
@@ -1365,10 +1375,44 @@ __$__.Testize = {
 
 
     createWindow(width, height, title) {
-        __$__.Testize.window.testGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 300, title: title});
-        __$__.Testize.window.runtimeGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 500, title: 'actual object graph'});
-        __$__.Testize.window.testGraph.getContent().update('<div id="window-for-manipulation"></div>');
-        __$__.Testize.window.runtimeGraph.getContent().update('<div id="window-for-actualGraph"></div>');
+        // To be checked
+        // __$__.Testize.window.testGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 300, title: title});
+        // __$__.Testize.window.runtimeGraph = new Window({className: 'mac_os_x', width: width, height: height, zIndex: 500, title: 'actual object graph'});
+        __$__.Testize.window.testGraph = new jBox('Modal', {
+            attach: '.show_testGraph',
+            width: width,
+            height: height,
+            position: { x: 'center', y: 'center' },
+            title: 'Set a new test',
+            overlay: false,
+            content: '',
+            draggable: 'title',
+            animation: 'pulse',
+            zIndex: 300,
+            reposition: true,
+            repositionOnOpen: false,
+            repositionOnContent: false
+          });
+        __$__.Testize.window.runtimeGraph = new jBox('Modal', {
+            attach: '#actualGraphButton',
+            width: width,
+            height: height,
+            position: { x: 'center', y: 'center' },
+            title: 'Actual Graph',
+            overlay: false,
+            content: '',
+            draggable: 'title',
+            animation: 'pulse',
+            zIndex: 500,
+            reposition: true,
+            repositionOnOpen: false,
+            repositionOnContent: false
+          });
+        // To be checked
+        // __$__.Testize.window.testGraph.getContent().update('<div id="window-for-manipulation"></div>');
+        // __$__.Testize.window.runtimeGraph.getContent().update('<div id="window-for-actualGraph"></div>');
+        __$__.Testize.window.testGraph.setContent('<div id="window-for-manipulation"></div>');
+        __$__.Testize.window.runtimeGraph.setContent('<div id="window-for-actualGraph"></div>');
         let windowSelection = __$__.d3.select('#window-for-manipulation');
 
         let header = windowSelection.append('div')
@@ -1380,6 +1424,8 @@ __$__.Testize = {
             .on('click', function (e) {
                 // this function is invoked when this button is clicked.
                 __$__.Testize.setTest();
+                // To be checked - このままでOK
+                // __$__.Testize.window.testGraph.close();
                 __$__.Testize.window.testGraph.close();
                 __$__.StorePositions.registerPositionsOfExpectedStructure();
                 __$__.Update.PositionUpdate([{
@@ -1497,22 +1543,26 @@ __$__.Testize = {
             });
         })();
 
-        Windows.addObserver({
-            onResize(eventName, win) {
-                if (win === __$__.Testize.window.testGraph) {
-                    __$__.Testize.network.network.redraw();
-                } else if (win === __$__.Testize.window.runtimeGraph) {
-                    __$__.Testize.actualGraphNetwork.network.redraw();
-                }
-            },
-            onClose(eventName, win) {
-                if (win === __$__.Testize.window.testGraph) {
-                    __$__.Testize.focusedTestOperations = undefined;
-                    __$__.Testize.window.runtimeGraph.close();
-                } else if (win === __$__.Testize.window.runtimeGraph) {
-                }
-            }
-        });
+        // Observerにウィンドウがリサイズ・閉じたときのtestGraph/runtimeGraph挙動を登録
+        // -> 当ファイルのredraw()に統合し、ecentHundler.jsからリサイズ時に呼ぶ
+        // 1. Resize時はそれぞれ再描画（ウィンドウサイズを再計算）
+        // 2. testGraphはClose時にruntimeGraphにフォーカスを移す
+        // Windows.addObserver({
+        //     onResize(eventName, win) {
+        //         if (win === __$__.Testize.window.testGraph) {
+        //             __$__.Testize.network.network.redraw();
+        //         } else if (win === __$__.Testize.window.runtimeGraph) {
+        //             __$__.Testize.actualGraphNetwork.network.redraw();
+        //         }
+        //     },
+        //     onClose(eventName, win) {
+        //         if (win === __$__.Testize.window.testGraph) {
+        //             __$__.Testize.focusedTestOperations = undefined;
+        //             __$__.Testize.window.runtimeGraph.close();
+        //         } else if (win === __$__.Testize.window.runtimeGraph) {
+        //         }
+        //     }
+        // });
     },
 
 
@@ -1619,12 +1669,16 @@ __$__.Testize = {
 
 
     openWin(modified = false) {
-        let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
-        if (!__$__.Testize.window.testGraph) {
-            __$__.Testize.createWindow(split_pane_size.width/1.5, split_pane_size.height/1.5, '');
-        } else {
-            __$__.Testize.window.testGraph.setSize(split_pane_size.width / 1.5, split_pane_size.height / 1.5);
-        }
+        // To be checked
+        // let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
+        // if (!__$__.Testize.window.testGraph) {
+        //     __$__.Testize.createWindow(split_pane_size.width/1.5, split_pane_size.height/1.5, '');
+        //     console.log("testGraphが空");
+        // } else {
+        //     // __$__.Testize.window.testGraph.setSize(split_pane_size.width / 1.5, split_pane_size.height / 1.5);
+        //     __$__.Testize.window.testGraph.setWidth(split_pane_size.width / 1.5);
+        //     __$__.Testize.window.testGraph.setHeight(split_pane_size.height / 1.5);
+        // }
 
         // duplicate an object graph stored just before the focusing function call
         let graph, visGraph;
@@ -1683,7 +1737,9 @@ __$__.Testize = {
         __$__.Testize.setPositions(visGraph);
         __$__.Testize.network.network.setData(visGraph);
         __$__.Testize.network.network.redraw();
-        __$__.Testize.window.testGraph.showCenter();
+        // To be checked
+        // __$__.Testize.window.testGraph.showCenter();
+        // __$__.Testize.window.testGraph.open();
         __$__.Testize.window.runtimeGraph.close();
         __$__.Testize.network.network.once('stabilized', param => {
             Object.values(__$__.Testize.network.network.body.data.nodes._data).forEach(node => {
@@ -1696,7 +1752,10 @@ __$__.Testize = {
 
     openRuntimeGraphWin() {
         let split_pane_size = document.getElementById('split-pane-frame').getBoundingClientRect();
-        __$__.Testize.window.runtimeGraph.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
+        // To be checked
+        // __$__.Testize.window.runtimeGraph.setSize(split_pane_size.width / 2, split_pane_size.height / 2);
+        __$__.Testize.window.runtimeGraph.setWidth(split_pane_size.width / 1.75);
+        __$__.Testize.window.runtimeGraph.setHeight(split_pane_size.height / 1.75);
         let selectedCallInfo = __$__.Testize.selectedCallInfo;
         let graph = __$__.Testize.storedActualGraph[selectedCallInfo.label][selectedCallInfo.context_sensitiveID] || {nodes: [], edges: []};
 
@@ -1721,8 +1780,10 @@ __$__.Testize = {
             edges: new vis.DataSet(graph.edges)
         });
         __$__.Testize.actualGraphNetwork.network.redraw();
-        __$__.Testize.window.runtimeGraph.show();
-        __$__.Testize.window.runtimeGraph.toFront();
+        // To be checked - z-Indexは常にruntimeGraph > testGraphなのでtoFrontは不要
+        // __$__.Testize.window.runtimeGraph.show();
+        // __$__.Testize.window.runtimeGraph.toFront();
+        __$__.Testize.window.runtimeGraph.open();
 
         __$__.Testize.actualGraphNetwork.network.once('stabilized', param => {
             Object.values(__$__.Testize.actualGraphNetwork.network.body.data.nodes._data).forEach(node => {
