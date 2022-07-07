@@ -1,11 +1,9 @@
 [
-   "./examples/basics",
    "./examples/basics/AVL.js",
    "./examples/basics/binary-search-tree.js",
    "./examples/basics/linked-list-insertSort.js",
    "./examples/basics/singular-linked-list.js",
    "./examples/basics/doubly-linked-list.js",
-   "./examples/for_FIFA_layout",
    "./examples/for_FIFA_layout/tree_having_list2.js",
    "./examples/for_FIFA_layout/q_tree.js",
    "./examples/for_FIFA_layout/binary_tree.js",
