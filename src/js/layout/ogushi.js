@@ -144,7 +144,12 @@ __$__.Layout = {
                     }
                     let _checked = (graph.notInterestedClass.indexOf(allClass[i]) != -1) ? '"> ' : '" checked> ';
                     let className = (allClass[i] == "Kanon-ArrayNode") ? "Array" : allClass[i];
-                    checkboxString = checkboxString + '<input type="checkbox" name="checkClass" value="' + allClass[i] + _checked + className;
+                    // チェックボックスの値が更新されるたびにRedrawボタンと同一の処理が走る
+                    let _onChange = ' onchange="' + "__$__.Update.waitForStabilized = false;__$__.Update.ContextUpdate('changed');" + '" ';
+                    checkboxString = 
+                        checkboxString + '<input type="checkbox" name="checkClass" ' 
+                        + _onChange
+                        + 'value="' + allClass[i] + _checked + className;
                 }
                 checkboxString = checkboxString + '</form>';
                 selectClassDiv.innerHTML = checkboxString;

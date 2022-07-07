@@ -11,6 +11,7 @@ document.getElementById('pullDownViewMode').onchange = function() {
     let selectedValue = document.getElementById('pullDownViewMode').value;
     __$__.Context.SwitchViewMode(selectedValue === 'Snapshot');
     __$__.Update.ContextUpdate('changed');
+    console.log("[DEBUG]: Selected viewMode changed to "+selectedValue);
 };
 
 document.getElementById('autoLayout').onchange = function() {

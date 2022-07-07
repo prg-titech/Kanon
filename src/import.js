@@ -7,6 +7,8 @@ document.write('<script type="text/javascript" src="node_modules/jquery/dist/jqu
 document.write('<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="node_modules/split-pane/split-pane.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
+
+
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 
 document.write('<script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>');

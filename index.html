@@ -6,8 +6,6 @@
 
 	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
 	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css" />
-	<link rel="stylesheet" href="external/prototype_window/themes/default.css" />
-	<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css" />
 	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css" />
 	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css" />
 	<link rel="stylesheet" type="text/css" href="src/css/style.css">
@@ -39,8 +37,11 @@
 </head>
 
 <body>
+	<script type="module" src="src/js/menubar.js"></script>
+	<div id="app"></div>
 
-	<div id="menu-bar">
+
+	<div id="menu-bar" style="display:none">
 		<div id="viewMode">
 			View Mode:
 			<select name="pullDownViewMode" id="pullDownViewMode">
@@ -71,7 +72,7 @@
 				<option value="Original">Original</option>
 			</select>
 		</div>
-		<div id="selectClass"></div>
+		<!-- <div id="selectClass"></div> -->
 		<input id="redrawButton" type="button" value="redraw"
 			onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 	</div>
