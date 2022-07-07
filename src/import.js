@@ -7,8 +7,8 @@ document.write('<script type="text/javascript" src="external/jquery/dist/jquery.
 document.write('<script type="text/javascript" src="external/jquery-ui-dist/jquery-ui.js"></script>');
 document.write('<script type="text/javascript" src="external/split-pane/split-pane.js"></script>');
 document.write('<script type="text/javascript" src="external/escodegen/escodegen.browser.js"></script>');
-document.write('<script type="text/javascript" src="external/prototype_window/javascripts/prototype.js"></script>');
-document.write('<script type="text/javascript" src="external/prototype_window/javascripts/window.js"></script>');
+
+
 document.write('<script type="text/javascript" src="src/js/object2graph/traverse.js"></script>');
 
 
@@ -36,3 +36,6 @@ document.write('<script type="text/javascript" src="src/js/code-instrumentation/
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-transforms.js"></script>');
 document.write('<script type="text/javascript" src="src/js/code-instrumentation/ast-walker.js"></script>');
 document.write('<script type="text/javascript" src="src/js/loadExamples.js"></script>')
+
+// modalmenu
+document.write('<script src="https://cdn.jsdelivr.net/gh/StephanWagner/jBox@v1.3.3/dist/jBox.all.min.js"></script>');
