@@ -2,8 +2,14 @@
 # Use 'jo' to generate the json file.
 # Run 'apt install jo' to enable it.
 
-# rm -rf json/
-mkdir json
+# rm json/
+if [ -d json ]; then
+  rm -rf ./json
+  mkdir json
+else
+  mkdir json
+fi
+
 
 ### Generate filelists (json/examples_*.json) for each subdirectory
 function getPaths () {
@@ -22,4 +28,4 @@ done
 
 ### Generate a filelist (json/examples.json) containing all examples
 # find ./examples/* -maxdepth 1 | grep .js | jo -pa > json/examples.json
-find ./examples/* -maxdepth 1 | jo -pa > json/examples.json
+find ./examples/* -maxdepth 1 -type f | grep .js | jo -pa > json/examples.json
