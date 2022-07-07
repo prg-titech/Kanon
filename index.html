@@ -6,13 +6,13 @@
 
 	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
 	<link href="node_modules/jquery-ui-dist/jquery-ui.css" rel="stylesheet" type="text/css" />
-	<link rel="stylesheet" href="external/prototype_window/themes/default.css" />
-	<link rel="stylesheet" href="external/prototype_window/themes/mac_os_x.css" />
 	<link rel="stylesheet" href="node_modules/split-pane/split-pane.css" />
 	<link rel="stylesheet" href="node_modules/split-pane/pretty-split-pane.css" />
 	<link rel="stylesheet" type="text/css" href="src/css/style.css">
 	<link rel="stylesheet" type="text/css" href="src/css/call-tree-network.css">
 	<link rel="stylesheet" type="text/css" href="src/css/tooltip.css">
+	<!-- modalmenu -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/StephanWagner/jBox@v1.3.3/dist/jBox.all.min.css" />
 
 	<script type="text/javascript" src="src/import.js"></script>
 
@@ -37,8 +37,11 @@
 </head>
 
 <body>
+	<script type="module" src="src/js/menubar.js"></script>
+	<div id="app"></div>
 
-	<div id="menu-bar">
+
+	<div id="menu-bar" style="display:none">
 		<div id="viewMode">
 			View Mode:
 			<select name="pullDownViewMode" id="pullDownViewMode">
@@ -69,7 +72,7 @@
 				<option value="Original">Original</option>
 			</select>
 		</div>
-		<div id="selectClass"></div>
+		<!-- <div id="selectClass"></div> -->
 		<input id="redrawButton" type="button" value="redraw"
 			onclick="__$__.Update.waitForStabilized = false; __$__.Update.ContextUpdate('changed');">
 	</div>
@@ -115,9 +118,9 @@
 		<input type="button" value="save" id="saveButtonForTestize" />
 		<input type="button" value="cancel" id="cancelButtonForTestize" />
 	</div>
-	<div id="tooltip_set" class="seecoderun_tooltip">set test</div>
+	<div id="tooltip_set" class="seecoderun_tooltip show_testGraph">set test</div>
 	<div id="tooltips" class="seecoderun_tooltip">
-		<div id="tooltip_modify">modify</div>
+		<div id="tooltip_modify" class="show_testGraph">modify</div>
 		<div id="tooltip_remove">remove</div>
 	</div>
 

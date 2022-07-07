@@ -87,8 +87,9 @@ __$__.pasteExample = function () {
       function (data) {
         __$__.editor.setValue(data);
         __$__.editor.selection.clearSelection();
-      }
-    )
+      },
+      "text"
+    );
   } else {
     alert("Select one the example categories.");
   }

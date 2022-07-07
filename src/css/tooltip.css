@@ -35,6 +35,7 @@
     height: 100%;
     font-size: 18px;
     position: relative;
+    word-break: normal; /* jBoxのword-breakを無効に */
 }
 
 #window-header {
@@ -88,6 +89,7 @@
 #window-for-actualGraph {
     width: 100%;
     height: 100%;
+    word-break: normal; /* jBoxのword-breakを無効に */
 }
 
 #network-popUp {
