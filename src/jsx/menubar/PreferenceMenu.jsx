@@ -88,7 +88,7 @@ export default function CustomizedDialogs() {
         open={open}
       >
         <DialogTitle id="customized-dialog-title" onClose={handleClose}>
-          Preference
+          Preferences
         </DialogTitle>
         <DialogContent dividers>
           <TextFieldFontSize />
