@@ -5,7 +5,7 @@ While you write JavaScript code in the editor on the left-hand side,
 the data structures constructed during the execution of the code appears as a graph on the right-hand side.
 
 ![](./example.gif)
-
+ 
 ## How to use
 
 Kanon runs on your browser.  Open the following page: [https://prg-titech.github.io/Kanon/](https://prg-titech.github.io/Kanon/).
