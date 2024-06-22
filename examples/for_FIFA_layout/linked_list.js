@@ -6,7 +6,7 @@ class Node{
     }
     
     add(val){
-        if(this.next == null){
+        if(this.next === null){
             let temp = new Node(val);
             this.next = temp;
             temp.prev = this;
