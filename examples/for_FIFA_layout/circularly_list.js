@@ -1,5 +1,4 @@
 class DCLL {
-
     constructor(val) {
         this.val = val;
         this.next = this;
