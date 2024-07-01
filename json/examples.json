@@ -9,7 +9,6 @@
    "./examples/for_FIFA_layout/B+_tree.js",
    "./examples/for_FIFA_layout/doubly_linked_list_sentinels.js",
    "./examples/for_FIFA_layout/fibonacci_heap.js",
-   "./examples/for_FIFA_layout/doubly_linked_simple.js",
    "./examples/for_FIFA_layout/list_in_list.js",
    "./examples/for_FIFA_layout/skip_list.js",
    "./examples/for_FIFA_layout/binary_tree.js",
@@ -28,5 +27,6 @@
    "./examples/for_FIFA_layout/array_simple.js",
    "./examples/for_FIFA_layout/ternary_tree.js",
    "./examples/for_FIFA_layout/Adjacencey_Matrix.js",
+   "./examples/for_FIFA_layout/doubly_linked_list_simple.js",
    "./examples/for_FIFA_layout/tree_having_list2.js"
 ]
