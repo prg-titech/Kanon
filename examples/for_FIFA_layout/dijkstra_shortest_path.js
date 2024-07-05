@@ -1,86 +1,122 @@
-class CostedEdge {
-  constructor(from, to, cost) {
-      this.from = from;
-      this.to = to;
-      this.cost = cost;
+/*
+ * Dijkstra's algorithm
+ * Find the shortest path between stations in the Nagoya area.
+ * - Node objects: stations
+ * - Eedge objects: the routes between stations with associated travel costs
+ * - dijkstra function: Calculates the shortest path and distance from a starting station to a destination
+ */
+
+class Node {
+  constructor(name) {
+    this.name = name;
+    this.edges = [];
+  }
+
+  addEdge(edge) {
+    this.edges.push(edge);
   }
 }
 
-// Number of vertices & edges in the graph
-let V = 8, E = 12;
+class WeightedEdge {
+  constructor(from, to, cost) {
+    this.from = from;
+    this.to = to;
+    this.cost = cost;
+    from.addEdge(this);
+    to.addEdge(this);
+  }
+}
 
-// List of station names
-const stations = [
-"Nagoya",
-"International Center",
-"Fushimi",
-"Marunouchi",
-"Asama Town",
-"Meijo Park",
-"City Hall",
-"Hisaya Odori",
-"Sakae"
-];
+// Nodes
+const nagoya = new Node("Nagoya");
+const internationalCenter = new Node("International Center");
+const fushimi = new Node("Fushimi");
+const marunouchi = new Node("Marunouchi");
+const asamaTown = new Node("Asama Town");
+const meijoPark = new Node("Meijo Park");
+const cityHall = new Node("City Hall");
+const hisayaOdori = new Node("Hisaya Odori");
+const sakae = new Node("Sakae");
 
-// List of edges with their respective costs
-const edges = [
-  { from: stations[0], to: stations[1], cost: 2 },
-  { from: stations[0], to: stations[2], cost: 3 },
-  { from: stations[1], to: stations[3], cost: 1 },
-  { from: stations[2], to: stations[3], cost: 2 },
-  { from: stations[2], to: stations[8], cost: 2 },
-  { from: stations[8], to: stations[7], cost: 1 },
-  { from: stations[3], to: stations[7], cost: 2 },
-  { from: stations[3], to: stations[6], cost: 5 },
-  { from: stations[6], to: stations[7], cost: 2 },
-  { from: stations[3], to: stations[4], cost: 2 },
-  { from: stations[4], to: stations[5], cost: 6 },
-  { from: stations[6], to: stations[5], cost: 2 }
-];
+// Edges
+new WeightedEdge(nagoya, internationalCenter, 2);
+new WeightedEdge(nagoya, fushimi, 3);
+new WeightedEdge(internationalCenter, marunouchi, 1);
+new WeightedEdge(fushimi, marunouchi, 2);
+new WeightedEdge(fushimi, sakae, 2);
+new WeightedEdge(sakae, hisayaOdori, 1);
+new WeightedEdge(marunouchi, hisayaOdori, 2);
+new WeightedEdge(marunouchi, cityHall, 5);
+new WeightedEdge(cityHall, hisayaOdori, 2);
+new WeightedEdge(marunouchi, asamaTown, 2);
+new WeightedEdge(asamaTown, meijoPark, 6);
+new WeightedEdge(cityHall, meijoPark, 2);
 
-// Create the graph by mapping the edge objects to CostedEdge instances
-const graph = edges.map(edge => new CostedEdge(edge.from, edge.to, edge.cost));
+// Helper function to find the unvisited node with the smallest distance
+function getMinDistanceNode(unvisited, distances) {
+  let minNode = null;
+  unvisited.forEach(node => {
+    if (minNode === null || distances[node.name] < (distances[minNode.name] || Infinity)) {
+      minNode = node;
+    }
+  });
+  return minNode;
+}
+
+// Helper function to update distances to the neighboring nodes
+function updateNeighborDistances(currentNode, distances, previousNodes, unvisited) {
+  currentNode.edges.forEach(edge => {
+    const neighbor = edge.from === currentNode ? edge.to : edge.from;
+    const newDistance = distances[currentNode.name] + edge.cost;
+
+    if (distances[neighbor.name] === undefined || newDistance < distances[neighbor.name]) {
+      distances[neighbor.name] = newDistance;
+      previousNodes[neighbor.name] = currentNode;
+      unvisited.add(neighbor);
+    }
+  });
+}
 
 // Dijkstra's algorithm to find the shortest path from start to goal
 function dijkstra(start, goal) {
-  const distances = new Array(V).fill(Number.MAX_VALUE); // Array to store the shortest distance from start to each vertex
-  const used = new Array(V).fill(false); // Array to track visited vertices
+  const distances = {}; // Object to store the shortest distance from start to each node
+  const previousNodes = {}; // Object to store the previous node in the shortest path
+  const unvisited = new Set(); // Set to store unvisited nodes
 
-  distances[stations.indexOf(start)] = 0; // Distance to the start vertex is 0
+  // Initialize distances and unvisited set
+  distances[start.name] = 0;
+  unvisited.add(start);
 
-  while (true) {
-      let v = -1; // Vertex to be processed next
+  let currentNode;
 
-      // Find the unvisited vertex with the smallest distance
-      for (let u = 0; u < V; u++) {
-          if (!used[u] && (v === -1 || distances[u] < distances[v])) {
-              v = u;
-          }
-      }
+  while (unvisited.size > 0) {
+    // Find the unvisited node with the smallest distance
+    currentNode = getMinDistanceNode(unvisited, distances);
 
-      if (v === -1) break; // All vertices have been visited, exit the loop
+    // If the smallest distance node is the goal, we can stop
+    if (currentNode === goal) break;
 
-      used[v] = true; // Mark the vertex as visited
+    // Remove the current node from the unvisited set
+    unvisited.delete(currentNode);
 
-      // Update the distances to the neighboring vertices
-      for (let u = 0; u < V; u++) {
-          let cost = Number.MAX_VALUE;
-
-          // Find the cost of the edge between vertices u and v
-          for (let i = 0; i < graph.length; i++) {
-              if ((stations.indexOf(graph[i].from) === u && stations.indexOf(graph[i].to) === v) ||
-                  (stations.indexOf(graph[i].from) === v && stations.indexOf(graph[i].to) === u)) {
-                  cost = graph[i].cost;
-                  break;
-              }
-          }
-
-          // Update the distance to vertex u if a shorter path is found
-          distances[u] = Math.min(distances[u], distances[v] + cost);
-      }
+    // Update distances to the neighboring nodes
+    updateNeighborDistances(currentNode, distances, previousNodes, unvisited);
   }
 
-  return distances[stations.indexOf(goal)]; // Return the shortest distance to the goal
+  // Retrieve the shortest path
+  const path = [];
+  let node = goal;
+  while (node) {
+    path.unshift(node.name);
+    node = previousNodes[node.name];
+  }
+
+  return {
+    distance: distances[goal.name],
+    path: path
+  };
 }
 
-// alert(dijkstra("Nagoya", "Meijo Park")); // 9
+// Display the result
+// const result = dijkstra(nagoya, meijoPark);
+// alert(`Distance: ${result.distance}, Path: ${result.path.join(" -> ")}`);
