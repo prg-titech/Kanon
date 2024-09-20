@@ -1,6 +1,7 @@
 class Parent {
-    constructor(name){
+    constructor(name,age){
         this.name = name;
+        this.age = age;
         this.wife = null;
         this.husband = null;
         this.child = null;
@@ -20,14 +21,15 @@ class Parent {
 }
 
 class Child {
-    constructor(name){
+    constructor(name,age){
         this.name = name;
+        this.age = age;
     }
 }
 
-let dad = new Parent("ひろし");
-let mom = new Parent("みさえ");
-let son = new Child("しんのすけ");
+let dad = new Parent("ひろし",42);
+let mom = new Parent("みさえ",40);
+let son = new Child("しんのすけ",10);
 dad.addWife(mom);
 dad.addChild(son);
 mom.addHusband(dad);

@@ -29,20 +29,24 @@ __$__.Layout = {
                                     let newID = nodeID + "-" + graph.edges[i].label + "-array";
                                     let newNode = new __$__.StoredGraphFormat.Node(
                                         newID, 
-                                        "Kanon-ArrayNode", 
+                                        "Kanon-ArrayNode",
+                                        //graph.nodes[toID].value, 
                                         false, 
                                         "Kanon-ArrayNode"
                                     );
+                                    newNode.v = graph.nodes[toID].value;
+
                                     newNode.index = refNum;
                                     graph.pushNode(newNode);
                                     graph.setArrayNode(newID);
                                     references[refNum] = newID;
-                                    let newEdge1 = new __$__.StoredGraphFormat.Edge(
-                                        newID, 
-                                        toID, 
-                                        "ref"
-                                    );
-                                    graph.pushEdge(newEdge1);
+                                    if(graph.nodes[toID].isLiteral == false){
+                                        let newEdge1 = new __$__.StoredGraphFormat.Edge(
+                                            newID, 
+                                            toID, 
+                                            "ref"
+                                        );
+                                        graph.pushEdge(newEdge1);}
                                     if(refNum != fields.length - 1){
                                         let newEdge2 = new __$__.StoredGraphFormat.Edge(
                                             references[refNum], 
@@ -73,7 +77,31 @@ __$__.Layout = {
                             }
                         }
                     }
+
                 }
+                for(let edgeID of Object.keys(graph.edges))
+                    {
+                        let targetedge = graph.edges[edgeID]
+                        let fromnode = graph.nodes[targetedge.from]
+                        let tonode = graph.nodes[targetedge.to]
+                        if (tonode.isLiteral == true){
+                            fromnode.label = fromnode.label + "a"
+                            // let newID = graph.edges[egdeID].fromID + "-" + graph.edges[edgeID].toID;
+                            // let newNode = new __$__.StoredGraphFormat.Node(
+                            //     newID, 
+                            //     "Kanon-Node",
+                            //     false, 
+                            //     "Kanon-Node"
+                            // );
+                            // newNode.v1 = graph.nodes[fromID].value;
+                            // newNode.v2 = graph.nodes[toID].value;
+                            // newNode.index = refNum;
+                            // graph.pushNode(newNode);
+                            // graph.setArrayNode(newID);
+                            // references[refNum] = newID;
+                        }
+                    }
+                
 
                 //どこからも参照されていないノードは表示しないようにする
                 let limeEdges = graph.variableEdges;
@@ -176,13 +204,35 @@ __$__.Layout = {
                     //     graph.setEdgeLabel(fromID, toID, fromID.slice(fromID.length - 1, fromID.length));
                     // }
                 }
+                //toIDのisLiteralがtrueの時toIDとrefを消す
+                // for(let i = 0; i < graph.edges.length; i++){
+                //     let edge = graph.edges[i];
+                //     let fromID = edge.from;
+                //     let toID = edge.to;
+                //     if(graph.nodes[toID].isLiteral == true) {
+                //         graph.setEdgeArrowOff(fromID, toID);
+                //     }
+                if(graph.edges[i].from == nodeID && graph.edges[i].label != "ref"){
                 for(let nodeID of Object.keys(graph.nodes)) {
                     let index = graph.nodes[nodeID].index
+                    let val = graph.nodes[nodeID].v
                     if(index != -1) {
-                        graph.setLabel(nodeID, "Array [" + index + "]");
+                        graph.setLabel(nodeID, "Array [" + index + "] : " + val);
                     }
                 }
-                graph.makeChanges = true;
+                graph.makeChanges = true;}
+
+                if(graph.nodes[toID].label != "Array"){
+                    for(let nodeID of Object.keys(graph.nodes)) {
+                        let val = graph.nodes[nodeID].v
+                        let val1 = graph.nodes[nodeID].v1
+                        let val2 = graph.nodes[nodeID].v2
+                        if(index != -1) {
+                            graph.setLabel(nodeID, val + val1 + val2);
+                        }
+                    }
+                    graph.makeChanges = true;
+                }
             }
 
             graph.notInterestedClass = [];
