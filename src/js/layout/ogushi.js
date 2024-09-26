@@ -74,6 +74,41 @@ __$__.Layout = {
                         }
                     }
                 }
+                let deleteedgeIDs = []
+                for(let edgeID of Object.keys(graph.edges))
+                    {
+                        let targetedge = graph.edges[edgeID]
+                        let fromnode = graph.nodes[targetedge.from]
+                        let tonode = graph.nodes[targetedge.to]
+                        if (tonode.isLiteral == true){
+                            fromnode.label += "\n" 
+                                + targetedge.label
+                                + ":"
+                                + tonode.value
+                            
+                            // deleteedgeIDs.push(edgeID);
+
+
+                            // tonode = null
+                            // targetedge = null
+                            // let newID = graph.edges[egdeID].fromID + "-" + graph.edges[edgeID].toID;
+                            // let newNode = new __$__.StoredGraphFormat.Node(
+                            //     newID, 
+                            //     "Kanon-Node",
+                            //     false, 
+                            //     "Kanon-Node"
+                            // );
+                            // newNode.v1 = graph.nodes[fromID].value;
+                            // newNode.v2 = graph.nodes[toID].value;
+                            // newNode.index = refNum;
+                            // graph.pushNode(newNode);
+                            // graph.setArrayNode(newID);
+                            // references[refNum] = newID;
+                        }
+                    }
+                for(let edgeID of deleteedgeIDs){
+                    delete graph.edges[edgeID]
+                }
 
                 //どこからも参照されていないノードは表示しないようにする
                 let limeEdges = graph.variableEdges;
@@ -102,6 +137,9 @@ __$__.Layout = {
                     if(layoutNodeIDs.indexOf(nodeID) == -1) deleteIDs.push(nodeID);
                 }
                 for(let i = 0; i < deleteIDs.length; i++){
+                    // let id = deleteIDs[i] 
+                    // let a = graph.nodes
+                    // delete a[id];
                     delete graph.nodes[deleteIDs[i]];
                     delete graph.variableNodes[deleteIDs[i]];
                     for(let j = graph.edges.length - 1; j >= 0; j--){
