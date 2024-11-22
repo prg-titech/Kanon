@@ -15,3 +15,12 @@ import "../updateLabelPos.js";
 import "../code-instrumentation/ast-walker.js";
 import "../code-instrumentation/instrument.js";
 import "../code-instrumentation/ast-builder.js";
+import "../call-tree/callTree.js";
+import "../testize.js";
+import "../code-instrumentation/checkpoint.js";
+import "../object2graph/graph.js";
+import "../setup.js";
+import "../object2graph/traverse.js";
+import "../jumpToConst.js";
+
+//import "../editor.js";
