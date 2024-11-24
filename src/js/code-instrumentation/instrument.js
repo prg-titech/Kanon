@@ -12,7 +12,12 @@ __$__.CodeInstrumentation = {
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
     instrument: function(code) {
-        let ast = esprima.parse(code, {loc: true});
+	return escodegen.generate(
+	    this.instrument_ast(
+		esprima.parse(code, {loc: true})));
+    },
+    instrument_ast: function(ast) {
+        //let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];
     
@@ -53,6 +58,7 @@ __$__.CodeInstrumentation = {
     
         __$__.walkAST(ast, null, visitors);
     
-        return escodegen.generate(ast);
+	return ast;
+        // return escodegen.generate(ast);
     }
 };
