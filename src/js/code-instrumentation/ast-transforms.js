@@ -1920,6 +1920,7 @@ __$__.ASTTransforms = {
                     if (node.type === 'ReturnStatement') {
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
+			console.log("return statement");
                         return b.BlockStatement([
                             __$__.ASTTransforms.makeCheckpoint(start, variables),
                             b.VariableDeclaration([
@@ -1977,6 +1978,7 @@ __$__.ASTTransforms = {
                         ]);
                     } else if (node.type === 'VariableDeclaration' && node.kind !== 'var' && ('ForStatement' !== parent.type && 'ForInStatement' !== parent.type || parent.init !== node && parent.left !== node)
                         || node.type === 'ClassDeclaration') {
+			console.log("this is something:" + node.type);
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                         __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                         return [
@@ -1991,7 +1993,7 @@ __$__.ASTTransforms = {
                             __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                             let expression = Object.assign({}, node.init);
                             let name = node.id.name;
-
+			    console.log("vardecl? : " + node.type);
                             node.init = b.CallExpression(
                                 b.ArrowFunctionExpression(
                                     [],
@@ -2019,6 +2021,7 @@ __$__.ASTTransforms = {
                             let parent = path[path.length - 2];
                             if (parent && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
                                 if (node.type === 'BlockStatement') {
+				    console.log("top level block!? ");
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                     return [
@@ -2029,6 +2032,8 @@ __$__.ASTTransforms = {
                                         __$__.ASTTransforms.makeCheckpoint(end, variables)
                                     ];
                                 } else {
+				    console.log("some other cases"+ node.type);
+				    console.log("super?="+ this.isSuperConstructorStatement(node,path));
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                     __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                     return [
@@ -2041,19 +2046,9 @@ __$__.ASTTransforms = {
                             }
 
                             if (node.type === 'BlockStatement') {
-                                start.column += 1;
-                                end.column -= 1;
-
-                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
-                                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
-                                return b.BlockStatement([
-                                    __$__.ASTTransforms.changedGraphStmt(),
-                                    __$__.ASTTransforms.makeCheckpoint(start, variables),
-                                    node,
-                                    __$__.ASTTransforms.changedGraphStmt(),
-                                    __$__.ASTTransforms.makeCheckpoint(end, variables)
-                                ]);
+				return this.transformBlockStatement(start,end,variables,b,node,path);
                             } else {
+				console.log("here!");
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
                                 return b.BlockStatement([
@@ -2066,7 +2061,48 @@ __$__.ASTTransforms = {
                         }
                     }
                 }
-            }
+            },
+	    // to determine whether the given node is a statement that
+	    // calls a super constructor; i.e., it matches
+	    // ... constructor(...){ [[super(...);]] ... } ...
+	    isSuperConstructorStatement(node,path) {
+		let parent = path[path.length - 2];
+		return node.type == "ExpressionStatement" &&
+		    node.expression.type == "CallExpression" &&
+		    node.expression.callee.type == "Super" &&
+		    this.isConstructorBody(parent, path.slice(0,-1));
+	    },
+	    // to determine whether the given node is the body block
+	    // of a constructor; i.e., it matches
+	    // ... constructor(...)[[{ ... }]] ...
+	    isConstructorBody(node,path) {
+		let parent      = path[path.length - 2],
+		    grandParent = path[path.length - 3];
+		return node.type == "BlockStatement" &&
+		    parent.type == "FunctionExpression" &&
+		    grandParent.type == "MethodDefinition" &&
+		    grandParent.key.name == "constructor";
+	    },
+	    // transform all (other) block statement
+	    transformBlockStatement(start,end,variables,b,node,path){
+		start.column += 1;
+                end.column -= 1;
+		console.log("transforming a constructor body"
+			    + " (in constructor="
+			    + this.isConstructorBody(node,path)
+			    + ") "
+			    + escodegen.generate(node));
+		
+                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
+                __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter + 1] = __$__.ASTTransforms.checkPoint_idCounter;
+                return b.BlockStatement([
+                    __$__.ASTTransforms.changedGraphStmt(),
+                    __$__.ASTTransforms.makeCheckpoint(start, variables),
+                    node,
+                    __$__.ASTTransforms.changedGraphStmt(),
+                    __$__.ASTTransforms.makeCheckpoint(end, variables)
+                ]);
+	    }
         };
     },
 

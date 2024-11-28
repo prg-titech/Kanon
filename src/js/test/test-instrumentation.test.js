@@ -94,12 +94,16 @@ each_test_program_text((filename, text) => {
     });
 });
 
-function run_transformers(text) {
+function run_transformers(text, factories=null) {
     let ast = esprima.parse(text, {loc: true});
     __$__.UpdateLabelPos.Initialize();
     __$__.CallTree.Initialize();
-    return __$__.CodeInstrumentation.instrument_ast(ast);
+    return __$__.CodeInstrumentation.instrument_ast(ast,factories);
 }
+function run_insertCheckPoint(text) {
+    return run_transformers(text, [__$__.ASTTransforms.InsertCheckPoint]);
+}
+
 function run_transformers_old(text) {
     let ast = esprima.parse(text, {loc: true});
     let tf = __$__.ASTTransforms;
@@ -310,3 +314,31 @@ test('transformation:invalid-super-call when there is a statement before super',
      () => {expect(valid_super_calls_after_transformation(
 	 'class C { constructor() {x=1;super();} }')).toBeFalsy();
 });
+
+function valid_super_calls_after_insert_checkpoint(text) {
+    return valid_super_calls(run_insertCheckPoint(text));
+}
+function has_super_calls_after_insert_checkpoint(text) {
+    return has_super_calls(run_insertCheckPoint(text));
+}
+
+test('insertCheckPoint:valid-super-call when there is no constructor', () => {
+    expect(valid_super_calls_after_insert_checkpoint('class C { }')).
+	toBeTruthy();
+});
+test('insertCheckPoint:valid-super-call when there is an empty constructor',
+     () => {
+	 expect(valid_super_calls_after_insert_checkpoint(
+	     'class C { constructor() { } }')).toBeTruthy();
+	 expect(has_super_calls_after_insert_checkpoint(
+	     'class C { constructor() { } }')).toBeFalsy();
+     });
+test('insertCheckPoint:valid-super-call when there is a constructor with '+
+     'super at first', () => {
+	 expect(valid_super_calls_after_insert_checkpoint(
+	     'class C { constructor() {super(); } }')).toBeTruthy();
+	 expect(has_super_calls_after_insert_checkpoint(
+	     'class C { constructor() {super(); } }')).toBeTruthy();
+});
+
+
