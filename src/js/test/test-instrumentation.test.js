@@ -221,6 +221,20 @@ function valid_super_calls(ast) {
 		})()));
 }
 
+function has_super_calls(ast) {
+    // for all class declaration CDECL
+    return all(ast, cdecl =>	
+	(!is_class_decl(cdecl)) ||
+	    // for all constructor declaration MDECL in CDECL
+	all(cdecl, (mdecl) =>  
+	    (!is_method_decl(mdecl, "constructor")) ||
+		(() => {
+		    let [first,...rest] = method_body_statement(mdecl);
+		            // the first statement is a super call or 
+		    return (is_super_call_statement(first));
+		})()));
+}
+
 test('to have a constructor', () => {
     let ast = esprima.parse('class C { constructor() {} }');
     expect(find_in(ast,is_constructor)).toBeTruthy();
@@ -257,5 +271,42 @@ test('invalid-super-call when there is a constructor with two supers',
      });
 test('invalid-super-call when there is a statement before super',
      () => {expect(valid_super_calls_in(
+	 'class C { constructor() {x=1;super();} }')).toBeFalsy();
+});
+
+function valid_super_calls_after_transformation(text) {
+    return valid_super_calls(run_transformers(text));
+}
+function has_super_calls_after_transformation(text) {
+    return has_super_calls(run_transformers(text));
+}
+
+test('transformation:valid-super-call when there is no constructor', () => {
+    expect(valid_super_calls_after_transformation('class C { }')).toBeTruthy();
+});
+test('transformation:valid-super-call when there is an empty constructor', () => {
+    expect(valid_super_calls_after_transformation('class C { constructor() { } }')).toBeTruthy();
+    expect(has_super_call_after_transformation('class C { constructor() { } }')).toBeTruthy();
+});
+test('transformation:valid-super-call when there is a constructor with super at first',
+     () => {
+	 expect(valid_super_calls_after_transformation(
+	     'class C { constructor() {super(); } }')).toBeTruthy();
+	 expect(has_super_calls_after_transformation(
+	     'class C { constructor() {super(); } }')).toBeTruthy();
+});
+test('transformation:invalid-super-call when super is not a statement',
+     () => {expect(valid_super_calls_after_transformation(
+	 'class C { constructor() {x=super(); } }')).toBeFalsy();
+});
+test('transformation:invalid-super-call when there is a constructor with two supers',
+     () => {
+	 expect(valid_super_calls_after_transformation(
+	     'class C { constructor() {super();super();} }')).toBeFalsy();
+	 expect(valid_super_calls_after_transformation(
+	     'class C { constructor() {super();x=super();} }')).toBeFalsy();
+     });
+test('transformation:invalid-super-call when there is a statement before super',
+     () => {expect(valid_super_calls_after_transformation(
 	 'class C { constructor() {x=1;super();} }')).toBeFalsy();
 });
