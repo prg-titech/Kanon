@@ -242,4 +242,4 @@ function addList(tree, ID, time) {
 insertNullatAllNode(Trees);
 addList(Trees, addTreeID, parseFloat((120 + Math.floor(Math.random() * 6000) / 100 - 30).toFixed(2)));
 
-Trees.remove()
+
