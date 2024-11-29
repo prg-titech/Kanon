@@ -1,3 +1,11 @@
+// An unfinished lambda calculus interpreter 
+//
+// This file demonstrates how we can gradually implement lambda calculus 
+// interpreter in Kanon.  We first define three classes with an empty 
+// eval(), then repeat adding an example term, adding respective method
+// body, and visually checking the result.  This file is incomplete 
+// as not all possible lambda terms can be evaluated.  
+
 class App {
     constructor(t1, t2) {
         this.t1 = t1;
@@ -45,9 +53,27 @@ class Var {
 
     subst(target, t) {
         if(this.v === target) return t;
-        else {}
+        else return this;
     }
 }
 
-let t = (() => {})();
-let t1 = t.eval();
+function example1() {
+    return new Var("x");
+}
+function example2() {
+    return new Lam("x", example1());
+}
+function example3() {
+    return new App(example2(), example1());
+}
+function example4() {
+    return new App(example2(), example2());
+}
+function example5() {
+    return new App(new Lam("y", example1()), new Var("z"));
+}
+let t1 = example1().eval();
+let t2 = example2().eval();
+let t3 = example3().eval();
+let t4 = example4().eval();
+let t5 = example5().eval();
