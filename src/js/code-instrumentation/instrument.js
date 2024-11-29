@@ -11,10 +11,11 @@ __$__.CodeInstrumentation = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    instrument: function(code) {
+    instrument: function(code, transformer_factories=null) {
 	return escodegen.generate(
 	    this.instrument_ast(
-		esprima.parse(code, {loc: true})));
+		esprima.parse(code, {loc: true}),
+		transformer_factories));
     },
     instrument_ast: function(ast, transformer_factories=null) {
         //let ast = esprima.parse(code, {loc: true});
