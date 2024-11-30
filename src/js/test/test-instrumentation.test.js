@@ -48,7 +48,7 @@ function map_on_example_program_text(f) {
 }
 
 // apply a program text to all or selected transformers and returns an AST
-function run_transformers(text, factories=null) {
+function run_transformers(text, factories=true) {
     let ast = esprima.parse(text, {loc: true});
     __$__.UpdateLabelPos.Initialize();
     __$__.CallTree.Initialize();
@@ -56,7 +56,7 @@ function run_transformers(text, factories=null) {
 }
 
 // apply a program text to the instrument module and returns text
-function do_instrument(text, factories=null) {
+function do_instrument(text, factories=true) {
     return escodegen.generate(run_transformers(text,factories));
 }
 
@@ -228,6 +228,16 @@ function valid_super_calls_in(text) {
     return valid_super_calls(esprima.parse(text));
 }
 
+function valid_super_calls_after_transformation(text,factories=true) {
+    return valid_super_calls(run_transformers(text,factories));
+}
+function has_super_calls_after_transformation(text,factories=true) {
+    return has_super_calls(run_transformers(text,factories));
+}
+function convartable_to_string_after_transformation(text,factories=true) {
+    return escodegen.generate(run_transformers(text,factories));
+}
+
 //////////////////////////////////////////////////////////////////////
 // tests
 
@@ -290,10 +300,19 @@ let simple_classes = [
      valid: true, has_constructor: true, has_super: false},
     {src: 'class C { constructor() {super(); } }',
      valid: true, has_constructor: true, has_super: true},
+    {src: 'class C { constructor() {super(); this.x=0;} }',
+     valid: true, has_constructor: true, has_super: true},
     {src: 'class C { constructor() {x=super(); } }',
      valid: false, has_constructor: true, has_super: true},
     {src: 'class C { constructor() {x=1;super();} }',
-     valid: false, constructor: true, has_super: true}
+     valid: false, constructor: true, has_super: true},
+    {src: 
+    `class Node {
+    constructor(val) {
+        this.val = val;
+        this.right = null;
+        this.left = null;
+    }}`, valid: true, constructor: true, has_super: false}
 ];
 
 describe('AST helper functions',()=>{
@@ -314,58 +333,95 @@ describe('AST helper functions',()=>{
 	}
     });
 });
-function valid_super_calls_after_transformation(text) {
-    return valid_super_calls(run_transformers(text));
-}
-function has_super_calls_after_transformation(text) {
-    return has_super_calls(run_transformers(text));
-}
+
+let transformer_sets = {
+    none: false,
+    all: true,
+    insertCheckPoint:      [__$__.ASTTransforms.InsertCheckPoint],
+    ConvertCallExpression: [__$__.ASTTransforms.ConvertCallExpression],
+    BlockedProgram:        [__$__.ASTTransforms.BlockedProgram],
+    AddSomeCodeInHead:     [__$__.ASTTransforms.AddSomeCodeInHead],
+    Context:               [__$__.ASTTransforms.Context],
+};
+
+console.log(do_instrument("class C { constructor(a) {super(f(a)); x=1;} }",
+			  transformer_sets.Context));
+// console.log(escodegen.generate(
+//     run_transformers("class C { constructor() {} }",
+// 		     transformer_sets.insertCheckPoint)));
+// console.log(JSON.stringify(run_transformers("class C { constructor() {} }",transformer_sets.insertCheckPoint), null, 2));
 
 describe('transformations', () => {
-    describe('all transformations', () => {
-	for(const{src:src, valid:valid, has_constructor:has_constructor,
-		  has_super:has_super} of simple_classes) {
-	    if(valid){
-		test(src+ " is still valid", () =>{
-		    expect(valid_super_calls_after_transformation(src)).
-			toBeTruthy();
-		});
-		if(has_constructor && has_super){
-		    test(src+ " keeps super call", () =>{
-			expect(has_super_calls_after_transformation(src)).
+    for(const [name, set] of Object.entries(transformer_sets)) {
+	describe(name,()=>{
+	    for(const{src:src, valid:valid, has_constructor:has_constructor,
+		      has_super:has_super} of simple_classes) {
+		if(valid) {
+		    test(src+ " is still valid", () =>{
+			expect(
+			    valid_super_calls_after_transformation(src,set)).
 			    toBeTruthy();
 		    });
-		} if(has_constructor && !has_super) {
-		    test(src+ " keeps super call", () =>{
-			expect(has_super_calls_after_transformation(src)).
-			    toBeFalsy();
-		    });
-		}
-	    }
-	}
-    });
-    describe('insertCheckPoint', () => {
-	for(const{src:src, valid:valid, has_constructor:has_constructor,
-		  has_super:has_super} of simple_classes) {
-	    if(valid){
-		test(src+ " is still valid", () =>{
-		    expect(valid_super_calls_after_insert_checkpoint(src)).
-			toBeTruthy();
-		});
-		if(has_constructor && has_super){
-		    test(src+ " keeps super call", () =>{
-			expect(has_super_calls_after_insert_checkpoint(src)).
+		    test(src+ " is convartable to string", () =>{
+			expect(
+			    convartable_to_string_after_transformation(src,set)).
 			    toBeTruthy();
 		    });
-		} if(has_constructor && !has_super) {
-		    test(src+ " keeps super call", () =>{
-			expect(has_super_calls_after_insert_checkpoint(src)).
-			    toBeFalsy();
-		    });
 		}
+		if(valid && has_constructor)
+		    test(src+ " keeps super call", () =>{
+			expect(
+			    has_super_calls_after_transformation(src,set)).
+			    toBe(has_super);
+		    });
 	    }
-	}
-    });
+	});
+    }
+    // describe('all transformations', () => {
+    // 	for(const{src:src, valid:valid, has_constructor:has_constructor,
+    // 		  has_super:has_super} of simple_classes) {
+    // 	    if(valid){
+    // 		test(src+ " is still valid", () =>{
+    // 		    expect(valid_super_calls_after_transformation(src)).
+    // 			toBeTruthy();
+    // 		});
+    // 		if(has_constructor && has_super){
+    // 		    test(src+ " keeps super call", () =>{
+    // 			expect(has_super_calls_after_transformation(src)).
+    // 			    toBeTruthy();
+    // 		    });
+    // 		} if(has_constructor && !has_super) {
+    // 		    test(src+ " keeps super call", () =>{
+    // 			expect(has_super_calls_after_transformation(src)).
+    // 			    toBeFalsy();
+    // 		    });
+    // 		}
+    // 	    }
+    // 	}
+    // });
+    // describe('insertCheckPoint', () => {
+    // 	for(const{src:src, valid:valid, has_constructor:has_constructor,
+    // 		  has_super:has_super} of simple_classes) {
+    // 	    if(valid){
+    // 		test(src+ " is still valid", () =>{
+    // 		    expect(valid_super_calls_after_insert_checkpoint(src)).
+    // 			toBeTruthy();
+    // 		});
+    // 		if(has_constructor && has_super){
+    // 		    test(src+ " keeps super call", () =>{
+    // 			expect(has_super_calls_after_insert_checkpoint(src)).
+    // 			    toBeTruthy();
+    // 		    });
+    // 		} if(has_constructor && !has_super) {
+    // 		    test(src+ " keeps super call", () =>{
+    // 			expect(has_super_calls_after_insert_checkpoint(src)).
+    // 			    toBeFalsy();
+    // 		    });
+    // 		}
+    // 	    }
+    // 	}
+    // })
+    ;
 });
 
 
@@ -399,12 +455,12 @@ describe('transformations', () => {
 // 	 'class C { constructor() {x=1;super();} }')).toBeFalsy();
 // });
 
-function valid_super_calls_after_insert_checkpoint(text) {
-    return valid_super_calls(run_insertCheckPoint(text));
-}
-function has_super_calls_after_insert_checkpoint(text) {
-    return has_super_calls(run_insertCheckPoint(text));
-}
+// function valid_super_calls_after_insert_checkpoint(text) {
+//     return valid_super_calls(run_insertCheckPoint(text));
+// }
+// function has_super_calls_after_insert_checkpoint(text) {
+//     return has_super_calls(run_insertCheckPoint(text));
+// }
 
 // test('insertCheckPoint:valid-super-call when there is no constructor', () => {
 //     expect(valid_super_calls_after_insert_checkpoint('class C { }')).

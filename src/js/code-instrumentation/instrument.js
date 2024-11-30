@@ -11,13 +11,13 @@ __$__.CodeInstrumentation = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    instrument: function(code, transformer_factories=null) {
+    instrument: function(code, transformer_factories=true) {
 	return escodegen.generate(
 	    this.instrument_ast(
 		esprima.parse(code, {loc: true}),
 		transformer_factories));
     },
-    instrument_ast: function(ast, transformer_factories=null) {
+    instrument_ast: function(ast, transformer_factories=true) {
         //let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];
@@ -48,11 +48,13 @@ __$__.CodeInstrumentation = {
 
         visitors = [];
 
-	if (transformer_factories===null) {
+	if (transformer_factories===true) {
 	    transformer_factories=[
 		tf.InsertCheckPoint, tf.ConvertCallExpression,
 		tf.BlockedProgram, tf.AddSomeCodeInHead,
 		tf.Context, tf.CollectObjects];
+	} else if (transformer_factories===false) {
+	    transformer_factories=[];
 	}
 	for(const factory of transformer_factories) {
 	    visitors.push(factory());
