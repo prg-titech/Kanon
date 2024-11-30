@@ -4,5 +4,4 @@ package-lock.json
 **/.vs/
 */obj/Debug
 **/Debug
-*.js
 *~
