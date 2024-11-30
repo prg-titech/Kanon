@@ -344,12 +344,20 @@ let transformer_sets = {
     Context:               [__$__.ASTTransforms.Context],
 };
 
-console.log(do_instrument("class C { constructor(a) {super(f(a)); x=1;} }",
-			  transformer_sets.Context));
-// console.log(escodegen.generate(
-//     run_transformers("class C { constructor() {} }",
-// 		     transformer_sets.insertCheckPoint)));
-// console.log(JSON.stringify(run_transformers("class C { constructor() {} }",transformer_sets.insertCheckPoint), null, 2));
+// These tests are to inspect transformation result by your own eyes.
+// They are turned off because they are too noisy. Remove 'x' in
+// xdescribe below when they are used.
+xdescribe('print transformed', () =>{
+    test('in text',()=>{
+	console.log(do_instrument("class C { constructor() { super(); } }",
+				  transformer_sets.all));
+    });
+    test('in AST', ()=>{
+	console.log(JSON.stringify(run_transformers(
+	    "class C { constructor() {} }",
+	    transformer_sets.insertCheckPoint), null, 2));
+    });
+});
 
 describe('transformations', () => {
     for(const [name, set] of Object.entries(transformer_sets)) {
