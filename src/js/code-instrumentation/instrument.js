@@ -11,8 +11,14 @@ __$__.CodeInstrumentation = {
      * Finally, AST is converted into code whose type is string using escodegen.
      * (walkAST() is executed twice if 'isSnapshot' is true.)
      */
-    instrument: function(code) {
-        let ast = esprima.parse(code, {loc: true});
+    instrument: function(code, transformer_factories=true) {
+	return escodegen.generate(
+	    this.instrument_ast(
+		esprima.parse(code, {loc: true}),
+		transformer_factories));
+    },
+    instrument_ast: function(ast, transformer_factories=true) {
+        //let ast = esprima.parse(code, {loc: true});
         let tf = __$__.ASTTransforms;
         let visitors = [];
     
@@ -42,17 +48,29 @@ __$__.CodeInstrumentation = {
 
         visitors = [];
 
-        visitors.push(tf.InsertCheckPoint());
-        visitors.push(tf.ConvertCallExpression());
-        visitors.push(tf.BlockedProgram());
-        visitors.push(tf.AddSomeCodeInHead());
-        visitors.push(tf.Context());
+	if (transformer_factories===true) {
+	    transformer_factories=[
+		tf.InsertCheckPoint, tf.ConvertCallExpression,
+		tf.BlockedProgram, tf.AddSomeCodeInHead,
+		tf.Context, tf.CollectObjects];
+	} else if (transformer_factories===false) {
+	    transformer_factories=[];
+	}
+	for(const factory of transformer_factories) {
+	    visitors.push(factory());
+	}
+        // visitors.push(tf.InsertCheckPoint());
         // visitors.push(tf.ConvertCallExpression());
-        visitors.push(tf.CollectObjects());
+        // visitors.push(tf.BlockedProgram());
+        // visitors.push(tf.AddSomeCodeInHead());
+        // visitors.push(tf.Context());
+        // // visitors.push(tf.ConvertCallExpression());
+        // visitors.push(tf.CollectObjects());
 
     
         __$__.walkAST(ast, null, visitors);
     
-        return escodegen.generate(ast);
+	return ast;
+        // return escodegen.generate(ast);
     }
 };
