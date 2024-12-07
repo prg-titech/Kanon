@@ -986,13 +986,241 @@ __$__.ASTTransforms = {
             leave(node, path) {
                 if (node.loc && ('NewExpression' === node.type || 'ArrayExpression' === node.type || 'ObjectExpression' === node.type)) {
                     const c = {};
+		    let line = false, column = false;
                     if (node.type === 'NewExpression') {
                         c.callee = node.callee.name;
                         c.this_node = b.NewExpression(
                             node.callee,
                             node.arguments
                         );
-                        c.newExpInfo = b.ObjectExpression([
+			line = node.loc.end.line;
+			column = node.loc.end.column;
+                        // c.newExpInfo = b.ObjectExpression([
+                        //     b.Property(
+                        //         b.Identifier('loopLabel'),
+                        //         b.CallExpression(
+                        //             b.MemberExpression(
+                        //                 b.Identifier('__loopLabels'),
+                        //                 b.Identifier('last')
+                        //             ),
+                        //             []
+                        //         )
+                        //     ),
+                        //     b.Property(
+                        //         b.Identifier('loopCount'),
+                        //         b.Identifier('__loopCount')
+                        //     ),
+                        //     b.Property(
+                        //         b.Identifier('pos'),
+                        //         b.ObjectExpression([
+                        //             b.Property(
+                        //                 b.Identifier('line'),
+                        //                 b.Literal(node.loc.end.line)
+                        //             ),
+                        //             b.Property(
+                        //                 b.Identifier('column'),
+                        //                 b.Literal(node.loc.end.column)
+                        //             )
+                        //         ])
+                        //     ),
+                        //     // contextSensitiveID: __stackForCallTree.last().getContextSensitiveID()
+                        //     b.Property(
+                        //         b.Identifier('contextSensitiveID'),
+                        //         b.CallExpression(
+                        //             b.MemberExpression(
+                        //                 b.CallExpression(
+                        //                     b.MemberExpression(
+                        //                         b.Identifier('__stackForCallTree'),
+                        //                         b.Identifier('last')
+                        //                     ),
+                        //                     []
+                        //                 ),
+                        //                 b.Identifier('getContextSensitiveID')
+                        //             ),
+                        //             []
+                        //         )
+                        //     )
+                        // ]);
+                    } else if (node.type === 'ArrayExpression') {
+                        c.callee = 'Array';
+                        c.this_node = b.ArrayExpression(
+                            node.elements
+                        );
+                        // c.newExpInfo = b.Literal(false);
+                    } else {
+                        c.callee = 'Object';
+                        c.this_node = b.ObjectExpression(
+                            node.properties
+                        );
+                        // c.newExpInfo = b.Literal(false);
+                    }
+
+                    let label = node.label;
+		    return __$__.ASTTransforms.buildNewWrapper(
+			label,c,line,column);
+                    // return b.CallExpression(
+                    //     b.ArrowFunctionExpression(
+                    //         [],
+                    //         b.BlockStatement([
+                    //             b.ExpressionStatement(
+                    //                 b.CallExpression(
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__newExpInfo'),
+                    //                         b.Identifier('push')
+                    //                     ), [
+                    //                         c.newExpInfo
+                    //                     ]
+                    //                 )
+                    //             ),
+                    //             //  __stackForCallTree.push(
+                    //             //     new __$__.CallTree.Instance(
+                    //             //         'unique ID',
+                    //             //         __stackForCallTree,
+                    //             //         'Class'
+                    //             //     )
+                    //             // );
+                    //             b.ExpressionStatement(
+                    //                 b.CallExpression(
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__stackForCallTree'),
+                    //                         b.Identifier('push')
+                    //                     ),
+                    //                     [b.NewExpression(
+                    //                         b.MemberExpression(
+                    //                             b.MemberExpression(
+                    //                                 b.Identifier('__$__'),
+                    //                                 b.Identifier('CallTree')
+                    //                             ),
+                    //                             b.Identifier('Instance')
+                    //                         ),
+                    //                         [
+                    //                             b.Literal(label),
+                    //                             b.Identifier('__stackForCallTree'),
+                    //                             b.Literal(c.callee)
+                    //                         ]
+                    //                     )]
+                    //                 )
+                    //             ),
+                    //             // var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
+                    //             b.VariableDeclaration([
+                    //                 b.VariableDeclarator(
+                    //                     b.Identifier('__newObjectId'),
+                    //                     b.CallExpression(
+                    //                         b.MemberExpression(
+                    //                             b.CallExpression(
+                    //                                 b.MemberExpression(
+                    //                                     b.Identifier('__stackForCallTree'),
+                    //                                     b.Identifier('last')
+                    //                                 ),
+                    //                                 []
+                    //                             ),
+                    //                             b.Identifier('getContextSensitiveID')
+                    //                         ),
+                    //                         []
+                    //                     )
+                    //                 )
+                    //             ], 'var'),
+                    //             // __newObjectIds.push(__newObjectId);
+                    //             b.ExpressionStatement(
+                    //                 b.CallExpression(
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__newObjectIds'),
+                    //                         b.Identifier('push')
+                    //                     ), [
+                    //                         b.Identifier('__newObjectId')
+                    //                     ]
+                    //                 )
+                    //             ),
+                    //             b.VariableDeclaration([
+                    //                 b.VariableDeclarator(
+                    //                     b.Identifier('__temp'),
+                    //                     c.this_node
+                    //                 )
+                    //             ], 'var'),
+                    //             __$__.ASTTransforms.changedGraphStmt(),
+                    //             b.ExpressionStatement(
+                    //                 b.CallExpression(
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__newExpInfo'),
+                    //                         b.Identifier('pop')
+                    //                     ), []
+                    //                 )
+                    //             ),
+                    //             // __stackForCallTree.pop();
+                    //             b.ExpressionStatement(
+                    //                 b.CallExpression(
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__stackForCallTree'),
+                    //                         b.Identifier('pop')
+                    //                     ), []
+                    //                 )
+                    //             ),
+                    //             /**
+                    //              * if (!__temp.__id) {
+                    //          *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
+                    //          *     __objs.push(__temp);
+                    //          * }
+                    //              */
+                    //             b.IfStatement(
+                    //                 b.UnaryExpression(
+                    //                     '!',
+                    //                     b.MemberExpression(
+                    //                         b.Identifier('__temp'),
+                    //                         b.Identifier('__id')
+                    //                     ),
+                    //                     true
+                    //                 ),
+                    //                 b.BlockStatement([
+                    //                     b.ExpressionStatement(
+                    //                         // Object.setProperty(__temp, "__id", __newObjectIds.pop())
+                    //                         b.CallExpression(
+                    //                             b.MemberExpression(
+                    //                                 b.Identifier('Object'),
+                    //                                 b.Identifier('setProperty')
+                    //                             ), [
+                    //                                 b.Identifier('__temp'),
+                    //                                 b.Literal('__id'),
+                    //                                 b.CallExpression(
+                    //                                     b.MemberExpression(
+                    //                                         b.Identifier('__newObjectIds'),
+                    //                                         b.Identifier('pop')
+                    //                                     ),
+                    //                                     []
+                    //                                 )
+                    //                             ]
+                    //                         )
+
+                    //                     ),
+                    //                     b.ExpressionStatement(
+                    //                         // __objs.push(__temp)
+                    //                         b.CallExpression(
+                    //                             b.MemberExpression(
+                    //                                 b.Identifier('__objs'),
+                    //                                 b.Identifier('push')
+                    //                             ),
+                    //                             [b.Identifier('__temp')]
+                    //                         )
+                    //                     )
+                    //                 ])
+                    //             ),
+                    //             b.ReturnStatement(
+                    //                 b.Identifier("__temp")
+                    //             )
+                    //         ])
+                    //     ),
+                    //     []
+                    // );
+                }
+            }
+        };
+    },
+    // to generate an expression that wraps an object-creating
+    // expression including new-expressions, array literals and object
+    // literals.  
+    buildNewWrapper(label, c, line, column) {
+	let b = __$__.ASTBuilder;
+	let newExpInfo = line ?
+	    b.ObjectExpression([
                             b.Property(
                                 b.Identifier('loopLabel'),
                                 b.CallExpression(
@@ -1012,11 +1240,13 @@ __$__.ASTTransforms = {
                                 b.ObjectExpression([
                                     b.Property(
                                         b.Identifier('line'),
-                                        b.Literal(node.loc.end.line)
+                                        //b.Literal(node.loc.end.line)
+					b.Literal(line)
                                     ),
                                     b.Property(
                                         b.Identifier('column'),
-                                        b.Literal(node.loc.end.column)
+                                        //b.Literal(node.loc.end.column)
+					b.Literal(column)
                                     )
                                 ])
                             ),
@@ -1037,180 +1267,161 @@ __$__.ASTTransforms = {
                                     []
                                 )
                             )
-                        ]);
-                    } else if (node.type === 'ArrayExpression') {
-                        c.callee = 'Array';
-                        c.this_node = b.ArrayExpression(
-                            node.elements
-                        );
-                        c.newExpInfo = b.Literal(false);
-                    } else {
-                        c.callee = 'Object';
-                        c.this_node = b.ObjectExpression(
-                            node.properties
-                        );
-                        c.newExpInfo = b.Literal(false);
-                    }
-
-                    let label = node.label;
-
-                    return b.CallExpression(
-                        b.ArrowFunctionExpression(
-                            [],
-                            b.BlockStatement([
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newExpInfo'),
-                                            b.Identifier('push')
-                                        ), [
-                                            c.newExpInfo
-                                        ]
-                                    )
+            ]) : b.Literal(false);
+	return b.CallExpression(
+            b.ArrowFunctionExpression(
+                [],
+                b.BlockStatement([
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__newExpInfo'),
+                                b.Identifier('push')
+                            ), [
+                                // c.newExpInfo
+				newExpInfo
+                            ]
+                        )
+                    ),
+                    //  __stackForCallTree.push(
+                    //     new __$__.CallTree.Instance(
+                    //         'unique ID',
+                    //         __stackForCallTree,
+                    //         'Class'
+                    //     )
+                    // );
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__stackForCallTree'),
+                                b.Identifier('push')
+                            ),
+                            [b.NewExpression(
+                                b.MemberExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__$__'),
+                                        b.Identifier('CallTree')
+                                    ),
+                                    b.Identifier('Instance')
                                 ),
-                                //  __stackForCallTree.push(
-                                //     new __$__.CallTree.Instance(
-                                //         'unique ID',
-                                //         __stackForCallTree,
-                                //         'Class'
-                                //     )
-                                // );
-                                b.ExpressionStatement(
+                                [
+                                    b.Literal(label),
+                                    b.Identifier('__stackForCallTree'),
+                                    b.Literal(c.callee)
+                                ]
+                            )]
+                        )
+                    ),
+                    // var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
+                    b.VariableDeclaration([
+                        b.VariableDeclarator(
+                            b.Identifier('__newObjectId'),
+                            b.CallExpression(
+                                b.MemberExpression(
                                     b.CallExpression(
                                         b.MemberExpression(
                                             b.Identifier('__stackForCallTree'),
-                                            b.Identifier('push')
+                                            b.Identifier('last')
                                         ),
-                                        [b.NewExpression(
-                                            b.MemberExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__$__'),
-                                                    b.Identifier('CallTree')
-                                                ),
-                                                b.Identifier('Instance')
-                                            ),
-                                            [
-                                                b.Literal(label),
-                                                b.Identifier('__stackForCallTree'),
-                                                b.Literal(c.callee)
-                                            ]
-                                        )]
-                                    )
+                                        []
+                                    ),
+                                    b.Identifier('getContextSensitiveID')
                                 ),
-                                // var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
-                                b.VariableDeclaration([
-                                    b.VariableDeclarator(
-                                        b.Identifier('__newObjectId'),
+                                []
+                            )
+                        )
+                    ], 'var'),
+                    // __newObjectIds.push(__newObjectId);
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__newObjectIds'),
+                                b.Identifier('push')
+                            ), [
+                                b.Identifier('__newObjectId')
+                            ]
+                        )
+                    ),
+                    b.VariableDeclaration([
+                        b.VariableDeclarator(
+                            b.Identifier('__temp'),
+                            c.this_node
+                        )
+                    ], 'var'),
+                    __$__.ASTTransforms.changedGraphStmt(),
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__newExpInfo'),
+                                b.Identifier('pop')
+                            ), []
+                        )
+                    ),
+                    // __stackForCallTree.pop();
+                    b.ExpressionStatement(
+                        b.CallExpression(
+                            b.MemberExpression(
+                                b.Identifier('__stackForCallTree'),
+                                b.Identifier('pop')
+                            ), []
+                        )
+                    ),
+                    /**
+                     * if (!__temp.__id) {
+                     *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
+                     *     __objs.push(__temp);
+                     * }
+                     */
+                    b.IfStatement(
+                        b.UnaryExpression(
+                            '!',
+                            b.MemberExpression(
+                                b.Identifier('__temp'),
+                                b.Identifier('__id')
+                            ),
+                            true
+                        ),
+                        b.BlockStatement([
+                            b.ExpressionStatement(
+                                // Object.setProperty(__temp, "__id", __newObjectIds.pop())
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('Object'),
+                                        b.Identifier('setProperty')
+                                    ), [
+                                        b.Identifier('__temp'),
+                                        b.Literal('__id'),
                                         b.CallExpression(
                                             b.MemberExpression(
-                                                b.CallExpression(
-                                                    b.MemberExpression(
-                                                        b.Identifier('__stackForCallTree'),
-                                                        b.Identifier('last')
-                                                    ),
-                                                    []
-                                                ),
-                                                b.Identifier('getContextSensitiveID')
+                                                b.Identifier('__newObjectIds'),
+                                                b.Identifier('pop')
                                             ),
                                             []
                                         )
-                                    )
-                                ], 'var'),
-                                // __newObjectIds.push(__newObjectId);
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newObjectIds'),
-                                            b.Identifier('push')
-                                        ), [
-                                            b.Identifier('__newObjectId')
-                                        ]
-                                    )
-                                ),
-                                b.VariableDeclaration([
-                                    b.VariableDeclarator(
-                                        b.Identifier('__temp'),
-                                        c.this_node
-                                    )
-                                ], 'var'),
-                                __$__.ASTTransforms.changedGraphStmt(),
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__newExpInfo'),
-                                            b.Identifier('pop')
-                                        ), []
-                                    )
-                                ),
-                                // __stackForCallTree.pop();
-                                b.ExpressionStatement(
-                                    b.CallExpression(
-                                        b.MemberExpression(
-                                            b.Identifier('__stackForCallTree'),
-                                            b.Identifier('pop')
-                                        ), []
-                                    )
-                                ),
-                                /**
-                                 * if (!__temp.__id) {
-                             *     Object.setProperty(__temp, '__id', __newObjectIds.pop());
-                             *     __objs.push(__temp);
-                             * }
-                                 */
-                                b.IfStatement(
-                                    b.UnaryExpression(
-                                        '!',
-                                        b.MemberExpression(
-                                            b.Identifier('__temp'),
-                                            b.Identifier('__id')
-                                        ),
-                                        true
-                                    ),
-                                    b.BlockStatement([
-                                        b.ExpressionStatement(
-                                            // Object.setProperty(__temp, "__id", __newObjectIds.pop())
-                                            b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('Object'),
-                                                    b.Identifier('setProperty')
-                                                ), [
-                                                    b.Identifier('__temp'),
-                                                    b.Literal('__id'),
-                                                    b.CallExpression(
-                                                        b.MemberExpression(
-                                                            b.Identifier('__newObjectIds'),
-                                                            b.Identifier('pop')
-                                                        ),
-                                                        []
-                                                    )
-                                                ]
-                                            )
-
-                                        ),
-                                        b.ExpressionStatement(
-                                            // __objs.push(__temp)
-                                            b.CallExpression(
-                                                b.MemberExpression(
-                                                    b.Identifier('__objs'),
-                                                    b.Identifier('push')
-                                                ),
-                                                [b.Identifier('__temp')]
-                                            )
-                                        )
-                                    ])
-                                ),
-                                b.ReturnStatement(
-                                    b.Identifier("__temp")
+                                    ]
                                 )
-                            ])
-                        ),
-                        []
-                    );
-                }
-            }
-        };
-    },
 
+                            ),
+                            b.ExpressionStatement(
+                                // __objs.push(__temp)
+                                b.CallExpression(
+                                    b.MemberExpression(
+                                        b.Identifier('__objs'),
+                                        b.Identifier('push')
+                                    ),
+                                    [b.Identifier('__temp')]
+                                )
+                            )
+                        ])
+                    ),
+                    b.ReturnStatement(
+                        b.Identifier("__temp")
+                    )
+                ])
+            ),
+            []
+        );
+    },
 
     /** Insert the code to manage the context in loop.
      * loop includes

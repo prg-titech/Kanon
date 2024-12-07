@@ -342,20 +342,22 @@ let transformer_sets = {
     BlockedProgram:        [__$__.ASTTransforms.BlockedProgram],
     AddSomeCodeInHead:     [__$__.ASTTransforms.AddSomeCodeInHead],
     Context:               [__$__.ASTTransforms.Context],
+    CollectObjects:        [__$__.ASTTransforms.CollectObjects],
 };
 
 // These tests are to inspect transformation result by your own eyes.
 // They are turned off because they are too noisy. Remove 'x' in
 // xdescribe below when they are used.
-xdescribe('print transformed', () =>{
+describe('print transformed', () =>{
     test('in text',()=>{
-	console.log(do_instrument("class C { constructor() { super(); } }",
-				  transformer_sets.all));
+	console.log(do_instrument("new C()",
+				  transformer_sets.CollectObjects
+				 ));
     });
     test('in AST', ()=>{
 	console.log(JSON.stringify(run_transformers(
-	    "class C { constructor() {} }",
-	    transformer_sets.insertCheckPoint), null, 2));
+	    "new C()",
+	    transformer_sets.CollectObjects), null, 2));
     });
 });
 
@@ -387,3 +389,68 @@ describe('transformations', () => {
     }
 });
 
+describe('ast-transforms.js', () =>{
+    describe('CollectObjects',()=>{
+	describe('given a new expression',()=>{
+	    test('to return an instrumented expression',()=>{
+		expect(run_transformers("new C()",
+					transformer_sets.CollectObjects)
+		       .body[0].expression.callee.body.body[8]).
+		    toMatchObject(
+			{"type": "IfStatement",
+			 "test": {"type": "UnaryExpression",
+				  "operator": "!",
+				  "argument": {
+				      "type": "MemberExpression",
+				      "object": {"type": "Identifier",
+						 "name": "__temp"},
+				      "property": {"type": "Identifier",
+						   "name": "__id"},
+				      "computed": false},
+				  "prefix": true},
+			 "consequent": {
+			     "type": "BlockStatement",
+			     "body": [
+				 {"type": "ExpressionStatement",
+				  "expression": {
+				      "type": "CallExpression",
+				      "callee": {
+					  "type": "MemberExpression",
+					  "object": {"type": "Identifier",
+						     "name": "Object"},
+					  "property": {"type": "Identifier",
+						       "name": "setProperty"},
+					  "computed": false},
+				      "arguments": [
+					  {"type": "Identifier",
+					   "name": "__temp"},
+					  {"type": "Literal", "value": "__id"},
+					  {"type": "CallExpression",
+					   "callee": {
+					       "type": "MemberExpression",
+					       "object": {
+						   "type": "Identifier",
+						   "name": "__newObjectIds"},
+					       "property": {
+						   "type": "Identifier",
+						   "name": "pop"},
+					       "computed": false},
+					   "arguments": []}]}},
+				 {"type": "ExpressionStatement",
+				  "expression": {
+				      "type": "CallExpression",
+				      "callee": {
+					  "type": "MemberExpression",
+					  "object": {"type": "Identifier",
+						     "name": "__objs"},
+					  "property": {"type": "Identifier",
+						       "name": "push"},
+					  "computed": false},
+				      "arguments": [{"type": "Identifier",
+						     "name": "__temp"}]}}]},
+			 "alternate": null}
+		    );
+	    });
+	});
+    });
+});

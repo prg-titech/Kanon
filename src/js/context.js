@@ -498,5 +498,32 @@ __$__.Context = {
                 __$__.Context.CallRelationship[sourceCSID] = {};
             __$__.Context.CallRelationship[sourceCSID][targetCSID] = callLabel;
         }
+    },
+
+    NewExpressionWrapprer(__newExpInfo, __loopLabels, __loopCount,
+			  __stackForCallTree, label, class_name,
+			  __newObjectIds) {
+	__newExpInfo.push({
+            loopLabel: __loopLabels.last(),
+            loopCount: __loopCount,
+            pos: {
+                line: 1,
+                column: 7
+            },
+            contextSensitiveID: __stackForCallTree.last().getContextSensitiveID()
+        });
+        __stackForCallTree.push(new __$__.CallTree.Instance('new1', __stackForCallTree, 'C'));
+        var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
+        __newObjectIds.push(__newObjectId);
+        var __temp = new C();
+        __$__.Context.ChangedGraph = true;
+        __newExpInfo.pop();
+        __stackForCallTree.pop();
+        if (!__temp.__id) {
+            Object.setProperty(__temp, '__id', __newObjectIds.pop());
+            __objs.push(__temp);
+        }
+        return __temp;
+
     }
 };
