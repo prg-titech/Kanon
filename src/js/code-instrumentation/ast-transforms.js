@@ -1056,7 +1056,7 @@ __$__.ASTTransforms = {
                     }
 
                     let label = node.label;
-		    return __$__.ASTTransforms.buildNewWrapper(
+		    return __$__.ASTTransforms.buildNewWrapperCall(
 			label,c,line,column);
                     // return b.CallExpression(
                     //     b.ArrowFunctionExpression(
@@ -1422,7 +1422,89 @@ __$__.ASTTransforms = {
             []
         );
     },
-
+    // to generate a call expression
+    //
+    // __$__.Context.NewExpressionWrapprer(
+    //   ()=> !!!c.this_node!!!, __newExpInfo, __loopLabels, __loopCount,
+    //   __stackForCallTree, !!!label!!!, !!!class_name!!!,
+    //   __newObjectIds, !!!line!!!, !!!column!!!)
+    buildNewWrapperCall(label, c, line, column) {
+	let b = __$__.ASTBuilder;
+	return {
+            "type": "CallExpression",
+            "callee": {
+		"type": "MemberExpression",
+		"computed": false,
+		"object": {
+		    "type": "MemberExpression",
+		    "computed": false,
+		    "object": {
+			"type": "Identifier",
+			"name": "__$__"
+		    },
+		    "property": {
+			"type": "Identifier",
+			"name": "Context"
+		    }
+		},
+		"property": {
+		    "type": "Identifier",
+		    "name": "NewExpressionWrapprer"
+		}
+            },
+            "arguments": [
+		{
+		    "type": "ArrowFunctionExpression",
+		    "id": null,
+		    "params": [],
+		    "body": c.this_node,
+		    "generator": false,
+		    "expression": true,
+		    "async": false
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__newExpInfo"
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__loopLabels"
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__loopCount"
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__stackForCallTree"
+		},
+		{
+		    "type": "Literal",
+		    "value": label
+		},
+		{
+		    "type": "Literal",
+		    "value": c.callee
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__newObjectIds"
+		},
+		{
+		    "type": "Literal",
+		    "value": line
+		},
+		{
+		    "type": "Literal",
+		    "value": column
+		},
+		{
+		    "type": "Identifier",
+		    "name": "__objs"
+		}
+            ]
+	};
+    },
     /** Insert the code to manage the context in loop.
      * loop includes
      * - DoWhileStatement

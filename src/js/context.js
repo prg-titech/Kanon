@@ -499,23 +499,27 @@ __$__.Context = {
             __$__.Context.CallRelationship[sourceCSID][targetCSID] = callLabel;
         }
     },
-
-    NewExpressionWrapprer(__newExpInfo, __loopLabels, __loopCount,
+    // to add information to newly created objects.  For "new C(e...)"
+    // in the source program, the code instrumetor generates
+    //      __$__.Context.NewExpressionWrapprer(()=> new C(e...), ...vars...)
+    // where the first argument is a thunk that performs the original new
+    // expression.
+    NewExpressionWrapprer(thunk, __newExpInfo, __loopLabels, __loopCount,
 			  __stackForCallTree, label, class_name,
-			  __newObjectIds) {
-	__newExpInfo.push({
+			  __newObjectIds, line, column, __objs) {
+	__newExpInfo.push( line && {
             loopLabel: __loopLabels.last(),
             loopCount: __loopCount,
             pos: {
-                line: 1,
-                column: 7
+                line: line,
+                column: column
             },
             contextSensitiveID: __stackForCallTree.last().getContextSensitiveID()
         });
-        __stackForCallTree.push(new __$__.CallTree.Instance('new1', __stackForCallTree, 'C'));
+        __stackForCallTree.push(new __$__.CallTree.Instance(label, __stackForCallTree, class_name));
         var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
         __newObjectIds.push(__newObjectId);
-        var __temp = new C();
+        var __temp = thunk();
         __$__.Context.ChangedGraph = true;
         __newExpInfo.pop();
         __stackForCallTree.pop();
