@@ -61,14 +61,15 @@ function do_instrument(text, factories=true) {
 }
 
 // eval the given JS program text without console output
-function run_instrumented(text) {
+function run_instrumented(text, postfix="") {
     let __objs = [];
     let __loopLabels = ['main'];
     let checkpoint = (args) => {};
-    suppress_console_log(() => {
-	console.log = jest.fn();
+    return suppress_console_log(() => {
 	try {
-	    return eval(text);
+	    return {result: eval(text+postfix),
+		    __objs: __objs,
+		    __loopLabels: __loopLabels};
 	} catch(e) {
 	    throw new Error('eval(text) failed with ' + e
 			    // + " where text is:\n" + text
@@ -77,28 +78,23 @@ function run_instrumented(text) {
     });
 }
 
+// eval the given JS program text, and check if the objects created in
+// the 
+function run_instrumented_check_object_id(text) {
+    let objects = run_instrumented(text).__objs;
+    return objects.length > 0 &&
+	objects.every(obj =>
+	    obj instanceof Object &&
+		Object.hasOwn(obj, "__id") &&
+		(typeof obj.__id === "string" ||
+		 obj.__id instanceof String));
+}
+
 // apply a program text only the InsertCheckPoint transformer
 function run_insertCheckPoint(text) {
     return run_transformers(text, [__$__.ASTTransforms.InsertCheckPoint]);
 }
 
-// function run_transformers_old(text) {
-//     let ast = esprima.parse(text, {loc: true});
-//     let tf = __$__.ASTTransforms;
-//     let visitors = [];
-//     visitors.push(tf.InsertCheckPoint());
-//     visitors.push(tf.ConvertCallExpression());
-//     visitors.push(tf.BlockedProgram());
-//     visitors.push(tf.AddSomeCodeInHead());
-//     visitors.push(tf.Context());
-//     // visitors.push(tf.ConvertCallExpression());
-//     visitors.push(tf.CollectObjects());
-
-//     __$__.ASTTransforms.varEnv = new __$__.Probe.StackEnv();
-
-//     __$__.walkAST(ast, null, visitors);
-//     return ast;
-// }
 //////////////////////////////////////////////////////////////////////
 // helper function on AST
 
@@ -272,6 +268,10 @@ describe('for all examples', () => {
 	});
 	test('instrumented '+filename+ ' runs without an error', () => {
 	    run_instrumented(do_instrument(text));
+	});
+	test('instrumented '+filename+ ' creates objects with ID', () => {
+	    expect(run_instrumented_check_object_id(
+		do_instrument(text))).toBeTruthy();
 	});
     });
 });
