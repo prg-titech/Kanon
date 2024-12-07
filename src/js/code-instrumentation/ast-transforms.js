@@ -1430,80 +1430,22 @@ __$__.ASTTransforms = {
     //   __newObjectIds, !!!line!!!, !!!column!!!)
     buildNewWrapperCall(label, c, line, column) {
 	let b = __$__.ASTBuilder;
-	return {
-            "type": "CallExpression",
-            "callee": {
-		"type": "MemberExpression",
-		"computed": false,
-		"object": {
-		    "type": "MemberExpression",
-		    "computed": false,
-		    "object": {
-			"type": "Identifier",
-			"name": "__$__"
-		    },
-		    "property": {
-			"type": "Identifier",
-			"name": "Context"
-		    }
-		},
-		"property": {
-		    "type": "Identifier",
-		    "name": "NewExpressionWrapprer"
-		}
-            },
-            "arguments": [
-		{
-		    "type": "ArrowFunctionExpression",
-		    "id": null,
-		    "params": [],
-		    "body": c.this_node,
-		    "generator": false,
-		    "expression": true,
-		    "async": false
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__newExpInfo"
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__loopLabels"
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__loopCount"
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__stackForCallTree"
-		},
-		{
-		    "type": "Literal",
-		    "value": label
-		},
-		{
-		    "type": "Literal",
-		    "value": c.callee
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__newObjectIds"
-		},
-		{
-		    "type": "Literal",
-		    "value": line
-		},
-		{
-		    "type": "Literal",
-		    "value": column
-		},
-		{
-		    "type": "Identifier",
-		    "name": "__objs"
-		}
-            ]
-	};
+	return b.CallExpression(
+	    b.MemberExpression(
+		b.MemberExpression(b.Identifier("__$__"),
+				   b.Identifier("Context")),
+		b.Identifier("NewExpressionWrapprer")),
+	    [b.ArrowFunctionExpression([], c.this_node, true),
+	     b.Identifier("__newExpInfo"),
+	     b.Identifier("__loopLabels"),
+	     b.Identifier("__loopCount"),
+	     b.Identifier("__stackForCallTree"),
+	     b.Literal(label),
+	     b.Literal(c.callee),
+	     b.Identifier("__newObjectIds"),
+	     b.Literal(line),
+	     b.Literal(column),
+	     b.Identifier("__objs")]);
     },
     /** Insert the code to manage the context in loop.
      * loop includes

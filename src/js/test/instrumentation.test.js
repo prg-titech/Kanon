@@ -72,7 +72,7 @@ function run_instrumented(text, postfix="") {
 		    __loopLabels: __loopLabels};
 	} catch(e) {
 	    throw new Error('eval(text) failed with ' + e
-			    // + " where text is:\n" + text
+			    + " where text is:\n" + text
 			   );
 	}
     });
@@ -454,3 +454,4 @@ describe('ast-transforms.js', () =>{
 	});
     });
 });
+
