@@ -523,11 +523,31 @@ __$__.Context = {
         __$__.Context.ChangedGraph = true;
         __newExpInfo.pop();
         __stackForCallTree.pop();
+	// the next if-statement cannot be replaced with a call
+	// to setObjectID as the conditions are different.
+	// Here, __newExpInfo.last() is false for array and
+	// object literals.  At the same time, setObjectID is
+	// called even when __newExpInfo.last() is false.  It
+	// is possible because call to this method is inserted
+	// not only to constructors, but also other methods
+	// and functions.  Since JavaScript supports various
+	// types of object constructions, we should be very
+	// careful.
         if (!__temp.__id) {
             Object.setProperty(__temp, '__id', __newObjectIds.pop());
             __objs.push(__temp);
         }
         return __temp;
 
+    },
+    // set object ID if not set.  We set object ID either at
+    // the beginning of a constructor, or just after returning
+    // from a NEW expression.  Every constructor body is inserted
+    // a call to this method.
+    setObjectID(obj,__newExpInfo,__newObjectIds,__objs){
+	if (__newExpInfo.last() && !obj.__id) {
+	    Object.setProperty(obj, '__id', __newObjectIds.pop());
+            __objs.push(obj);
+        }
     }
 };

@@ -2019,50 +2019,25 @@ __$__.ASTTransforms = {
                 );
 
                 /**
-                 * if (__newExpInfo.last()) {
-                 *     Object.setProperty(this, '__id', __newObjectIds.pop());
-                 *     __objs.push(this);
-                 * }
+                 * __$__.Context.setObjectID(this, __newExpInfo, 
+		 *                           __newObjectIds, __objs);
                  */
                 newBlockStmt.body.push(
-                    b.IfStatement(
-                        b.CallExpression(
-                            b.MemberExpression(
-                                b.Identifier('__newExpInfo'),
-                                b.Identifier('last')
-                            ), []
-                        ),
-                        b.BlockStatement([
-                            b.ExpressionStatement(
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('Object'),
-                                        b.Identifier('setProperty')
-                                    ), [
-                                        b.Identifier('this'),
-                                        b.Literal('__id'),
-                                        b.CallExpression(
-                                            b.MemberExpression(
-                                                b.Identifier('__newObjectIds'),
-                                                b.Identifier('pop')
-                                            ),
-                                            []
-                                        )
-                                    ]
-                                )
-                            ),
-                            b.ExpressionStatement(
-                                // b.Identifier('__objs.push(this)')
-                                b.CallExpression(
-                                    b.MemberExpression(
-                                        b.Identifier('__objs'),
-                                        b.Identifier('push')
-                                    ),
-                                    [b.Identifier('this')]
-                                )
-                            )
-                        ])
-                    )
+		    b.ExpressionStatement(
+			b.CallExpression(
+			    b.MemberExpression(
+				b.MemberExpression(
+				    b.Identifier("__$__"),
+				    b.Identifier("Context")
+				),
+				b.Identifier("setObjectID")
+			    ),
+			    [b.Identifier('this'),
+			     b.Identifier("__newExpInfo"),
+			     b.Identifier("__newObjectIds"),
+			     b.Identifier("__objs"),
+			    ]
+			)
                 );
 
 

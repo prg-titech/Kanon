@@ -14,5 +14,5 @@ property to be true.
 
 This test code checks if the transformed code still has a valid syntax.
 */
-{ foo: 123,
-  bar: 456 }
+let x = { foo: 123,
+	  bar: 456 };

@@ -348,16 +348,16 @@ let transformer_sets = {
 // These tests are to inspect transformation result by your own eyes.
 // They are turned off because they are too noisy. Remove 'x' in
 // xdescribe below when they are used.
-describe('print transformed', () =>{
+xdescribe('print transformed', () =>{
     test('in text',()=>{
-	console.log(do_instrument("new C()",
-				  transformer_sets.CollectObjects
+	console.log(do_instrument("class C{constructor(){}}",
+				  transformer_sets.Context
 				 ));
     });
     test('in AST', ()=>{
 	console.log(JSON.stringify(run_transformers(
-	    "new C()",
-	    transformer_sets.CollectObjects), null, 2));
+	    "class C{constructor(){}}",
+	    transformer_sets.Context), null, 2));
     });
 });
 
@@ -392,7 +392,10 @@ describe('transformations', () => {
 describe('ast-transforms.js', () =>{
     describe('CollectObjects',()=>{
 	describe('given a new expression',()=>{
-	    test('to return an instrumented expression',()=>{
+	    // This test is no longer valid since 1c39409.  With
+	    // 1c39409, the transformer generates a call to a wrapper
+	    // function.
+	    xtest('to return an instrumented expression',()=>{
 		expect(run_transformers("new C()",
 					transformer_sets.CollectObjects)
 		       .body[0].expression.callee.body.body[8]).
@@ -453,5 +456,703 @@ describe('ast-transforms.js', () =>{
 	    });
 	});
     });
+
+    describe('Context',()=>{
+	describe('given a constructor declaration',()=>{
+	    xtest('to return an instrumented constructor',()=>{
+		expect(run_transformers("class C {constructor() {}}",
+					transformer_sets.Context)
+		       .body[0].body.body[0].value.body).
+		    toMatchObject(
+			{
+                      "type": "BlockStatement",
+                      "body": [
+                        {
+                          "type": "VariableDeclaration",
+                          "declarations": [
+                            {
+                              "type": "VariableDeclarator",
+                              "id": {
+                                "type": "Identifier",
+                                "name": "__loopLabel"
+                              },
+                              "init": {
+                                "type": "Literal",
+                              }
+                            }
+                          ],
+                          "kind": "let"
+                        },
+                        {
+                          "type": "ExpressionStatement",
+                          "expression": {
+                            "type": "CallExpression",
+                            "callee": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "Identifier",
+                                "name": "__loopLabels"
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "push"
+                              },
+                              "computed": false
+                            },
+                            "arguments": [
+                              {
+                                "type": "Identifier",
+                                "name": "__loopLabel"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "IfStatement",
+                          "test": {
+                            "type": "BinaryExpression",
+                            "left": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "Identifier",
+                                    "name": "__$__"
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "Context"
+                                  },
+                                  "computed": false
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "CallTreeNodesOfEachLoop"
+                                },
+                                "computed": false
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "__loopLabel"
+                              },
+                              "computed": true
+                            },
+                            "operator": "===",
+                            "right": {
+                              "type": "Identifier",
+                              "name": "undefined"
+                            }
+                          },
+                          "consequent": {
+                            "type": "ExpressionStatement",
+                            "expression": {
+                              "type": "AssignmentExpression",
+                              "left": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__$__"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "Context"
+                                    },
+                                    "computed": false
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "CallTreeNodesOfEachLoop"
+                                  },
+                                  "computed": false
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "__loopLabel"
+                                },
+                                "computed": true
+                              },
+                              "operator": "=",
+                              "right": {
+                                "type": "ArrayExpression",
+                                "elements": []
+                              }
+                            }
+                          },
+                          "alternate": null
+                        },
+                        {
+                          "type": "VariableDeclaration",
+                          "declarations": [
+                            {
+                              "type": "VariableDeclarator",
+                              "id": {
+                                "type": "Identifier",
+                                "name": "__loopCount"
+                              },
+                              "init": {
+                                "type": "BinaryExpression",
+                                "left": {
+                                  "type": "UnaryExpression",
+                                  "operator": "++",
+                                  "argument": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__loopCounterObject"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "__loopLabel"
+                                    },
+                                    "computed": true
+                                  },
+                                  "prefix": true
+                                },
+                                "operator": "||",
+                                "right": {
+                                  "type": "AssignmentExpression",
+                                  "left": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__loopCounterObject"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "__loopLabel"
+                                    },
+                                    "computed": true
+                                  },
+                                  "operator": "=",
+                                  "right": {
+                                    "type": "Literal",
+                                    "value": 1
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "kind": "let"
+                        },
+                        {
+                          "type": "IfStatement",
+                          "test": {
+                            "type": "BinaryExpression",
+                            "left": {
+                              "type": "Identifier",
+                              "name": "__loopCount"
+                            },
+                            "operator": ">",
+                            "right": {
+                              "type": "Literal",
+                              "value": 10000
+                            }
+                          },
+                          "consequent": {
+                            "type": "BlockStatement",
+                            "body": [
+                              {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                  "type": "AssignmentExpression",
+                                  "left": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "MemberExpression",
+                                      "object": {
+                                        "type": "Identifier",
+                                        "name": "__$__"
+                                      },
+                                      "property": {
+                                        "type": "Identifier",
+                                        "name": "Context"
+                                      },
+                                      "computed": false
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "InfLoop"
+                                    },
+                                    "computed": false
+                                  },
+                                  "operator": "=",
+                                  "right": {
+                                    "type": "Identifier",
+                                    "name": "__loopLabel"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "ThrowStatement",
+                                "argument": {
+                                  "type": "Literal",
+                                  "value": "Infinite Loop"
+                                }
+                              }
+                            ]
+                          },
+                          "alternate": null
+                        },
+                        {
+                          "type": "VariableDeclaration",
+                          "declarations": [
+                            {
+                              "type": "VariableDeclarator",
+                              "id": {
+                                "type": "Identifier",
+                                "name": "__start"
+                              },
+                              "init": {
+                                "type": "Identifier",
+                                "name": "__time_counter"
+                              }
+                            }
+                          ],
+                          "kind": "let"
+                        },
+                        {
+                          "type": "ExpressionStatement",
+                          "expression": {
+                            "type": "CallExpression",
+                            "callee": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "Identifier",
+                                "name": "__stackForCallTree"
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "push"
+                              },
+                              "computed": false
+                            },
+                            "arguments": [
+                              {
+                                "type": "NewExpression",
+                                "callee": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__$__"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "CallTree"
+                                    },
+                                    "computed": false
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "Function"
+                                  },
+                                  "computed": false
+                                },
+                                "arguments": [
+                                  {
+                                    "type": "Identifier",
+                                    "name": "__loopLabel"
+                                  },
+                                  {
+                                    "type": "Identifier",
+                                    "name": "__stackForCallTree"
+                                  },
+                                  {
+                                    "type": "Literal",
+                                  },
+                                  {
+                                    "type": "Literal",
+                                    "value": "constructor"
+                                  },
+                                  {
+                                    "type": "Literal",
+                                    "value": "C"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "IfStatement",
+                          "test": {
+                            "type": "BinaryExpression",
+                            "left": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "Identifier",
+                                    "name": "__$__"
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "Context"
+                                  },
+                                  "computed": false
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "SpecifiedContext"
+                                },
+                                "computed": false
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "__loopLabel"
+                              },
+                              "computed": true
+                            },
+                            "operator": "===",
+                            "right": {
+                              "type": "Identifier",
+                              "name": "undefined"
+                            }
+                          },
+                          "consequent": {
+                            "type": "ExpressionStatement",
+                            "expression": {
+                              "type": "AssignmentExpression",
+                              "left": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__$__"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "Context"
+                                    },
+                                    "computed": false
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "SpecifiedContext"
+                                  },
+                                  "computed": false
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "__loopLabel"
+                                },
+                                "computed": true
+                              },
+                              "operator": "=",
+                              "right": {
+                                "type": "CallExpression",
+                                "callee": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                      "type": "MemberExpression",
+                                      "object": {
+                                        "type": "Identifier",
+                                        "name": "__stackForCallTree"
+                                      },
+                                      "property": {
+                                        "type": "Identifier",
+                                        "name": "last"
+                                      },
+                                      "computed": false
+                                    },
+                                    "arguments": []
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "getContextSensitiveID"
+                                  },
+                                  "computed": false
+                                },
+                                "arguments": []
+                              }
+                            }
+                          },
+                          "alternate": null
+                        },
+                        {
+                          "type": "ExpressionStatement",
+                          "expression": {
+                            "type": "CallExpression",
+                            "callee": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__$__"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "Context"
+                                    },
+                                    "computed": false
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "CallTreeNodesOfEachLoop"
+                                  },
+                                  "computed": false
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "__loopLabel"
+                                },
+                                "computed": true
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "push"
+                              },
+                              "computed": false
+                            },
+                            "arguments": [
+                              {
+                                "type": "CallExpression",
+                                "callee": {
+                                  "type": "MemberExpression",
+                                  "object": {
+                                    "type": "Identifier",
+                                    "name": "__stackForCallTree"
+                                  },
+                                  "property": {
+                                    "type": "Identifier",
+                                    "name": "last"
+                                  },
+                                  "computed": false
+                                },
+                                "arguments": []
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "IfStatement",
+                          "test": {
+                            "type": "CallExpression",
+                            "callee": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "Identifier",
+                                "name": "__newExpInfo"
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "last"
+                              },
+                              "computed": false
+                            },
+                            "arguments": []
+                          },
+                          "consequent": {
+                            "type": "BlockStatement",
+                            "body": [
+                              {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                  "type": "CallExpression",
+                                  "callee": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "Object"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "setProperty"
+                                    },
+                                    "computed": false
+                                  },
+                                  "arguments": [
+                                    {
+                                      "type": "Identifier",
+                                      "name": "this"
+                                    },
+                                    {
+                                      "type": "Literal",
+                                      "value": "__id"
+                                    },
+                                    {
+                                      "type": "CallExpression",
+                                      "callee": {
+                                        "type": "MemberExpression",
+                                        "object": {
+                                          "type": "Identifier",
+                                          "name": "__newObjectIds"
+                                        },
+                                        "property": {
+                                          "type": "Identifier",
+                                          "name": "pop"
+                                        },
+                                        "computed": false
+                                      },
+                                      "arguments": []
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                  "type": "CallExpression",
+                                  "callee": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__objs"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "push"
+                                    },
+                                    "computed": false
+                                  },
+                                  "arguments": [
+                                    {
+                                      "type": "Identifier",
+                                      "name": "this"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          "alternate": null
+                        },
+                        {
+                          "type": "ExpressionStatement",
+                          "expression": {
+                            "type": "CallExpression",
+                            "callee": {
+                              "type": "MemberExpression",
+                              "object": {
+                                "type": "MemberExpression",
+                                "object": {
+                                  "type": "Identifier",
+                                  "name": "__$__"
+                                },
+                                "property": {
+                                  "type": "Identifier",
+                                  "name": "Context"
+                                },
+                                "computed": false
+                              },
+                              "property": {
+                                "type": "Identifier",
+                                "name": "RegisterCallRelationship"
+                              },
+                              "computed": false
+                            },
+                            "arguments": [
+                              {
+                                "type": "Identifier",
+                                "name": "__stackForCallTree"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "TryStatement",
+                          "block": {
+                            "type": "BlockStatement",
+                            "body": [],
+                            "loc": {
+                              "start": {
+                                "line": 1,
+                              },
+                              "end": {
+                                "line": 1,
+                              }
+                            }
+                          },
+                          "handler": null,
+                          "finalizer": {
+                            "type": "BlockStatement",
+                            "body": [
+                              {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                  "type": "CallExpression",
+                                  "callee": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                      "type": "Identifier",
+                                      "name": "__stackForCallTree"
+                                    },
+                                    "property": {
+                                      "type": "Identifier",
+                                      "name": "pop"
+                                    },
+                                    "computed": false
+                                  },
+                                  "arguments": []
+                                }
+                              },
+                              {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                  "type": "Identifier",
+                                  "name": "__loopLabels.pop()"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+		    );
+	    });
+	    test('to insert a call to new object id setter',()=>{
+		expect(run_transformers("class C {constructor() {}}",
+					transformer_sets.Context)
+		       .body[0].body.body[0].value.body.body[9]).
+		    toMatchObject(
+			// __$__.Context.setObjectID(
+			// this,__newExpInfo,__newObjectIds,__objs)
+			{"type": "ExpressionStatement",
+			 "expression": {
+			     "type": "CallExpression",
+			     "callee": {
+				 "type": "MemberExpression",
+				 "computed": false,
+				 "object": {"type": "MemberExpression",
+					    "computed": false,
+					    "object": {"type": "Identifier",
+						       "name": "__$__"},
+					    "property": {"type": "Identifier",
+							 "name": "Context"}},
+				 "property": {"type": "Identifier",
+					      "name": "setObjectID"}},
+			     "arguments": [{"type": "Identifier",
+					    "name": "this"},
+					   {"type": "Identifier",
+					    "name": "__newExpInfo"},
+					   {"type": "Identifier",
+					    "name": "__newObjectIds"},
+					   {"type": "Identifier",
+					    "name": "__objs"}
+					  ]}}
+		    );
+	    });
+
+	});
+    })
 });
 
