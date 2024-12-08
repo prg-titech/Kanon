@@ -498,5 +498,56 @@ __$__.Context = {
                 __$__.Context.CallRelationship[sourceCSID] = {};
             __$__.Context.CallRelationship[sourceCSID][targetCSID] = callLabel;
         }
+    },
+    // to add information to newly created objects.  For "new C(e...)"
+    // in the source program, the code instrumetor generates
+    //      __$__.Context.NewExpressionWrapprer(()=> new C(e...), ...vars...)
+    // where the first argument is a thunk that performs the original new
+    // expression.
+    NewExpressionWrapprer(thunk, __newExpInfo, __loopLabels, __loopCount,
+			  __stackForCallTree, label, class_name,
+			  __newObjectIds, line, column, __objs) {
+	__newExpInfo.push( line && {
+            loopLabel: __loopLabels.last(),
+            loopCount: __loopCount,
+            pos: {
+                line: line,
+                column: column
+            },
+            contextSensitiveID: __stackForCallTree.last().getContextSensitiveID()
+        });
+        __stackForCallTree.push(new __$__.CallTree.Instance(label, __stackForCallTree, class_name));
+        var __newObjectId = __stackForCallTree.last().getContextSensitiveID();
+        __newObjectIds.push(__newObjectId);
+        var __temp = thunk();
+        __$__.Context.ChangedGraph = true;
+        __newExpInfo.pop();
+        __stackForCallTree.pop();
+	// the next if-statement cannot be replaced with a call
+	// to setObjectID as the conditions are different.
+	// Here, __newExpInfo.last() is false for array and
+	// object literals.  At the same time, setObjectID is
+	// called even when __newExpInfo.last() is false.  It
+	// is possible because call to this method is inserted
+	// not only to constructors, but also other methods
+	// and functions.  Since JavaScript supports various
+	// types of object constructions, we should be very
+	// careful.
+        if (!__temp.__id) {
+            Object.setProperty(__temp, '__id', __newObjectIds.pop());
+            __objs.push(__temp);
+        }
+        return __temp;
+
+    },
+    // set object ID if not set.  We set object ID either at
+    // the beginning of a constructor, or just after returning
+    // from a NEW expression.  Every constructor body is inserted
+    // a call to this method.
+    setObjectID(obj,__newExpInfo,__newObjectIds,__objs){
+	if (__newExpInfo.last() && !obj.__id) {
+	    Object.setProperty(obj, '__id', __newObjectIds.pop());
+            __objs.push(obj);
+        }
     }
 };
