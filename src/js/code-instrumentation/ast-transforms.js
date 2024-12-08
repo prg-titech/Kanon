@@ -2028,17 +2028,12 @@ __$__.ASTTransforms = {
 			    b.MemberExpression(
 				b.MemberExpression(
 				    b.Identifier("__$__"),
-				    b.Identifier("Context")
-				),
-				b.Identifier("setObjectID")
-			    ),
+				    b.Identifier("Context")),
+				b.Identifier("setObjectID")),
 			    [b.Identifier('this'),
 			     b.Identifier("__newExpInfo"),
 			     b.Identifier("__newObjectIds"),
-			     b.Identifier("__objs"),
-			    ]
-			)
-                );
+			     b.Identifier("__objs")])));
 
 
                 if (isFunction)
