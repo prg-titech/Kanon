@@ -295,6 +295,7 @@ function setGraphLocation(graph) {
     var classAndFieldList = new Array();
     var attentionNodes = attentionNodesInit(graph);
     var cluster_shortest_path = null;
+    var thisNodesInit = thisNodesInit(graph);
     //console.log("interest Nodes = ");
     //console.log(attentionNodes);
     /************
@@ -456,6 +457,7 @@ function setGraphLocation(graph) {
             }
             else
                 pink = "hotpink";
+                // pink = "green";
             nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
         }
         //極小ノードを生成する
@@ -1513,5 +1515,13 @@ function setGraphLocation(graph) {
             }
         }
         return attentionNodes;
+    }
+    //thisに指されているノードの特定
+    function thisNodesInit(graph){
+        let cursor_position = __$__.editor.getCursorPosition();
+        var thisNodes = new Array();
+        var greenEdges = graph.variableEdges; //緑の矢印の集合
+
+
     }
 }

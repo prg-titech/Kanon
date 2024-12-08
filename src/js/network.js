@@ -15,6 +15,7 @@ __$__.ObjectGraphNetwork = {
             //     background: 'rgba(' + __$__.colorRGB.skyblue + ',1)'
             // }
             //color: 'skyblue'
+            // size: 50
         },
         edges: {
             //arrows: 'to',
@@ -33,7 +34,8 @@ __$__.ObjectGraphNetwork = {
         },
         groups: {       //追加部分
             pink: {
-                color: 'rgba(255, 0, 255, 1.0)'
+                // color: 'rgba(255, 0, 255, 1.0)'
+                color: 'rgba(255, 255, 0, 1.0)'//黄色
             },
             skyblue: {
                 color: 'rgba(135, 206, 235, 1.0)'

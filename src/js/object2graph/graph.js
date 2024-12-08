@@ -54,7 +54,8 @@ __$__.StoredGraphFormat = {
                     }
                 };
             } else {
-                let nodeSize = (this.size == -1) ? 15 : this.size;
+                // let nodeSize = (this.size == -1) ? 15 : this.size;
+                let nodeSize = (this.size == -1) ? 35 : this.size;
                 node = {
                     color: this.color,
                     id: this.id,

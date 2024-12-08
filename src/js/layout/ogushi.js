@@ -86,7 +86,7 @@ __$__.Layout = {
                                 + ":"
                                 + tonode.value
                             
-                            // deleteedgeIDs.push(edgeID);
+                             deleteedgeIDs.push(edgeID);
 
 
                             // tonode = null
@@ -109,7 +109,9 @@ __$__.Layout = {
                 for(let edgeID of deleteedgeIDs){
                     delete graph.edges[edgeID]
                 }
-
+                graph.edges = graph.edges.filter(function(e) {
+                    return e != undefined;
+                  });
                 //どこからも参照されていないノードは表示しないようにする
                 let limeEdges = graph.variableEdges;
                 let layoutNodeIDs = new Array();
