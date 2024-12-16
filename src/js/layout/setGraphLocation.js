@@ -295,13 +295,14 @@ function setGraphLocation(graph) {
     var classAndFieldList = new Array();
     var attentionNodes = attentionNodesInit(graph);
     var cluster_shortest_path = null;
+    var variableEdgeToNode = highlightThisNodes(graph);
     //console.log("interest Nodes = ");
     //console.log(attentionNodes);
     /************
      * 実行部分
      * **********/
     //角度付きエッジリストを用意し、参照関係を元に初期化する
-    edgeListInit(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue, attentionNodes);
+    edgeListInit(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, classAndFieldList, DrawCircle, EdgeWithPrimitiveValue, attentionNodes, variableEdgeToNode);
     //console.log("nodelist = ");
     //console.log(FiFA_NodeList);
     //console.log("edgeList = ");
@@ -312,7 +313,7 @@ function setGraphLocation(graph) {
     //console.log(classAndFieldList);
     //角度付きエッジリストを元に、力学的手法を用いて各ノードの座標を計算
     //graphオブジェクト内のノード座標を破壊的に書き替える
-    calculateLocationWithForceDirectedMethod(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, attentionNodes);
+    calculateLocationWithForceDirectedMethod(graph, FiFA_NodeList, FiFA_EdgeList, FiFA_ClusterNodeList, FiFA_ClusterEdgeList, attentionNodes, variableEdgeToNode);
     //console.log("nodelist = ");
     //console.log(FiFA_NodeList);
     //console.log("clusternodelist = ");
@@ -357,13 +358,14 @@ function setGraphLocation(graph) {
     /**********************
      * グラフエッジの生成
      * ********************/
-    function edgeListInit(graph, nodelist, edgelist, clusternodelist, clusteredgelist, caflist, drawcircle, edgewithprimitivevalue, attentionNodes) {
+    function edgeListInit(graph, nodelist, edgelist, clusternodelist, clusteredgelist, caflist, drawcircle, edgewithprimitivevalue, attentionNodes, variableEdgeToNode) {
         var edgeListInitStartTime = performance.now();
         //ノード群の生成
         for (var i_7 = 0; i_7 < ObjectIDs.length; i_7++) {
             var fnode = new FiFA_Node(ObjectIDs[i_7]);
             fnode.interested = graph.notInterestedClass.indexOf(fnode.cls) == -1;
             fnode.attention = attentionNodes.indexOf(ObjectIDs[i_7]) != -1;
+            fnode.variable = variableEdgeToNode.indexOf(ObjectIDs[i_7] != -1);
             nodelist.push(fnode);
         }
         //グラフ内で使われているオブジェクトのクラス名の配列
@@ -458,6 +460,28 @@ function setGraphLocation(graph) {
                 pink = "hotpink";
             nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
         }
+        //this変数に指されているノードの色を変更する
+        for (var i_14 = 0; i_14 < variableEdgeToNode.length; i_14++) {
+            var yellow = void 0;
+            if (graph.getClass(variableEdgeToNode[i_14]) == "Kanon-ArrayNode") {
+                yellow = {
+                    border: 'yellow',
+                    background: 'yellow',
+                    highlight: {
+                        border: 'yellow',
+                        background: 'yellow'
+                    },
+                    hover: {
+                        border: 'yellow',
+                        background: 'yellow'
+                    }
+                };
+            }
+            else
+                yellow = "yellow";
+            nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_14])].color = yellow;
+        }
+
         //極小ノードを生成する
         var notInterestedNodeClusterSort = makeMinimalNode(nodelist, edgelist);
         //極小ノードリストからクラスターを生成する
@@ -484,6 +508,61 @@ function setGraphLocation(graph) {
                 var attendNode = nodelist[ObjectIDs.indexOf(attentionNodes[i_16])];
                 var attendCluster = attendNode.cluster;
                 indexes.push(clusternodelist.indexOf(attendCluster));
+            }
+            //各点クラスターにに注目クラスターとの最短経路長を追加
+            var maxDistance = 0;
+            for (var i_17 = 0; i_17 < clusternodelist.length; i_17++) {
+                var minLength = clusternodelist.length;
+                for (var j_4 = 0; j_4 < indexes.length; j_4++) {
+                    if (minLength > cluster_shortest_path[indexes[j_4] * clusternodelist.length + i_17]) {
+                        minLength = cluster_shortest_path[indexes[j_4] * clusternodelist.length + i_17];
+                    }
+                }
+                if (minLength != clusternodelist.length) {
+                    clusternodelist[i_17].route_length = minLength;
+                    if (maxDistance < clusternodelist[i_17].route_length) {
+                        maxDistance = clusternodelist[i_17].route_length;
+                    }
+                }
+            }
+            //注目点との経路長を元に注目点との理想距離を計算
+            for (var i_18 = 0; i_18 < clusternodelist.length; i_18++) {
+                if (clusternodelist[i_18].route_length == 0) {
+                    clusternodelist[i_18].feye_distance = 0;
+                }
+                else {
+                    clusternodelist[i_18].feye_distance = (DISTORTION + 1) * maxDistance /
+                        (DISTORTION + maxDistance / clusternodelist[i_18].route_length);
+                }
+            }
+            for (var i_19 = 0; i_19 < clusteredgelist.length; i_19++) {
+                clusteredgelist[i_19].feye_length(maxDistance, DISTORTION);
+                clusteredgelist[i_19].edge.id_length = clusteredgelist[i_19].id_length;
+            }
+            //console.log("edges =");
+            //console.log(edges);
+            //注目点との距離を元に各点のサイズを追加
+            for (var i_20 = 0; i_20 < clusternodelist.length; i_20++) {
+                if (clusternodelist[i_20].route_length != -1 && maxDistance != 0) {
+                    clusternodelist[i_20].size = NODEMAXSIZE - (NODEMAXSIZE - NODEMINSIZE) * clusternodelist[i_20].feye_distance / maxDistance;
+                }
+                if (clusternodelist[i_20].main != null)
+                    clusternodelist[i_20].main.size *= clusternodelist[i_20].size / NODESIZE;
+                for (var j_5 = 0; j_5 < clusternodelist[i_20].sub.length; j_5++) {
+                    clusternodelist[i_20].sub[j_5].size *= clusternodelist[i_20].size / NODESIZE;
+                }
+                for (var j_6 = 0; j_6 < clusternodelist[i_20].f_include_edges.length; j_6++) {
+                    clusternodelist[i_20].f_include_edges[j_6].id_length *= clusternodelist[i_20].size / NODESIZE;
+                }
+            }
+        }
+        if (variableEdgeToNode.length > 0) { //もしthis変数に刺されているノードがあるのならば
+            //注目ノードの含まれるクラスターの番号
+            var indexes = new Array();
+            for (var i_77 = 0; i_16 < variableEdgeToNode.length; i_77++) {
+                var variableNode = nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_77])];
+                var variableCluster = variableNode.cluster;
+                indexes.push(clusternodelist.indexOf(variableCluster));
             }
             //各点クラスターにに注目クラスターとの最短経路長を追加
             var maxDistance = 0;
@@ -967,7 +1046,7 @@ function setGraphLocation(graph) {
     /**********************
      * ノードの座標の計算
      * ********************/
-    function calculateLocationWithForceDirectedMethod(graph, nodelist, edgelist, clusternodelist, clusteredgelist, attentionNodes) {
+    function calculateLocationWithForceDirectedMethod(graph, nodelist, edgelist, clusternodelist, clusteredgelist, attentionNodes, variableEdgeToNode) {
         var forceDirectedMethodStartTime = performance.now();
         var CLUSTERNUM = clusternodelist.length;
         var CEDGENUM = clusteredgelist.length;
@@ -1301,6 +1380,13 @@ function setGraphLocation(graph) {
                     graph.setVariableEdgeLabelSize(attentionNodes[i_57], edgefontSize); //緑エッジのラベルのサイズ
                 }
             }
+            if (variableEdgeToNode.length > 0) {
+                for (var i_76 = 0; i_76 < variableEdgeToNode.length; i_76++) {
+                    var node = nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_76])];
+                    var edgefontSize = (node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE) + STANDARD_EDGEFONTSIZE;
+                    graph.setVariableEdgeLabelSize(variableEdgeToNode[i_76], edgefontSize); //緑エッジのラベルのサイズ
+                }
+            }
         }
         //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
         function move_near_center(nodelist, clusternodelist) {
@@ -1514,4 +1600,26 @@ function setGraphLocation(graph) {
         }
         return attentionNodes;
     }
+    //カーソル位置に一番近いCPがとった全てのスナップショットのthis変数に指されているノードをハイライトする
+    function highlightThisNodes(graph){
+        let cursor_position = __$__.editor.getCursorPosition();//カーソルの場所を取ってくる
+        let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
+        let beforeId = checkPointIds.beforeIds[0]
+        let afterId = checkPointIds.afterIds.last()
+        let checkPointId = __$__.Context.CheckPointAroundCursor = {
+            beforeId: beforeId,
+            afterId: afterId
+}
+        var variableEdgeToNode = [];
+        for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
+            let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
+            for(let edge of snapshot.variableEdges){
+                if(edge.label == "this" ){
+                // if(edge.label == "current" ){
+                variableEdgeToNode.push(edge.to)
+            }}
+            
+    }
+        return variableEdgeToNode;
+}
 }
