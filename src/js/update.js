@@ -164,7 +164,9 @@ __$__.Update = {
             } catch (e) {
                 if (e === 'Infinite Loop') {
                     document.getElementById('console').textContent = 'infinite loop?';
-                }
+                }else{
+                    throw e; // re-throw the exception so that errors 
+                }            // our implementation can be observed
             }
             __$__.ObjectGraphNetwork.network.redraw();
         }
