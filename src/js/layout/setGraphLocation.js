@@ -118,6 +118,7 @@ function setGraphLocation(graph) {
             this.feye_distance = -1;
             this.interested = true;
             this.attention = false;
+            this.variable = false;
             this.color = graph.getColor(ID);
         }
         //座標を初期化する
@@ -175,6 +176,7 @@ function setGraphLocation(graph) {
             this.size = NODESIZE;
             this.feye_distance = -1;
             this.attention = false;
+            this.variable = false;
             //所属しているノードにクラスターを登録させる
             if (this.main != null)
                 this.main.register_cluster(this);
@@ -365,7 +367,7 @@ function setGraphLocation(graph) {
             var fnode = new FiFA_Node(ObjectIDs[i_7]);
             fnode.interested = graph.notInterestedClass.indexOf(fnode.cls) == -1;
             fnode.attention = attentionNodes.indexOf(ObjectIDs[i_7]) != -1;
-            fnode.variable = variableEdgeToNode.indexOf(ObjectIDs[i_7] != -1);
+            fnode.variable = variableEdgeToNode.indexOf(ObjectIDs[i_7]) != -1;
             nodelist.push(fnode);
         }
         //グラフ内で使われているオブジェクトのクラス名の配列
@@ -559,7 +561,7 @@ function setGraphLocation(graph) {
         if (variableEdgeToNode.length > 0) { //もしthis変数に刺されているノードがあるのならば
             //注目ノードの含まれるクラスターの番号
             var indexes = new Array();
-            for (var i_77 = 0; i_16 < variableEdgeToNode.length; i_77++) {
+            for (var i_77 = 0; i_77 < variableEdgeToNode.length; i_77++) {
                 var variableNode = nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_77])];
                 var variableCluster = variableNode.cluster;
                 indexes.push(clusternodelist.indexOf(variableCluster));
@@ -1606,6 +1608,7 @@ function setGraphLocation(graph) {
         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
         let beforeId = checkPointIds.beforeIds[0]
         let afterId = checkPointIds.afterIds.last()
+        var bool = false;
         let checkPointId = __$__.Context.CheckPointAroundCursor = {
             beforeId: beforeId,
             afterId: afterId
@@ -1614,9 +1617,10 @@ function setGraphLocation(graph) {
         for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
             let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
             for(let edge of snapshot.variableEdges){
-                if(edge.label == "this" ){
-                // if(edge.label == "current" ){
-                variableEdgeToNode.push(edge.to)
+                // if(edge.label == "this" ){
+                if(edge.label == "current" ){
+                variableEdgeToNode.push(edge.to);
+                bool = true;
             }}
             
     }
