@@ -482,6 +482,7 @@ function setGraphLocation(graph) {
             else
                 yellow = "yellow";
             nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_14])].color = yellow;
+            // nodelist[ObjectIDs.indexOf(variableEdgeToNode[i_14])].size = 50;
         }
 
         //極小ノードを生成する
