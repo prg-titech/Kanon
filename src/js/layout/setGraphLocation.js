@@ -462,7 +462,7 @@ function setGraphLocation(graph) {
                 pink = "hotpink";
             nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
         }
-        //this変数に指されているノードの色を変更する
+        //変数に指されているノードの色を変更する
         for (var i_14 = 0; i_14 < variableEdgeToNode.length; i_14++) {
             var yellow = void 0;
             if (graph.getClass(variableEdgeToNode[i_14]) == "Kanon-ArrayNode") {
@@ -1603,7 +1603,7 @@ function setGraphLocation(graph) {
         }
         return attentionNodes;
     }
-    //カーソル位置に一番近いCPがとった全てのスナップショットのthis変数に指されているノードをハイライトする
+    //カーソル位置に一番近いCPがとった全てのスナップショットの特定の変数に指されているノードをハイライトする
     function highlightThisNodes(graph){
         let cursor_position = __$__.editor.getCursorPosition();//カーソルの場所を取ってくる
         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
@@ -1615,16 +1615,39 @@ function setGraphLocation(graph) {
             afterId: afterId
 }
         var variableEdgeToNode = [];
-        for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
-            let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
-            for(let edge of snapshot.variableEdges){
+        let graphCP = __$__.Context.SnapshotContext; //可視化されたグラフのCP情報が入っている
+        let currentContextID = graphCP.contextSensitiveID;
+        // "main-callx" の部分を抽出
+        let mainCallPrefix = currentContextID.match(/^main-call\d+/)[0]; // "main-callx"を抽出
+    
+        // すべての CP を調べる
+    for (let cpID of Object.keys(__$__.Context.StoredGraph)) {
+        let snapshots = __$__.Context.StoredGraph[cpID];
+
+        for (let contextID in snapshots) {
+            if (contextID.startsWith(mainCallPrefix)) { // main-callxで始まるか確認
+                let snapshot = snapshots[contextID];
+                
+        // 各スナップショットの contextSensitiveID を確認
+        // for (let snapshotKey of Object.keys(snapshots)) {
+        //     if (snapshotKey === currentContextID) { //すべてのCPのうち可視化されたCPの呼び出し文脈とおなじもの
+        //         let snapshot = snapshots[snapshotKey];
+
+    // 　　カーソル位置のCPのすべてのスナップショット
+    //     for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
+    //         let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
+            
+    // variableedgeのlabel==currentを集める
+    for(let edge of snapshot.variableEdges){
                 // if(edge.label == "this" ){
                 if(edge.label == "current" ){
                 variableEdgeToNode.push(edge.to);
                 bool = true;
             }}
-            
+    }
+}
     }
         return variableEdgeToNode;
-}
+    
+    }
 }
