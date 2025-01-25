@@ -1605,37 +1605,73 @@ function setGraphLocation(graph) {
     }
     //カーソル位置に一番近いCPがとった全てのスナップショットの特定の変数に指されているノードをハイライトする
     function highlightThisNodes(graph){
-        let cursor_position = __$__.editor.getCursorPosition();//カーソルの場所を取ってくる
-        let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
-        let beforeId = checkPointIds.beforeIds[0]
-        let afterId = checkPointIds.afterIds.last()
-        var bool = false;
-        let checkPointId = __$__.Context.CheckPointAroundCursor = {
-            beforeId: beforeId,
-            afterId: afterId
-}
+//         let cursor_position = __$__.editor.getCursorPosition();//カーソルの場所を取ってくる
+//         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
+//         let beforeId = checkPointIds.beforeIds[0]
+//         let afterId = checkPointIds.afterIds.last()
+//         var bool = false;
+//         let checkPointId = __$__.Context.CheckPointAroundCursor = {
+//             beforeId: beforeId,
+//             afterId: afterId
+// }
+        // closestCallingContext : string -> string
+// a context ID that represents closet function call to the current context
+        function closestCallingContext(contextID) { 
+            let segments = contextID.split('-').reverse(); // contextIDを-で分割して逆順にする
+            let closestContext = []; // call以降の部分を集める
+            let foundCall = false; // callが見つかったかどうかのフラグ
+        
+            for (let segment of segments) {
+                if (foundCall) {
+                    // callが見つかった後のすべてをclosestContextに追加
+                    closestContext.push(segment);
+                } else if (segment.startsWith('call')) {
+                    // callが初めて見つかった場合
+                    closestContext.push(segment);
+                    foundCall = true; // フラグを立てる
+                }
+            }
+        
+            // closestContextを逆順に戻して結合する
+            return closestContext.reverse().join('-');
+         }
+
+        // assertEq("main-call1", closestCallingContext("main-call1"));
+        // assertEq("main-call1", closestCallingContext("main-call1-while1-2"));
+        // assertEq("main-call1-while1-2-call2", closestCallingContext("main-call1-while1-2-call2"));
+        // assertEq("main-call1-while1-2-call2", closestCallingContext("main-call1-while1-2-call2-while2-3"));
+        // assertEq("main", closestCallingContext("main"));
+
+// matchCallingContext : string * string -> boolean
+// determine if the contextToTest is in the same function of displayedContext
+        function matchCallingContext(displayedContext, contextToTest) { 
+
+            if(closestCallingContext(displayedContext) == closestCallingContext(contextToTest)){
+                return true;//displayedContextとcontextToTestのclosestCallingContextが同じだったらtrue
+            }else{
+                    return false;
+                }
+         }
+        // assertEq(true,  matchCallingContext("main-call1", "main-call1"));
+        // assertEq(true,  matchCallingContext("main-call1", "main-call1-while1-2"));
+        // assertEq(false, matchCallingContext("main-call1", "main-call1-while1-2-call2"));
+        // assertEq(true,  matchCallingContext("main-call1-call2", "main-call1-call2-while3-2"));
+        // assertEq(false, matchCallingContext("main", "main-call1-call2-while3-2"));
+
         var variableEdgeToNode = [];
         let graphCP = __$__.Context.SnapshotContext; //可視化されたグラフのCP情報が入っている
         let currentContextID = graphCP.contextSensitiveID;
-        // "main-callx" の部分を抽出
-        let mainCallPrefix = currentContextID.match(/^main-call\d+/)[0]; // "main-callx"を抽出
-    
         // すべての CP を調べる
     for (let cpID of Object.keys(__$__.Context.StoredGraph)) {
         let snapshots = __$__.Context.StoredGraph[cpID];
 
         for (let contextID in snapshots) {
-            if (contextID.startsWith(mainCallPrefix)) { // main-callxで始まるか確認
+            if(matchCallingContext(currentContextID, contextID) === true){
                 let snapshot = snapshots[contextID];
-                
-        // 各スナップショットの contextSensitiveID を確認
-        // for (let snapshotKey of Object.keys(snapshots)) {
-        //     if (snapshotKey === currentContextID) { //すべてのCPのうち可視化されたCPの呼び出し文脈とおなじもの
-        //         let snapshot = snapshots[snapshotKey];
 
-    // 　　カーソル位置のCPのすべてのスナップショット
-    //     for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
-    //         let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
+    //カーソル位置のCPのすべてのスナップショット
+        // for(let snapshotKey of Object.keys(__$__.Context.StoredGraph[beforeId])){//beforeIdのCPの呼び出し文脈をsnapshotKeyとする
+        //     let snapshot = __$__.Context.StoredGraph[beforeId][snapshotKey];//snapshotKeyのグラフをとってきて、variableEdgeの”this"を集める
             
     // variableedgeのlabel==currentを集める
     for(let edge of snapshot.variableEdges){
