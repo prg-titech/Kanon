@@ -52,10 +52,10 @@ new WeightedEdge(marunouchi, asamaTown, 2);
 new WeightedEdge(asamaTown, meijoPark, 6);
 new WeightedEdge(cityHall, meijoPark, 2);
 
-// Helper function to find the unvisited node with the smallest distance
-function getMinDistanceNode(unvisited, distances) {
+// Helper function to find the toBeVisited node with the smallest distance
+function getMinDistanceNode(toBeVisited, distances) {
   let minNode = null;
-  unvisited.forEach(node => {
+  toBeVisited.forEach(node => {
     if (minNode === null || distances[node.name] < (distances[minNode.name] || Infinity)) {
       minNode = node;
     }
@@ -64,7 +64,7 @@ function getMinDistanceNode(unvisited, distances) {
 }
 
 // Helper function to update distances to the neighboring nodes
-function updateNeighborDistances(currentNode, distances, previousNodes, unvisited) {
+function updateNeighborDistances(currentNode, distances, previousNodes, toBeVisited) {
   currentNode.edges.forEach(edge => {
     const neighbor = edge.from === currentNode ? edge.to : edge.from;
     const newDistance = distances[currentNode.name] + edge.cost;
@@ -72,7 +72,7 @@ function updateNeighborDistances(currentNode, distances, previousNodes, unvisite
     if (distances[neighbor.name] === undefined || newDistance < distances[neighbor.name]) {
       distances[neighbor.name] = newDistance;
       previousNodes[neighbor.name] = currentNode;
-      unvisited.add(neighbor);
+      toBeVisited.add(neighbor);
     }
   });
 }
@@ -81,26 +81,26 @@ function updateNeighborDistances(currentNode, distances, previousNodes, unvisite
 function dijkstra(start, goal) {
   const distances = {}; // Object to store the shortest distance from start to each node
   const previousNodes = {}; // Object to store the previous node in the shortest path
-  const unvisited = new Set(); // Set to store unvisited nodes
+  const toBeVisited = new Set(); // Set to store toBeVisited nodes
 
-  // Initialize distances and unvisited set
+  // Initialize distances and toBeVisited set
   distances[start.name] = 0;
-  unvisited.add(start);
+  toBeVisited.add(start);
 
   let currentNode;
 
-  while (unvisited.size > 0) {
-    // Find the unvisited node with the smallest distance
-    currentNode = getMinDistanceNode(unvisited, distances);
+  while (toBeVisited.size > 0) {
+    // Find the toBeVisited node with the smallest distance
+    currentNode = getMinDistanceNode(toBeVisited, distances);
 
     // If the smallest distance node is the goal, we can stop
     if (currentNode === goal) break;
 
-    // Remove the current node from the unvisited set
-    unvisited.delete(currentNode);
+    // Remove the current node from the toBeVisited set
+    toBeVisited.delete(currentNode);
 
     // Update distances to the neighboring nodes
-    updateNeighborDistances(currentNode, distances, previousNodes, unvisited);
+    updateNeighborDistances(currentNode, distances, previousNodes, toBeVisited);
   }
 
   // Retrieve the shortest path
