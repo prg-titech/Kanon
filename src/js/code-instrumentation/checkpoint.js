@@ -106,7 +106,7 @@ __$__.Checkpoint = {
         let graph = (__$__.Context.ChangedGraph)
             ? __$__.Traverse.traverse(objects, probe)
             : __$__.Context.LastGraph;
-
+        graph.timeCounter = timeCounter;
 
         if (!__$__.Context.StoredGraph[checkPointId])
             __$__.Context.StoredGraph[checkPointId] = {};

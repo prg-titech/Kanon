@@ -458,6 +458,57 @@ function setGraphLocation(graph) {
                 pink = "hotpink";
             nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
         }
+
+        //軌跡ノードをグレー→赤にする
+        let orderNode = __$__.Context.getVarTarget("current");
+        let max = orderNode.length;
+        for(var i = 0; i < max; i++){
+            var saturation = i * (100 /max - 1);
+            var colors = "hsl(0," + saturation + "%,50%)";
+            var idx = ObjectIDs.indexOf(orderNode[i]); 
+            if(idx >= 0){
+            nodelist[idx].color = colors;
+            }
+        }    
+
+        //軌跡ノードを線で繋ぐ
+        // let orderNode = __$__.Context.getVarTarget("current");
+        // let max = orderNode.length;
+        // let coords = []; //座標を集める
+        // for(var i = 0; i < max; i++){
+        //     var idx = ObjectIDs.indexOf(orderNode[i]); 
+        //     if(idx >= 0){
+        //         var node = nodelist[idx];
+        //         let x = node.x;
+        //         let y = node.y;
+        //         coords.push({ x: x, y: y }); 
+        //     }
+        // }
+        // console.log(coords);
+        // __$__.Context.Debug = __$__.Context.Debug || {};
+        // __$__.Context.Debug.coords = coords;
+
+        
+        // function drawTrace(network, coords) {
+        //     function handler(ctx) {
+        //         if (!coords || coords.length < 2) return;
+
+        //         ctx.save();
+        //         ctx.lineWidth = 2;           // 太さ
+        //         ctx.strokeStyle = '#d33';    // 色（赤系）
+        //         ctx.beginPath();
+        //         ctx.moveTo(coords[0].x, coords[0].y);
+        //         for (var i = 1; i < coords.length; i++) {
+        //             ctx.lineTo(coords[i].x, coords[i].y);
+        //         }
+        //     ctx.stroke();
+        //     ctx.restore();
+        //     }
+        // network.on('afterDrawing', handler); // 毎回の再描画後に上書き描画
+        // }
+        // var network = __$__.ObjectGraphNetwork.network;
+        // drawTrace(network, coords);
+
         //極小ノードを生成する
         var notInterestedNodeClusterSort = makeMinimalNode(nodelist, edgelist);
         //極小ノードリストからクラスターを生成する

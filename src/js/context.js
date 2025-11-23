@@ -38,7 +38,73 @@ __$__.Context = {
         __$__.Context.StoredGraph = {};
         __$__.Context.TableTimeCounter = [];
     },
+    getVarTarget: function (variable){ //全てのcp,snapshotについて(変数の参照オブジェクト,cpID,contextID)を返す
+        let graph = __$__.Context.StoredGraph; //全てのcp,snapshot情報
+        const result = [];
+        const orderNode = [];
+        let currentGraph = __$__.Context.SnapshotContext; //可視化されたグラフのCP情報
+        let currentContextID = currentGraph.contextSensitiveID;
+        function closestCallingContext(contextID) { 
+            let segments = contextID.split('-').reverse(); // contextIDを-で分割して逆順にする
+            let closestContext = []; // call以降の部分を集める
+            let foundCall = false; // callが見つかったかどうかのフラグ
+        
+            for (let segment of segments) {
+                if (foundCall) {
+                    // callが見つかった後のすべてをclosestContextに追加
+                    closestContext.push(segment);
+                } else if (segment.startsWith('call')) {
+                    // callが初めて見つかった場合
+                    closestContext.push(segment);
+                    foundCall = true; // フラグを立てる
+                }
+            }
+        
+            // closestContextを逆順に戻して結合する
+            return closestContext.reverse().join('-');
+         }
+         function matchCallingContext(displayedContext, contextToTest) { 
+            let targetStr = closestCallingContext(contextToTest);
+            let displayedStr = closestCallingContext(displayedContext);
+            if(targetStr === displayedStr || targetStr.startsWith(displayedStr + '-')){//displayedContextとcontextToTestのclosestCallingContextの最初のcallが同じだったらtrue
+            // if(targetStr === displayedStr){  //closestCallingContextが最後に出てくるcallまで一致していたらtrue
+                return true;
+            }else{
+                    return false;
+                }
+         }
 
+        for (let cpID of Object.keys(__$__.Context.StoredGraph)) {
+            let snapshots = graph[cpID]
+            for (let contextID in snapshots) {
+                if(matchCallingContext(currentContextID, contextID)){
+                let snapshot = snapshots[contextID];
+                let time = snapshot.timeCounter;
+                //if(contextID == currentContextID){　範囲限定
+                    for(let edge of snapshot.variableEdges){
+                        if(edge.label == variable ){
+                            result.push([edge.to,cpID,contextID,time]); 
+                        }
+                    }
+                }
+            }
+        }
+                //}
+        result.sort((a, b) => a[3] - b[3]);//timeでソート
+        //return result; //4つ組を返す
+        let prev = null;
+
+        for (const [node] of result) {   
+            if (node !== prev) {
+                orderNode.push(node);        // 連続重複だけ除去
+                prev = node;
+                }
+        }
+
+        return orderNode;
+        
+    }
+    ,
 
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
