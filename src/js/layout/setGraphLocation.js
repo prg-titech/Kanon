@@ -1281,26 +1281,26 @@ function setGraphLocation(graph) {
                     graph.setEdgeSmooth(dot1ID, dot2ID, false);
                 }
             }
-            var greenEdges = graph.variableEdges; //緑の矢印の集合
-            for (var i_56 = 0; i_56 < greenEdges.length; i_56++) {
-                if (!nodelist[ObjectIDs.indexOf(greenEdges[i_56].to)].interested) {
-                    var toNode = nodelist[ObjectIDs.indexOf(greenEdges[i_56].to)];
-                    var edgefontSize = toNode.size * STANDARD_EDGEFONTSIZE / NODESIZE;
-                    //エッジのラベルのサイズ
-                    //graph.setletiableEdgeLabelSize(greenEdges[i].to, edgefontSize);
-                    //エッジの太さ
-                    //graph.setletiableEdgeWidth(greenEdges[i].to, 3);
-                    //エッジの長さ
-                    graph.setVariableEdgeLength(greenEdges[i_56].to, STANDARD_EDGELENGTH / 100);
-                }
-            }
-            if (attentionNodes.length > 0) {
-                for (var i_57 = 0; i_57 < attentionNodes.length; i_57++) {
-                    var node = nodelist[ObjectIDs.indexOf(attentionNodes[i_57])];
-                    var edgefontSize = (node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE) + STANDARD_EDGEFONTSIZE;
-                    graph.setVariableEdgeLabelSize(attentionNodes[i_57], edgefontSize); //緑エッジのラベルのサイズ
-                }
-            }
+            // var greenEdges = graph.variableEdges; //緑の矢印の集合
+            // for (var i_56 = 0; i_56 < greenEdges.length; i_56++) {
+            //     if (!nodelist[ObjectIDs.indexOf(greenEdges[i_56].to)].interested) {
+            //         var toNode = nodelist[ObjectIDs.indexOf(greenEdges[i_56].to)];
+            //         var edgefontSize = toNode.size * STANDARD_EDGEFONTSIZE / NODESIZE;
+            //         //エッジのラベルのサイズ
+            //         //graph.setletiableEdgeLabelSize(greenEdges[i].to, edgefontSize);
+            //         //エッジの太さ
+            //         //graph.setletiableEdgeWidth(greenEdges[i].to, 3);
+            //         //エッジの長さ
+            //         graph.setVariableEdgeLength(greenEdges[i_56].to, STANDARD_EDGELENGTH / 100);
+            //     }
+            // }
+            // if (attentionNodes.length > 0) {
+            //     for (var i_57 = 0; i_57 < attentionNodes.length; i_57++) {
+            //         var node = nodelist[ObjectIDs.indexOf(attentionNodes[i_57])];
+            //         var edgefontSize = (node.size - NODEMINSIZE) * 10 / (NODEMAXSIZE - NODEMINSIZE) + STANDARD_EDGEFONTSIZE;
+            //         graph.setVariableEdgeLabelSize(attentionNodes[i_57], edgefontSize); //緑エッジのラベルのサイズ
+            //     }
+            // }
         }
         //計算後に連結していないノード同士が離れすぎていないように、グループ毎に全体の重心に近づけていく
         function move_near_center(nodelist, clusternodelist) {
@@ -1493,25 +1493,26 @@ function setGraphLocation(graph) {
     }
     //注目ノードの特定
     function attentionNodesInit(graph) {
-        var attentionNodes = new Array();
-        var greenEdges = graph.variableEdges; //緑の矢印の集合
-        var bool = false;
-        for (var i_72 = 0; i_72 < greenEdges.length; i_72++) {
-            if (greenEdges[i_72].label == "this") {
-                attentionNodes.push(greenEdges[i_72].to);
-                bool = true;
-                break;
-            }
-        }
-        var global_letiables = graph.getGlobalVariables(); //グローバル変数の集合
-        if ( /*bool*/true) {
-            for (var i_73 = 0; i_73 < greenEdges.length; i_73++) {
-                //ローカル変数の指すノードを拡大表示する
-                if (greenEdges[i_73].label != "this" && global_letiables.indexOf(greenEdges[i_73].label) == -1) {
-                    attentionNodes.push(greenEdges[i_73].to);
-                }
-            }
-        }
-        return attentionNodes;
+        // var attentionNodes = new Array();
+        // var greenEdges = graph.variableEdges; //緑の矢印の集合
+        // var bool = false;
+        // for (var i_72 = 0; i_72 < greenEdges.length; i_72++) {
+        //     if (greenEdges[i_72].label == "this") {
+        //         attentionNodes.push(greenEdges[i_72].to);
+        //         bool = true;
+        //         break;
+        //     }
+        // }
+        // var global_letiables = graph.getGlobalVariables(); //グローバル変数の集合
+        // if ( /*bool*/true) {
+        //     for (var i_73 = 0; i_73 < greenEdges.length; i_73++) {
+        //         //ローカル変数の指すノードを拡大表示する
+        //         if (greenEdges[i_73].label != "this" && global_letiables.indexOf(greenEdges[i_73].label) == -1) {
+        //             attentionNodes.push(greenEdges[i_73].to);
+        //         }
+        //     }
+        // }
+        // return attentionNodes;
+        return [];
     }
 }

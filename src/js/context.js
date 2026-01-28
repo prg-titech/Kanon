@@ -38,7 +38,84 @@ __$__.Context = {
         __$__.Context.StoredGraph = {};
         __$__.Context.TableTimeCounter = [];
     },
+    getVarTarget: function (variable){ 
+        // 全てのcp,snapshotについて(変数の参照オブジェクト,cpID,contextID)を返す
+        let graph = __$__.Context.StoredGraph; 
+        const result = [];
+        let currentGraph = __$__.Context.SnapshotContext; 
+        let currentContextID = currentGraph.contextSensitiveID;
 
+        // 内部関数定義
+        function closestCallingContext(contextID) { 
+            let segments = contextID.split('-').reverse(); 
+            let closestContext = []; 
+            let foundCall = false; 
+        
+            for (let segment of segments) {
+                if (foundCall) {
+                    closestContext.push(segment);
+                } else if (segment.startsWith('call')) {
+                    closestContext.push(segment);
+                    foundCall = true; 
+                }
+            }
+            return closestContext.reverse().join('-');
+        }
+
+        function matchCallingContext(displayedContext, contextToTest) { 
+            let targetStr = closestCallingContext(contextToTest);
+            let displayedStr = closestCallingContext(displayedContext);
+            if(targetStr === displayedStr || targetStr.startsWith(displayedStr + '-')){
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // 全データを収集
+        for (let cpID of Object.keys(__$__.Context.StoredGraph)) {
+            let snapshots = graph[cpID];
+            for (let contextID in snapshots) {
+                if(matchCallingContext(currentContextID, contextID)){
+                    let snapshot = snapshots[contextID];
+                    let time = snapshot.timeCounter;
+                    
+                    for(let edge of snapshot.variableEdges){
+                        if(edge.label == variable ){
+                            result.push([edge.to, cpID, contextID, time]); 
+                        }
+                    }
+                }
+            }
+        }
+
+        // 時間順にソート
+        result.sort((a, b) => a[3] - b[3]);
+
+        // 連続重複を除去してリスト化
+        const filteredHistory = []; 
+        let prevNodeID = null;
+
+        for (const item of result) {
+            const nodeID = item[0]; 
+            const cpID = item[1];
+            const contextID = item[2];
+            // const time = item[3];
+
+            // 直前のIDと比較
+            if (nodeID !== prevNodeID) {
+                filteredHistory.push({
+                    nodeID: nodeID,
+                    cpID: cpID,
+                    contextID: contextID,
+                    // time: time
+                });
+                prevNodeID = nodeID;
+            }
+        }
+
+        return filteredHistory; 
+    }, 
 
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
