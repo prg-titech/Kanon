@@ -7,8 +7,8 @@ __$__.Traverse = {
     },
     
     
-    traverse: function(objs, variables = {}) {
-        let retGraph = new __$__.StoredGraphFormat.Graph();
+    traverse: function(objs, variables = {}, timeCounter) {
+        let retGraph = new __$__.StoredGraphFormat.Graph(timeCounter);
         let graphNodes = {};
 
         // 【追加 1】 オブジェクトIDから変数名を引くためのマップを作成
