@@ -193,7 +193,7 @@ __$__.StoredGraphFormat = {
 
 
     Graph: class __Graph__ {
-        constructor() {
+        constructor(timeCounter) {
             this.nodes = {};
             this.edges = [];
             this.variableNodes = {};
@@ -202,6 +202,7 @@ __$__.StoredGraphFormat = {
             this.CustomMode = false;
             this.FisheyeView = true;
             this.notInterestedClass = [];
+	    this.timeCounter = timeCounter;
         }
 
         pushNode(node) {
