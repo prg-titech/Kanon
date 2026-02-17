@@ -10,6 +10,10 @@ __$__.StoredGraphFormat = {
             this.size = -1;         //追加部分
             this.index = -1;        //追加部分
             this.shape = 'ellipse';
+
+            // ★ 配列のスロットノードかどうかを判定
+            this.isArraySlot = (type === 'variable' && id.endsWith('-array'));
+
             if (color) {
                 this.color = color;
             } else if (isLiteral) {
@@ -25,13 +29,32 @@ __$__.StoredGraphFormat = {
                         background: 'white'
                     }
                 };
-            } else {
+            } else if (this.isArraySlot) {
+                // ★ スロットノードの場合、透明にする（または目立たなくする）
+                this.color = {
+                    border: 'rgba(0,0,0,0)',
+                    background: 'rgba(0,0,0,0)',
+                    highlight: { border: 'rgba(0,0,0,0)', background: 'rgba(0,0,0,0)' }
+                };
+            }else {
                 this.color = 'skyblue';
             }
         }
 
         generateVisjsNode(fixed = false) {
             let node;
+            // ★ 配列スロットノード用の設定
+            if (this.isArraySlot) {
+                return {
+                    id: this.id,
+                    label: this.label, // インデックス番号([0]など)を表示したい場合はそのまま
+                    // label: '',      // 文字も消したい場合はこちら
+                    shape: 'text',     // 形を持たないテキストのみ
+                    font: { size: 14, color: '#666' }, // 文字色を少し薄く
+                    physics: false,    // ★ 物理演算無効化（これで引力が働かなくなる）
+                    fixed: fixed
+                };
+            }
             if (this.isLiteral) {
                 let nodeSize = (this.size == -1) ? 10 : this.size;
                 node = {
@@ -125,10 +148,11 @@ __$__.StoredGraphFormat = {
 
 
     Edge: class __Edge__ {
-        constructor(from, to, label) {
+        constructor(from, to, label, displayLabel) {
             this.from = from;
             this.to = to;
             this.label = label;
+            this.displayLabel = (displayLabel !== undefined) ? displayLabel : label;
             this.length = undefined;
             this.width = 3;
             this.fontSize = 14;
@@ -152,7 +176,7 @@ __$__.StoredGraphFormat = {
                     },
                     from: this.from,
                     to: this.to,
-                    label: this.label,
+                    label: this.displayLabel,
                     length: this.length,
                     width: this.width,
                     font: {
@@ -166,7 +190,7 @@ __$__.StoredGraphFormat = {
                 edge = {
                     from: this.from,
                     to: this.to,
-                    label: this.label,
+                    label: this.displayLabel,
                     length: this.length,
                     width: this.width,
                     font: {
@@ -179,7 +203,7 @@ __$__.StoredGraphFormat = {
             }
             
 
-            if (this.from.slice(0, 11) === '__Variable-') {
+            if (this.from.slice(0, 11) === '__Variable-'|| this.from.endsWith('-array')) {
                 edge.color = 'seagreen';
             }
 
@@ -187,7 +211,7 @@ __$__.StoredGraphFormat = {
         }
 
         duplicate() {
-            return new __$__.StoredGraphFormat.Edge(this.from, this.to, this.label);
+            return new __$__.StoredGraphFormat.Edge(this.from, this.to, this.label, this.displayLabel);
         }
     },
 

@@ -92,15 +92,21 @@ __$__.Context = {
         // 時間順にソート
         result.sort((a, b) => a[3] - b[3]);
 
-        // 連続重複を除去してリスト化
         const filteredHistory = []; 
         let prevNodeID = null;
+
+        const seenContexts = new Set();
 
         for (const item of result) {
             const nodeID = item[0]; 
             const cpID = item[1];
             const contextID = item[2];
             // const time = item[3];
+            if (seenContexts.has(contextID)) {
+                continue;
+            }
+            // 新しい contextID なので記録する
+            seenContexts.add(contextID);
 
             // 直前のIDと比較
             if (nodeID !== prevNodeID) {
