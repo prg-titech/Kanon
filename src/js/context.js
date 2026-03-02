@@ -101,7 +101,7 @@ __$__.Context = {
             const nodeID = item[0]; 
             const cpID = item[1];
             const contextID = item[2];
-            // const time = item[3];
+            const timeCounter = item[3];
             if (seenContexts.has(contextID)) {
                 continue;
             }
@@ -114,7 +114,7 @@ __$__.Context = {
                     nodeID: nodeID,
                     cpID: cpID,
                     contextID: contextID,
-                    // time: time
+                    time: timeCounter,
                 });
                 prevNodeID = nodeID;
             }

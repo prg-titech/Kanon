@@ -2,91 +2,276 @@ window.VariableHistoryView = {
     targetVariableName: "stack", 
 
     COLORS: [
-        { border: '#FF1493', background: '#FF69B4' },
-        { border: '#FF69B4', background: '#FFB6C1' },
-        { border: '#FFB6C1', background: '#FFC0CB' },
-        { border: '#FFC0CB', background: '#FFE4E1' },
-        { border: '#FFE4E1', background: '#FFF0F5' } 
+        { border: '#FF1493', background: '#FF69B4' }, // 0: 現在
+        { border: '#FF69B4', background: '#FFB6C1' }, // 1: 1つ前
+        { border: '#FFB6C1', background: '#FFC0CB' }, // 2: 2つ前
+        { border: '#FFC0CB', background: '#FFE4E1' }, // 3: 3つ前
+        { border: '#FFE4E1', background: '#FFF0F5' }  // 4: 4つ前
     ],
 
-    STACK_COLOR: { 
-        border: '#FF1493', 
-        background: '#FFC0CB',
-        highlight: { border: '#FF1493', background: '#FFC0CB' },
-        hover: { border: '#FF1493', background: '#FFC0CB' }
+    //前回集合 / 消えた要素の年齢(1..4)
+    //prevSet: null,          // Set<string>
+    //removedAges: new Map(), // Map<string, number>
+
+    removeArrayNodes: function(visGraph) {
+        const removalIds = new Set();
+        visGraph.nodes = visGraph.nodes.filter(node => {
+            if (node.shape === 'box') {
+                removalIds.add(node.id);
+                return false; 
+            }
+            return true;
+        });
+        visGraph.edges = visGraph.edges.filter(edge => {
+            return !removalIds.has(edge.from) && !removalIds.has(edge.to);
+        });
     },
 
-    applyColorsToVisData: function(visGraph) {
-        if (!__$__.Context) return;
-        const target = this.targetVariableName || 'stack';
+    //配列かどうかの判定
+    updateTargetType: function(visGraph) {
+        const target = this.targetVariableName;
+        const varEdge = visGraph.edges.find(e => e.from && e.from.includes(`Variable-${target}`));
         
-        if (target === 'stack') {
-            this.highlightStackContents(visGraph);
-        } else {
-            this.highlightSingleVariableHistory(visGraph);
+        if (varEdge && varEdge.to) {
+            this.targetIsArray = varEdge.to.includes('arr');
+            return varEdge;
         }
+        this.targetIsArray = false;
+        return null;
+    },
+    
+    applyColorsToVisData: function(visGraph) {
+        if (!__$__.Context || !__$__.Context.getVarTarget) return;
+
+        const varEdge = this.updateTargetType(visGraph);
+
+        // 取れないなら「配列じゃない」とみなして単一変数側を実行
+        if (!varEdge) {
+            this.targetIsArray = false;
+            this.highlightSingleVariableHistory(visGraph);
+            return;
+        }
+
+        if (this.targetIsArray) this.highlightStackHistory(visGraph);
+        else this.highlightSingleVariableHistory(visGraph);
     },
 
-    /**
-     * 【修正版】ID文字列に依存せず、グラフのつながりでStackの中身を特定する
-     */
-    highlightStackContents: function(visGraph) {
-        // 1. "stack" 変数が指している配列ノード(Array)を探す
-        const stackEdge = visGraph.edges.find(e => e.from === '__Variable-stack');
-        if (!stackEdge) return;
-
-        const arrayNodeID = stackEdge.to; 
-        const contentNodeIDs = new Set();
-
-        // 2. その配列ノード(Array)から伸びている矢印をすべて探す
-        // Kanonの内部実装が変わっても追従できるよう、fromが一致するものを全て取得
-        visGraph.edges.forEach(edge => {
-            // エッジの始点が配列ノードであれば、その先は要素であるとみなす
-            if (edge.from === arrayNodeID) {
-                contentNodeIDs.add(edge.to);
-            }
-            // 念のため、古いIDルール(main-new1-array-0など)もカバー
-            else if (edge.from.startsWith(arrayNodeID)) {
-                contentNodeIDs.add(edge.to);
-            }
-        });
-
-        // 3. 特定したノードをピンクにする
-        visGraph.nodes.forEach(node => {
-            if (contentNodeIDs.has(node.id)) {
-                node.color = this.STACK_COLOR;
-            }
-        });
+    getGraphAt: function(cpID, contextID) {
+        const g = __$__.Context && __$__.Context.StoredGraph;
+        if (!g) return null;
+        const cp = g[cpID];
+        if (!cp) return null;
+        return cp[contextID] || cp[String(contextID)] || null;
     },
 
+    getArrayContentsSetFromGraph: function(graphObj, arrayNodeID) {
+        if (!graphObj || !Array.isArray(graphObj.edges)) return new Set();
+
+        const nodesObj = graphObj.nodes || {}; // StoredGraphのgraphには nodes がある
+        const isBox = (id) => nodesObj[id] && nodesObj[id].shape === 'box';
+
+        // from が arrayNodeID（またはprefix）に一致する edge を列挙
+        const outgoing = (fromId) => {
+            const res = [];
+            for (const e of graphObj.edges) {
+                const from = e.from, to = e.to;
+                if (!from || !to) continue;
+                if (from === fromId || (typeof from === "string" && from.startsWith(fromId))) {
+                    res.push(to);
+                }
+            }
+            return res;
+        };
+
+        const result = new Set();
+
+        // 1段目：arr から出る先を集める
+        const first = outgoing(arrayNodeID);
+
+        for (const to1 of first) {
+            if (isBox(to1)) {
+                // 2段目：boxの先を要素として採用
+                const second = outgoing(to1);
+                for (const to2 of second) {
+                    result.add(to2);
+                }
+            } else {
+                // 直接 Node ならそのまま採用
+                result.add(to1);
+            }
+        }
+
+        return result;
+    },
+
+    setEquals: function(a, b) {
+        if (a === b) return true;
+        if (!a || !b) return false;
+        if (a.size !== b.size) return false;
+        for (const x of a) if (!b.has(x)) return false;
+        return true;
+    },
+    paintNode: function(node, idx) {
+        const c = this.COLORS[idx];
+        node.color = {
+            border: c.border,
+            background: c.background,
+            highlight: { border: c.border, background: c.background },
+            hover: { border: c.border, background: c.background }
+        };
+    },
+
+    collectSnapshotsByTimeCounter: function() {
+        const stored = __$__.Context && __$__.Context.StoredGraph;
+        const snap = __$__.Context && __$__.Context.SnapshotContext;
+        if (!stored || !snap) return [];
+
+        // 例: "main-call10-FunctionExpression3-WhileStatement1-2"
+        const curCtx = String(snap.contextSensitiveID);
+
+        // main-call10 の部分だけを取り出す（あなたのルールに合わせて調整可）
+        const m = curCtx.match(/^(main-call\d+)/);
+        const callPrefix = m ? m[1] : curCtx;
+
+        const snaps = [];
+        for (const cpID of Object.keys(stored)) {
+            const contexts = stored[cpID];
+            if (!contexts || typeof contexts !== "object") continue;
+
+            for (const ctxID of Object.keys(contexts)) {
+            // main-call10 で始まるものだけ集める
+            if (!String(ctxID).startsWith(callPrefix)) continue;
+
+            const g = contexts[ctxID];
+            if (!g) continue;
+
+            snaps.push({ cpID, contextID: String(ctxID), g, timeCounter: g.timeCounter ?? 0 });
+        }
+    }
+
+        snaps.sort((a,b) => (a.timeCounter ?? 0) - (b.timeCounter ?? 0));
+        return snaps;
+        },
+
+    // graphObj(variableEdges)から targetVariableName が指す配列ノードIDを取る
+    getArrayNodeIdFromGraph: function(graphObj) {
+        if (!graphObj || !Array.isArray(graphObj.variableEdges)) return null;
+
+        const target = this.targetVariableName;
+        // fromが "__Variable-<name>" の場合が多いが、label でも拾えるようにする
+        const varKey = `__Variable-${target}`;
+
+        const e = graphObj.variableEdges.find(v =>
+            v.from === varKey || v.label === target || v.displayLabel === target
+        );
+
+        return e && e.to ? String(e.to) : null;
+    },
+
+    highlightStackHistory: function (visGraph) {
+        const currentSnapshot = __$__.Context.SnapshotContext;
+        if (!currentSnapshot || currentSnapshot.cpID === undefined) return;
+
+        const contextID = String(currentSnapshot.contextSensitiveID);
+
+        // 1) 同一contextのスナップショットを timeCounter 昇順で集める
+        const snaps = this.collectSnapshotsByTimeCounter(contextID);
+        if (snaps.length === 0) return;
+
+        // 2) “現在の” timeCounter を StoredGraph から取る
+        const currentGraphObj = this.getGraphAt(currentSnapshot.cpID, currentSnapshot.contextSensitiveID);
+        const currentTime = currentGraphObj ? (currentGraphObj.timeCounter ?? null) : null;
+
+        // 3) 現在時刻まで走査して「現在集合」と「消えた要素の年齢」を決定的に求める
+        let prevSet = null;
+        const removedAges = new Map(); // nodeID -> age(1..4)
+        let currentSet = new Set();
+
+        for (const s of snaps) {
+            if (currentTime !== null && (s.timeCounter ?? 0) > currentTime) break;
+
+            // ===== ① arrayNodeID が取れてるか確認 =====
+            const arrayNodeID = this.getArrayNodeIdFromGraph(s.g);
+            if (!arrayNodeID) {
+                continue;
+            }
+
+            if (!String(arrayNodeID).includes("arr")) {
+                // stack が配列を指していないと判定されたスナップショット
+                continue;
+            }
+
+            const nextSet = this.getArrayContentsSetFromGraph(s.g, arrayNodeID);
+
+            // ===== ② changed と prevSet.size/nextSet.size を確認 =====
+            const changed = (prevSet !== null) ? !this.setEquals(prevSet, nextSet) : true;
+
+            // changed のとき or 現在スナップショットのときだけ出す（ログが増えすぎないように）
+            // if (changed || ((s.timeCounter ?? 0) === currentTime)) {
+            //     console.log("[VHV] step",
+            //         "time", s.timeCounter, "cp", s.cpID,
+            //         "prevSize", prevSet ? prevSet.size : null,
+            //         "nextSize", nextSet.size,
+            //         "changed", changed
+            //     );
+            // }
+
+            if (changed && prevSet) {
+                // (1) 既存 removed を進める（変化があった時だけ）
+                for (const [id, age] of removedAges.entries()) {
+                    if (!nextSet.has(id)) removedAges.set(id, Math.min(age + 1, 4));
+                }
+
+                // (2) 今回消えたものを age=1 で追加
+                for (const id of prevSet) {
+                    if (!nextSet.has(id) && !removedAges.has(id)) removedAges.set(id, 1);
+                }
+            }
+
+            // 戻ってきた要素は removed から外す（0が勝つ）
+            for (const id of nextSet) {
+                if (removedAges.has(id)) removedAges.delete(id);
+            }
+
+            prevSet = nextSet;
+            currentSet = nextSet;
+        }
+
+        // 4) 色付け（0=現在集合、1..4=消えたもの）
+        const nodeMap = new Map();
+        visGraph.nodes.forEach(n => nodeMap.set(n.id, n));
+
+        for (const id of currentSet) {
+            const node = nodeMap.get(id);
+            if (node) this.paintNode(node, 0);
+        }
+
+        for (const [id, age] of removedAges.entries()) {
+            const node = nodeMap.get(id);
+            if (node) this.paintNode(node, age);
+        }
+
+    },
     highlightSingleVariableHistory: function(visGraph) {
-        if (!__$__.Context.getVarTarget) return;
-
         const currentSnapshot = __$__.Context.SnapshotContext;
         if (!currentSnapshot || currentSnapshot.cpID === undefined) return;
 
         const history = __$__.Context.getVarTarget(this.targetVariableName);
         if (!history || history.length === 0) return;
 
-        const currentCPID = currentSnapshot.cpID;
-        const currentContextID = currentSnapshot.contextSensitiveID;
-        
-        const n = this.findCurrentIndex(history, currentCPID, currentContextID);
+        const n = this.findCurrentIndex(history, currentSnapshot.cpID, currentSnapshot.contextSensitiveID);
         if (n === -1) return;
 
         const nodeMap = new Map();
-        visGraph.nodes.forEach(node => {
-            nodeMap.set(node.id, node);
-        });
+        visGraph.nodes.forEach(node => nodeMap.set(node.id, node));
 
         for (let i = 0; i <= n; i++) {
-            const historyItem = history[i];
-            const node = nodeMap.get(historyItem.nodeID);
-
+            const node = nodeMap.get(history[i].nodeID);
             if (node) {
                 let diff = n - i;
-                if (diff > 4) continue;
-
+                if (diff > 4) 
+                    diff = 4;
+                    //continue;
                 const colorSet = this.COLORS[diff];
                 node.color = {
                     border: colorSet.border,
@@ -96,179 +281,181 @@ window.VariableHistoryView = {
                 };
             }
         }
+        console.log("cpID", currentSnapshot.cpID, "parsed", parseInt(currentSnapshot.cpID,10));
     },
 
     findCurrentIndex: function(history, currentCPID, currentContextID) {
         let bestIndex = -1;
         const currentCpNum = parseInt(currentCPID, 10);
-
         for (let i = 0; i < history.length; i++) {
             const item = history[i];
             if (item.contextID !== currentContextID) continue;
             const itemCpNum = parseInt(item.cpID, 10);
-            
-            if (!isNaN(itemCpNum) && !isNaN(currentCpNum)) {
-                if (itemCpNum <= currentCpNum) {
-                    bestIndex = i;
-                }
-            }
+            if (!isNaN(itemCpNum) && itemCpNum <= currentCpNum) bestIndex = i;
         }
         return bestIndex;
     }
+    
 };
 
-window.AnimationController = {
-    timer: null,
-    playBtn: null,
-    stopBtn: null,
-    container: null,
-    
-    // --- 初期化・UI関連 ---
-    init: function() {
-        const existingContainer = document.getElementById('kanon-animation-container');
-        if (existingContainer) existingContainer.remove();
-        this.container = document.createElement('div');
-        this.container.id = 'kanon-animation-container';
-        Object.assign(this.container.style, { position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, display: 'flex', gap: '10px' });
-        document.body.appendChild(this.container);
-        this.playBtn = document.createElement('button'); this.playBtn.textContent = '▶ Play Animation'; this.styleButton(this.playBtn, '#007bff'); this.playBtn.onclick = () => this.play(); this.container.appendChild(this.playBtn);
-        this.stopBtn = document.createElement('button'); this.stopBtn.textContent = '■ Stop'; this.styleButton(this.stopBtn, '#dc3545'); this.stopBtn.style.display = 'none'; this.stopBtn.onclick = () => this.stop(); this.container.appendChild(this.stopBtn);
-    },
-    styleButton: function(btn, bgColor) { Object.assign(btn.style, { padding: '10px 20px', fontSize: '16px', fontWeight: 'bold', color: '#fff', backgroundColor: bgColor, border: 'none', borderRadius: '5px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }); btn.onmouseover = () => btn.style.opacity = '0.8'; btn.onmouseout = () => btn.style.opacity = '1.0'; },
-    toggleState: function(isPlaying) { if (this.playBtn && this.stopBtn) { this.playBtn.style.display = isPlaying ? 'none' : 'block'; this.stopBtn.style.display = isPlaying ? 'block' : 'none'; } },
-    stop: function() { if (this.timer) { clearInterval(this.timer); this.timer = null; } this.toggleState(false); console.log("Animation stopped."); },
-    
-    // --- 探索・ユーティリティ ---
-    findTargetNode: function(root, targetID) { if (root.getContextSensitiveID() === targetID) return root; if (root.children) { for (let child of root.children) { const found = this.findTargetNode(child, targetID); if (found) return found; } } return null; },
-    flattenChildrenOrder: function(node, list) { let children = node.children ? [].concat(node.children) : []; while (children.length > 0) { let child = children.shift(); if (child.constructor.name === 'FunctionCall' || child.constructor.name === 'Instance') { if (child.children && child.children.length > 0) { children.unshift(...child.children); } continue; } const ctxID = child.getContextSensitiveID(); if (ctxID) list.push(ctxID); this.flattenChildrenOrder(child, list); } },
-    getLineNumber: function(cpID) { if (__$__.Context.CheckPointTable && __$__.Context.CheckPointTable[cpID]) { return __$__.Context.CheckPointTable[cpID].line; } return parseInt(cpID.toString().replace(/\D/g, '')) || 0; },
-
-    // --- 変化検知ロジック ---
-    // 色がついているノードのIDと色の組み合わせを指紋にする
-    getVisualSignature: function(visNodes) {
-        return visNodes
-            .filter(n => n.color && n.color.background)
-            .map(n => `${n.id}:${n.color.background}`)
-            .sort()
-            .join('|');
-    },
-
-    // --- メイン再生処理 ---
-    play: function() {
-        const currentSnapshot = __$__.Context.SnapshotContext;
-        if (!currentSnapshot || !currentSnapshot.contextSensitiveID) { alert("Please select the method call you want to focus on first."); return; }
-        const targetContextID = currentSnapshot.contextSensitiveID;
-        const rootNode = __$__.CallTree.rootNode;
-        if (!rootNode) { alert("CallTree is empty."); return; }
-        const targetNode = this.findTargetNode(rootNode, targetContextID);
-        if (!targetNode) { alert("Context not found in CallTree."); return; }
-
-        const graphStorage = __$__.Context.StoredGraph;
-        let allSnapshots = [];
-        // CP番号順（実行順）にソート
-        let traceIDs = Object.keys(graphStorage).map(k => parseInt(k, 10)).sort((a, b) => a - b);
-        let relevantContextIDs = [targetContextID];
-        let childCtxIDs = [];
-        this.flattenChildrenOrder(targetNode, childCtxIDs);
-        relevantContextIDs = relevantContextIDs.concat(childCtxIDs);
-
-        // 歴史データの収集
-        traceIDs.forEach(cpNum => {
-            const cpID = cpNum.toString();
-            relevantContextIDs.forEach(ctxID => {
-                if (graphStorage[cpID] && graphStorage[cpID][ctxID]) {
-                    allSnapshots.push({ cpID: cpID, cpNum: cpNum, contextID: ctxID, graph: graphStorage[cpID][ctxID], line: this.getLineNumber(cpID) });
-                }
-            });
-        });
-        
-        // 念のため再ソート
-        allSnapshots.sort((a, b) => a.cpNum - b.cpNum);
-        
-        if (allSnapshots.length === 0) { alert("No snapshots found."); return; }
-
-        const filteredTimeline = [];
-        let lastSignature = null;
-        const targetVarName = window.VariableHistoryView ? window.VariableHistoryView.targetVariableName : 'stack';
-
-        console.group("🔍 Animation Filtering Log (Strict Filter Removed)");
-
-        allSnapshots.forEach((step, index) => {
-            const originalCtx = __$__.Context.SnapshotContext;
-            __$__.Context.SnapshotContext = { cpID: step.cpID, contextSensitiveID: step.contextID };
-            const visData = step.graph.generateVisjsGraph(true);
-            window.VariableHistoryView.applyColorsToVisData(visData);
-            __$__.Context.SnapshotContext = originalCtx;
-
-            // 1. データ自体が空っぽなら流石にスキップ (エラー防止)
-            if (!visData.nodes || visData.nodes.length === 0) {
-                return;
-            }
-
-            // 2. 見た目の変化（Signature）
-            const currentSignature = this.getVisualSignature(visData.nodes);
-            
-            // 前回と見た目が少しでも違えば抽出
-            if (currentSignature !== lastSignature) {
-                step.cachedVisData = visData;
-                filteredTimeline.push(step);
-                lastSignature = currentSignature;
-            } else {
-                // 全く同じ絵なら重複としてスキップ
-                // console.log(`[CP ${step.cpID}] Skipped (Duplicate)`);
-            }
-        });
-        console.groupEnd();
-
-        if (filteredTimeline.length === 0) { alert("No visual changes found for variable: " + targetVarName); return; }
-        
-        console.log(`🎬 Playing ${filteredTimeline.length} frames`);
-        this.toggleState(true);
-
-        // --- スーパーグラフ生成と座標計算 (変更なし) ---
-        const superGraph = new __$__.StoredGraphFormat.Graph();
-        filteredTimeline.forEach(step => {
-            Object.values(step.graph.nodes).forEach(node => { if (!superGraph.nodes[node.id]) superGraph.pushNode(node.duplicate()); });
-            Object.values(step.graph.variableNodes).forEach(node => { if (!superGraph.variableNodes[node.id]) superGraph.pushNode(node.duplicate()); });
-            const addUniqueEdges = (edges, targetArr) => { edges.forEach(edge => { const exists = targetArr.some(e => e.from === edge.from && e.to === edge.to && e.label === edge.label); if (!exists) targetArr.push(edge.duplicate()); }); };
-            addUniqueEdges(step.graph.edges, superGraph.edges);
-            addUniqueEdges(step.graph.variableEdges, superGraph.variableEdges);
-        });
-
-        if (__$__.Layout && typeof __$__.Layout.setLocation === 'function') { __$__.Layout.setLocation(superGraph); }
-        const positionMap = {};
-        Object.values(superGraph.nodes).forEach(n => { if(n.x!==undefined) positionMap[n.id] = {x:n.x, y:n.y}; });
-        Object.values(superGraph.variableNodes).forEach(n => { if(n.x!==undefined) positionMap[n.id] = {x:n.x, y:n.y}; });
-
-        // --- 再生ループ (変更なし) ---
-        let i = 0;
-        if (this.timer) clearInterval(this.timer);
-        this.timer = setInterval(() => {
-            if (i >= filteredTimeline.length) { this.stop(); return; }
-            const step = filteredTimeline[i];
-            __$__.Context.SnapshotContext = { cpID: step.cpID, contextSensitiveID: step.contextID };
-            const visData = step.cachedVisData;
-            visData.nodes.forEach(node => { if (positionMap[node.id]) { node.x = positionMap[node.id].x; node.y = positionMap[node.id].y; node.physics = false; } });
-            if (__$__.ObjectGraphNetwork && __$__.ObjectGraphNetwork.network) {
-                __$__.ObjectGraphNetwork.network.setData({ nodes: new vis.DataSet(visData.nodes), edges: new vis.DataSet(visData.edges) });
-                if (i === 0) __$__.ObjectGraphNetwork.network.fit({ animation: { duration: 1000 } });
-            }
-            i++;
-        }, 1000); 
-    }
-};
+// Hook処理（あなたのまま）
 (function() {
     const hookInterval = setInterval(() => {
-        if (typeof __$__ !== 'undefined' && __$__.StoredGraphFormat) {
+        if (typeof __$__ !== 'undefined' && 
+            __$__.StoredGraphFormat && 
+            __$__.StoredGraphFormat.Graph && 
+            __$__.StoredGraphFormat.Graph.prototype.generateVisjsGraph) {
+            
             clearInterval(hookInterval);
+            
             const GraphProto = __$__.StoredGraphFormat.Graph.prototype;
             const originalGenerateVisjsGraph = GraphProto.generateVisjsGraph;
-            GraphProto.generateVisjsGraph = function(nodeFixed) {
+
+            GraphProto.generateVisjsGraph = function() {
                 const visGraph = originalGenerateVisjsGraph.apply(this, arguments);
-                try { if (window.VariableHistoryView) window.VariableHistoryView.applyColorsToVisData(visGraph); } catch (e) {}
+                try {
+                    if (window.VariableHistoryView) {
+                        window.VariableHistoryView.removeArrayNodes(visGraph);
+                        window.VariableHistoryView.applyColorsToVisData(visGraph);
+                    }
+                } catch (e) {
+                    console.error("View modification failed:", e);
+                }
                 return visGraph;
             };
-            if (window.AnimationController) window.AnimationController.init();
         }
     }, 100);
 })();
+
+
+window.AnimationController = {
+    timerId: null,
+    changedSnapshots: [], 
+    currentIndex: 0,
+    interval: 800,
+    fixedPositions: null, // 確定した座標を保持
+
+    init: function() {
+        this.createUI();
+    },
+
+    getSignature: function(snap, targetName, isTargetArray) {
+        // 変数の参照先（配列ノードID）を取る：VariableHistoryView と揃えて label で探す
+        const varEdge = (snap.variableEdges || []).find(e => e.label === targetName);
+        const targetID = varEdge ? varEdge.to : "null";
+
+        if (!isTargetArray) {
+            return `VAR:${targetID}`;
+        }
+        if (targetID === "null") {
+            return "ARRAY:null";
+        }
+
+        const set = window.VariableHistoryView.getArrayContentsSetFromGraph(snap, targetID);
+        const arr = Array.from(set).sort();
+
+        return `ARRAY:${targetID}:${arr.join(",")}`;
+    },
+
+    preprocess: function () {
+        const targetName = window.VariableHistoryView.targetVariableName;
+        const isTargetArray = !!window.VariableHistoryView.targetIsArray;
+
+        const stored = __$__.Context.StoredGraph;
+
+        // 1) 全snapshot抽出
+        const snaps = [];
+        for (const cpID of Object.keys(stored)) {
+            const contexts = stored[cpID];
+            if (!contexts || typeof contexts !== "object") continue;
+
+            for (const contextID of Object.keys(contexts)) {
+                const snap = contexts[contextID];
+                if (!snap) continue;
+                snaps.push({ cpID, contextID, snap });
+            }
+        }
+
+        // 2) timeCounter順
+        snaps.sort((a, b) => (a.snap.timeCounter ?? 0) - (b.snap.timeCounter ?? 0));
+
+        // 3) 変化点抽出（signatureで比較）
+        this.changedSnapshotKeys = [];
+        this.changedSnapshotDebug = [];
+
+        let lastSig = "";
+
+        for (const { cpID, contextID, snap } of snaps) {
+            const sig = this.getSignature(snap, targetName, isTargetArray);
+            const changed = sig !== lastSig;
+
+            if (changed) this.changedSnapshotKeys.push({ cpID, contextID });
+
+            this.changedSnapshotDebug.push({
+                cpID,
+                contextID,
+                timeCounter: snap.timeCounter,
+                signature: sig,
+                changed
+            });
+
+            lastSig = sig;
+        }
+    },
+    start() {
+        this.preprocess();
+        this.currentIndex = 0;
+        this.showFrame(this.currentIndex);
+
+        this.stop(); // 多重起動防止
+        this.timerId = setInterval(() => this.step(), this.interval);
+    },
+
+    stop() {
+        if (this.timerId) clearInterval(this.timerId);
+            this.timerId = null;
+    },
+
+    step() {
+        this.currentIndex++;
+            if (this.currentIndex >= this.changedSnapshotKeys.length) {
+                this.stop();
+            return;
+            }
+        this.showFrame(this.currentIndex);
+    },
+
+    showFrame(i) {
+        const key = this.changedSnapshotKeys[i];
+        const snap = __$__.Context.StoredGraph[key.cpID][key.contextID];
+        this.applySnapshot(snap, key);
+
+        this.statusLabel.innerText = `Frame ${i+1}/${this.changedSnapshotKeys.length}`;
+    },
+
+    applySnapshot(snap, key) {
+  
+    },
+
+    createUI: function() {
+        const old = document.getElementById('animation-panel');
+        if (old) old.remove();
+        const container = document.createElement('div');
+        container.id = 'animation-panel';
+        Object.assign(container.style, {
+            position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 10000, background: 'white', padding: '10px 20px', borderRadius: '30px',
+            display: 'flex', gap: '15px', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', border: '1px solid #FF69B4'
+        });
+        this.statusLabel = document.createElement('span');
+        this.statusLabel.innerText = "Ready";
+        const playBtn = document.createElement('button');
+        playBtn.innerText = "▶ Play Animation";
+        playBtn.onclick = () => this.start();
+        container.appendChild(this.statusLabel);
+        container.appendChild(playBtn);
+        document.body.appendChild(container);
+    }
+};
+window.AnimationController.init();
+// window.VariableHistoryView();
