@@ -438,26 +438,26 @@ function setGraphLocation(graph) {
             }
         }
         //注目ノードの色を変更する
-        for (var i_14 = 0; i_14 < attentionNodes.length; i_14++) {
-            var pink = void 0;
-            if (graph.getClass(attentionNodes[i_14]) == "Kanon-ArrayNode") {
-                pink = {
-                    border: 'deeppink',
-                    background: 'mistyrose',
-                    highlight: {
-                        border: 'deeppink',
-                        background: 'mistyrose'
-                    },
-                    hover: {
-                        border: 'deeppink',
-                        background: 'mistyrose'
-                    }
-                };
-            }
-            else
-                pink = "hotpink";
-            nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
-        }
+        // for (var i_14 = 0; i_14 < attentionNodes.length; i_14++) {
+        //     var pink = void 0;
+        //     if (graph.getClass(attentionNodes[i_14]) == "Kanon-ArrayNode") {
+        //         pink = {
+        //             border: 'deeppink',
+        //             background: 'mistyrose',
+        //             highlight: {
+        //                 border: 'deeppink',
+        //                 background: 'mistyrose'
+        //             },
+        //             hover: {
+        //                 border: 'deeppink',
+        //                 background: 'mistyrose'
+        //             }
+        //         };
+        //     }
+        //     else
+        //         pink = "hotpink";
+        //     nodelist[ObjectIDs.indexOf(attentionNodes[i_14])].color = pink;
+        // }
         //極小ノードを生成する
         var notInterestedNodeClusterSort = makeMinimalNode(nodelist, edgelist);
         //極小ノードリストからクラスターを生成する
