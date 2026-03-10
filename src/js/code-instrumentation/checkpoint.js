@@ -104,7 +104,7 @@ __$__.Checkpoint = {
 
     StoreGraph: function(objects, loopLabel, timeCounter, checkPointId, probe, contextSensitiveID) {
         let graph = (__$__.Context.ChangedGraph)
-            ? __$__.Traverse.traverse(objects, probe)
+            ? __$__.Traverse.traverse(objects, probe, timeCounter)
             : __$__.Context.LastGraph;
 
 
