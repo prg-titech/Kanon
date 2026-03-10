@@ -2157,6 +2157,13 @@ __$__.ASTTransforms = {
                     __$__.ASTTransforms.varEnv.addVariable(node.id.name, parent.kind, true);
                 }
 
+		// remember the current list of variables, which is used as
+		// the variables at the end of a block statement.
+		let variables_end = __$__.ASTTransforms.varEnv.Variables();
+
+		// discard the current frame of local variables, so that
+		// the later checkpoint insertion will only see the variables
+		// available at the beginning of the block
                 if (__$__.ASTTransforms.varScopes[node.type]) {
                     __$__.ASTTransforms.varEnv.pop();
                 }
@@ -2165,6 +2172,8 @@ __$__.ASTTransforms = {
                     let start = node.loc.start;
                     let end = node.loc.end;
                     let parent = path[path.length - 2];
+		    // lexical variables (i.e., after popping off declared
+		    // variables in this block)
                     let variables = __$__.ASTTransforms.varEnv.Variables();
 
 
@@ -2291,7 +2300,11 @@ __$__.ASTTransforms = {
                                     return [
                                         __$__.ASTTransforms.changedGraphStmt(),
                                         __$__.ASTTransforms.makeCheckpoint(start, variables),
-                                        node,
+ // This embedding might create unnecessary nested blocks, which can cause
+ // a problem (because it uses the same `variables` at the beginning and 
+ // the end; but there should be variables declared inside of the block.)
+ // However, this code seems to be dead, so I leave it as it is now.
+                                        node, 
                                         __$__.ASTTransforms.changedGraphStmt(),
                                         __$__.ASTTransforms.makeCheckpoint(end, variables)
                                     ];
@@ -2311,7 +2324,7 @@ __$__.ASTTransforms = {
                             }
 
                             if (node.type === 'BlockStatement') {
-				return this.transformBlockStatement(start,end,variables,b,node,path);
+				return this.transformBlockStatement(start,end,variables,variables_end,b,node,path);
                             } else {
 				// console.log("here!");
                                 __$__.ASTTransforms.pairCPID[__$__.ASTTransforms.checkPoint_idCounter] = __$__.ASTTransforms.checkPoint_idCounter + 1;
@@ -2327,8 +2340,16 @@ __$__.ASTTransforms = {
                     }
                 }
             },
-	    // transform all (other) block statement
-	    transformBlockStatement(start,end,variables,b,node,path){
+	    // transform all (other) block statement.  Parameters
+	    // `variables_begin` and `variables_end` are the list of variables
+	    // that are accessible at the beginning of the given block `node`.
+	    // For example, transformBlockStatement(_,_,["foo"],["foo","bar"],
+	    // _, { s1; let bar = 123; s2; }) will return a list of AST nodes:
+	    // [ CNG; CP(...{foo: foo}...); s1; let bar = 123;
+	    //   CNG; CP(...{foo: foo, bar: bar}...); ]
+	    // where CNG is a statement to flag changes, CP is a checkpointing
+	    // statement.
+	    transformBlockStatement(start,end,variables_begin,variables_end,b,node,path){
 		start.column += 1;
                 end.column -= 1;
 		// when this is in a constructor and the first statement of
@@ -2348,10 +2369,10 @@ __$__.ASTTransforms = {
                     return b.BlockStatement(
 			beforeCP.concat(
 			    [__$__.ASTTransforms.changedGraphStmt(),
-			     __$__.ASTTransforms.makeCheckpoint(start, variables),
-			     node,
+			     __$__.ASTTransforms.makeCheckpoint(start, variables_begin),
+			     ...node.body, // embed the block body, no nesting
 			     __$__.ASTTransforms.changedGraphStmt(),
-			     __$__.ASTTransforms.makeCheckpoint(end, variables)
+			     __$__.ASTTransforms.makeCheckpoint(end, variables_end)
 			    ]));
 		}
 	    },
@@ -2488,6 +2509,9 @@ __$__.ASTTransforms = {
                     b.Identifier(__$__.ASTTransforms.checkPoint_idCounter++),
                     b.ObjectExpression(
                         variables.map(function(val) {
+			    // for VAL, create a property name and a variable
+			    // reference exression, namely
+			    // {VAL: typeof VAL !== 'string' ? VAL : undefined}
                             let new_val = (val === temp_var) ? '__temp_' + val : val;
                             return b.Property(
                                 b.Identifier(val),
