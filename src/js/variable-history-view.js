@@ -2304,7 +2304,88 @@ window.VariableHistoryView = {
             paletteKey: paletteKey
         };
     },
+    // ----------------------------
+    // Array event の重複表示をまとめる
+    //
+    // 目的:
+    // - stack[1] -> stack[0] のように index が変わっただけで
+    //   同じ node に ring が何重にも出るのを防ぐ
+    //
+    // 方針:
+    // - 同じ variableName + objectNodeId + paletteKey の array-element event は1つにまとめる
+    // - displayAge が小さいものを優先する
+    //   例: 現在 array に含まれている node は age 0 なので最優先
+    // - displayAge が同じなら，より新しい timeCounter の event を残す
+    // ----------------------------
+    collapseArrayIndexDrawableEvents: function(drawableEvents) {
+        if (!Array.isArray(drawableEvents)) return [];
 
+        const nonArrayEvents = [];
+        const arrayEventByNode = new Map();
+
+        for (const event of drawableEvents) {
+            if (!event) continue;
+
+            // array 由来でない event はそのまま残す
+            if (event.sourceKind !== "array-element") {
+                nonArrayEvents.push(event);
+                continue;
+            }
+
+            const variableName = String(event.variableName ?? "").trim();
+            const objectNodeId = String(event.objectNodeId ?? event.nodeId ?? "").trim();
+            const paletteKey = String(event.paletteKey ?? "pink").trim();
+
+            // うまく key を作れない場合は、安全のためそのまま残す
+            if (!variableName || !objectNodeId) {
+                nonArrayEvents.push(event);
+                continue;
+            }
+
+            // accessLabel はあえて入れない
+            // stack[1] と stack[0] を別物として扱わないため
+            const key = [
+                variableName,
+                objectNodeId,
+                paletteKey,
+                "array-element"
+            ].join("::");
+
+            const oldEvent = arrayEventByNode.get(key);
+
+            if (!oldEvent) {
+                arrayEventByNode.set(key, event);
+                continue;
+            }
+
+            const oldAge = Number(oldEvent.displayAge ?? 999);
+            const newAge = Number(event.displayAge ?? 999);
+
+            // age が小さい方を優先
+            // age 0 = 現在 array に含まれている node
+            if (newAge < oldAge) {
+                arrayEventByNode.set(key, event);
+                continue;
+            }
+
+            if (newAge > oldAge) {
+                continue;
+            }
+
+            // age が同じなら，新しい event を代表にする
+            const oldTime = Number(oldEvent.timeCounter ?? -Infinity);
+            const newTime = Number(event.timeCounter ?? -Infinity);
+
+            if (newTime >= oldTime) {
+                arrayEventByNode.set(key, event);
+            }
+        }
+
+        return [
+            ...nonArrayEvents,
+            ...Array.from(arrayEventByNode.values())
+        ];
+    },
     paintObjectRingEvents: function(visGraph, ringResult, options = {}) {
         if (!visGraph || !Array.isArray(visGraph.nodes)) return;
         if (!ringResult || !ringResult.objectNodeId) return;
@@ -2351,12 +2432,17 @@ window.VariableHistoryView = {
         // 中心・外輪の順番を、ringIndex ではなく displayAge で決める
         // displayAge が小さいほど内側
         // ----------------------------
-        const drawableEvents = events
+        let drawableEvents = events
             .map(event => ({
                 ...event,
                 displayAge: getDisplayAge(event)
             }))
             .filter(event => event.displayAge !== null);
+
+        // Array index mode では、
+        // 同じ stack 変数・同じ node に対する履歴 event を1つにまとめる。
+        // displayAge は現在の stack index から計算されたものを使う。
+        drawableEvents = this.collapseArrayIndexDrawableEvents(drawableEvents);
 
         if (drawableEvents.length === 0) return;
 
