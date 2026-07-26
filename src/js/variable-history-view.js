@@ -218,6 +218,9 @@ window.VariableHistoryOptions = {
         ac.displayedIndex = -1;
         ac.currentIndex = 0;
         ac.fixedPositions = null;
+        ac.displayedKey = null;
+        ac.displayedAllIndex = -1;
+        ac.displayedChangeIndex = -1;
 
         if (typeof ac.setPlaybackControlsEnabled === "function") {
             ac.setPlaybackControlsEnabled(false);
@@ -1734,6 +1737,41 @@ window.VariableHistoryView = {
         return unique;
     },
 
+    // ----------------------------
+    // 配列変数の「同じ参照が継続しているか」を判定する key
+    // ----------------------------
+    // 目的:
+    // - stack[1] -> stack[0] のような index 変化だけでは
+    //   新しい参照イベントにしない
+    // - ただし、一度 stack から外れて、後でもう一度 stack に入った場合は
+    //   新しい参照イベントとして扱う
+    getReferenceContinuityKey: function(ref) {
+        if (!ref) return "";
+
+        const variableName = String(ref.variableName ?? "").trim();
+        const sourceKind = String(ref.sourceKind ?? "").trim();
+        const nodeId = String(ref.nodeId ?? ref.objectNodeId ?? "").trim();
+
+        if (!variableName || !sourceKind || !nodeId) return "";
+
+        if (sourceKind === "array-element") {
+            const arrayNodeId = String(ref.arrayNodeId ?? "").trim();
+
+            return [
+                variableName,
+                sourceKind,
+                arrayNodeId,
+                nodeId
+            ].join("::");
+        }
+
+        return [
+            variableName,
+            sourceKind,
+            nodeId
+        ].join("::");
+    },
+
     buildObjectVariableHistory: function(objectNodeId) {
         const targetObjectId = String(objectNodeId ?? "").trim();
 
@@ -1753,7 +1791,7 @@ window.VariableHistoryView = {
         const rawRows = [];
         const eventRows = [];
 
-        // 直前 snapshot で参照されていた key
+        // 直前 snapshot で参照されていた continuityKey
         // 「新しく参照され始めた瞬間」だけ eventRows に入れるために使う
         let prevActiveKeys = new Set();
 
@@ -1765,16 +1803,24 @@ window.VariableHistoryView = {
 
             const currentActiveKeys = new Set();
 
-            for (const ref of refs) {
-                const refKey = [
-                    ref.variableName,
-                    ref.accessLabel,
-                    ref.sourceKind,
-                    ref.index ?? "",
-                    ref.arrayNodeId ?? ""
-                ].join("::");
+            // 同じ snapshot 内で同じ参照開始 event を重複登録しないための Set
+            // 例: stack[0] と stack[1] が同じ node を指している場合
+            const startedThisSnapshot = new Set();
 
-                currentActiveKeys.add(refKey);
+            for (const ref of refs) {
+                const continuityKey =
+                    typeof this.getReferenceContinuityKey === "function"
+                        ? this.getReferenceContinuityKey(ref)
+                        : [
+                            ref.variableName,
+                            ref.sourceKind,
+                            ref.arrayNodeId ?? "",
+                            ref.nodeId ?? ""
+                        ].join("::");
+
+                if (!continuityKey) continue;
+
+                currentActiveKeys.add(continuityKey);
 
                 const row = {
                     objectNodeId: targetObjectId,
@@ -1786,18 +1832,32 @@ window.VariableHistoryView = {
                     sourceKind: ref.sourceKind,
                     index: ref.index,
                     arrayNodeId: ref.arrayNodeId,
-                    slotNodeId: ref.slotNodeId
+                    slotNodeId: ref.slotNodeId,
+
+                    // debug 用
+                    continuityKey
                 };
 
                 // rawRows は「その snapshot で参照されていた」全部
                 rawRows.push(row);
 
-                // eventRows は「直前までは参照されておらず、この snapshot で参照され始めた」もの
-                if (!prevActiveKeys.has(refKey)) {
+                // eventRows は「直前までは参照されておらず、
+                // この snapshot で参照され始めた」ものだけ
+                //
+                // 配列変数では index を continuityKey に含めないので、
+                // stack[1] -> stack[0] のような移動では新 event にならない。
+                // 一方、一度 stack から消えて、後でもう一度入った場合は、
+                // prevActiveKeys に存在しないため新 event になる。
+                if (
+                    !prevActiveKeys.has(continuityKey) &&
+                    !startedThisSnapshot.has(continuityKey)
+                ) {
                     eventRows.push({
                         ...row,
                         eventKind: "start-reference"
                     });
+
+                    startedThisSnapshot.add(continuityKey);
                 }
             }
 
@@ -2304,87 +2364,42 @@ window.VariableHistoryView = {
             paletteKey: paletteKey
         };
     },
-    // ----------------------------
-    // Array event の重複表示をまとめる
-    //
-    // 目的:
-    // - stack[1] -> stack[0] のように index が変わっただけで
-    //   同じ node に ring が何重にも出るのを防ぐ
-    //
-    // 方針:
-    // - 同じ variableName + objectNodeId + paletteKey の array-element event は1つにまとめる
-    // - displayAge が小さいものを優先する
-    //   例: 現在 array に含まれている node は age 0 なので最優先
-    // - displayAge が同じなら，より新しい timeCounter の event を残す
-    // ----------------------------
+  
     collapseArrayIndexDrawableEvents: function(drawableEvents) {
         if (!Array.isArray(drawableEvents)) return [];
 
-        const nonArrayEvents = [];
-        const arrayEventByNode = new Map();
+        const result = [];
+        const seen = new Set();
 
         for (const event of drawableEvents) {
             if (!event) continue;
 
-            // array 由来でない event はそのまま残す
-            if (event.sourceKind !== "array-element") {
-                nonArrayEvents.push(event);
-                continue;
-            }
-
-            const variableName = String(event.variableName ?? "").trim();
-            const objectNodeId = String(event.objectNodeId ?? event.nodeId ?? "").trim();
-            const paletteKey = String(event.paletteKey ?? "pink").trim();
-
-            // うまく key を作れない場合は、安全のためそのまま残す
-            if (!variableName || !objectNodeId) {
-                nonArrayEvents.push(event);
-                continue;
-            }
-
-            // accessLabel はあえて入れない
-            // stack[1] と stack[0] を別物として扱わないため
+            // ここでは「同じ node の array-event」をまとめない。
+            // まとめてしまうと、
+            //   過去 stack: 薄緑
+            //   過去 current: 薄ピンク
+            //   現在 stack: 濃緑
+            // のうち、過去 stack が消えてしまうため。
+            //
+            // ただし、完全に同じ event が二重に入った場合だけ除去する。
             const key = [
-                variableName,
-                objectNodeId,
-                paletteKey,
-                "array-element"
+                event.objectNodeId ?? event.nodeId ?? "",
+                event.variableName ?? "",
+                event.accessLabel ?? "",
+                event.sourceKind ?? "",
+                event.cpID ?? "",
+                event.contextID ?? "",
+                event.timeCounter ?? "",
+                event.paletteKey ?? "pink"
             ].join("::");
 
-            const oldEvent = arrayEventByNode.get(key);
+            if (seen.has(key)) continue;
 
-            if (!oldEvent) {
-                arrayEventByNode.set(key, event);
-                continue;
-            }
-
-            const oldAge = Number(oldEvent.displayAge ?? 999);
-            const newAge = Number(event.displayAge ?? 999);
-
-            // age が小さい方を優先
-            // age 0 = 現在 array に含まれている node
-            if (newAge < oldAge) {
-                arrayEventByNode.set(key, event);
-                continue;
-            }
-
-            if (newAge > oldAge) {
-                continue;
-            }
-
-            // age が同じなら，新しい event を代表にする
-            const oldTime = Number(oldEvent.timeCounter ?? -Infinity);
-            const newTime = Number(event.timeCounter ?? -Infinity);
-
-            if (newTime >= oldTime) {
-                arrayEventByNode.set(key, event);
-            }
+            seen.add(key);
+            result.push(event);
         }
 
-        return [
-            ...nonArrayEvents,
-            ...Array.from(arrayEventByNode.values())
-        ];
+        return result;
     },
     paintObjectRingEvents: function(visGraph, ringResult, options = {}) {
         if (!visGraph || !Array.isArray(visGraph.nodes)) return;
@@ -2951,11 +2966,8 @@ window.VariableHistoryView = {
             }
         }
 
-        // ----------------------------
-        // ここが重要：
-        // arrayMembershipAgeMap / ageMap / debugRows は
-        // for (const event of allEvents) より前に作る
-        // ----------------------------
+        // 配列変数について、
+        // 現在 array に含まれている node / 最近外れた node の age を作る
         const arrayMembershipResult =
             this.buildObjectArrayMembershipAgeMap(selectedEntries);
 
@@ -2964,20 +2976,21 @@ window.VariableHistoryView = {
         const ageMap = new Map();
         const debugRows = [];
 
-        // 単一変数用。
-        // 配列変数は arrayMembershipAgeMap 側で処理し、
-        // 単一変数だけ groups に入れて全体時系列で age を決める。
+        // 単一変数用:
+        // current などはこれまで通り、変数ごとの全体時系列で age を決める
         const groups = new Map();
+
+        // 配列変数用:
+        // stack などは node 単位で潰さず、
+        // 「同じ node が stack に入った episode」を複数保持する
+        const arrayEpisodeGroups = new Map();
 
         for (const event of allEvents) {
             const variableName = String(event.variableName ?? "");
             const paletteKey = String(event.paletteKey ?? "pink");
 
             // ----------------------------
-            // A. 配列変数の場合:
-            // 現在配列内なら age 0
-            // 外れたものは age 1,2,3...
-            // 表示対象外なら null
+            // A. 配列変数の場合
             // ----------------------------
             const arrayAge = this.getObjectArrayMembershipAge(
                 event,
@@ -2985,31 +2998,29 @@ window.VariableHistoryView = {
             );
 
             if (arrayAge !== undefined) {
-                const key = this.getObjectRingEventIdentity(event);
+                const objectNodeId = String(event.objectNodeId ?? "").trim();
 
-                // null も入れる。
-                // paint 側で fallback させず「表示しない」にするため。
-                ageMap.set(key, arrayAge);
+                const groupKey = [
+                    variableName,
+                    paletteKey,
+                    event.sourceKind ?? "array-element",
+                    objectNodeId
+                ].join("::");
 
-                debugRows.push({
-                    groupKey: `${variableName}::${paletteKey}`,
-                    ageSource: "array-membership",
-                    objectNodeId: event.objectNodeId,
-                    variableName: event.variableName,
-                    accessLabel: event.accessLabel,
-                    sourceKind: event.sourceKind,
-                    timeCounter: event.timeCounter,
-                    rawAge: arrayAge,
-                    normalizedAge: arrayAge,
-                    paletteKey: event.paletteKey
+                if (!arrayEpisodeGroups.has(groupKey)) {
+                    arrayEpisodeGroups.set(groupKey, []);
+                }
+
+                arrayEpisodeGroups.get(groupKey).push({
+                    event,
+                    baseArrayAge: arrayAge
                 });
 
                 continue;
             }
 
             // ----------------------------
-            // B. 単一変数の場合:
-            // 全体時系列で古いほど薄くする
+            // B. 単一変数の場合
             // ----------------------------
             const groupKey = `${variableName}::${paletteKey}`;
 
@@ -3020,6 +3031,83 @@ window.VariableHistoryView = {
             groups.get(groupKey).push(event);
         }
 
+        // ----------------------------
+        // 配列変数用:
+        // 同じ node に対する stack event を消さずに age を付ける
+        //
+        // 例:
+        //   古い stack event   -> green age 1 or 2
+        //   新しい stack event -> green age 0
+        //
+        // current の pink event は scalar 側で別に age が付くため、
+        // 最終的に
+        //   外側: 古い green
+        //   中間: pink
+        //   内側: 新しい green
+        // のように並びやすくなる
+        // ----------------------------
+        for (const [groupKey, items] of arrayEpisodeGroups.entries()) {
+            items.sort((a, b) => {
+                const at = Number(a.event.timeCounter ?? 0);
+                const bt = Number(b.event.timeCounter ?? 0);
+
+                return (
+                    at - bt ||
+                    String(a.event.cpID).localeCompare(String(b.event.cpID)) ||
+                    String(a.event.contextID).localeCompare(String(b.event.contextID)) ||
+                    String(a.event.accessLabel ?? "").localeCompare(String(b.event.accessLabel ?? ""))
+                );
+            });
+
+            if (items.length === 0) continue;
+
+            // 最新 episode の membership age を基準にする
+            // time mode:
+            //   現在 stack に含まれる node は 0
+            //   最近 stack から外れた node は 1,2,...
+            //
+            // stack mode:
+            //   現在の配列 index に応じた age
+            const newestBaseAge = items[items.length - 1].baseArrayAge;
+
+            for (let i = 0; i < items.length; i++) {
+                const { event } = items[i];
+                const key = this.getObjectRingEventIdentity(event);
+
+                const distanceFromNewest = items.length - 1 - i;
+
+                let rawAge = null;
+                let normalizedAge = null;
+
+                if (newestBaseAge !== null && newestBaseAge !== undefined) {
+                    rawAge = Number(newestBaseAge) + distanceFromNewest;
+                    normalizedAge = this.normalizeAgeByFadeMode(rawAge);
+                }
+
+                // null も入れる。
+                // paint 側で fallback せず、「表示しない」と判断させるため
+                ageMap.set(key, normalizedAge);
+
+                debugRows.push({
+                    groupKey,
+                    ageSource: "array-episode",
+                    objectNodeId: event.objectNodeId,
+                    variableName: event.variableName,
+                    accessLabel: event.accessLabel,
+                    sourceKind: event.sourceKind,
+                    timeCounter: event.timeCounter,
+                    rawAge,
+                    normalizedAge,
+                    paletteKey: event.paletteKey
+                });
+            }
+        }
+
+        // ----------------------------
+        // 単一変数用:
+        // current, node, maxNode などは、
+        // 変数ごとの時系列で古いものほど age を大きくする
+        // ----------------------------
         for (const [groupKey, events] of groups.entries()) {
             events.sort((a, b) => {
                 const at = Number(a.timeCounter ?? 0);
@@ -3043,9 +3131,9 @@ window.VariableHistoryView = {
 
                 const key = this.getObjectRingEventIdentity(event);
 
-                if (age !== null) {
-                    ageMap.set(key, age);
-                }
+                // null も入れる。
+                // recent5 で対象外になった event が fallback 表示されるのを防ぐ
+                ageMap.set(key, age);
 
                 debugRows.push({
                     groupKey,
@@ -3943,14 +4031,28 @@ window.AnimationController = {
     allSnapsSorted: [],
     playBtn: null,
     stopBtn: null,
-    prevBtn: null,
-    nextBtn: null,
+    prevFrameBtn: null,   // ◀️ 1 snapshot 戻る
+    nextFrameBtn: null,   // ▶️ 1 snapshot 進む
+    prevChangeBtn: null,  // ⏪ 直前の変化点へ戻る
+    nextChangeBtn: null,  // ⏩ 次の変化点へ進む
     prepareOverlay: null,
     statusLabel: null,
 
     // 今画面に表示されている frame index
     // まだ何も表示していないときは -1
     displayedIndex: -1,
+    // 今画面に表示している snapshot key
+    // まだ何も表示していないときは null
+    displayedKey: null,
+
+    // allSnapsSorted 上での表示位置
+    // ▶️ / ◀️ 用
+    displayedAllIndex: -1,
+
+    // changedSnapshotKeys 上での表示位置
+    // ⏩ / ⏪ / Play 用
+    // 変化点ではない snapshot を表示しているときは -1
+    displayedChangeIndex: -1,
     editorFrameLineMarkerId: null,
     editorFrameColumnMarkerId: null,
     editorActiveLineWasEnabled: null,
@@ -4198,15 +4300,26 @@ window.AnimationController = {
         return btn;
     },
 
-    setPlaybackControlsEnabled: function(enabled) {
-        const buttons = [this.stopBtn, this.prevBtn, this.nextBtn];
+    setButtonEnabled: function(btn, enabled) {
+        if (!btn) return;
 
-        for (const btn of buttons) {
-            if (!btn) continue;
-            btn.disabled = !enabled;
-            btn.style.opacity = enabled ? "1" : "0.45";
-            btn.style.cursor = enabled ? "pointer" : "not-allowed";
+        btn.disabled = !enabled;
+        btn.style.opacity = enabled ? "1" : "0.45";
+        btn.style.cursor = enabled ? "pointer" : "not-allowed";
+    },
+
+    setPlaybackControlsEnabled: function(enabled) {
+        this.setButtonEnabled(this.stopBtn, enabled);
+
+        if (!enabled) {
+            this.setButtonEnabled(this.prevFrameBtn, false);
+            this.setButtonEnabled(this.nextFrameBtn, false);
+            this.setButtonEnabled(this.prevChangeBtn, false);
+            this.setButtonEnabled(this.nextChangeBtn, false);
+            return;
         }
+
+        this.updateManualNavigationButtons();
     },
 
     createUI: function() {
@@ -4238,9 +4351,14 @@ window.AnimationController = {
                 ? window.VariableHistoryOptions.buildAnimationStatusText("ready")
                 : "Ready (no variable selected)";
 
-        // 1コマ戻す
-        this.prevBtn = this.createControlButton("◀ Prev", () => {
-            this.stepBackward();
+        // 直前の変化点へ戻る
+        this.prevChangeBtn = this.createControlButton("⏪", () => {
+            this.stepChangeBackward();
+        });
+
+        // 1 snapshot 戻る
+        this.prevFrameBtn = this.createControlButton("◀️", () => {
+            this.stepFrameBackward();
         });
 
         // Prepare / Play
@@ -4280,16 +4398,23 @@ window.AnimationController = {
             this.pausePlayback();
         });
 
-        // 1コマ進める
-        this.nextBtn = this.createControlButton("Next ▶", () => {
-            this.stepForward();
+        /// 1 snapshot 進む
+        this.nextFrameBtn = this.createControlButton("▶️", () => {
+            this.stepFrameForward();
+        });
+
+        // 次の変化点へ進む
+        this.nextChangeBtn = this.createControlButton("⏩", () => {
+            this.stepChangeForward();
         });
 
         container.appendChild(this.statusLabel);
-        container.appendChild(this.prevBtn);
+        container.appendChild(this.prevChangeBtn);
+        container.appendChild(this.prevFrameBtn);
         container.appendChild(this.playBtn);
         container.appendChild(this.stopBtn);
-        container.appendChild(this.nextBtn);
+        container.appendChild(this.nextFrameBtn);
+        container.appendChild(this.nextChangeBtn);
 
         document.body.appendChild(container);
 
@@ -4338,40 +4463,43 @@ window.AnimationController = {
 
     // 変化判定用 signature も StoredGraph ベース
     getSignature: function(graphObj, targetName) {
-    const info = this.getTargetInfoFromStoredGraphForName(graphObj, targetName);
+        const info = this.getTargetInfoFromStoredGraphForName(graphObj, targetName);
 
-    if (!info.targetNodeId) return "VAR:null";
+        if (!info.targetNodeId) return "VAR:null";
 
-    // 単一ノード変数
-    if (!info.isArray) {
-        return `VAR:${info.targetNodeId}`;
-    }
+        // 単一ノード変数
+        if (!info.isArray) {
+            return `VAR:${info.targetNodeId}`;
+        }
 
-    const gradientMode = window.VariableHistoryOptions?.gradientMode || "time";
+        // ----------------------------
+        // 修正ポイント:
+        // time / stack に関係なく、
+        // 配列は index 付き・順序付きで signature を作る
+        // これにより
+        //   [A, B]
+        //   [A, B, B]
+        // の違いも検出できる
+        // ----------------------------
+        if (
+            window.VariableHistoryView &&
+            typeof window.VariableHistoryView.getArrayContentsEntriesFromStoredGraph === "function"
+        ) {
+            const entries = window.VariableHistoryView
+                .getArrayContentsEntriesFromStoredGraph(graphObj, info.targetNodeId)
+                .sort((a, b) => a.index - b.index);
 
-    // step2-5:
-    // stack モードでは配列内の順序が色に影響するため、
-    // 集合ではなく index 付きの順序を signature に入れる
-    if (
-        gradientMode === "stack" &&
-        window.VariableHistoryView &&
-        typeof window.VariableHistoryView.getArrayContentsEntriesFromStoredGraph === "function"
-    ) {
-        const entries = window.VariableHistoryView
-            .getArrayContentsEntriesFromStoredGraph(graphObj, info.targetNodeId)
-            .sort((a, b) => a.index - b.index);
+            const ordered = entries
+                .map(entry => `${entry.index}:${entry.nodeId}`)
+                .join(",");
 
-        const ordered = entries
-            .map(entry => `${entry.index}:${entry.nodeId}`)
-            .join(",");
+            return `ARRAY_ORDERED:${info.targetNodeId}:${ordered}`;
+        }
 
-        return `ARRAY_ORDERED:${info.targetNodeId}:${ordered}`;
-    }
-
-    // time モードでは今まで通り集合として扱う
-    const arr = Array.from(info.arrayContentsSet).sort();
-    return `ARRAY:${info.targetNodeId}:${arr.join(",")}`;
-},
+        // fallback
+        const arr = Array.from(info.arrayContentsSet).sort();
+        return `ARRAY_FALLBACK:${info.targetNodeId}:${arr.join(",")}`;
+    },
     // ----------------------------
     // 複数選択 entry を取得する
     // ----------------------------
@@ -4687,7 +4815,11 @@ window.AnimationController = {
             const changed = (lastSig === null) ? true : (sig !== lastSig);
 
             if (changed) {
-                this.changedSnapshotKeys.push({ cpID, contextID });
+                this.changedSnapshotKeys.push({
+                    cpID: String(cpID),
+                    contextID: String(contextID),
+                    timeCounter
+                });
             }
 
             this.changedSnapshotDebug.push({
@@ -5062,6 +5194,9 @@ window.AnimationController = {
         this.fixedPositions = null;
         this.currentIndex = 0;
         this.displayedIndex = -1;
+        this.displayedKey = null;
+        this.displayedAllIndex = -1;
+        this.displayedChangeIndex = -1;
 
         this.clearCallTreeHighlight();
 
@@ -5144,6 +5279,259 @@ window.AnimationController = {
         if (this.playBtn) {
             this.playBtn.innerText = "▶ Play Animation";
         }
+        this.updateManualNavigationButtons();
+    },
+
+    // ----------------------------
+    // 表示中 snapshot の位置管理
+    // ----------------------------
+    snapshotKeyEquals: function(a, b) {
+        return (
+            String(a?.cpID ?? "") === String(b?.cpID ?? "") &&
+            String(a?.contextID ?? "") === String(b?.contextID ?? "")
+        );
+    },
+
+    normalizeSnapshotKey: function(key) {
+        if (!key) return null;
+
+        const cpID = String(key.cpID ?? "");
+        const contextID = String(key.contextID ?? "");
+
+        if (!cpID || !contextID) return null;
+
+        const snap = __$__.Context?.StoredGraph?.[cpID]?.[contextID];
+
+        return {
+            cpID,
+            contextID,
+            timeCounter: key.timeCounter ?? snap?.timeCounter ?? null
+        };
+    },
+
+    syncDisplayedIndicesFromKey: function(key) {
+        const normalizedKey = this.normalizeSnapshotKey(key);
+
+        if (!normalizedKey) {
+            this.displayedKey = null;
+            this.displayedAllIndex = -1;
+            this.displayedChangeIndex = -1;
+            this.displayedIndex = -1;
+            this.currentIndex = 0;
+            return {
+                displayedKey: this.displayedKey,
+                displayedAllIndex: this.displayedAllIndex,
+                displayedChangeIndex: this.displayedChangeIndex,
+                displayedIndex: this.displayedIndex,
+                currentIndex: this.currentIndex
+            };
+        }
+
+        this.displayedKey = normalizedKey;
+
+        this.displayedAllIndex = this.allSnapsSorted.findIndex(s =>
+            this.snapshotKeyEquals(s, normalizedKey)
+        );
+
+        this.displayedChangeIndex = this.changedSnapshotKeys.findIndex(s =>
+            this.snapshotKeyEquals(s, normalizedKey)
+        );
+
+        // 互換用:
+        // 既存の stepForward / stepBackward / playCurrent が
+        // displayedIndex を使っているため、今は changedSnapshotKeys 側に合わせる。
+        this.displayedIndex = this.displayedChangeIndex;
+
+        // currentIndex は「次に再生する変化点」の index として使う。
+        // 表示中 snapshot が変化点なら、その次から再生する。
+        // 変化点でない snapshot の場合は、いったん現在の displayedIndex 互換を優先し、
+        // 次 Step 以降で timeCounter ベースに変更する。
+        const nextChangeIndex = this.findNextChangeIndexAfterKey(normalizedKey);
+
+        this.currentIndex =
+            nextChangeIndex >= 0
+                ? nextChangeIndex
+                : this.changedSnapshotKeys.length;
+
+        return {
+            displayedKey: this.displayedKey,
+            displayedAllIndex: this.displayedAllIndex,
+            displayedChangeIndex: this.displayedChangeIndex,
+            displayedIndex: this.displayedIndex,
+            currentIndex: this.currentIndex
+        };
+        },
+
+    findNextChangeIndexAfterKey: function(key) {
+        if (!this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+            return -1;
+        }
+
+        const normalizedKey = this.normalizeSnapshotKey(key);
+
+        // まだ何も表示していない場合は、最初の変化点へ
+        if (!normalizedKey) {
+            return 0;
+        }
+
+        const currentTime = Number(normalizedKey.timeCounter ?? -Infinity);
+
+        for (let i = 0; i < this.changedSnapshotKeys.length; i++) {
+            const changeTime = Number(this.changedSnapshotKeys[i].timeCounter ?? -Infinity);
+
+            // 「現在より後」の最初の変化点へ飛ぶ
+            if (changeTime > currentTime) {
+                return i;
+            }
+        }
+
+        // 次の変化点がない
+        return -1;
+    },
+
+    findPrevChangeIndexBeforeKey: function(key) {
+        if (!this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+            return -1;
+        }
+
+        const normalizedKey = this.normalizeSnapshotKey(key);
+
+        // まだ何も表示していない場合は、戻る先がない
+        if (!normalizedKey) {
+            return -1;
+        }
+
+        const currentTime = Number(normalizedKey.timeCounter ?? Infinity);
+
+        for (let i = this.changedSnapshotKeys.length - 1; i >= 0; i--) {
+            const changeTime = Number(this.changedSnapshotKeys[i].timeCounter ?? Infinity);
+
+            // 「現在より前」の最後の変化点へ戻る
+            if (changeTime < currentTime) {
+                return i;
+            }
+        }
+
+        // 前の変化点がない
+        return -1;
+    },
+
+    updateManualNavigationButtons: function() {
+        if (this.isPreparing || !this.isPrepared) {
+            this.setButtonEnabled(this.prevFrameBtn, false);
+            this.setButtonEnabled(this.nextFrameBtn, false);
+            this.setButtonEnabled(this.prevChangeBtn, false);
+            this.setButtonEnabled(this.nextChangeBtn, false);
+            return;
+        }
+
+        const allCount = this.allSnapsSorted?.length ?? 0;
+        const changeCount = this.changedSnapshotKeys?.length ?? 0;
+
+        // ----------------------------
+        // ◀️ / ▶️: 全 snapshot 上での前後
+        // ----------------------------
+        if (allCount === 0) {
+            this.setButtonEnabled(this.prevFrameBtn, false);
+            this.setButtonEnabled(this.nextFrameBtn, false);
+        } else if (!this.displayedKey) {
+            // Prepare 後、まだ何も表示していない状態
+            this.setButtonEnabled(this.prevFrameBtn, false);
+            this.setButtonEnabled(this.nextFrameBtn, true);
+        } else {
+            this.setButtonEnabled(
+                this.prevFrameBtn,
+                this.displayedAllIndex > 0
+            );
+
+            this.setButtonEnabled(
+                this.nextFrameBtn,
+                this.displayedAllIndex >= 0 &&
+                this.displayedAllIndex < allCount - 1
+            );
+        }
+
+        // ----------------------------
+        // ⏪ / ⏩: 変化点上での前後
+        // ----------------------------
+        if (changeCount === 0) {
+            this.setButtonEnabled(this.prevChangeBtn, false);
+            this.setButtonEnabled(this.nextChangeBtn, false);
+        } else if (!this.displayedKey) {
+            // Prepare 後、まだ何も表示していない状態
+            this.setButtonEnabled(this.prevChangeBtn, false);
+            this.setButtonEnabled(this.nextChangeBtn, true);
+        } else {
+            const prevChangeIndex = this.findPrevChangeIndexBeforeKey(this.displayedKey);
+            const nextChangeIndex = this.findNextChangeIndexAfterKey(this.displayedKey);
+
+            this.setButtonEnabled(
+                this.prevChangeBtn,
+                prevChangeIndex >= 0
+            );
+
+            this.setButtonEnabled(
+                this.nextChangeBtn,
+                nextChangeIndex >= 0
+            );
+        }
+    },
+
+    debugDisplayedSnapshot: function() {
+        const result = {
+            displayedKey: this.displayedKey,
+            displayedAllIndex: this.displayedAllIndex,
+            displayedChangeIndex: this.displayedChangeIndex,
+            displayedIndex: this.displayedIndex,
+            currentIndex: this.currentIndex,
+            allCount: this.allSnapsSorted?.length ?? 0,
+            changeCount: this.changedSnapshotKeys?.length ?? 0
+        };
+
+        console.log("[AnimationController] displayed snapshot:", result);
+        return result;
+    },
+
+    renderFrameByKey: function(key, options = {}, done) {
+        const normalizedKey = this.normalizeSnapshotKey(key);
+
+        if (!normalizedKey) {
+            this.statusLabel.innerText = "No frame";
+            done && done();
+            return;
+        }
+
+        const snap =
+            __$__.Context?.StoredGraph?.[normalizedKey.cpID]?.[normalizedKey.contextID];
+
+        if (!snap) {
+            this.statusLabel.innerText = "Frame not found";
+            console.warn("[renderFrameByKey] snapshot not found:", normalizedKey);
+            done && done();
+            return;
+        }
+
+        this.syncDisplayedIndicesFromKey(normalizedKey);
+
+        // editor 上で cp の位置を示す
+        this.showEditorFrameIndicator(normalizedKey);
+
+        // call graph 上で context を赤くする
+        this.applyCallTreeHighlightForContext(normalizedKey.contextID);
+
+        if (options.label) {
+            this.statusLabel.innerText = options.label;
+        } else if (this.displayedAllIndex >= 0 && this.allSnapsSorted?.length > 0) {
+            this.statusLabel.innerText =
+                `Snapshot ${this.displayedAllIndex + 1}/${this.allSnapsSorted.length}`;
+        } else {
+            this.statusLabel.innerText = "Snapshot";
+        }
+
+        this.applySnapshot(snap, normalizedKey, () => {
+            this.updateManualNavigationButtons();
+            done && done();
+        });
     },
 
     renderFrameAtIndex: function(index, done) {
@@ -5159,8 +5547,7 @@ window.AnimationController = {
         const key = this.changedSnapshotKeys[safeIndex];
         const snap = __$__.Context.StoredGraph[key.cpID][key.contextID];
 
-        this.displayedIndex = safeIndex;
-        this.currentIndex = safeIndex + 1;
+        this.syncDisplayedIndicesFromKey(key);
 
         // editor 上で cp の位置を示す
         this.showEditorFrameIndicator(key);
@@ -5172,44 +5559,139 @@ window.AnimationController = {
             `Frame ${safeIndex + 1}/${this.changedSnapshotKeys.length}`;
 
         this.applySnapshot(snap, key, () => {
+            this.updateManualNavigationButtons();
             done && done();
         });
     },
 
+    // 古いコードが stepForward() を呼んでも、現在の「次の変化点へ進む」動作に揃える
     stepForward: function() {
-        if (this.isPreparing) return;
-
-        if (!this.isPrepared || this.changedSnapshotKeys.length === 0) {
-            this.statusLabel.innerText = "Prepare animation first";
-            return;
-        }
-
-        this.pausePlayback();
-
-        const nextIndex =
-            this.displayedIndex < 0
-                ? 0
-                : Math.min(this.displayedIndex + 1, this.changedSnapshotKeys.length - 1);
-
-        this.renderFrameAtIndex(nextIndex);
+        return this.stepChangeForward();
     },
 
-    stepBackward: function() {
+    stepFrameForward: function() {
         if (this.isPreparing) return;
 
-        if (!this.isPrepared || this.changedSnapshotKeys.length === 0) {
+        if (!this.isPrepared || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
             this.statusLabel.innerText = "Prepare animation first";
             return;
         }
 
+        // 再生中なら一度止める
         this.pausePlayback();
 
-        const prevIndex =
-            this.displayedIndex < 0
-                ? 0
-                : Math.max(this.displayedIndex - 1, 0);
+        const allCount = this.allSnapsSorted.length;
 
-        this.renderFrameAtIndex(prevIndex);
+        // まだ何も表示していないなら最初の snapshot へ
+        // 何か表示しているなら、その次の snapshot へ
+        const nextIndex =
+            this.displayedKey
+                ? this.displayedAllIndex + 1
+                : 0;
+
+        // 最後を超えたら、今回は止めるだけ
+        // ボタンを押せなくする処理は後の Step で入れる
+        if (nextIndex < 0 || nextIndex >= allCount) {
+            this.statusLabel.innerText = `Last snapshot ${allCount}/${allCount}`;
+            return;
+        }
+
+        const key = this.allSnapsSorted[nextIndex];
+
+        this.renderFrameByKey(key, {
+            label: `Snapshot ${nextIndex + 1}/${allCount}`
+        });
+    },
+
+    stepFrameBackward: function() {
+        if (this.isPreparing) return;
+
+        if (!this.isPrepared || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
+            this.statusLabel.innerText = "Prepare animation first";
+            return;
+        }
+
+        // 再生中なら一度止める
+        this.pausePlayback();
+
+        // まだ何も表示していないなら戻れない
+        if (!this.displayedKey) {
+            this.statusLabel.innerText = "No snapshot is displayed";
+            return;
+        }
+
+        const prevIndex = this.displayedAllIndex - 1;
+
+        // 先頭より前には戻らない
+        // ボタンを押せなくする処理は後の Step で入れる
+        if (prevIndex < 0) {
+            this.statusLabel.innerText = `First snapshot 1/${this.allSnapsSorted.length}`;
+            return;
+        }
+
+        const key = this.allSnapsSorted[prevIndex];
+
+        this.renderFrameByKey(key, {
+            label: `Snapshot ${prevIndex + 1}/${this.allSnapsSorted.length}`
+        });
+    },
+
+    // 古いコードが stepBackward() を呼んでも、現在の「直前の変化点へ戻る」動作に揃える
+    stepBackward: function() {
+        return this.stepChangeBackward();
+    },
+
+    stepChangeForward: function() {
+        if (this.isPreparing) return;
+
+        if (!this.isPrepared || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+            this.statusLabel.innerText = "Prepare animation first";
+            return;
+        }
+
+        // 再生中なら一度止める
+        this.pausePlayback();
+
+        const changeCount = this.changedSnapshotKeys.length;
+
+        const nextIndex = this.findNextChangeIndexAfterKey(this.displayedKey);
+
+        if (nextIndex < 0 || nextIndex >= changeCount) {
+            this.statusLabel.innerText = `Last change ${changeCount}/${changeCount}`;
+            return;
+        }
+
+        const key = this.changedSnapshotKeys[nextIndex];
+
+        this.renderFrameByKey(key, {
+            label: `Change ${nextIndex + 1}/${changeCount}`
+        });
+    },
+    stepChangeBackward: function() {
+        if (this.isPreparing) return;
+
+        if (!this.isPrepared || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+            this.statusLabel.innerText = "Prepare animation first";
+            return;
+        }
+
+        // 再生中なら一度止める
+        this.pausePlayback();
+
+        const changeCount = this.changedSnapshotKeys.length;
+
+        const prevIndex = this.findPrevChangeIndexBeforeKey(this.displayedKey);
+
+        if (prevIndex < 0 || prevIndex >= changeCount) {
+            this.statusLabel.innerText = `First change 1/${changeCount}`;
+            return;
+        }
+
+        const key = this.changedSnapshotKeys[prevIndex];
+
+        this.renderFrameByKey(key, {
+            label: `Change ${prevIndex + 1}/${changeCount}`
+        });
     },
     
     startPlayback: function() {
@@ -5291,6 +5773,8 @@ window.AnimationController = {
             if (this.playBtn) {
                 this.playBtn.innerText = "▶ Play Animation";
             }
+
+            this.updateManualNavigationButtons();
             return;
         }
 
@@ -5597,6 +6081,9 @@ window.VariableHistoryContextMenu = {
         window.AnimationController.preparedTargetName = null;
         window.AnimationController.preparedSelectionKey = null;
         window.AnimationController.displayedIndex = -1;
+        window.AnimationController.displayedKey = null;
+        window.AnimationController.displayedAllIndex = -1;
+        window.AnimationController.displayedChangeIndex = -1;
 
         if (typeof window.AnimationController.setPlaybackControlsEnabled === "function") {
             window.AnimationController.setPlaybackControlsEnabled(false);

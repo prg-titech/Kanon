@@ -16,6 +16,8 @@ __$__.CallTreeNetwork = {
     circle: undefined,
     whileDrawing: undefined,
     nextDrawingSource: undefined,
+    animationContextSensitiveID: null,
+    suppressSpecifiedContextHighlight: false,
 
     switchEnabled() {
         this.enable = !this.enable;
@@ -335,22 +337,60 @@ __$__.CallTreeNetwork = {
 
     updateHighlightCircles() {
         let nodeUpdate = __$__.CallTreeNetwork.circle;
+        if (!nodeUpdate) return;
+
         let selectedContext = {};
         Object.values(__$__.Context.SpecifiedContext).forEach(contextSensitiveID => {
-            selectedContext[contextSensitiveID] = true;
+            selectedContext[String(contextSensitiveID)] = true;
         });
 
+        const animationCSID = String(__$__.CallTreeNetwork.animationContextSensitiveID ?? "");
+        const suppressSpecified = !!__$__.CallTreeNetwork.suppressSpecifiedContextHighlight;
+
         nodeUpdate
-            .style('stroke-width', d => {
-                let contextSensitiveID = d.data.contextSensitiveID;
-                if (selectedContext[contextSensitiveID]) {
-                    return 3;
-                } else {
-                    return 1;
+            .style('stroke', d => {
+                const csid = String(d.data.contextSensitiveID ?? "");
+                if (animationCSID && csid === animationCSID) {
+                    return '#ff3333';
                 }
+                return 'black';
+            })
+            .style('stroke-width', d => {
+                const csid = String(d.data.contextSensitiveID ?? "");
+
+                // アニメーション中の現在 context は赤太枠
+                if (animationCSID && csid === animationCSID) {
+                    return 4;
+                }
+
+                // アニメーション中は、prepare 前に選ばれていた黒太枠を出さない
+                if (!suppressSpecified && selectedContext[csid]) {
+                    return 3;
+                }
+
+                return 1;
             });
     },
 
+    setAnimationHighlightedContext(contextSensitiveID) {
+        this.animationContextSensitiveID = contextSensitiveID
+            ? String(contextSensitiveID)
+            : null;
+
+        // アニメーション中は既存の黒太枠を消す
+        this.suppressSpecifiedContextHighlight = true;
+
+        this.updateHighlightCircles();
+    },
+
+    clearAnimationHighlightedContext() {
+        this.animationContextSensitiveID = null;
+
+        // アニメーション終了時は元に戻す
+        this.suppressSpecifiedContextHighlight = false;
+
+        this.updateHighlightCircles();
+    },
 
     /**
      * if there is no test in the context, the value is undefined
