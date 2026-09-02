@@ -3224,6 +3224,9 @@ window.VariableHistoryView = {
         const n = Number(age);
         if (!Number.isFinite(n)) return null;
 
+    // 発表用：最新（最も濃い色）だけ表示する
+        return n === 0 ? 0 : null;
+
         const fadeMode = this.getFadeMode();
 
         // オプション2:
