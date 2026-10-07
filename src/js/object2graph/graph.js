@@ -111,6 +111,7 @@ __$__.StoredGraphFormat = {
 
         duplicate() {
             let newNode = new __$__.StoredGraphFormat.Node(this.id, this.value, this.isLiteral, this.type);
+            if (this.collectionKind) newNode.collectionKind = this.collectionKind;
             if (this.x) newNode.x = this.x;
             if (this.y) newNode.y = this.y;
             return newNode;
@@ -211,7 +212,9 @@ __$__.StoredGraphFormat = {
         }
 
         duplicate() {
-            return new __$__.StoredGraphFormat.Edge(this.from, this.to, this.label, this.displayLabel);
+            const edge = new __$__.StoredGraphFormat.Edge(this.from, this.to, this.label, this.displayLabel);
+            if (this.isSetMember) edge.isSetMember = true;
+            return edge;
         }
     },
 

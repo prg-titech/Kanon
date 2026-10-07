@@ -1,5 +1,12 @@
 __$__.Animation = {
     nowAnimationID: 0,
+    moveTimers: new Set(),
+
+    cancelMoves: function() {
+        this.nowAnimationID++;
+        for (const timer of this.moveTimers) clearInterval(timer);
+        this.moveTimers.clear();
+    },
 
 
     /**
@@ -22,16 +29,19 @@ __$__.Animation = {
             return;
     
         let interval = setInterval(() => {
+            // 無効化されたタイマーは、終了時の最終移動より先に止める。
+            if (animationID !== __$__.Animation.nowAnimationID) {
+                clearInterval(interval);
+                __$__.Animation.moveTimers.delete(interval);
+                return;
+            }
             let current_time = (new Date).getTime();
             if (current_time - start_time >= ms) {
                 __$__.ObjectGraphNetwork.network.moveNode(node_id, to.x, to.y);
                 __$__.Update.updateArrayPosition({nodes: [node_id]});
                 __$__.StorePositions.registerPositions();
                 clearInterval(interval);
-                return;
-            }
-            if (current_time - start_time >= ms || animationID !== __$__.Animation.nowAnimationID) {
-                clearInterval(interval);
+                __$__.Animation.moveTimers.delete(interval);
                 return;
             }
             
@@ -39,6 +49,7 @@ __$__.Animation = {
             __$__.Update.updateArrayPosition({nodes: [node_id]});
             __$__.StorePositions.registerPositions();
         }, 1);
+        this.moveTimers.add(interval);
     },
 
 
@@ -52,6 +63,12 @@ __$__.Animation = {
      * we use animation to move the node.
      */
     setData: function(visGraph) {
+        const controller = window.AnimationController;
+        if (controller?.hasFixedLayout()) {
+            controller.renderFixedVisGraph(visGraph);
+            return;
+        }
+        this.cancelMoves();
         let next_position = [];
         let node_positions = __$__.ObjectGraphNetwork.network.getPositions();
         visGraph.nodes.forEach(node => {

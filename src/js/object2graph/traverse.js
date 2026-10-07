@@ -50,7 +50,7 @@ __$__.Traverse = {
         if (obj.__id && !graphNodes[obj.__id]) {
             node = new __$__.StoredGraphFormat.Node(
                 obj.__id,
-                obj.__ClassName__ || obj.constructor.name,
+                obj.__ClassName__ || obj.constructor?.name || "Object",
                 false,
                 typeof obj
             );
@@ -60,6 +60,38 @@ __$__.Traverse = {
             return;
         }
     
+        // 通常の Object はプロパティ値を保持する入れ物として識別する。
+        const prototype = Object.getPrototypeOf(obj);
+        if ((prototype === Object.prototype || prototype === null) &&
+            (!obj.__ClassName__ || obj.__ClassName__ === "Object")) {
+            node.collectionKind = "object";
+        }
+
+        // Set の要素は Object.keys では取得できないため、所属関係を保存する。
+        // 要素 ID は挿入順によらず、削除・再追加後も同じ値に対応する。
+        if (obj instanceof Set) {
+            node.collectionKind = "set";
+            if (!obj.__setMemberIds) Object.setProperty(obj, '__setMemberIds', new Map());
+            for (const member of obj) {
+                if (!obj.__setMemberIds.has(member)) {
+                    obj.__setMemberIds.set(member, obj.__id + '-set-member-' + obj.__setMemberIds.size);
+                }
+                let memberId = obj.__setMemberIds.get(member);
+                if (member !== null && (typeof member === "object" || typeof member === "function")) {
+                    if (!member.__id) Object.setProperty(member, '__id', memberId);
+                    memberId = member.__id;
+                    __$__.Traverse.dfs(graph, member, graphNodes, objs, variableMap);
+                } else {
+                    graph.pushNode(new __$__.StoredGraphFormat.Node(
+                        memberId, String(member), true, typeof member
+                    ));
+                }
+                const edge = new __$__.StoredGraphFormat.Edge(obj.__id, memberId, '', '');
+                edge.isSetMember = true;
+                graph.pushEdge(edge);
+            }
+        }
+
         Object.keys(obj).forEach(key => {
             // Don't search if the head of property name is "__"
             if (key.slice(0, 2) === '__')

@@ -125,6 +125,7 @@ __$__.Context = {
 
     // Draw() method is executed when user code is changed or the cursor position is moved
     Draw: function(e) {
+        const fixedLayout = !!window.AnimationController?.hasFixedLayout();
         let cursor_position = __$__.editor.getCursorPosition();
         let checkPointIds = __$__.Context.FindCPIDNearCursorPosition(cursor_position);
         let checkPointId = __$__.Context.CheckPointAroundCursor = {
@@ -187,10 +188,12 @@ __$__.Context = {
 
             __$__.ObjectGraphNetwork.options.nodes.color = 'rgba(' + __$__.ObjectGraphNetwork.colorRGB.skyblue + ',' + ((showLightly) ? 0.5 : 1.0) + ')';
             __$__.ObjectGraphNetwork.options.edges.color.opacity = (showLightly) ? 0.5 : 1.0;
-            __$__.ObjectGraphNetwork.network.setOptions(__$__.ObjectGraphNetwork.options);
+            __$__.ObjectGraphNetwork.network.setOptions(fixedLayout
+                ? { ...__$__.ObjectGraphNetwork.options, physics: { enabled: false } }
+                : __$__.ObjectGraphNetwork.options);
 
             let isChanged;
-            if (__$__.Layout.enabled && graph) {
+            if (!fixedLayout && __$__.Layout.enabled && graph) {
                 __$__.Layout.setLocation(graph);
                 isChanged = Object.values(graph.nodes).some(node => {
                     let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
@@ -202,7 +205,7 @@ __$__.Context = {
             if (isChanged || e === 'changed' || e === 'redraw' || __$__.Update.isChange(visGraph, true)) {
                 __$__.Animation.setData(visGraph);
                 //console.log(visGraph);
-                if (__$__.Update.useBoxToVisualizeArray) {
+                if (!fixedLayout && __$__.Update.useBoxToVisualizeArray) {
                     __$__.Context.Arrays.forEach(arr => {
                         __$__.Update.updateArrayPosition({nodes: [arr[0]]});
                     });
@@ -291,7 +294,7 @@ __$__.Context = {
             __$__.StorePositions.setPositions(graph);
 
             let isChanged;
-            if (__$__.Layout.enabled) {
+            if (!fixedLayout && __$__.Layout.enabled) {
                 __$__.Layout.setLocation(graph);
                 isChanged = Object.values(graph.nodes).some(node => {
                     let beforePos = __$__.StorePositions.oldNetwork.nodes[node.id];
