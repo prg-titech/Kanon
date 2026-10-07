@@ -217,7 +217,7 @@ window.VariableHistoryOptions = {
         ac.preparedSelectionKey = null;
         ac.displayedIndex = -1;
         ac.currentIndex = 0;
-        ac.fixedPositions = null;
+        // 色・選択の変更では、Prepare で保存した配置を破棄しない。
         ac.displayedKey = null;
         ac.displayedAllIndex = -1;
         ac.displayedChangeIndex = -1;
@@ -386,7 +386,7 @@ window.VariableHistoryOptions = {
 
     variableHasArrayInGraph: function(graphObj, variableName) {
         const targetId = this.getVariableTargetIdFromGraph(graphObj, variableName);
-        return !!targetId && targetId.includes("arr");
+        return !!targetId && !window.VariableHistoryView.isUnorderedCollectionTarget(graphObj, targetId) && targetId.includes("arr");
     },
 
     variableHasArrayInCurrentGroup: function(variableName) {
@@ -1262,8 +1262,14 @@ window.VariableHistoryView = {
             // 大きくなりすぎ防止
             maxOffset: 24
         },
-    removeArrayNodes: function(visGraph) {
+    removeArrayNodes: function(visGraph, graphObj = this.getCurrentStoredGraph()) {
         const removalIds = new Set();
+        // Set / Object の参照関係は履歴に残し、要素への矢印だけを非表示にする。
+        const collectionNodeIds = new Set(
+            Object.values(graphObj?.nodes || {})
+                .filter(node => node.collectionKind === "set" || node.collectionKind === "object")
+                .map(node => String(node.id))
+        );
         const isArrayRootNode = (id) => {
             const s = String(id ?? "");
             return s.includes("arr") && !s.endsWith("-array");
@@ -1304,8 +1310,178 @@ window.VariableHistoryView = {
         // 一方
         //   arr-slot -> 実ノード
         // は残る
-            return !removalIds.has(from) && !removalIds.has(to);
+            return !removalIds.has(from) && !removalIds.has(to) && !collectionNodeIds.has(from);
         });
+    },
+
+    // 現在の変数から参照できない配列の矢印を除く。
+    // __objs には過去のループで作られた配列も残るため、表示だけを絞る。
+    removeUnreachableArrayArrows: function(visGraph, graphObj) {
+        if (!Array.isArray(graphObj?.variableEdges) || !Array.isArray(graphObj?.edges)) return;
+
+        const outgoing = new Map();
+        const slotIds = new Set();
+        const connect = (from, to) => {
+            if (!outgoing.has(from)) outgoing.set(from, []);
+            outgoing.get(from).push(to);
+        };
+        for (const edge of graphObj.edges) {
+            const from = String(edge.from);
+            connect(from, String(edge.to));
+
+            // 配列本体 -> スロットの辺は保存されていないので、所有関係を補う。
+            // displayLabel ではなく元のキーを使い、名前のない入れ子配列もたどる。
+            const suffix = `-${edge.label}-array`;
+            if (!from.endsWith(suffix)) continue;
+            const ownerId = from.slice(0, -suffix.length);
+            if (!Object.prototype.hasOwnProperty.call(graphObj.nodes || {}, ownerId)) continue;
+            slotIds.add(from);
+            connect(ownerId, from);
+        }
+
+        const reachable = new Set();
+        const pending = graphObj.variableEdges.map(edge => String(edge.to));
+        while (pending.length) {
+            const id = pending.pop();
+            if (reachable.has(id)) continue;
+            reachable.add(id);
+            for (const to of outgoing.get(id) || []) pending.push(to);
+        }
+
+        const removed = new Set([...slotIds].filter(id => !reachable.has(id)));
+        visGraph.nodes = visGraph.nodes.filter(node => !removed.has(String(node.id)));
+        visGraph.edges = visGraph.edges.filter(edge =>
+            !removed.has(String(edge.from)) && !removed.has(String(edge.to))
+        );
+    },
+
+    // 選択した変数の矢印だけを描画から除く。履歴データは保持する。
+    hideSelectedVariableEdges: function(visGraph, graphObj) {
+        const hiddenSources = new Set();
+        for (const entry of this.getActiveRingSelectionEntries()) {
+            const name = String(entry.name ?? "").trim();
+            if (!name) continue;
+
+            hiddenSources.add(`__Variable-${name}`);
+            hiddenSources.add(`Variable-${name}`);
+
+            // 配列の緑の矢印は変数ノードではなく、各スロットから伸びる。
+            const info = this.getTargetInfoFromStoredGraph(graphObj, name);
+            if (info.isArray) {
+                for (const member of this.getArrayContentsEntriesFromStoredGraph(graphObj, info.targetNodeId)) {
+                    if (member.slotNodeId) hiddenSources.add(String(member.slotNodeId));
+                }
+            }
+        }
+
+        visGraph.edges = visGraph.edges.filter(edge => !hiddenSources.has(String(edge.from)));
+    },
+
+    // 画面上での矢印の長さ。ズームしてもノードの近くに表示する。
+    variableArrowLengthPx: 60,
+
+    isVariableArrowSourceId: function(id) {
+        const value = String(id ?? "");
+        return value.startsWith("__Variable-") || value.startsWith("Variable-") || value.endsWith("-array");
+    },
+
+    prepareShortVariableArrows: function(visGraph) {
+        const nodes = new Map(visGraph.nodes.map(node => [String(node.id), node]));
+        const anchors = new Map();
+        const groups = new Map();
+        const edges = [];
+
+        for (const edge of visGraph.edges) {
+            const from = String(edge.from);
+            const oldAnchor = nodes.get(from)?.vhVariableArrow;
+            if (!oldAnchor && !this.isVariableArrowSourceId(from)) {
+                edges.push(edge);
+                continue;
+            }
+            const targetId = String(edge.to);
+            if (!nodes.has(targetId)) continue;
+            const sourceId = oldAnchor?.sourceId ?? from;
+            // 編集・ダブルクリックの参照解決で使う元の始点 ID を維持する。
+            const anchorId = sourceId;
+            if (!anchors.has(anchorId)) {
+                const target = nodes.get(targetId);
+                const anchor = {
+                    id: anchorId, label: "", hidden: true,
+                    physics: false, fixed: { x: true, y: true },
+                    x: Number.isFinite(target.x) ? target.x : 0,
+                    y: Number.isFinite(target.y) ? target.y : 0,
+                    vhVariableArrow: { sourceId, targetId, angle: 0 }
+                };
+                anchors.set(anchorId, anchor);
+                if (!groups.has(targetId)) groups.set(targetId, []);
+                groups.get(targetId).push(anchor);
+            }
+            // 始点の近傍配置だけで直線を描き、力学計算には参加させない。
+            edges.push({ ...edge, from: anchorId, smooth: false, physics: false });
+        }
+
+        for (const group of groups.values()) {
+            group.sort((a, b) => a.vhVariableArrow.sourceId.localeCompare(b.vhVariableArrow.sourceId));
+            group.forEach((anchor, index) => {
+                anchor.vhVariableArrow.angle = -3 * Math.PI / 4 + 2 * Math.PI * index / group.length;
+            });
+        }
+        visGraph.nodes = visGraph.nodes.filter(node =>
+            !this.isVariableArrowSourceId(node.id)
+        );
+        visGraph.nodes.push(...anchors.values());
+        visGraph.edges = edges;
+        this.installVariableArrowTracking(__$__.ObjectGraphNetwork?.network);
+    },
+
+    getVariableArrowPosition: function(reference, target, bounds, scale) {
+        const dx = Math.cos(reference.angle);
+        const dy = Math.sin(reference.angle);
+        // 初回描画前には bounding box が未確定なので、通常の楕円サイズで補完する。
+        const width = bounds ? (bounds.right - bounds.left) / 2 : 0;
+        const height = bounds ? (bounds.bottom - bounds.top) / 2 : 0;
+        const rx = Number.isFinite(width) && width > 0 ? width : 25;
+        const ry = Number.isFinite(height) && height > 0 ? height : 15;
+        const radius = 1 / Math.sqrt((dx / rx) ** 2 + (dy / ry) ** 2);
+        const zoom = Number.isFinite(scale) && scale > 0 ? scale : 1;
+        const distance = radius + this.variableArrowLengthPx / zoom;
+        // vis.getPositions は整数に丸めるため、比較する位置も整数に揃える。
+        return {
+            x: Math.round(target.x + dx * distance),
+            y: Math.round(target.y + dy * distance)
+        };
+    },
+
+    installVariableArrowTracking: function(net) {
+        if (!net || net.__vhVariableArrowHandler) return;
+        const handler = () => {
+            const nodes = __$__.ObjectGraphNetwork.nodes;
+            if (!nodes) return;
+            const anchors = [];
+            nodes.forEach(node => { if (node.vhVariableArrow) anchors.push(node); });
+            if (!anchors.length) return;
+            const ids = new Set();
+            for (const node of anchors) {
+                ids.add(String(node.id));
+                ids.add(node.vhVariableArrow.targetId);
+            }
+            // hidden な始点は引数なしの getPositions() に含まれない。
+            const positions = net.getPositions(Array.from(ids));
+            for (const node of anchors) {
+                const reference = node.vhVariableArrow;
+                const target = positions[reference.targetId];
+                if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.y)) continue;
+                const desired = this.getVariableArrowPosition(
+                    reference, target, net.getBoundingBox(reference.targetId), net.getScale()
+                );
+                const current = positions[node.id];
+                if (!current || current.x !== desired.x || current.y !== desired.y) {
+                    net.moveNode(node.id, desired.x, desired.y);
+                }
+            }
+        };
+        net.__vhVariableArrowHandler = handler;
+        net.on("beforeDrawing", handler);
     },
 
     getGraphAt: function(cpID, contextID) {
@@ -1329,6 +1505,11 @@ window.VariableHistoryView = {
             return {
                 targetNodeId: null,
                 isArray: false,
+                isSet: false,
+                isObject: false,
+                isUnorderedCollection: false,
+                collectionContentsSet: new Set(),
+                setContentsSet: new Set(),
                 arrayContentsSet: new Set()
             };
         }
@@ -1345,15 +1526,64 @@ window.VariableHistoryView = {
         );
 
         const targetNodeId = e && e.to ? String(e.to) : null;
-        const isArray = !!targetNodeId && targetNodeId.includes("arr");
+        const isSet = this.isSetTarget(graphObj, targetNodeId);
+        const isObject = this.isObjectTarget(graphObj, targetNodeId);
+        const isUnorderedCollection = isSet || isObject;
+        const isArray = !isUnorderedCollection && !!targetNodeId && targetNodeId.includes("arr");
 
         return {
             targetNodeId,
             isArray,
+            isSet,
+            isObject,
+            isUnorderedCollection,
+            collectionContentsSet: isUnorderedCollection
+                ? new Set(this.getCollectionEntriesFromStoredGraph(graphObj, targetNodeId).map(entry => entry.nodeId))
+                : new Set(),
+            setContentsSet: isSet
+                ? this.getSetContentsSetFromStoredGraph(graphObj, targetNodeId)
+                : new Set(),
             arrayContentsSet: isArray
                 ? this.getArrayContentsSetFromStoredGraph(graphObj, targetNodeId)
                 : new Set()
         };
+    },
+
+    // Set は挿入順や表示ラベルではなく、保存時の型情報で判定する。
+    isSetTarget: function(graphObj, nodeId) {
+        const node = graphObj?.nodes?.[nodeId];
+        return node?.collectionKind === "set";
+    },
+
+    isObjectTarget: function(graphObj, nodeId) {
+        return graphObj?.nodes?.[nodeId]?.collectionKind === "object";
+    },
+
+    isUnorderedCollectionTarget: function(graphObj, nodeId) {
+        return this.isSetTarget(graphObj, nodeId) || this.isObjectTarget(graphObj, nodeId);
+    },
+
+    getSetContentsSetFromStoredGraph: function(graphObj, nodeId) {
+        return new Set((graphObj?.edges || [])
+            .filter(edge => String(edge.from) === String(nodeId) && edge.isSetMember)
+            .map(edge => String(edge.to)));
+    },
+
+    getCollectionEntriesFromStoredGraph: function(graphObj, nodeId) {
+        if (this.isObjectTarget(graphObj, nodeId)) {
+            return (graphObj?.edges || [])
+                .filter(edge => String(edge.from) === String(nodeId))
+                .map(edge => ({
+                    nodeId: String(edge.to), key: String(edge.label),
+                    index: null, slotNodeId: null
+                }));
+        }
+        if (this.isSetTarget(graphObj, nodeId)) {
+            return Array.from(this.getSetContentsSetFromStoredGraph(graphObj, nodeId))
+                .sort()
+                .map(nodeId => ({ nodeId, index: null, slotNodeId: null }));
+        }
+        return this.getArrayContentsEntriesFromStoredGraph(graphObj, nodeId);
     },
 
     // StoredGraph の 1 snapshot から配列要素集合を取る
@@ -1665,7 +1895,9 @@ window.VariableHistoryView = {
             // maxNode -> objectNodeId
             // this -> objectNodeId
             // ----------------------------
-            if (!this.isArrayTargetId(targetId)) {
+            const isSet = this.isSetTarget(graphObj, targetId);
+            const isObject = this.isObjectTarget(graphObj, targetId);
+            if (!isSet && !isObject && !this.isArrayTargetId(targetId)) {
                 if (targetId === targetObjectId) {
                     refs.push({
                         variableName,
@@ -1686,7 +1918,7 @@ window.VariableHistoryView = {
             // current -> arr
             // arr[0] -> objectNodeId
             // ----------------------------
-            const entries = this.getArrayContentsEntriesFromStoredGraph(
+            const entries = this.getCollectionEntriesFromStoredGraph(
                 graphObj,
                 targetId
             );
@@ -1698,8 +1930,9 @@ window.VariableHistoryView = {
 
                 refs.push({
                     variableName,
-                    accessLabel: `${variableName}[${entry.index}]`,
-                    sourceKind: "array-element",
+                    accessLabel: isObject ? `${variableName}[${JSON.stringify(entry.key)}]`
+                        : isSet ? variableName : `${variableName}[${entry.index}]`,
+                    sourceKind: isObject ? "object-property" : isSet ? "set-element" : "array-element",
                     nodeId: targetObjectId,
                     arrayNodeId: targetId,
                     index: entry.index,
@@ -1754,7 +1987,7 @@ window.VariableHistoryView = {
 
         if (!variableName || !sourceKind || !nodeId) return "";
 
-        if (sourceKind === "array-element") {
+        if (sourceKind === "array-element" || sourceKind === "set-element" || sourceKind === "object-property") {
             const arrayNodeId = String(ref.arrayNodeId ?? "").trim();
 
             return [
@@ -2709,7 +2942,7 @@ window.VariableHistoryView = {
                 if (!info || !info.targetNodeId) continue;
 
                 // 単一変数
-                if (!info.isArray) {
+                if (!info.isArray && !info.isUnorderedCollection) {
                     const nodeId = String(info.targetNodeId);
                     objectIds.add(nodeId);
 
@@ -2728,7 +2961,7 @@ window.VariableHistoryView = {
                 }
 
                 // 配列変数
-                const arrayEntries = this.getArrayContentsEntriesFromStoredGraph(
+                const arrayEntries = this.getCollectionEntriesFromStoredGraph(
                     snap.g,
                     info.targetNodeId
                 );
@@ -2744,8 +2977,9 @@ window.VariableHistoryView = {
                         contextID: snap.contextID,
                         timeCounter: snap.timeCounter,
                         variableName,
-                        accessLabel: `${variableName}[${arrayEntry.index}]`,
-                        sourceKind: "array-element",
+                        accessLabel: info.isObject ? `${variableName}[${JSON.stringify(arrayEntry.key)}]`
+                            : info.isSet ? variableName : `${variableName}[${arrayEntry.index}]`,
+                        sourceKind: info.isObject ? "object-property" : info.isSet ? "set-element" : "array-element",
                         objectNodeId: nodeId,
                         index: arrayEntry.index
                     });
@@ -2866,11 +3100,13 @@ window.VariableHistoryView = {
             const lastState = last?.state;
 
             // 配列変数でないものはここでは扱わない
-            if (!lastState || !lastState.isArray) continue;
+            if (!lastState || (!lastState.isArray && !lastState.isUnorderedCollection)) continue;
 
             let nodeAgeMap;
 
-            if (this.getGradientMode() === "stack") {
+            if (lastState.isUnorderedCollection) {
+                nodeAgeMap = this.collectSetNodeAgeMap(visibleTimeline);
+            } else if (this.getGradientMode() === "stack") {
                 // Array index:
                 // 現在の配列内の位置によって濃淡を決める
                 // 配列から外れた object は表示対象外になる
@@ -2906,7 +3142,7 @@ window.VariableHistoryView = {
         if (!event || !arrayMembershipAgeMap) return undefined;
 
         // 配列由来の event だけ特別扱いする
-        if (event.sourceKind !== "array-element") {
+        if (event.sourceKind !== "array-element" && event.sourceKind !== "set-element" && event.sourceKind !== "object-property") {
             return undefined;
         }
 
@@ -3460,6 +3696,28 @@ window.VariableHistoryView = {
         };
     },
 
+    // 同時に外れた Set / Object の要素は同じ age にする。列挙順を濃淡に使わない。
+    collectSetNodeAgeMap: function(timeline) {
+        let previous = new Set();
+        let removalStep = 0;
+        const removedAt = new Map();
+        for (const entry of timeline) {
+            const current = entry.state.exists ? new Set(entry.state.nodeIds) : new Set();
+            const removed = Array.from(previous).filter(id => !current.has(id));
+            if (removed.length > 0) removalStep++;
+            for (const id of removed) removedAt.set(id, removalStep);
+            for (const id of current) removedAt.delete(id);
+            previous = current;
+        }
+        const result = new Map();
+        for (const id of previous) result.set(String(id), 0);
+        for (const [id, step] of removedAt) {
+            const age = this.normalizeAgeByFadeMode(removalStep - step + 1);
+            if (age !== null) result.set(String(id), age);
+        }
+        return result;
+    },
+
     collectArrayNodeAgeMap: function(timeline) {
         const result = new Map();
 
@@ -3589,6 +3847,10 @@ window.VariableHistoryView = {
 
         const lastState = visibleTimeline[visibleTimeline.length - 1].state;
 
+        if (lastState.isUnorderedCollection) {
+            return this.collectSetNodeAgeMap(visibleTimeline);
+        }
+
         if (lastState.isArray) {
             // step2-4:
             // stack モードでは、secondary green 側も配列 index ベースで ageMap を作る
@@ -3669,6 +3931,17 @@ window.VariableHistoryView = {
                 exists: false,
                 isArray: false,
                 nodeIds: new Set()
+            };
+        }
+
+        if (info.isUnorderedCollection) {
+            return {
+                exists: true,
+                isArray: false,
+                isSet: info.isSet,
+                isObject: info.isObject,
+                isUnorderedCollection: true,
+                nodeIds: new Set(info.collectionContentsSet)
             };
         }
 
@@ -3939,7 +4212,11 @@ window.VariableHistoryView = {
 
         const lastState = visibleTimeline[visibleTimeline.length - 1].state;
 
-        if (lastState.isArray) {
+        if (lastState.isUnorderedCollection) {
+            for (const [nodeId, age] of this.collectSetNodeAgeMap(visibleTimeline)) {
+                this.paintBaseNodeById(visGraph, nodeId, paletteKey, age);
+            }
+        } else if (lastState.isArray) {
             this.paintArrayTimeline(visGraph, visibleTimeline, paletteKey);
         } else {
             this.paintScalarTimeline(visGraph, visibleTimeline, paletteKey);
@@ -3995,11 +4272,14 @@ window.VariableHistoryView = {
                 const visGraph = originalGenerateVisjsGraph.apply(this, arguments);
                 try {
                     if (window.VariableHistoryView) {
-                        window.VariableHistoryView.removeArrayNodes(visGraph);
+                        window.VariableHistoryView.removeUnreachableArrayArrows(visGraph, this);
+                        window.VariableHistoryView.removeArrayNodes(visGraph, this);
+                        window.VariableHistoryView.hideSelectedVariableEdges(visGraph, this);
 
                         // editor / object のどちらで選択した場合も、
                         // 通常描画は object-ring style に統一する
                         window.VariableHistoryView.applyObjectRingHistory(visGraph);
+                        window.VariableHistoryView.prepareShortVariableArrows(visGraph);
 
                         // 旧 editor-style の色付けは fallback/debug 用として残す。
                         // 通常は呼ばない。
@@ -4025,6 +4305,7 @@ window.AnimationController = {
     baseSnapshotContext: null,
     callPrefix: null,
     fixedPositions: null,
+    fixedLayoutGraphStore: null,
     isPlaying: false,
     isPreparing: false,
     isPrepared: false,
@@ -4385,6 +4666,7 @@ window.AnimationController = {
             const currentCallPrefix = m ? m[1] : null;
 
             const needsPrepare =
+                !this.hasFixedLayout() ||
                 !this.isPrepared ||
                 this.preparedCallPrefix !== currentCallPrefix ||
                 this.preparedSelectionKey !== currentSelectionKey;
@@ -4452,16 +4734,7 @@ window.AnimationController = {
 
     // StoredGraph だけを使って target の情報を得る
     getTargetInfoFromStoredGraphForName: function(graphObj, targetName) {
-        const targetNodeId = this.getVarTargetIdFromStoredGraph(graphObj, targetName);
-        const isArray = !!targetNodeId && String(targetNodeId).includes("arr");
-
-        return {
-            targetNodeId,
-            isArray,
-            arrayContentsSet: isArray
-                ? window.VariableHistoryView.getArrayContentsSetFromStoredGraph(graphObj, targetNodeId)
-                : new Set()
-        };
+        return window.VariableHistoryView.getTargetInfoFromStoredGraph(graphObj, targetName);
     },
 
     // 変化判定用 signature も StoredGraph ベース
@@ -4469,6 +4742,23 @@ window.AnimationController = {
         const info = this.getTargetInfoFromStoredGraphForName(graphObj, targetName);
 
         if (!info.targetNodeId) return "VAR:null";
+
+        // Object はプロパティ順によらず、キーと参照先・値の変化を検出する。
+        if (info.isObject) {
+            const entries = window.VariableHistoryView
+                .getCollectionEntriesFromStoredGraph(graphObj, info.targetNodeId)
+                .map(entry => {
+                    const node = graphObj.nodes?.[entry.nodeId];
+                    return [entry.key, entry.nodeId, node?.isLiteral ? [node.type, String(node.value)] : null];
+                })
+                .sort((a, b) => a[0].localeCompare(b[0]));
+            return `OBJECT:${info.targetNodeId}:${JSON.stringify(entries)}`;
+        }
+
+        // Set の変化は要素集合だけで判定し、挿入順は無視する。
+        if (info.isSet) {
+            return `SET:${info.targetNodeId}:${JSON.stringify(Array.from(info.setContentsSet).sort())}`;
+        }
 
         // 単一ノード変数
         if (!info.isArray) {
@@ -4725,6 +5015,7 @@ window.AnimationController = {
     // Prepare 時の選択状態と、現在の選択状態が一致しているか確認する
     // ----------------------------
     isPreparedSelectionStillCurrent: function() {
+        if (!this.hasFixedLayout()) return false;
         const entries =
             typeof this.getAnimationSelectionEntries === "function"
                 ? this.getAnimationSelectionEntries()
@@ -4891,31 +5182,71 @@ window.AnimationController = {
     // ----------------------------
     // 座標固定のための補助
     // ----------------------------
+    hasFixedLayout: function() {
+        return !!this.fixedPositions &&
+            this.fixedLayoutGraphStore === __$__.Context.StoredGraph;
+    },
+
+    getOverlayBaseId: function(node) {
+        return node.vhObjectRing?.baseNodeId ?? this.getBaseNodeIdFromOverlayId(node.id);
+    },
+
     applyFixedPositionsToVisGraph: function(visGraph) {
-        if (!this.fixedPositions) return;
+        if (!this.hasFixedLayout()) return;
 
-        for (const n of visGraph.nodes) {
-            const id = String(n.id ?? "");
+        // 未表示だったノードだけ位置を補完し、既存ノードは一切動かさない。
+        for (const node of visGraph.nodes) {
+            if (this.getOverlayBaseId(node) != null ||
+                window.VariableHistoryView.isVariableArrowSourceId(node.id)) continue;
+            const id = String(node.id);
+            if (Object.prototype.hasOwnProperty.call(this.fixedPositions, id)) continue;
 
-            // 通常ノードはそのまま
-            let p = this.fixedPositions[id];
-
-            // overlay ノードなら、対応する本体ノードの座標を使う
-            if (!p && this.isOverlayNodeId(id)) {
-                const baseId = this.getBaseNodeIdFromOverlayId(id);
-                if (baseId) {
-                    p = this.fixedPositions[String(baseId)] || null;
-                }
+            const positions = Object.values(this.fixedPositions);
+            let x = node.x;
+            let y = node.y;
+            if (!Number.isFinite(x) || !Number.isFinite(y) || positions.some(p =>
+                Math.abs(p.x - x) < 80 && Math.abs(p.y - y) < 60
+            )) {
+                x = positions.reduce((max, p) => Math.max(max, p.x), 0) + 120;
+                y = positions.length ? positions.reduce((sum, p) => sum + p.y, 0) / positions.length : 0;
             }
+            this.fixedPositions[id] = { x, y };
+        }
 
-            if (p) {
-                n.x = p.x;
-                n.y = p.y;
-                n.fixed = { x: true, y: true };
-            }
+        for (const node of visGraph.nodes) {
+            if (window.VariableHistoryView.isVariableArrowSourceId(node.id)) continue;
+            // 色のリングは常に本体の位置から決める。
+            const baseId = this.getOverlayBaseId(node);
+            const p = this.fixedPositions[String(baseId ?? node.id)];
+            if (!p) continue;
+            node.x = p.x;
+            node.y = p.y;
+            node.fixed = { x: true, y: true };
+            node.physics = false;
         }
     },
-    
+
+    renderFixedVisGraph: function(visGraph) {
+        const net = __$__.ObjectGraphNetwork.network;
+        __$__.Animation.cancelMoves();
+        window.VariableHistoryView.prepareShortVariableArrows(visGraph);
+        this.applyFixedPositionsToVisGraph(visGraph);
+        window.VariableHistoryView.syncObjectRingOverlayPositions(visGraph);
+        // setData によって表示倍率・スクロール位置を変えない。
+        const position = net.getViewPosition();
+        const scale = net.getScale();
+        net.setOptions({ physics: { enabled: false } });
+        net.setData({
+            nodes: __$__.ObjectGraphNetwork.nodes = new vis.DataSet(visGraph.nodes),
+            edges: __$__.ObjectGraphNetwork.edges = new vis.DataSet(visGraph.edges)
+        });
+        net.stopSimulation();
+        net.moveTo({ position, scale, animation: false });
+        this.installOverlayPositionTracking(net);
+        __$__.StorePositions.registerPositions();
+        net.redraw();
+    },
+
     applyCallTreeHighlightForContext: function(contextID) {
         if (!__$__.CallTreeNetwork) return;
 
@@ -4952,211 +5283,30 @@ window.AnimationController = {
     },
 
 
-    registerNewNodePositions: function(ids) {
-        const net = __$__.ObjectGraphNetwork.network;
-        const pos = net.getPositions(ids);
-
-        if (!this.fixedPositions) this.fixedPositions = {};
-
-        for (const id of ids) {
-            if (pos[id]) {
-                this.fixedPositions[String(id)] = {
-                    x: pos[id].x,
-                    y: pos[id].y
-                };
-            }
-        }
-
-        console.log("[registerNewNodePositions] added", ids);
-    },
-
-    waitUntilPositionsStop: function(done, options = {}) {
-        const net = __$__.ObjectGraphNetwork.network;
-        const interval = options.interval ?? 100;
-        const epsilon = options.epsilon ?? 0.5;
-        const stableNeeded = options.stableNeeded ?? 3;
-        const timeout = options.timeout ?? 4000;
-
-        let prev = net.getPositions();
-        let stableCount = 0;
-        const start = Date.now();
-
-        const tick = () => {
-            const cur = net.getPositions();
-
-            let maxMove = 0;
-            for (const id of Object.keys(cur)) {
-                if (!prev[id]) continue;
-                const dx = cur[id].x - prev[id].x;
-                const dy = cur[id].y - prev[id].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > maxMove) maxMove = dist;
-            }
-
-            if (maxMove < epsilon) stableCount++;
-            else stableCount = 0;
-
-            if (stableCount >= stableNeeded) {
-                done && done();
-                return;
-            }
-
-            if (Date.now() - start > timeout) {
-                done && done();
-                return;
-            }
-
-            prev = cur;
-            setTimeout(tick, interval);
-        };
-
-        setTimeout(tick, interval);
-    },
-
-    // ----------------------------
-    // 初期フレームの固定座標を作る
-    // ----------------------------
+    // Prepare を押した瞬間の全ノードを保存する。フレーム切替や再配置はしない。
     buildFixedLayout: function(done) {
         const net = __$__.ObjectGraphNetwork.network;
-        const base = this.getBaseLayoutFrame();
-
-        if (!base) {
-            done && done();
-            return;
-        }
-
-        const key = { cpID: base.cpID, contextID: base.contextID };
-
-        __$__.Context.SnapshotContext = {
-            cpID: String(key.cpID),
-            contextSensitiveID: String(key.contextID),
-            loopLabel: this.baseSnapshotContext?.loopLabel
-        };
-
-        __$__.Update.ContextUpdate('changed');
-
-        this.waitUntilPositionsStop(() => {
-            this.fixedPositions = net.getPositions();
-
-            const updates = Object.keys(this.fixedPositions).map(id => ({
-                id,
-                x: this.fixedPositions[id].x,
-                y: this.fixedPositions[id].y,
-                fixed: { x: true, y: true }
-            }));
-
-            __$__.ObjectGraphNetwork.nodes?.update(updates);
-
-            net.setOptions({ physics: { enabled: false } });
-            net.stopSimulation();
-            net.redraw();
-
-            done && done();
+        __$__.Animation.cancelMoves();
+        net.stopSimulation();
+        const positions = net.getPositions();
+        const saved = this.hasFixedLayout() ? { ...this.fixedPositions } : {};
+        const updates = [];
+        __$__.ObjectGraphNetwork.nodes.forEach(node => {
+            if (this.getOverlayBaseId(node) != null ||
+                window.VariableHistoryView.isVariableArrowSourceId(node.id)) return;
+            const p = positions[node.id];
+            if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+            saved[String(node.id)] = { x: p.x, y: p.y };
+            updates.push({ id: node.id, x: p.x, y: p.y, fixed: { x: true, y: true }, physics: false });
         });
-    },
-
-    // ----------------------------
-    // 各ノードの初登場フレームを StoredGraph から調べる
-    // ----------------------------
-    buildFirstAppearanceFrames: function() {
-        const firstAppearance = new Map(); // nodeId -> frameIndex
-        const keys = this.changedSnapshotKeys || [];
-
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            const snap = __$__.Context.StoredGraph[key.cpID][key.contextID];
-            if (!snap) continue;
-
-            const visibleIds = this.getVisibleNodeIdsFromStoredGraph(snap);
-
-            for (const id of visibleIds) {
-                if (!firstAppearance.has(id)) {
-                    firstAppearance.set(id, i);
-                }
-            }
-        }
-
-        const frameToNodeIds = new Map();
-        for (const [nodeId, frameIndex] of firstAppearance.entries()) {
-            if (!frameToNodeIds.has(frameIndex)) {
-                frameToNodeIds.set(frameIndex, []);
-            }
-            frameToNodeIds.get(frameIndex).push(nodeId);
-        }
-
-        return frameToNodeIds;
-    },
-
-    // ----------------------------
-    // 初登場ノードだけ事前に座標回収
-    // ----------------------------
-    prepareAllNodePositions: function(done) {
-        const frameToNodeIds = this.buildFirstAppearanceFrames();
-        const frameIndices = Array.from(frameToNodeIds.keys()).sort((a, b) => a - b);
-
-        const targets = frameIndices.filter(i => i !== 0);
-        let idx = 0;
-
-        const step = () => {
-            if (idx >= targets.length) {
-                console.log("[prepareAllNodePositions] done");
-                this.statusLabel.innerText = `Prepared ${this.changedSnapshotKeys.length} frames`;
-                this.updatePrepareOverlay(`Prepared ${this.changedSnapshotKeys.length}/${this.changedSnapshotKeys.length}`);
-                done && done();
-                return;
-            }
-
-            const frameIndex = targets[idx];
-            const key = this.changedSnapshotKeys[frameIndex];
-            const nodeIds = frameToNodeIds.get(frameIndex) || [];
-            const missing = nodeIds.filter(id => !this.fixedPositions[String(id)]);
-
-            this.statusLabel.innerText = `Preparing ${idx + 1}/${targets.length}`;
-            this.updatePrepareOverlay(`Preparing ${idx + 1}/${targets.length}`);
-
-            if (missing.length === 0) {
-                idx++;
-                setTimeout(step, 0);
-                return;
-            }
-
-            console.log("[prepare] frame", frameIndex, "missing =", missing);
-
-            __$__.Context.SnapshotContext = {
-                cpID: String(key.cpID),
-                contextSensitiveID: String(key.contextID),
-                loopLabel: this.baseSnapshotContext?.loopLabel
-            };
-
-            __$__.Update.ContextUpdate('changed');
-
-            this.waitUntilPositionsStop(() => {
-                this.registerNewNodePositions(missing);
-
-                const updates = missing
-                    .filter(id => this.fixedPositions[String(id)])
-                    .map(id => ({
-                        id,
-                        x: this.fixedPositions[String(id)].x,
-                        y: this.fixedPositions[String(id)].y,
-                        fixed: { x: true, y: true }
-                    }));
-
-                __$__.ObjectGraphNetwork.nodes?.update(updates);
-                __$__.ObjectGraphNetwork.network.setOptions({ physics: { enabled: false } });
-                __$__.ObjectGraphNetwork.network.stopSimulation();
-
-                idx++;
-                setTimeout(step, 0);
-            }, {
-                interval: 60,
-                epsilon: 3.0,
-                stableNeeded: 1,
-                timeout: 500
-            });
-        };
-
-        step();
+        this.fixedPositions = saved;
+        this.fixedLayoutGraphStore = __$__.Context.StoredGraph;
+        __$__.ObjectGraphNetwork.nodes.update(updates);
+        net.setOptions({ physics: { enabled: false } });
+        this.installOverlayPositionTracking(net);
+        __$__.StorePositions.registerPositions();
+        net.redraw();
+        done && done();
     },
 
     // ----------------------------
@@ -5172,6 +5322,8 @@ window.AnimationController = {
             this.statusLabel.innerText = "Ready (no variable selected)";
             return;
         }
+
+        this.buildFixedLayout();
 
         const targetName = entries[0]?.name || window.VariableHistorySelection.get();
         const selectionKey = this.getAnimationSelectionKey(entries);
@@ -5194,7 +5346,6 @@ window.AnimationController = {
 
         this.isPreparing = true;
         this.isPrepared = false;
-        this.fixedPositions = null;
         this.currentIndex = 0;
         this.displayedIndex = -1;
         this.displayedKey = null;
@@ -5222,34 +5373,30 @@ window.AnimationController = {
         }
         this.setPlaybackControlsEnabled(false);
 
-        this.buildFixedLayout(() => {
-            this.prepareAllNodePositions(() => {
-                this.isPreparing = false;
-                this.isPrepared = true;
-                this.preparedCallPrefix = this.callPrefix;
+        this.isPreparing = false;
+        this.isPrepared = true;
+        this.preparedCallPrefix = this.callPrefix;
 
-                // 互換用に残す
-                this.preparedTargetName = targetName;
+        // 互換用に残す
+        this.preparedTargetName = targetName;
 
-                // Step 4-3 の本体
-                this.preparedSelectionKey = selectionKey;
+        // Step 4-3 の本体
+        this.preparedSelectionKey = selectionKey;
 
-                this.hidePrepareOverlay();
-                this.statusLabel.innerText =
-                    `Ready (${this.changedSnapshotKeys.length} frames; variables: ${selectionLabel})`;
-                if (this.playBtn) {
-                    this.playBtn.disabled = false;
-                    this.playBtn.innerText = "▶ Play Animation";
-                    this.playBtn.style.opacity = "1";
-                    this.playBtn.style.cursor = "pointer";
-                }
-                this.setPlaybackControlsEnabled(true);
+        this.hidePrepareOverlay();
+        this.statusLabel.innerText =
+            `Ready (${this.changedSnapshotKeys.length} frames; variables: ${selectionLabel})`;
+        if (this.playBtn) {
+            this.playBtn.disabled = false;
+            this.playBtn.innerText = "▶ Play Animation";
+            this.playBtn.style.opacity = "1";
+            this.playBtn.style.cursor = "pointer";
+        }
+        this.setPlaybackControlsEnabled(true);
 
-                if (this.baseSnapshotContext) {
-                    __$__.Context.SnapshotContext = { ...this.baseSnapshotContext };
-                }
-            });
-        });
+        if (this.baseSnapshotContext) {
+            __$__.Context.SnapshotContext = { ...this.baseSnapshotContext };
+        }
     },
 
     // ----------------------------
@@ -5575,7 +5722,7 @@ window.AnimationController = {
     stepFrameForward: function() {
         if (this.isPreparing) return;
 
-        if (!this.isPrepared || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
+        if (!this.isPrepared || !this.isPreparedSelectionStillCurrent() || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
             this.statusLabel.innerText = "Prepare animation first";
             return;
         }
@@ -5609,7 +5756,7 @@ window.AnimationController = {
     stepFrameBackward: function() {
         if (this.isPreparing) return;
 
-        if (!this.isPrepared || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
+        if (!this.isPrepared || !this.isPreparedSelectionStillCurrent() || !this.allSnapsSorted || this.allSnapsSorted.length === 0) {
             this.statusLabel.innerText = "Prepare animation first";
             return;
         }
@@ -5647,7 +5794,7 @@ window.AnimationController = {
     stepChangeForward: function() {
         if (this.isPreparing) return;
 
-        if (!this.isPrepared || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+        if (!this.isPrepared || !this.isPreparedSelectionStillCurrent() || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
             this.statusLabel.innerText = "Prepare animation first";
             return;
         }
@@ -5673,7 +5820,7 @@ window.AnimationController = {
     stepChangeBackward: function() {
         if (this.isPreparing) return;
 
-        if (!this.isPrepared || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
+        if (!this.isPrepared || !this.isPreparedSelectionStillCurrent() || !this.changedSnapshotKeys || this.changedSnapshotKeys.length === 0) {
             this.statusLabel.innerText = "Prepare animation first";
             return;
         }
@@ -5791,7 +5938,37 @@ window.AnimationController = {
         });
     },
 
-    // 実際の描画だけは visGraph を使う
+    // 色付きの円はレイアウト対象にせず、描画直前に本体の現在位置へ追従させる。
+    // DataSet を毎回読むので、フレーム切替後に消えた円は更新しない。
+    installOverlayPositionTracking: function(net) {
+        if (net.__vhOverlayPositionHandler) return;
+
+        const handler = () => {
+            const nodes = __$__.ObjectGraphNetwork.nodes;
+            if (!nodes) return;
+
+            const positions = net.getPositions();
+            nodes.forEach(node => {
+                const baseId = node.vhObjectRing?.baseNodeId ??
+                    this.getBaseNodeIdFromOverlayId(node.id);
+                if (baseId === null || baseId === undefined) return;
+
+                const base = positions[String(baseId)];
+                const overlay = positions[String(node.id)];
+                if (!base || !overlay) return;
+                if (!Number.isFinite(base.x) || !Number.isFinite(base.y)) return;
+
+                if (overlay.x !== base.x || overlay.y !== base.y) {
+                    net.moveNode(node.id, base.x, base.y);
+                }
+            });
+        };
+
+        net.__vhOverlayPositionHandler = handler;
+        net.on("beforeDrawing", handler);
+    },
+
+    // 準備時に保存した共通座標で各フレームを描画する。
     applySnapshot: function(_snap, key, done) {
         try {
             const net = __$__.ObjectGraphNetwork.network;
@@ -5804,31 +5981,7 @@ window.AnimationController = {
             };
 
             const visGraph = snap.generateVisjsGraph(false);
-            this.applyFixedPositionsToVisGraph(visGraph);
-
-            // step4-10d:
-            // animation 用の固定座標を base node に適用した後、
-            // object ring overlay も base node の座標に合わせ直す
-            if (
-                window.VariableHistoryView &&
-                typeof window.VariableHistoryView.syncObjectRingOverlayPositions === "function"
-            ) {
-                const syncedCount =
-                    window.VariableHistoryView.syncObjectRingOverlayPositions(visGraph);
-                    window.VariableHistoryOptions?.debugLog?.(
-                        "[AnimationController] synced object ring overlays:",
-                        syncedCount
-                    );
-            }
-
-            net.setOptions({ physics: { enabled: false } });
-            net.setData({
-                nodes: __$__.ObjectGraphNetwork.nodes = new vis.DataSet(visGraph.nodes),
-                edges: __$__.ObjectGraphNetwork.edges = new vis.DataSet(visGraph.edges)
-            });
-
-            net.stopSimulation();
-            net.redraw();
+            this.renderFixedVisGraph(visGraph);
 
             done && done();
         } catch (e) {
