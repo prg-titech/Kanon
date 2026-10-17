@@ -2005,105 +2005,116 @@ window.VariableHistoryView = {
         ].join("::");
     },
 
+    // Preserve separate occurrences while matching index moves at the unchanged
+    // ends of an array. For example, shift() keeps the later C in [C,D,E,C].
+    matchArrayReferenceOccurrences: function(previousRows, refs, previousGraph, graphObj) {
+        const matches = new Map();
+        if (!previousRows.length || !refs.length) return matches;
+
+        const arrayId = refs[0].arrayNodeId;
+        const before = this.getArrayContentsEntriesFromStoredGraph(previousGraph, arrayId);
+        const after = this.getArrayContentsEntriesFromStoredGraph(graphObj, arrayId);
+        const previousByIndex = new Map(previousRows.map(row => [row.index, row]));
+        const currentByIndex = new Map(refs.map(ref => [ref.index, ref]));
+        const used = new Set();
+        const match = (oldEntry, newEntry) => {
+            const row = previousByIndex.get(oldEntry.index);
+            const ref = currentByIndex.get(newEntry.index);
+            if (row && ref) {
+                matches.set(ref, row);
+                used.add(row);
+            }
+        };
+
+        let prefix = 0;
+        while (prefix < before.length && prefix < after.length &&
+               before[prefix].nodeId === after[prefix].nodeId) {
+            match(before[prefix], after[prefix]);
+            prefix++;
+        }
+        let oldEnd = before.length - 1;
+        let newEnd = after.length - 1;
+        while (oldEnd >= prefix && newEnd >= prefix &&
+               before[oldEnd].nodeId === after[newEnd].nodeId) {
+            match(before[oldEnd--], after[newEnd--]);
+        }
+
+        // Reordering surviving elements does not start another reference.
+        const remaining = previousRows.filter(row => !used.has(row));
+        let next = 0;
+        for (const ref of refs) {
+            if (!matches.has(ref) && next < remaining.length) {
+                matches.set(ref, remaining[next++]);
+            }
+        }
+        return matches;
+    },
+
     buildObjectVariableHistory: function(objectNodeId) {
         const targetObjectId = String(objectNodeId ?? "").trim();
-
-        if (!targetObjectId) {
-            return {
-                objectNodeId: targetObjectId,
-                rawRows: [],
-                eventRows: [],
-                variableNames: [],
-                accessLabels: []
-            };
-        }
-
-        // 現在の main-callX グループ内の snapshot を使う
-        const snaps = this.collectSnapshotsForCurrentTarget();
-
         const rawRows = [];
         const eventRows = [];
-
-        // 直前 snapshot で参照されていた continuityKey
-        // 「新しく参照され始めた瞬間」だけ eventRows に入れるために使う
-        let prevActiveKeys = new Set();
-
-        for (const snap of snaps) {
-            const refs = this.collectObjectVariableReferencesInGraph(
-                snap.g,
-                targetObjectId
-            );
-
-            const currentActiveKeys = new Set();
-
-            // 同じ snapshot 内で同じ参照開始 event を重複登録しないための Set
-            // 例: stack[0] と stack[1] が同じ node を指している場合
-            const startedThisSnapshot = new Set();
-
-            for (const ref of refs) {
-                const continuityKey =
-                    typeof this.getReferenceContinuityKey === "function"
-                        ? this.getReferenceContinuityKey(ref)
-                        : [
-                            ref.variableName,
-                            ref.sourceKind,
-                            ref.arrayNodeId ?? "",
-                            ref.nodeId ?? ""
-                        ].join("::");
-
-                if (!continuityKey) continue;
-
-                currentActiveKeys.add(continuityKey);
-
-                const row = {
-                    objectNodeId: targetObjectId,
-                    cpID: snap.cpID,
-                    contextID: snap.contextID,
-                    timeCounter: snap.timeCounter,
-                    variableName: ref.variableName,
-                    accessLabel: ref.accessLabel,
-                    sourceKind: ref.sourceKind,
-                    index: ref.index,
-                    arrayNodeId: ref.arrayNodeId,
-                    slotNodeId: ref.slotNodeId,
-
-                    // debug 用
-                    continuityKey
-                };
-
-                // rawRows は「その snapshot で参照されていた」全部
-                rawRows.push(row);
-
-                // eventRows は「直前までは参照されておらず、
-                // この snapshot で参照され始めた」ものだけ
-                //
-                // 配列変数では index を continuityKey に含めないので、
-                // stack[1] -> stack[0] のような移動では新 event にならない。
-                // 一方、一度 stack から消えて、後でもう一度入った場合は、
-                // prevActiveKeys に存在しないため新 event になる。
-                if (
-                    !prevActiveKeys.has(continuityKey) &&
-                    !startedThisSnapshot.has(continuityKey)
-                ) {
-                    eventRows.push({
-                        ...row,
-                        eventKind: "start-reference"
-                    });
-
-                    startedThisSnapshot.add(continuityKey);
-                }
-            }
-
-            prevActiveKeys = currentActiveKeys;
+        const referenceStates = [];
+        if (!targetObjectId) {
+            return { objectNodeId: targetObjectId, rawRows, eventRows,
+                referenceStates, variableNames: [], accessLabels: [] };
         }
 
-        const variableNames = Array.from(
-            new Set(rawRows.map(r => r.variableName))
-        ).sort();
+        const snaps = this.collectSnapshotsForCurrentTarget();
+        let previousGroups = new Map();
+        let previousGraph = null;
+        let referenceOrder = 0;
 
-        const accessLabels = Array.from(
-            new Set(rawRows.map(r => r.accessLabel))
-        ).sort();
+        for (const snap of snaps) {
+            const refs = this.collectObjectVariableReferencesInGraph(snap.g, targetObjectId);
+            const groups = new Map();
+            for (const ref of refs) {
+                const key = this.getReferenceContinuityKey(ref);
+                if (!key) continue;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(ref);
+            }
+
+            const currentGroups = new Map();
+            const arrayRows = [];
+            for (const [continuityKey, group] of groups) {
+                const isArray = group[0].sourceKind === "array-element";
+                if (isArray) group.sort((a, b) => a.index - b.index);
+                const previous = previousGroups.get(continuityKey) || [];
+                const matches = isArray
+                    ? this.matchArrayReferenceOccurrences(previous, group, previousGraph, snap.g)
+                    : new Map(group.map(ref => [ref, previous[0]]));
+                const rows = [];
+
+                for (const ref of group) {
+                    const prior = matches.get(ref) || (!isArray ? rows[0] : null);
+                    const order = prior?.referenceOrder ?? referenceOrder++;
+                    const row = {
+                        objectNodeId: targetObjectId,
+                        cpID: snap.cpID,
+                        contextID: snap.contextID,
+                        timeCounter: snap.timeCounter,
+                        variableName: ref.variableName,
+                        accessLabel: ref.accessLabel,
+                        sourceKind: ref.sourceKind,
+                        index: ref.index,
+                        arrayNodeId: ref.arrayNodeId,
+                        slotNodeId: ref.slotNodeId,
+                        continuityKey,
+                        referenceOrder: order,
+                        referenceId: prior?.referenceId ?? `${continuityKey}::${order}`
+                    };
+                    rawRows.push(row);
+                    rows.push(row);
+                    if (isArray) arrayRows.push(row);
+                    if (!prior) eventRows.push({ ...row, eventKind: "start-reference" });
+                }
+                currentGroups.set(continuityKey, rows);
+            }
+            referenceStates.push({ timeCounter: snap.timeCounter, rows: arrayRows });
+            previousGroups = currentGroups;
+            previousGraph = snap.g;
+        }
 
         return {
             objectNodeId: targetObjectId,
@@ -2112,8 +2123,9 @@ window.VariableHistoryView = {
             ),
             rawRows,
             eventRows,
-            variableNames,
-            accessLabels
+            referenceStates,
+            variableNames: Array.from(new Set(rawRows.map(r => r.variableName))).sort(),
+            accessLabels: Array.from(new Set(rawRows.map(r => r.accessLabel))).sort()
         };
     },
 
@@ -2348,16 +2360,30 @@ window.VariableHistoryView = {
             });
 
         const total = filtered.length;
+        const referenceStates = Array.isArray(history?.referenceStates)
+            ? history.referenceStates : [];
+        const currentState = referenceStates.filter(state =>
+            currentTime == null || state.timeCounter == null || state.timeCounter <= currentTime
+        ).slice(-1)[0];
+        const activeArrayReferences = new Map(
+            (currentState?.rows || []).map(row => [row.referenceId, row])
+        );
 
         const events = filtered.map((row, index) => {
             const variableName = String(row.variableName ?? "").trim();
+            const activeReference = activeArrayReferences.get(row.referenceId);
 
             return {
                 objectNodeId,
                 variableName,
-                accessLabel: row.accessLabel,
+                accessLabel: activeReference?.accessLabel ?? row.accessLabel,
                 sourceKind: row.sourceKind,
                 index: row.index,
+                arrayNodeId: row.arrayNodeId,
+                referenceId: row.referenceId,
+                referenceOrder: row.referenceOrder,
+                arrayReferenceActive: !!activeReference,
+                currentArrayIndex: activeReference?.index ?? null,
                 cpID: row.cpID,
                 contextID: row.contextID,
                 timeCounter: row.timeCounter,
@@ -2623,6 +2649,7 @@ window.VariableHistoryView = {
                 event.cpID ?? "",
                 event.contextID ?? "",
                 event.timeCounter ?? "",
+                event.referenceId ?? "",
                 event.paletteKey ?? "pink"
             ].join("::");
 
@@ -2687,20 +2714,35 @@ window.VariableHistoryView = {
             }))
             .filter(event => event.displayAge !== null);
 
-        // Array index mode では、
-        // 同じ stack 変数・同じ node に対する履歴 event を1つにまとめる。
-        // displayAge は現在の stack index から計算されたものを使う。
+        // Keep distinct array occurrences; remove only exact duplicate events.
         drawableEvents = this.collapseArrayIndexDrawableEvents(drawableEvents);
 
         if (drawableEvents.length === 0) return;
+
+        // Keep removed occurrences outside surviving elements even when both
+        // shades are capped at palette[4]. This order is separate from color.
+        const activeArrayAges = new Map();
+        const arrayKey = event => `${event.variableName}::${event.arrayNodeId}`;
+        for (const event of drawableEvents) {
+            if (event.sourceKind === "array-element" && event.arrayReferenceActive) {
+                const key = arrayKey(event);
+                activeArrayAges.set(key, Math.max(activeArrayAges.get(key) ?? 0, event.displayAge));
+            }
+        }
+        for (const event of drawableEvents) {
+            const activeAge = activeArrayAges.get(arrayKey(event));
+            event.displayOrderAge = this.getGradientMode() === "stack" &&
+                event.sourceKind === "array-element" && !event.arrayReferenceActive && activeAge !== undefined
+                ? Math.max(event.displayAge, activeAge + 1) : event.displayAge;
+        }
 
         // 内側に来る順に並べる
         // 1. displayAge が小さいもの
         // 2. 同じ age なら timeCounter が新しいもの
         // 3. それでも同じなら、選択順が早いもの
         drawableEvents.sort((a, b) => {
-            const ageA = Number(a.displayAge ?? 999);
-            const ageB = Number(b.displayAge ?? 999);
+            const ageA = Number(a.displayOrderAge ?? 999);
+            const ageB = Number(b.displayOrderAge ?? 999);
 
             if (ageA !== ageB) return ageA - ageB;
 
@@ -2719,6 +2761,10 @@ window.VariableHistoryView = {
 
             if (orderA !== orderB) return orderA - orderB;
 
+            if (a.variableName === b.variableName && a.arrayNodeId === b.arrayNodeId) {
+                const referenceOrder = Number(b.referenceOrder ?? 0) - Number(a.referenceOrder ?? 0);
+                if (referenceOrder) return referenceOrder;
+            }
             return String(a.accessLabel ?? "").localeCompare(String(b.accessLabel ?? ""));
         });
 
@@ -3068,7 +3114,8 @@ window.VariableHistoryView = {
             event.sourceKind ?? "",
             event.cpID ?? "",
             event.contextID ?? "",
-            event.timeCounter ?? ""
+            event.timeCounter ?? "",
+            event.referenceId ?? ""
         ].join("::");
     },
     // ----------------------------
@@ -3087,6 +3134,7 @@ window.VariableHistoryView = {
                 : this.getActiveRingSelectionEntries();
 
         const ageMap = new Map();
+        const arrayElementAgeMap = new Map();
         const rows = [];
 
         for (const entry of entries) {
@@ -3111,6 +3159,13 @@ window.VariableHistoryView = {
                 // 現在の配列内の位置によって濃淡を決める
                 // 配列から外れた object は表示対象外になる
                 nodeAgeMap = this.collectArrayStackNodeAgeMap(visibleTimeline);
+                const graphObj = this.getCurrentStoredGraph();
+                const info = this.getTargetInfoFromStoredGraph(graphObj, variableName);
+                const members = this.getArrayContentsEntriesFromStoredGraph(graphObj, info.targetNodeId);
+                members.forEach((member, rank) => {
+                    const key = [variableName, info.targetNodeId, member.index, member.nodeId].join("::");
+                    arrayElementAgeMap.set(key, this.getStackAgeForRank(rank, members.length));
+                });
             } else {
                 // Time:
                 // 現在配列内にいる object は age 0
@@ -3134,11 +3189,12 @@ window.VariableHistoryView = {
 
         return {
             ageMap,
+            arrayElementAgeMap,
             rows
         };
     },
 
-    getObjectArrayMembershipAge: function(event, arrayMembershipAgeMap) {
+    getObjectArrayMembershipAge: function(event, arrayMembershipAgeMap, arrayElementAgeMap) {
         if (!event || !arrayMembershipAgeMap) return undefined;
 
         // 配列由来の event だけ特別扱いする
@@ -3150,6 +3206,12 @@ window.VariableHistoryView = {
         const objectNodeId = String(event.objectNodeId ?? "").trim();
 
         if (!variableName || !objectNodeId) return null;
+
+        if (event.sourceKind === "array-element" && this.getGradientMode() === "stack" &&
+            event.arrayReferenceActive && arrayElementAgeMap) {
+            const elementKey = [variableName, event.arrayNodeId, event.currentArrayIndex, objectNodeId].join("::");
+            return arrayElementAgeMap.has(elementKey) ? arrayElementAgeMap.get(elementKey) : null;
+        }
 
         const key = `${variableName}::${objectNodeId}`;
 
@@ -3230,7 +3292,8 @@ window.VariableHistoryView = {
             // ----------------------------
             const arrayAge = this.getObjectArrayMembershipAge(
                 event,
-                arrayMembershipAgeMap
+                arrayMembershipAgeMap,
+                arrayMembershipResult.arrayElementAgeMap
             );
 
             if (arrayAge !== undefined) {
@@ -3291,6 +3354,7 @@ window.VariableHistoryView = {
                     at - bt ||
                     String(a.event.cpID).localeCompare(String(b.event.cpID)) ||
                     String(a.event.contextID).localeCompare(String(b.event.contextID)) ||
+                    Number(a.event.referenceOrder ?? 0) - Number(b.event.referenceOrder ?? 0) ||
                     String(a.event.accessLabel ?? "").localeCompare(String(b.event.accessLabel ?? ""))
                 );
             });
@@ -3305,9 +3369,13 @@ window.VariableHistoryView = {
             // stack mode:
             //   現在の配列 index に応じた age
             const newestBaseAge = items[items.length - 1].baseArrayAge;
+            const activeAges = items.filter(item => item.event.arrayReferenceActive &&
+                item.baseArrayAge != null).map(item => Number(item.baseArrayAge));
+            const oldestActiveAge = activeAges.length ? Math.max(...activeAges) : null;
+            let pastEpisodeAge = items.filter(item => !item.event.arrayReferenceActive).length;
 
             for (let i = 0; i < items.length; i++) {
-                const { event } = items[i];
+                const { event, baseArrayAge } = items[i];
                 const key = this.getObjectRingEventIdentity(event);
 
                 const distanceFromNewest = items.length - 1 - i;
@@ -3315,7 +3383,16 @@ window.VariableHistoryView = {
                 let rawAge = null;
                 let normalizedAge = null;
 
-                if (newestBaseAge !== null && newestBaseAge !== undefined) {
+                if (this.getGradientMode() === "stack" && event.arrayReferenceActive) {
+                    // Each current occurrence uses its own index, even if another
+                    // element in the same array refers to the same object.
+                    rawAge = baseArrayAge;
+                    normalizedAge = baseArrayAge;
+                } else if (this.getGradientMode() === "stack" && oldestActiveAge !== null) {
+                    // Removed occurrences stay outside all currently active ones.
+                    rawAge = oldestActiveAge + pastEpisodeAge--;
+                    normalizedAge = this.normalizeAgeByFadeMode(rawAge);
+                } else if (newestBaseAge !== null && newestBaseAge !== undefined) {
                     rawAge = Number(newestBaseAge) + distanceFromNewest;
                     normalizedAge = this.normalizeAgeByFadeMode(rawAge);
                 }
